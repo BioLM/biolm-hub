@@ -6,6 +6,7 @@ from botocore.exceptions import ClientError
 
 from models.commons.storage.r2 import get_r2_client
 from models.commons.util.config import (
+    cache_enabled,
     r2_bucket_name,
     r2_model_cache_dir,
 )
@@ -63,6 +64,10 @@ def fetch_from_r2(model_slug: str, model_action: str, item_key: str) -> Optional
     Returns:
         Optional[dict]: The decompressed JSON object, or None if not found.
     """
+    # R2 response-cache tier is opt-in (BIOLM_CACHE_ENABLED). Off => cache miss.
+    if not cache_enabled():
+        return None
+
     r2_client = get_r2_client()
     obj_key = build_r2_key_for_item(model_slug, model_action, item_key, ext=".jsonbin")
 
@@ -101,6 +106,10 @@ def store_in_r2(model_slug: str, model_action: str, item_key: str, value: dict) 
     Returns:
         None
     """
+    # R2 response-cache tier is opt-in (BIOLM_CACHE_ENABLED). Off => no write.
+    if not cache_enabled():
+        return
+
     r2_client = get_r2_client()
 
     # Serialize to JSON bytes

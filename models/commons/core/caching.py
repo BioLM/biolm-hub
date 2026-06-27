@@ -14,7 +14,7 @@ from models.commons.storage.cache import (
     fetch_from_r2,
     store_in_r2,
 )
-from models.commons.util.config import get_model_cache_name
+from models.commons.util.config import cache_enabled, get_model_cache_name
 
 logger = logging.getLogger(__name__)
 
@@ -320,6 +320,15 @@ async def process_with_cache(
     Returns:
         A dictionary containing the final, merged results.
     """
+    # Caching disabled (default): compute every item, touch no cache tier
+    # (no modal.Dict creation, no R2 access). Returns a plain computed count.
+    if not cache_enabled():
+        debug_logger.debug(
+            "Response cache disabled; computing all items without caching."
+        )
+        response_obj = await compute_fn(items, list(range(len(items))))
+        return serialize_model(response_obj, debug_logger), len(items)
+
     # 1. PRE-PROCESS: check short-term → fallback R2 for each item
     final_results, indices_to_compute, items_to_compute = await _cache_check(
         items, params, model_slug, model_action, debug_logger

@@ -1,5 +1,4 @@
-from collections.abc import Iterator
-from enum import Enum, EnumMeta
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel
@@ -40,15 +39,6 @@ except ImportError:
 # -------- Enhanced Enum Utilities --------
 
 
-class EnhancedEnumMeta(EnumMeta):
-    def __contains__(cls, item: object) -> bool:
-        try:
-            cls(item)
-        except ValueError:
-            return False
-        return True
-
-
 try:
     from pydantic import GetCoreSchemaHandler as _Handler
     from pydantic_core import core_schema as _cs
@@ -81,17 +71,12 @@ except ImportError:
             yield _cast
 
 
-class EnhancedStringEnum(_CastableEnumMixin, str, Enum, metaclass=EnhancedEnumMeta):
-    """
-    EnhancedStringEnum class that allows for:
-    - membership testing with `in` operator
-    - iteration over the members
-    - automatic string casting in Pydantic models
-    """
+class EnhancedStringEnum(_CastableEnumMixin, StrEnum):
+    """String enum with value-based membership, member iteration, and `str()` to value.
 
-    @classmethod
-    def __iter__(cls) -> Iterator[str]:
-        return (member.value for member in cls)
-
-    def __str__(self) -> str:
-        return str(self.value)
+    On Python 3.12+, stdlib ``StrEnum`` already provides value-`in` membership
+    (``"predict" in ModelActions``), iteration over members, and ``__str__``
+    returning the member's value. The only feature layered on top is
+    ``_CastableEnumMixin``, which lets *strict* Pydantic models accept a raw
+    string (or the enum member) for fields typed as this enum.
+    """

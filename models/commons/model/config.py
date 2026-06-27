@@ -11,13 +11,8 @@ def biolm_model_class(cls):
     """
     Decorator that marks a class as a BioLM model class for discovery purposes.
 
-    Note: Billing action tracking is now handled by the @modal_endpoint decorator,
-    which is the single point where all method calls flow through. This decorator
-    is kept for backward compatibility and class discovery.
-
-    Works by:
-    1. Marking the class as a biolm model class (for discovery)
-    2. Billing action tracking is handled by @modal_endpoint decorator
+    Works by marking the class with ``_is_biolm_model_class = True`` so the
+    gateway/test framework can resolve a model family's container class.
     """
     cls._is_biolm_model_class = True
     return cls
@@ -56,6 +51,12 @@ class ModelFamily(BaseModel):
     base_model_slug: str
     display_name: str  # Human-readable base display name, e.g., "ESM1v", "ProstT5"
     action_schemas: list[ActionSchemaMap]
+
+    # Name of the @biolm_model_class-decorated container class in this model's
+    # app.py (e.g. "ESM2Model"). Set per-model in W5; consumed by the gateway's
+    # config-driven routing (W8) in place of AST class discovery. Optional here so
+    # existing configs import cleanly until values are populated.
+    modal_class_name: str | None = None
 
     # Model tags for categorization and discovery
     # Rule of Specificity: Models should be tagged with the most specific applicable

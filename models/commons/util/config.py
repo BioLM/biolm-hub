@@ -1,9 +1,12 @@
+import os
 from pathlib import Path
 
 import modal
 
 # R2
-r2_bucket_name = "biolm-modal"
+# The bucket defaults to the public OSS bucket and may be overridden via the
+# BIOLM_R2_BUCKET environment variable. The logical prefixes below are stable.
+r2_bucket_name = os.getenv("BIOLM_R2_BUCKET", "biolm-public")
 r2_model_store_dir = "model-store"
 r2_model_cache_dir = "model-cache"
 r2_test_data_dir = "test-data"
@@ -23,7 +26,6 @@ common_requirements = [
     "modal==1.3.5",
     "orjson==3.10.12",
     "pydantic==2.11.7",
-    "redis>=5.1.1,<=6.2.0",
 ]
 
 
@@ -47,6 +49,21 @@ def get_model_cache_name(model_slug: str) -> str:
     return f"model-cache-{model_slug}"
 
 
+# Response cache feature flag.
+# Both response-cache tiers (modal.Dict short-term + R2 long-term) are OFF by
+# default. Enable them by setting BIOLM_CACHE_ENABLED to a truthy value.
+_CACHE_TRUTHY_VALUES = {"1", "true", "yes"}
+
+
+def cache_enabled() -> bool:
+    """Return True if response caching is enabled via BIOLM_CACHE_ENABLED.
+
+    Both cache tiers (modal.Dict + R2 gzip) are disabled unless the environment
+    variable is set to one of "1", "true", "yes" (case-insensitive). Default off.
+    """
+    return os.getenv("BIOLM_CACHE_ENABLED", "").strip().lower() in _CACHE_TRUTHY_VALUES
+
+
 # Modal secrets
 cloudflare_r2_secret_name = "cloudflare-r2"
 cloudflare_r2_secret = modal.Secret.from_name(cloudflare_r2_secret_name)
@@ -59,9 +76,6 @@ huggingface_api_token_secret = modal.Secret.from_name(huggingface_api_token_secr
 
 nvidia_ngc_secret_name = "ngc-cli-api-key"
 nvidia_ngc_secret = modal.Secret.from_name(nvidia_ngc_secret_name)
-
-redis_url_secret_name = "redis-url"
-redis_url_secret = modal.Secret.from_name(redis_url_secret_name)
 
 
 # Modal environments

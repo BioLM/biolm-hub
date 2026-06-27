@@ -16,6 +16,7 @@ from models.commons.core.caching import (
 from models.commons.core.error import ErrorResponse, UserError
 from models.commons.core.logging import DebugLogger, truncate_for_debug
 from models.commons.data.serializer import serialize_model
+from models.commons.util.config import cache_enabled
 
 
 def modal_endpoint(  # noqa: C901
@@ -99,20 +100,6 @@ def modal_endpoint(  # noqa: C901
                 extra_context={"model_slug": model_slug, "model_action": model_action},
             )
 
-            ### ------- Billing action tracking -------
-            # Extract self from args if this is an instance method
-            # and set the billing action before executing the function
-            billing_service = None
-            if args and len(args) > 0:
-                self_instance = args[0]
-                # Check if self has billing_service attribute (instance method on BillingMixin)
-                if hasattr(self_instance, "billing_service"):
-                    billing_service = getattr(self_instance, "billing_service", None)
-                    if billing_service:
-                        # Set the action - it will persist in _last_active_action
-                        # for the billing loop to read, even after the method completes
-                        billing_service.set_current_action(model_action)
-
             try:
                 return await _run_main_decorator_flow_async(
                     func=func,
@@ -130,11 +117,6 @@ def modal_endpoint(  # noqa: C901
                     exc,
                     debug_logger=debug_logger,
                 )
-            finally:
-                # Clear the action when the method finishes to stop billing
-                # This prevents billing from continuing after the method completes
-                if billing_service:
-                    billing_service.set_current_action(None)
 
         if inspect.iscoroutinefunction(func):
             return async_wrapper  # Expose async wrapper directly
@@ -220,42 +202,6 @@ def _validate_and_bind_payload(
     # Update the payload in bound arguments
     bound_args.arguments["payload"] = payload
     return bound_args, payload, clean_kwargs, skip_cache, raw_payload_dict
-
-
-def _track_protocol_id(
-    args: tuple,
-    payload: Any,
-    clean_kwargs: dict,
-) -> None:
-    """
-    Extract protocol_id from payload or kwargs and track it for billing.
-    This allows tracking billing by protocol/analysis ID without affecting container pooling.
-    """
-    ### ------- Billing protocol_id tracking -------
-    if not args or len(args) == 0:
-        return
-
-    self_instance = args[0]
-    if not hasattr(self_instance, "billing_service"):
-        return
-
-    billing_service = getattr(self_instance, "billing_service", None)
-    if not billing_service:
-        return
-
-    # Try to get protocol_id from payload first (most common case)
-    protocol_id = None
-    if hasattr(payload, "protocol_id"):
-        protocol_id = getattr(payload, "protocol_id", None)
-    elif isinstance(payload, dict) and "protocol_id" in payload:
-        protocol_id = payload.get("protocol_id")
-
-    # Fallback to kwargs if not in payload
-    if not protocol_id and "protocol_id" in clean_kwargs:
-        protocol_id = clean_kwargs.get("protocol_id")
-
-    if protocol_id:
-        billing_service.set_protocol_id(str(protocol_id))
 
 
 async def _call_function_directly(
@@ -374,13 +320,19 @@ async def _run_main_decorator_flow_async(
         Any: A final response object, typically a dict or Pydantic model.
     """
 
-    bound_args, payload, clean_kwargs, skip_cache, raw_payload_dict = (
+    bound_args, payload, _clean_kwargs, skip_cache, raw_payload_dict = (
         _validate_and_bind_payload(
             signature, args, kwargs, request_model_type, debug_logger
         )
     )
 
-    _track_protocol_id(args, payload, clean_kwargs)
+    # Response caching is OFF unless explicitly enabled (BIOLM_CACHE_ENABLED).
+    # When disabled, every request is computed directly — no modal.Dict or R2 access.
+    if not cache_enabled():
+        skip_cache = True
+        debug_logger.debug(
+            "Caching disabled (BIOLM_CACHE_ENABLED unset); computing directly."
+        )
 
     # Determine if caching should be skipped
     if model_action in non_cacheable_actions:
