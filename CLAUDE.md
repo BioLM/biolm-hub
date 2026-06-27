@@ -12,22 +12,33 @@
 
 Everything below is porting-phase scaffolding, not permanent project documentation.
 
-## Read the plan first
-This repo is mid-port. Before doing anything, read **`.planning/00_MASTER_PLAN.md`**, then
-`.planning/01_INVESTIGATION_FINDINGS.md`, `.planning/02_MODEL_INCLUSION_MATRIX.md`,
-`.planning/03_WORKSTREAMS.md` (`.planning/README.md` is the index).
+## Read the plan first (and to RESUME mid-execution)
+This repo is **mid-execution**. On a fresh session, orient in this order: **(1)** the project memory
+`project_oss_biolm_catalog.md` (live status + all ratified decisions), **(2)** `git log --oneline`
+(what's committed), **(3)** `.planning/00_MASTER_PLAN.md` + `.planning/04_TESTING_STRATEGY.md` §0
+(the **Modal cost-discipline** validation model), **(4)** `.planning/03_WORKSTREAMS.md` +
+`.planning/02_MODEL_INCLUSION_MATRIX.md` for the next work. (`README.md` = index; `01` = evidence base.)
 
-**Status (2026-06-22):** Stage 0 — planning complete, awaiting user review/feedback. No code
-extracted yet.
+**Status (2026-06-27) — EXECUTION IN PROGRESS.** The commons + global-rules phase is **done &
+committed** (13 commits on `main` = the porting trunk): W1 bootstrap → W2 extraction (46 models, 14
+excluded) → W3a commons decouple + 46-model API migration → W-acq → W7 (canonical actions
+`predict/fold/encode/generate/log_prob/score` + `BioLMError→UserError/ServerError` taxonomy) → W6
+(structured logging, `print` banned via ruff T20) → W17 (pytest collection). **NEXT = W5 per-model
+hardening fan-out** (46 models, batches A–H in `02`; this is where the deferred schema-FIELD renames
+apply). **Validate Modal-free** (static + Opus review); batch live deploys into Milestone A
+(`peptides` smoke) / B (comprehensive) — see `04` §0. **Commit per major block.**
 
 ## Porting ground rules
-- The internal repo **`/Users/qamar/dev/biolm-modal` is READ-ONLY reference.** Extract FROM it INTO
-  here; never edit it. It's the source of truth — re-investigate it for any detail the plan omits.
-  Ignore its untracked root `.md` files / `ref/` (unrelated side-projects).
+- The internal repo **`/Users/qamar/dev/biolm-modal` is READ-ONLY reference** (reference branch =
+  `main`). Read `main` via the detached read-only worktree
+  `/Users/qamar/dev/biolm-modal-worktrees/oss-readonly-main` — do NOT switch the internal checkout (it
+  has unrelated uncommitted work). Extract FROM it INTO here; never edit it. Ignore its untracked root
+  `.md` files / `ref/`.
 - `.planning/` is a temporary internal dotfile dir — it is deleted (and git history nuked) before
   the repo goes public. Don't reference `.planning/` from any file meant to ship publicly.
-- Use isolated git worktrees for parallel work (master plan §7). Never fold `models/commons/` edits
-  into per-model work (commons is its own reviewed workstream, W3).
+- Use isolated git worktrees for parallel work (master plan §7). **Never edit `models/commons/` inside
+  a per-model batch** — surface requests to `.planning/COMMONS_REQUESTS.md` for the W3b reconciliation
+  pass (commons is its own reviewed workstream).
 
 ## Conventions that carry into the public repo (tooling lands in W1)
 - `make style` before every commit (once the Makefile / pre-commit hooks exist).
