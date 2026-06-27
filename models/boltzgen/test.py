@@ -192,8 +192,10 @@ test_suite = TestSuite(
     ],
 )
 
-generate_tests_from_suite(test_suite, test_type="integration")
-generate_tests_from_suite(test_suite, test_type="deployment")
+test_boltzgen_integration = generate_tests_from_suite(
+    test_suite, test_type="integration"
+)
+test_boltzgen_deployment = generate_tests_from_suite(test_suite, test_type="deployment")
 
 
 # ---------------------------------------------------------------------------
@@ -241,7 +243,7 @@ slow_test_suite = TestSuite(
     ],
 )
 
-generate_tests_from_suite(slow_test_suite, test_type="slow")
+test_boltzgen_slow = generate_tests_from_suite(slow_test_suite, test_type="slow")
 
 
 # ---------------------------------------------------------------------------

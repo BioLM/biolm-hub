@@ -395,10 +395,14 @@ deployment_test_suite = TestSuite(
 )
 
 # Generate integration tests (marked with @pytest.mark.integration)
-generate_tests_from_suite(integration_test_suite, test_type="integration")
+test_boltz_integration = generate_tests_from_suite(
+    integration_test_suite, test_type="integration"
+)
 
 # Generate deployment tests (marked with @pytest.mark.deployment)
-generate_tests_from_suite(deployment_test_suite, test_type="deployment")
+test_boltz_deployment = generate_tests_from_suite(
+    deployment_test_suite, test_type="deployment"
+)
 
 # USAGE INSTRUCTIONS:
 #

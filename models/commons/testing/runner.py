@@ -1,4 +1,3 @@
-import inspect
 import os
 import sys
 import time
@@ -344,6 +343,17 @@ def _collect_test_params(suite: TestSuite, test_type: str) -> list:
     return test_params
 
 
+def _apply_test_type_marker(test_fn, test_type: str):
+    """Apply the pytest marker that matches the test type (no-op if unknown)."""
+    if test_type == "integration":
+        return pytest.mark.integration(test_fn)
+    if test_type == "slow":
+        return pytest.mark.slow(test_fn)
+    if test_type == "deployment":
+        return pytest.mark.deployment(test_fn)
+    return test_fn
+
+
 def _create_test_template(suite: TestSuite, test_type: str):
     """Create the test template function with appropriate markers."""
 
@@ -355,28 +365,43 @@ def _create_test_template(suite: TestSuite, test_type: str):
         else:
             pytest.fail(f"Unknown test_type: {test_type}")
 
-    # Add appropriate pytest markers
-    if test_type == "integration":
-        test_template = pytest.mark.integration(test_template)
-    elif test_type == "slow":
-        test_template = pytest.mark.slow(test_template)
-    elif test_type == "deployment":
-        test_template = pytest.mark.deployment(test_template)
+    return _apply_test_type_marker(test_template, test_type)
 
-    return test_template
+
+def _create_empty_suite_test(test_type: str):
+    """Return a single test that skips when a suite collects no cases.
+
+    An empty ``pytest.mark.parametrize`` list silently yields zero tests, so a
+    misconfigured suite (Modal/R2 absent, missing fixtures) would look "green"
+    while running nothing. Returning one skipping test keeps collection
+    observable: ``--collect-only`` always reports >=1 item per generated test.
+    """
+
+    def test_template():
+        pytest.skip(
+            f"no {test_type} test cases collected — check Modal/R2 config / fixtures"
+        )
+
+    return _apply_test_type_marker(test_template, test_type)
 
 
 def generate_tests_from_suite(suite: TestSuite, test_type: str):
-    """Dynamically generates and parametrizes pytest tests from a TestSuite object."""
+    """Build and return a parametrized pytest test function for a ``TestSuite``.
+
+    Assign the result to a module-level ``test_*`` name so pytest collects it::
+
+        test_esm2_integration = generate_tests_from_suite(suite, test_type="integration")
+
+    Returning the function (instead of injecting it into the caller's module
+    globals) makes every ``models/<model>/test.py`` a first-class pytest
+    collectible: ``pytest --collect-only`` works without running anything, IDE
+    discovery and ``-k`` selection work, and an empty suite surfaces as a skip
+    rather than silently collecting zero tests.
+    """
     test_params = _collect_test_params(suite, test_type)
+
+    if not test_params:
+        return _create_empty_suite_test(test_type)
+
     test_template = _create_test_template(suite, test_type)
-
-    parametrized_test = pytest.mark.parametrize("variant, case", test_params)(
-        test_template
-    )
-
-    # Inject the generated test function into the calling test script's global namespace
-    frame = inspect.currentframe().f_back
-    frame.f_globals[f"test_{suite.model_family.base_model_slug}_{test_type}"] = (
-        parametrized_test
-    )
+    return pytest.mark.parametrize("variant, case", test_params)(test_template)

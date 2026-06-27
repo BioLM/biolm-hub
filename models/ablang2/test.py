@@ -69,10 +69,12 @@ test_suite = TestSuite(
 )
 
 # Generate integration tests (marked with @pytest.mark.integration)
-generate_tests_from_suite(test_suite, test_type="integration")
+test_ablang2_integration = generate_tests_from_suite(
+    test_suite, test_type="integration"
+)
 
 # Generate deployment tests (marked with @pytest.mark.deployment)
-generate_tests_from_suite(test_suite, test_type="deployment")
+test_ablang2_deployment = generate_tests_from_suite(test_suite, test_type="deployment")
 
 # Usage:
 #   pytest models/ablang2/test.py -m integration -n auto --no-cov -v -s  # integration only
