@@ -83,6 +83,7 @@ OMNI_DNA_VARIANT_RESOURCE_SPECS = {
 # - Actions: encode, log_prob
 MODEL_FAMILY = ModelFamily(
     base_model_slug=OmniDNAParams.base_model_slug,
+    modal_class_name="OmniDNAModel",
     display_name=OmniDNAParams.display_name,
     tags=ModelTags(
         input_modality=[InputModality.SEQUENCE],

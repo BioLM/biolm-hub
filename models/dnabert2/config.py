@@ -35,6 +35,7 @@ DNABERT2ResourceSpec = ModalResourceSpec(
 # - Actions: encode, log_prob
 MODEL_FAMILY = ModelFamily(
     base_model_slug=DNABERT2Params.base_model_slug,
+    modal_class_name="DNABERT2Model",
     display_name=DNABERT2Params.display_name,
     tags=ModelTags(
         input_modality=[InputModality.SEQUENCE],

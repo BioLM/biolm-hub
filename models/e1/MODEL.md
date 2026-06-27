@@ -183,13 +183,13 @@ Request
 
 ### Caching Behavior
 
-E1 uses `BillingMixin` (not `BillingMixinSnap`) since GPU memory snapshots are disabled. Standard Redis/R2 two-tier caching applies. Cache keys include context sequences when provided.
+Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container. Cache keys include context sequences when provided.
 
 ## Versions & Changelog
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v1 | 2025-12-04 | Initial implementation with encode, predict, and predict_log_prob actions |
+| v1 | 2025-12-04 | Initial implementation with encode, predict, and log_prob actions |
 | v1 (updated) | 2025-12-04 | Added context_sequences support (retrieval-augmented mode) |
 | v1 (updated) | 2025-12-11 | Disabled torch.compile/dynamo to fix flex_attention errors |
 | v1 (updated) | 2025-12-13 | Disabled GPU memory snapshots to fix SIGSEGV |

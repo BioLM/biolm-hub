@@ -18,7 +18,7 @@ strengths:
   - "Apache-2.0 license permits unrestricted commercial and academic use without licensing concerns"
   - "Most recent DNA foundation model (2025) on the platform, incorporating latest training methodology and architectural design choices"
   - "Designed for cross-modal and multi-task learning, positioning it as a versatile backbone for diverse downstream genomic analyses"
-  - "Dual-action API (encode + predict_log_prob) covers both embedding extraction and sequence scoring"
+  - "Dual-action API (encode + log_prob) covers both embedding extraction and sequence scoring"
 
 weaknesses:
   - "Very recently published (2025) with no independent benchmark validation yet — performance claims rely solely on the original paper"

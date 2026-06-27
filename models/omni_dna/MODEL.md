@@ -67,7 +67,7 @@ Note: Due to BPE tokenization, the number of nucleotides per token varies. A 2,0
 | Action | Test Input | Tolerance | Status |
 |--------|-----------|-----------|--------|
 | `encode` | DNA sequence, mean pooling | rel_tol=1e-4 | PASS |
-| `predict_log_prob` | DNA sequence | rel_tol=1e-4 | PASS |
+| `log_prob` | DNA sequence | rel_tol=1e-4 | PASS |
 
 Tests cover the 1B variant only.
 
@@ -82,7 +82,7 @@ Tests cover the 1B variant only.
 
 ### Error Bars & Confidence
 
-- `encode` and `predict_log_prob` are deterministic (seeds set to 42)
+- `encode` and `log_prob` are deterministic (seeds set to 42)
 - Small floating-point differences may occur across GPU architectures
 
 ## Strengths & Limitations
@@ -98,7 +98,7 @@ Tests cover the 1B variant only.
 ### Cons
 
 - BPE tokenization means sequence length in tokens does not directly map to nucleotide count
-- No generation endpoint (encode and predict_log_prob only)
+- No generation endpoint (encode and log_prob only)
 - Less validated than Evo or Nucleotide Transformer families
 - Only the 1B variant is currently deployed
 
@@ -124,7 +124,7 @@ Request
   |     |-- Compute mean or last pooling over non-padded tokens
   |     |-- Return embeddings
   |
-  |-- [predict_log_prob]
+  |-- [log_prob]
         |-- Tokenize without special tokens
         |-- Forward pass
         |-- log_softmax over vocabulary dimension
@@ -152,7 +152,7 @@ Results are reproducible on the same GPU architecture. GPU memory snapshot is en
 
 ### Caching Behavior
 
-- Standard BioLM Redis + R2 two-tier caching via `BillingMixinSnap`
+Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
 - GPU memory snapshots enabled (`enable_memory_snapshot=True`, `enable_gpu_snapshot=True`)
 - Cache key derived from action name, input payload, and model variant
 
@@ -160,7 +160,7 @@ Results are reproducible on the same GPU architecture. GPU memory snapshot is en
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v1 | -- | Initial implementation with encode and predict_log_prob actions; 1B variant |
+| v1 | -- | Initial implementation with encode and log_prob actions; 1B variant |
 
 ---
 

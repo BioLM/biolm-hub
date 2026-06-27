@@ -60,7 +60,7 @@ Currently, only the **Evo 1.5 8k Base** variant is enabled. Evo 1.5 was trained 
 
 ## Actions / Endpoints
 
-### `predict_log_prob`
+### `log_prob`
 
 Computes the total log-probability of each DNA sequence under Evo's autoregressive distribution. Uses `evo.scoring.score_sequences()` with sum reduction over positions.
 
@@ -209,7 +209,7 @@ Numerical reproduction (Option A): Integration tests compare model outputs again
 
 | Action | Input | Tolerance | Status |
 |--------|-------|-----------|--------|
-| `predict_log_prob` | "ACGTAC", "ACGTACGTAC" | rel_tol=1e-4 | PASS |
+| `log_prob` | "ACGTAC", "ACGTACGTAC" | rel_tol=1e-4 | PASS |
 | `generate` | Prompt "ACGT", 100 tokens | Generated sequence is valid DNA | PASS |
 
 ### Verification Status
@@ -230,10 +230,10 @@ Numerical reproduction (Option A): Integration tests compare model outputs again
 ## Implementation Notes
 
 - **Memory snapshots**: Uses `@modal.enter(snap=True)` with GPU snapshot enabled (`enable_memory_snapshot=True`, `enable_gpu_snapshot=True`). The model loads directly on GPU during snapshot creation.
-- **BillingMixinSnap**: Inherits from `BillingMixinSnap` for snapshot-compatible billing and caching.
-- **No `@modal.enter(snap=False)`**: Unlike some models that move weights from CPU to GPU in a second enter phase, Evo loads directly on GPU since it uses the `BillingMixin` direct-loading pattern.
+- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
+- **No `@modal.enter(snap=False)`**: Unlike some models that move weights from CPU to GPU in a second enter phase, Evo loads directly on GPU during snapshot creation.
 - **Container image**: Built from `pytorch/pytorch:2.2.0-cuda11.8-cudnn8-devel` with flash-attn compiled using `--no-build-isolation` (requires pre-installed torch).
-- **Determinism**: `predict_log_prob` is fully deterministic. `generate` is deterministic when a seed is provided; stochastic otherwise (time-based seed).
+- **Determinism**: `log_prob` is fully deterministic. `generate` is deterministic when a seed is provided; stochastic otherwise (time-based seed).
 - **Download layer**: Model weights are downloaded via the unified `setup_download_layer` system with R2 caching and HuggingFace fallback.
 
 ## License

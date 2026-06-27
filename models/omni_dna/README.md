@@ -85,7 +85,7 @@ Returns embeddings for each DNA sequence. Embeddings are extracted from the fina
 
 Fields are omitted when not included in the `include` parameter.
 
-### `predict_log_prob`
+### `log_prob`
 
 Computes the total log-probability of each DNA sequence under the auto-regressive model. The model processes the batch in one forward pass, applies log-softmax over the entire vocabulary, and sums the log probabilities corresponding to the actual tokens (ignoring padded positions).
 
@@ -163,7 +163,7 @@ Numerical reproduction: integration tests compare model outputs against golden f
 | Action | Input | Tolerance | Status |
 |--------|-------|-----------|--------|
 | `encode` | DNA sequence, mean pooling | rel_tol=1e-4 | PASS |
-| `predict_log_prob` | DNA sequence | rel_tol=1e-4 | PASS |
+| `log_prob` | DNA sequence | rel_tol=1e-4 | PASS |
 
 ### Verification Status
 
@@ -184,7 +184,7 @@ Numerical reproduction: integration tests compare model outputs against golden f
 ## Implementation Notes
 
 - **Memory snapshots**: Uses `@modal.enter(snap=True)` to load model directly on GPU for GPU memory snapshot.
-- **BillingMixinSnap**: Inherits from `BillingMixinSnap` for snapshot-compatible billing.
+- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
 - **GPU snapshots**: Enabled via `experimental_options={"enable_gpu_snapshot": True}`.
 - **Container image**: Built from `pytorch/pytorch:2.3.1-cuda11.8-cudnn8-runtime`.
 - **Weight loading**: Model weights loaded from `.safetensors` file via HuggingFace `AutoModelForCausalLM`.

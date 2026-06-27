@@ -6,7 +6,7 @@
 
 E1 is a protein language model developed by Profluent Bio and Synthyra. It extends the masked language modeling paradigm with retrieval-augmented inference: users can provide homologous sequences as context, and the model uses block-causal attention to condition predictions on evolutionary information without requiring explicit MSA computation.
 
-E1 is available in three size variants (150M, 300M, 600M parameters) and supports three actions: embedding extraction (`encode`), masked token prediction (`predict`), and sequence log-probability scoring (`predict_log_prob`). All actions support optional context sequences for improved accuracy.
+E1 is available in three size variants (150M, 300M, 600M parameters) and supports three actions: embedding extraction (`encode`), masked token prediction (`predict`), and sequence log-probability scoring (`log_prob`). All actions support optional context sequences for improved accuracy.
 
 ## Architecture
 
@@ -107,7 +107,7 @@ Performs masked token prediction. Sequences must contain one or more `?` mask to
 
 `logits` shape is `[L, 20]` restricted to the 20 canonical amino acids.
 
-### `predict_log_prob`
+### `log_prob`
 
 Computes the total log-probability of an unmasked sequence, optionally conditioned on context sequences.
 
@@ -199,8 +199,8 @@ Golden output comparison: Test fixtures compare outputs against reference values
 | Multi-sequence encode | `encode` | Multiple proteins | Cosine similarity to golden output |
 | Context-augmented encode | `encode` | Query + 2 context sequences | Cosine similarity to golden output |
 | Masked prediction | `predict` | Sequence with `?` tokens | Logit comparison to golden output |
-| Log probability (single) | `predict_log_prob` | Unmasked sequence | Negative finite float |
-| Log probability (context) | `predict_log_prob` | Sequence + 2 context | Negative finite float |
+| Log probability (single) | `log_prob` | Unmasked sequence | Negative finite float |
+| Log probability (context) | `log_prob` | Sequence + 2 context | Negative finite float |
 
 ### Verification Status
 
@@ -216,12 +216,12 @@ Golden output comparison: Test fixtures compare outputs against reference values
 
 ## Implementation Notes
 
-- **No GPU memory snapshots**: Disabled due to SIGSEGV on restore. Uses `BillingMixin` (not `BillingMixinSnap`).
+- **No GPU memory snapshots**: Disabled due to SIGSEGV on restore.
 - **torch.compile disabled**: `torch._dynamo.config.disable = True` to avoid flex_attention compilation errors.
 - **Dtype selection**: E1-150M uses float16 (T4 native); E1-300M/600M use bfloat16 (L4 Ada Lovelace native).
 - **config.json patching**: auto_map is injected at runtime for trust_remote_code support.
 - **Logit slicing**: Only 20 canonical amino acid logits are returned; non-canonical tokens are excluded.
-- **Caching**: Standard Redis/R2 two-tier caching via `BillingMixin`.
+- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
 
 ## License
 

@@ -67,6 +67,7 @@ EVO_VARIANT_TO_MODEL_NAME = {
 # - Actions: log_prob, generate
 MODEL_FAMILY = ModelFamily(
     base_model_slug=EvoParams.base_model_slug,
+    modal_class_name="EvoModel",
     display_name=EvoParams.display_name,
     tags=ModelTags(
         input_modality=[InputModality.SEQUENCE],

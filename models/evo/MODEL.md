@@ -107,7 +107,7 @@ Generated sequences were evaluated for:
 
 | Action | Test Input | Tolerance | Status |
 |--------|-----------|-----------|--------|
-| `predict_log_prob` | "ACGTAC", "ACGTACGTAC" | rel_tol=1e-4 | Verified via fixture tests |
+| `log_prob` | "ACGTAC", "ACGTACGTAC" | rel_tol=1e-4 | Verified via fixture tests |
 | `generate` | Prompt "ACGT", 100 tokens | Generated sequence check | Verified via fixture tests |
 
 ### Comparison to Alternatives
@@ -150,7 +150,7 @@ Request
   |-- 1. Validate input (DNA bases only, length <= 4096)
   |-- 2. Route to action:
   |
-  |-- [predict_log_prob]
+  |-- [log_prob]
   |     |-- Tokenize sequences (CharLevelTokenizer)
   |     |-- Forward pass through StripedHyena model
   |     |-- Gather per-position log-probabilities
@@ -177,7 +177,7 @@ Request
 
 ### Determinism & Reproducibility
 
-**`predict_log_prob`**: Deterministic. The forward pass is a pure function of the input with no random components.
+**`log_prob`**: Deterministic. The forward pass is a pure function of the input with no random components.
 
 **`generate`**: Stochastic by default, but reproducible with explicit seed control.
 
@@ -194,7 +194,7 @@ When a seed is provided, the implementation sets:
 
 ### Caching Behavior
 
-- Standard BioLM Redis + R2 two-tier caching via `BillingMixinSnap`
+Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
 - Cache key is derived from the full request payload (including parameters)
 - For `generate` with no seed (stochastic), cache misses are expected on repeated calls since the time-based seed differs
 
@@ -202,7 +202,7 @@ When a seed is provided, the implementation sets:
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v1 (params_version) | 2025-02 | Initial implementation with `predict_log_prob` and `generate` actions; Evo 1.5-8k-base variant |
+| v1 (params_version) | 2025-02 | Initial implementation with `log_prob` and `generate` actions; Evo 1.5-8k-base variant |
 
 ---
 

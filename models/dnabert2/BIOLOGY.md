@@ -31,7 +31,7 @@ The effective context window of approximately 4--8 kbp (depending on BPE compres
 
 **Why it matters**: Understanding how single-nucleotide variants (SNVs) and short insertions/deletions affect gene function is central to human genetics and clinical genomics. Genome-wide association studies (GWAS) identify statistical associations between variants and traits, but determining which variants are causal and how they affect molecular function remains a major bottleneck. Experimental characterization through massively parallel reporter assays (MPRAs) or saturation mutagenesis is costly and limited in throughput.
 
-**How DNABERT-2 addresses it**: The `predict_log_prob` action computes a pseudo-log-likelihood score for any DNA sequence. By comparing scores between reference and variant alleles, users can estimate the functional impact of mutations:
+**How DNABERT-2 addresses it**: The `log_prob` action computes a pseudo-log-likelihood score for any DNA sequence. By comparing scores between reference and variant alleles, users can estimate the functional impact of mutations:
 
 ```
 delta_score = log_prob(variant_sequence) - log_prob(reference_sequence)

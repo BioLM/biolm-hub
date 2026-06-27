@@ -36,7 +36,7 @@ The model is applicable to:
 
 **Why this matters**: Evaluating whether a DNA sequence is consistent with natural genomic patterns is important for variant interpretation, synthetic biology, and gene annotation.
 
-**How Omni-DNA addresses it**: The `predict_log_prob` action computes the total autoregressive log-probability of each sequence. The model processes sequences through its causal language model, computes log-softmax over the BPE vocabulary, and sums the log-probabilities of the actual tokens at each position.
+**How Omni-DNA addresses it**: The `log_prob` action computes the total autoregressive log-probability of each sequence. The model processes sequences through its causal language model, computes log-softmax over the BPE vocabulary, and sums the log-probabilities of the actual tokens at each position.
 
 **Interpreting scores**:
 - More negative values indicate sequences less consistent with the training distribution

@@ -70,7 +70,7 @@ Evaluating whether a DNA sequence is "natural-like" or functionally constrained 
 - Experimental fitness assays (e.g., deep mutational scanning) are accurate but expensive and limited to specific genes.
 
 **How Evo addresses it:**
-The `predict_log_prob` action computes the total log-probability of a DNA sequence under Evo's autoregressive distribution. This score reflects how well the sequence fits the model's learned representation of natural genomic sequences. Higher log-probabilities indicate sequences that are more consistent with the patterns in the training data, which correlates with:
+The `log_prob` action computes the total log-probability of a DNA sequence under Evo's autoregressive distribution. This score reflects how well the sequence fits the model's learned representation of natural genomic sequences. Higher log-probabilities indicate sequences that are more consistent with the patterns in the training data, which correlates with:
 - Evolutionary conservation
 - Functional constraint
 - Biological plausibility

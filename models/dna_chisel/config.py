@@ -28,6 +28,7 @@ DnaChiselResourceSpec = ModalResourceSpec(
 # - Actions: encode
 MODEL_FAMILY = ModelFamily(
     base_model_slug=DnaChiselParams.base_model_slug,
+    modal_class_name="DnaChiselModel",
     display_name=DnaChiselParams.display_name,
     tags=ModelTags(
         input_modality=[InputModality.SEQUENCE],

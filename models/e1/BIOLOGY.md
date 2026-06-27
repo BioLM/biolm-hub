@@ -41,7 +41,7 @@ Performance characteristics by protein type:
 
 **Problem**: Predicting whether a mutation improves or degrades protein function is critical for protein engineering and disease variant interpretation. Experimental testing is expensive.
 
-**How E1 helps**: The `predict_log_prob` action computes the total log probability of a sequence. By comparing log P(wild-type) vs log P(mutant), researchers can estimate mutation effects. When context sequences are provided, the model conditions on evolutionary information, typically improving fitness predictions.
+**How E1 helps**: The `log_prob` action computes the total log probability of a sequence. By comparing log P(wild-type) vs log P(mutant), researchers can estimate mutation effects. When context sequences are provided, the model conditions on evolutionary information, typically improving fitness predictions.
 
 **Biological meaning**: A large drop in log probability (mutant much less likely than wild-type) suggests the mutation disrupts an evolutionarily conserved position and is likely deleterious. Context sequences sharpen this signal by providing explicit examples of what evolution "expects" at each position.
 
@@ -65,7 +65,7 @@ Performance characteristics by protein type:
 
 E1 is a recent model (2024). Anticipated use cases include:
 
-- **Variant effect prediction**: Scoring mutations using predict_log_prob with context sequences for improved accuracy
+- **Variant effect prediction**: Scoring mutations using log_prob with context sequences for improved accuracy
 - **Sequence design**: Using masked prediction to explore compatible amino acids at design positions
 - **Protein family analysis**: Encoding protein families with shared context for consistent embeddings
 - **Antibody humanization**: Using germline sequences as context when predicting at CDR positions

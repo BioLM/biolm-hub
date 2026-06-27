@@ -46,7 +46,7 @@ Single variant -- no size options. The model slug is `dnabert2`.
 
 **Other considerations:**
 - BPE tokens have variable nucleotide lengths, so the effective genomic span covered by 2,048 tokens depends on sequence composition (typically 4--8 kbp)
-- The `predict_log_prob` action requires N forward passes (one per non-special token) and is significantly slower than `encode`
+- The `log_prob` action requires N forward passes (one per non-special token) and is significantly slower than `encode`
 - Uses GPU memory snapshots for reduced cold start times
 
 ## Actions / Endpoints
@@ -83,7 +83,7 @@ Computes a single mean-pooled embedding vector (768 dimensions) for each input D
 
 **Response schema**: `DNABERT2EncodeResponse` containing a list of `DNABERT2EncodeResponseResult`.
 
-### `predict_log_prob`
+### `log_prob`
 
 Computes a pseudo-likelihood log-probability for each input DNA sequence. For each non-special token in the sequence, the token is masked and the model predicts the probability of the original token. The log-probabilities are summed to produce a single score per sequence.
 
@@ -185,7 +185,7 @@ Numerical reproduction (Option A): Integration tests compare model outputs again
 | Action | Input | Tolerance | Status |
 |--------|-------|-----------|--------|
 | `encode` | "ACGTACGT" | rel_tol=1e-4 (golden fixture) | PASS |
-| `predict_log_prob` | "ACGT", "ACGTACGT" | rel_tol=1e-4 (golden fixture) | PASS |
+| `log_prob` | "ACGT", "ACGTACGT" | rel_tol=1e-4 (golden fixture) | PASS |
 
 ### Verification Status
 
@@ -205,7 +205,7 @@ Numerical reproduction (Option A): Integration tests compare model outputs again
 ## Implementation Notes
 
 - **Memory snapshots**: Uses `@modal.enter(snap=True)` with GPU snapshot enabled (`enable_memory_snapshot=True`, `enable_gpu_snapshot=True`). The model loads directly on GPU during snapshot creation.
-- **BillingMixinSnap**: Inherits from `BillingMixinSnap` for snapshot-compatible billing and caching.
+- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
 - **Tokenizer**: BPE tokenizer loaded from HuggingFace with `trust_remote_code=True`. Configured with padding and truncation up to `max_sequence_len=2048`.
 - **Container image**: Built from `pytorch/pytorch:2.3.1-cuda11.8-cudnn8-runtime`. The `triton` package is uninstalled to avoid conflicts.
 - **Determinism**: `torch.manual_seed(42)` and `torch.cuda.manual_seed_all(42)` set at model load time. Model runs in `eval()` mode with `torch.no_grad()`.

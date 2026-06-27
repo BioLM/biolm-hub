@@ -6,7 +6,7 @@ strengths:
   - "Retrieval-augmented protein representations: accepts up to 50 context sequences (homologs) alongside the query, capturing MSA-like evolutionary information via block-causal attention without requiring formal sequence alignment"
   - "Three size variants (150M, 300M, 600M) spanning T4 to L4 GPUs, providing fine-grained cost-performance tradeoff for different deployment scales and budget constraints"
   - "Block-causal attention architecture allows the query to attend to all context sequences while context sequences only attend to themselves -- efficiently simulating MSA column reading without O(N^2) alignment cost"
-  - "Three complementary actions: encode (embeddings), predict (masked residue prediction), and predict_log_prob (sequence scoring) -- covering embedding, design, and fitness prediction use cases in a single model"
+  - "Three complementary actions: encode (embeddings), predict (masked residue prediction), and log_prob (sequence scoring) -- covering embedding, design, and fitness prediction use cases in a single model"
   - "Zero-shot fitness prediction with context sequences improves variant effect scoring over single-sequence models, as the context provides explicit evolutionary conservation signals"
   - "Apache-2.0 license with no usage restrictions -- suitable for commercial integration and clinical variant interpretation pipelines"
   - "Extended amino acid alphabet support (20 standard + B, X, Z, U, O) handles ambiguous and non-standard residues commonly found in database entries without preprocessing"
@@ -24,7 +24,7 @@ weaknesses:
 
 use_when:
   - "You have homologous sequences available and want to improve embedding quality, fitness predictions, or masked predictions beyond what single-sequence models (ESM2) can achieve"
-  - "You need zero-shot variant effect scoring with evolutionary context -- provide the query protein and its homologs to predict_log_prob for improved mutation impact assessment"
+  - "You need zero-shot variant effect scoring with evolutionary context -- provide the query protein and its homologs to log_prob for improved mutation impact assessment"
   - "You are building downstream ML models (function prediction, localization, stability estimation) and want context-enriched embeddings as features"
   - "You need masked residue prediction at specific positions (active sites, binding interfaces) and have related sequences that provide evolutionary constraints"
   - "You want to analyze protein families by encoding all members with shared context sequences for consistent, evolutionarily informed representations"
@@ -55,7 +55,7 @@ alternatives:
 
 complements:
   - model: esmfold
-    workflow: "Use E1 predict_log_prob with context sequences to score variant effects and identify promising mutations, then use ESMFold for rapid structural assessment of top-ranked variants to verify they maintain the native fold"
+    workflow: "Use E1 log_prob with context sequences to score variant effects and identify promising mutations, then use ESMFold for rapid structural assessment of top-ranked variants to verify they maintain the native fold"
     example_protocol: null
   - model: boltz
     workflow: "Use E1 encode to generate context-enriched embeddings for sequence-level screening and clustering, then run Boltz on selected candidates for detailed 3D complex structure prediction and affinity estimation"

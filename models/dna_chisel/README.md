@@ -191,10 +191,9 @@ Deterministic output comparison: test fixtures compare computed features against
 ## Implementation Notes
 
 - **Memory snapshots**: Uses `@modal.enter(snap=True)` to pre-load library modules (dnachisel, primer3, scipy, Biopython Restriction) for faster cold starts.
-- **BillingMixin**: Inherits from `BillingMixin` (not `BillingMixinSnap`) since no GPU is used.
+- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
 - **Species validation**: The `SupportedSpecies` enum restricts codon table lookups to 6 validated species.
 - **Restriction enzyme validation**: Enzyme names are validated against Biopython's full enzyme database at request time.
-- **Caching**: Standard Redis/R2 two-tier caching via `BillingMixin`.
 
 ## License
 

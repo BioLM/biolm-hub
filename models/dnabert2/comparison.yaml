@@ -17,7 +17,7 @@ strengths:
   - "Strong multi-species generalization demonstrated on the GUE benchmark (36 datasets across 9 task categories), outperforming larger models on many regulatory element classification tasks"
   - "Apache-2.0 license permits unrestricted commercial and academic use, unlike NT's CC-BY-NC-SA-4.0 non-commercial license"
   - "Zero-shot variant effect prediction via pseudo-log-likelihood scoring requires no task-specific fine-tuning and benefits from BPE's ability to detect disruptions at multiple sequence scales"
-  - "Dual-action API (encode + predict_log_prob) covers both embedding extraction and sequence fitness scoring in a single model deployment"
+  - "Dual-action API (encode + log_prob) covers both embedding extraction and sequence fitness scoring in a single model deployment"
   - "BPE vocabulary learned from genomic data may capture biologically meaningful subword units (codons, common regulatory motifs) as individual tokens, providing interpretable tokenization"
   - "Well-validated in independent benchmarks (Nature Communications 2025, Frontiers in Genetics 2025) alongside NT, HyenaDNA, Caduceus, and GROVER"
 

@@ -99,7 +99,7 @@ Key findings from the paper:
 | Action | Test Input | Tolerance | Status |
 |--------|-----------|-----------|--------|
 | `encode` | "ACGTACGT" | rel_tol=1e-4 (golden fixture) | PASS |
-| `predict_log_prob` | "ACGT", "ACGTACGT" | rel_tol=1e-4 (golden fixture) | PASS |
+| `log_prob` | "ACGT", "ACGTACGT" | rel_tol=1e-4 (golden fixture) | PASS |
 
 ### Comparison to Alternatives
 
@@ -149,7 +149,7 @@ Request
   +-- 5. Return per-sequence embedding vectors (768-dimensional)
 ```
 
-#### predict_log_prob
+#### log_prob
 
 ```
 Request (processed per-sequence)
@@ -174,7 +174,7 @@ Request (processed per-sequence)
 
 Attention complexity is O(n^2) in token length. The 2,048 token limit keeps memory usage well within T4 capacity even at full batch size.
 
-The `predict_log_prob` action is significantly more expensive than `encode` because it requires N forward passes (one per non-special token in the sequence).
+The `log_prob` action is significantly more expensive than `encode` because it requires N forward passes (one per non-special token in the sequence).
 
 ### Determinism & Reproducibility
 
@@ -188,7 +188,7 @@ Seeds are set during model loading. Inference uses `torch.no_grad()` and the mod
 
 ### Caching Behavior
 
-- **Redis caching**: Enabled via `BillingMixinSnap` (Modal Dict + R2 two-tier caching).
+Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
 - **Memory snapshots**: GPU memory snapshots are enabled (`enable_memory_snapshot=True`, `enable_gpu_snapshot=True`) for faster cold starts.
 - **Cache key**: Determined by action name, input payload, and model variant.
 
@@ -196,7 +196,7 @@ Seeds are set during model loading. Inference uses `torch.no_grad()` and the mod
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v1 (params_version) | 2025 | Initial BioLM deployment with encode and predict_log_prob actions |
+| v1 (params_version) | 2025 | Initial BioLM deployment with encode and log_prob actions |
 
 ---
 

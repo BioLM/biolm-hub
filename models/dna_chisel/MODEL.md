@@ -132,7 +132,7 @@ All features are computed using exact arithmetic or well-defined numerical algor
 
 ### Caching Behavior
 
-- Standard BioLM Redis + R2 two-tier caching via `BillingMixin`
+Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
 - Cache key derived from input sequence and parameters (include list, species, restriction enzymes)
 - Cache hits are always valid since outputs are deterministic
 
