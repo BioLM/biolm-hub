@@ -1,9 +1,8 @@
-import logging
-
 import modal
 import numpy as np
 
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.modal.source import setup_source_layer
 from models.commons.model.base import ModelMixin
 from models.commons.model.config import biolm_model_class
@@ -21,7 +20,7 @@ from models.prody.schema import (
 )
 from models.prody.utils import compute_rmsd, process_structure_for_insty
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Define the Docker image with necessary dependencies
 image = (

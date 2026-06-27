@@ -56,6 +56,7 @@ PEPTIDES_VECTOR_FEATURES = [
 # - Actions: encode
 MODEL_FAMILY = ModelFamily(
     base_model_slug=PeptidesParams.base_model_slug,
+    modal_class_name="PeptidesModel",
     display_name=PeptidesParams.display_name,
     tags=ModelTags(
         input_modality=[InputModality.SEQUENCE],

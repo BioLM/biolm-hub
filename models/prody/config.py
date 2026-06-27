@@ -30,6 +30,7 @@ ProDyResourceSpec = ModalResourceSpec(
 # - Actions: encode (InSty interactions), predict (RMSD)
 MODEL_FAMILY = ModelFamily(
     base_model_slug=ProDyParams.base_model_slug,
+    modal_class_name="ProDyModel",
     display_name=ProDyParams.display_name,
     tags=ModelTags(
         input_modality=[InputModality.STRUCTURE],

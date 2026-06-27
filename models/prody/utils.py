@@ -1,6 +1,5 @@
 """ProDy utility functions for structure processing and interaction analysis."""
 
-import logging
 import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -15,6 +14,8 @@ if TYPE_CHECKING:
         ProDyPredictRequestParams,
     )
 
+from models.commons.core.error import ValidationError400
+from models.commons.core.logging import get_logger
 from models.prody.schema import (
     AlignmentMethod,
     ChainInteractionSummary,
@@ -26,7 +27,7 @@ from models.prody.schema import (
     ProDyPredictResponseResult,
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def get_structure_string_and_format(item) -> tuple[str, str]:
@@ -36,7 +37,7 @@ def get_structure_string_and_format(item) -> tuple[str, str]:
     elif item.cif is not None:
         return item.cif, "CIF"
     else:
-        raise ValueError("Either pdb or cif must be provided")
+        raise ValidationError400("Either pdb or cif must be provided")
 
 
 def convert_cif_to_pdb(cif_path: str | Path) -> str:
@@ -542,7 +543,7 @@ def process_structure_for_insty(  # noqa: C901
             chains_to_analyze = available_chains
 
         if not chains_to_analyze:
-            raise ValueError(
+            raise ValidationError400(
                 f"No valid chains found. Requested: {item.chain_ids}, Available: {available_chains}"
             )
 
@@ -556,7 +557,7 @@ def process_structure_for_insty(  # noqa: C901
         # Validate structure
         is_valid, error_msg = validate_structure_for_prody(structure, protein_atoms)
         if not is_valid:
-            raise ValueError(f"Structure validation failed: {error_msg}")
+            raise ValidationError400(f"Structure validation failed: {error_msg}")
 
         # Add hydrogens if requested
         if params.add_hydrogens and not hydrogens_added:
@@ -916,7 +917,7 @@ def compute_rmsd(  # noqa: C901
             if chain_sel is None or chain_sel.numAtoms() == 0:
                 chain_sel = structure_a.select(f"chain {chain_id}")
                 if chain_sel is None or chain_sel.numAtoms() == 0:
-                    raise ValueError(
+                    raise ValidationError400(
                         f"Chain {chain_id} not found or empty in structure A"
                     )
             chain_selections_a.append(chain_sel)
@@ -934,7 +935,7 @@ def compute_rmsd(  # noqa: C901
             if chain_sel is None or chain_sel.numAtoms() == 0:
                 chain_sel = structure_b.select(f"chain {chain_id}")
                 if chain_sel is None or chain_sel.numAtoms() == 0:
-                    raise ValueError(
+                    raise ValidationError400(
                         f"Chain {chain_id} not found or empty in structure B"
                     )
             chain_selections_b.append(chain_sel)
@@ -950,12 +951,12 @@ def compute_rmsd(  # noqa: C901
         ca_b = chain_b_sel.select("calpha")
 
         if ca_a is None or ca_a.numAtoms() == 0:
-            raise ValueError(
+            raise ValidationError400(
                 f"No CA atoms found in structure_a chains {chains_a}. "
                 "Make sure the chains contain protein residues."
             )
         if ca_b is None or ca_b.numAtoms() == 0:
-            raise ValueError(
+            raise ValidationError400(
                 f"No CA atoms found in structure_b chains {chains_b}. "
                 "Make sure the chains contain protein residues."
             )
@@ -976,7 +977,7 @@ def compute_rmsd(  # noqa: C901
                 matches = matchChains(ca_a, ca_b, pwalign=False)
 
             if not matches or len(matches) == 0:
-                raise ValueError("No matching chains found between structures")
+                raise ValidationError400("No matching chains found between structures")
 
             match = matches[0]
             atommap_ref = match[0]

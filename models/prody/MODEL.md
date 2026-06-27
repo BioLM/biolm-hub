@@ -149,7 +149,7 @@ Request
 
 ### Caching Behavior
 
-ProDy uses `BillingMixin` (not `BillingMixinSnap`) since memory snapshots are disabled to ensure fresh code execution on each container start. Standard Redis/R2 two-tier caching applies.
+Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container. Memory snapshots are disabled (`enable_memory_snapshot=False`) to ensure fresh code execution on each container start.
 
 ## Versions & Changelog
 

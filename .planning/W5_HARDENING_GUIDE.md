@@ -203,5 +203,5 @@ After a batch is committed, tick its models in the `02` per-model checklist and 
 | D | abodybuilder3, immunebuilder, immunefold, propermab | pending |
 | E | boltz, chai1, rf3, rfd3, boltzgen | pending |
 | F | thermompnn, thermompnn_d, deepviscosity, temberture, tempro, spurs | pending |
-| G | progen2, zymctrl, dsm, evo2, prostt5, pro1 | pending |
-| H | peptides, biotite, prody, clean | pending |
+| G | progen2, zymctrl, dsm, evo2, prostt5, pro1 | DONE (commit 4fae668) |
+| H | peptides, biotite, prody, clean | DONE |

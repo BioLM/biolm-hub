@@ -29,6 +29,7 @@ CLEANResourceSpec = ModalResourceSpec(
 # - Actions: predict, encode
 MODEL_FAMILY = ModelFamily(
     base_model_slug=CLEANParams.base_model_slug,
+    modal_class_name="CLEANModel",
     display_name=CLEANParams.display_name,
     tags=ModelTags(
         input_modality=[InputModality.SEQUENCE],

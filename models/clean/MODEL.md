@@ -205,10 +205,11 @@ The model is fully deterministic given identical inputs and hardware. All stocha
 
 ### Caching Behavior
 
-- **Redis (Modal Dict) caching**: Enabled via BillingMixinSnap integration
+Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
+
 - **R2 caching**: Model weights and cluster centers cached to R2 for fast container builds
 - **Cache key composition**: Determined by input sequences and action type
-- **Cache invalidation**: Standard TTL-based invalidation via the billing mixin
+- **Cache invalidation**: Standard TTL-based invalidation at the platform layer
 
 ## Training Procedures
 

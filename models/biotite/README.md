@@ -53,6 +53,12 @@ Biotite is a single-variant model with no size options.
 
 ## Actions / Endpoints
 
+> **Note on action verb naming**: Biotite uses the BioLM platform action verbs `generate` and
+> `predict` by convention, but both are **utility operations**, not machine-learning generation
+> or property prediction. `generate` here means "extract / produce structured data from a PDB"
+> (chain extraction), and `predict` here means "compute a structural metric" (RMSD). This
+> naming follows the platform contract; the docs below clarify what each action actually does.
+
 ### `generate` (Extract Chains)
 
 Extracts specified chains from PDB structures, returning amino acid sequences and PDB coordinate strings for each chain.
@@ -185,12 +191,12 @@ Deterministic output comparison: test fixtures verify chain extraction and RMSD 
 ## Implementation Notes
 
 - **Memory snapshots**: Uses `@modal.enter(snap=True)` to pre-import biotite modules for faster cold starts.
-- **BillingMixinSnap**: Inherits from `BillingMixinSnap` for consistent billing behavior.
+- **Base class**: Inherits from `ModelMixinSnap` (health/snapshot hooks; no billing logic in the model container).
 - **PDB parsing**: Uses `biotite.structure.io.pdb.PDBFile` for reading and writing PDB files.
 - **Superimposition**: Uses `biotite.structure.superimpose()` which implements the Kabsch algorithm for optimal rigid-body alignment.
 - **RMSD calculation**: Uses `biotite.structure.rmsd()` on C-alpha atoms after superimposition.
 - **Sequence extraction**: Converts 3-letter amino acid codes to 1-letter codes using a fixed mapping (25 residue types including non-standard). Unknown residues map to "X".
-- **Caching**: Standard Redis/R2 two-tier caching via `BillingMixinSnap`.
+- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
 
 ## License
 

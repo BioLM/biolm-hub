@@ -1,5 +1,3 @@
-import logging
-
 import modal
 import numpy as np
 
@@ -14,6 +12,8 @@ from models.biotite.schema import (
     BiotiteRMSDResponseResult,
 )
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.error import ModelExecutionError, ValidationError400
+from models.commons.core.logging import get_logger
 from models.commons.modal.source import setup_source_layer
 from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
@@ -22,7 +22,7 @@ from models.commons.util.config import (
     common_requirements,
 )
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Define the Docker image with necessary dependencies
 image = (
@@ -97,7 +97,9 @@ class BiotiteModel(ModelMixinSnap):
             chain_data = self._extract_chains_from_pdb(item.pdb_string, item.chain_ids)
 
             if chain_data is None:
-                raise ValueError(f"Failed to extract chains {item.chain_ids}")
+                raise ValidationError400(
+                    f"Failed to extract chains {item.chain_ids}: chains not found in PDB structure"
+                )
 
             results.append(
                 BiotiteExtractChainsResponseResult(
@@ -252,7 +254,7 @@ class BiotiteModel(ModelMixinSnap):
             )
 
             if rmsd < 0:
-                raise ValueError(
+                raise ModelExecutionError(
                     f"Failed to compute RMSD for item {item_idx}: RMSD calculation returned {rmsd}"
                 )
 
@@ -281,9 +283,9 @@ class BiotiteModel(ModelMixinSnap):
 
             # Validate PDB strings
             if not pdb_a or not pdb_a.strip():
-                raise ValueError("PDB A is empty or None")
+                raise ValidationError400("PDB A is empty or None")
             if not pdb_b or not pdb_b.strip():
-                raise ValueError("PDB B is empty or None")
+                raise ValidationError400("PDB B is empty or None")
 
             struc = self.struc
             pdbio = self.pdbio
@@ -291,13 +293,13 @@ class BiotiteModel(ModelMixinSnap):
 
             # Validate chain mapping
             if "a" not in chain_ids or "b" not in chain_ids:
-                raise ValueError("Chain mapping must contain 'a' and 'b' keys")
+                raise ValidationError400("Chain mapping must contain 'a' and 'b' keys")
 
             chain_ids_a = chain_ids["a"]
             chain_ids_b = chain_ids["b"]
 
             if len(chain_ids_a) != len(chain_ids_b):
-                raise ValueError(
+                raise ValidationError400(
                     f"Chain mapping length mismatch: {len(chain_ids_a)} vs {len(chain_ids_b)}"
                 )
 
@@ -309,7 +311,7 @@ class BiotiteModel(ModelMixinSnap):
             except Exception as e:
                 logger.error(f"Failed to load PDB A: {e}")
                 logger.error(f"PDB A content: {pdb_a[:200]}...")
-                raise ValueError(f"Invalid PDB A structure: {e}") from e
+                raise ValidationError400(f"Invalid PDB A structure: {e}") from e
 
             try:
                 struct_b_file = pdbio.PDBFile.read(self.StringIO(pdb_b))
@@ -318,7 +320,7 @@ class BiotiteModel(ModelMixinSnap):
             except Exception as e:
                 logger.error(f"Failed to load PDB B: {e}")
                 logger.error(f"PDB B content: {pdb_b[:200]}...")
-                raise ValueError(f"Invalid PDB B structure: {e}") from e
+                raise ValidationError400(f"Invalid PDB B structure: {e}") from e
 
             # Debug: Log available chains in both structures
             all_chains_a = set(struct_a.chain_id)
@@ -370,14 +372,16 @@ class BiotiteModel(ModelMixinSnap):
                 struct_b_coords.append(ca_b)
 
             if not struct_a_coords or not struct_b_coords:
-                raise ValueError("No valid chain pairs found for RMSD calculation")
+                raise ValidationError400(
+                    "No valid chain pairs found for RMSD calculation"
+                )
 
             # Concatenate all coordinates
             struct_a_coords = np.concatenate(struct_a_coords, axis=0)
             struct_b_coords = np.concatenate(struct_b_coords, axis=0)
 
             if struct_a_coords.shape != struct_b_coords.shape:
-                raise ValueError("Concatenated coordinate shape mismatch")
+                raise ModelExecutionError("Concatenated coordinate shape mismatch")
 
             # Compute RMSD
             transform = struc.superimpose(struct_a_coords, struct_b_coords)[1]

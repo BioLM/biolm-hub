@@ -7,8 +7,8 @@
 Biotite is **not a machine learning model**. It is a computational biology toolkit for protein structure analysis, wrapped as a BioLM endpoint. The `biotite` Python library provides efficient, well-tested algorithms for reading, writing, and analyzing macromolecular structures in PDB format.
 
 The BioLM Biotite endpoint exposes two key structural analysis capabilities:
-1. **Chain extraction** (`generate` action): Parse PDB structures and extract individual chains with their sequences and atomic coordinates
-2. **RMSD computation** (`predict` action): Compute root-mean-square deviation between two structures after optimal superimposition
+1. **Chain extraction** (`generate` action): Parse PDB structures and extract individual chains with their sequences and atomic coordinates. The `generate` verb follows BioLM platform convention; this is a **utility extraction operation**, not ML-based generation.
+2. **RMSD computation** (`predict` action): Compute root-mean-square deviation between two structures after optimal superimposition. The `predict` verb follows BioLM platform convention; this is a **structural metric computation**, not ML-based property prediction.
 
 These are essential utilities for structure prediction workflows -- e.g., comparing predicted structures from Boltz or Chai1 against experimental references, or extracting individual chains from multi-chain complexes for downstream analysis.
 
@@ -145,7 +145,8 @@ Request
 
 ### Caching Behavior
 
-- Standard BioLM Redis + R2 two-tier caching via `BillingMixinSnap`
+Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
+
 - Cache key derived from PDB strings, chain IDs, and action type
 - Cache hits are always valid since outputs are deterministic
 

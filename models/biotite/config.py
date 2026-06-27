@@ -30,6 +30,7 @@ BiotiteResourceSpec = ModalResourceSpec(
 # - Actions: generate (extract chains), predict (compute RMSD)
 MODEL_FAMILY = ModelFamily(
     base_model_slug=BiotiteParams.base_model_slug,
+    modal_class_name="BiotiteModel",
     display_name=BiotiteParams.display_name,
     tags=ModelTags(
         input_modality=[InputModality.STRUCTURE],

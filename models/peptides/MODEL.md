@@ -135,7 +135,8 @@ Memory usage is effectively constant regardless of input size. Compute time scal
 
 ### Caching Behavior
 
-- Redis (Modal Dict) caching: Enabled via `BillingMixinSnap`
+Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
+
 - Cache key composition: Based on input sequence and include parameters
 - Caching is effective since outputs are deterministic
 

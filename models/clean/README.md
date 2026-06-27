@@ -213,7 +213,7 @@ Tested against 6 well-characterized enzymes from the halogenase dataset with kno
 ## Implementation Notes
 
 - **Memory snapshots**: Uses `@modal.enter(snap=True)` to snapshot model weights on CPU, then restores on GPU for fast cold starts
-- **Caching**: Redis/R2 caching via BillingMixinSnap integration
+- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container
 - **Determinism**: All seeds set (torch=42, numpy=42, CUDA=42, cuDNN deterministic=True, cuDNN benchmark=False)
 - **Container image**: Based on `pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime`
 - **Download strategy**: R2 cache primary, Google Drive + GitHub fallback for initial download
