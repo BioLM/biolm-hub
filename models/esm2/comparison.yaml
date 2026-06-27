@@ -27,7 +27,7 @@ use_when:
   - "You need general-purpose protein embeddings for downstream ML tasks (fitness prediction, subcellular localization, function annotation, clustering) and want the widest ecosystem compatibility"
   - "You want fast single-sequence inference without MSA computation — ESM2 produces embeddings in a single forward pass, making it suitable for proteome-scale analyses (millions of sequences)"
   - "You are building a multi-model pipeline and need a reliable embedding backbone — ESM2 is the most commonly used feature extractor in published protein ML workflows"
-  - "You need zero-shot variant effect scoring (predict_log_prob) to prioritize mutations in a directed evolution or clinical genetics study before committing to expensive wet-lab validation"
+  - "You need zero-shot variant effect scoring (log_prob) to prioritize mutations in a directed evolution or clinical genetics study before committing to expensive wet-lab validation"
   - "You need to choose between inference cost and quality — the 8M variant on CPU handles rapid screening, while the 3B variant on L40S GPU provides the highest-quality representations"
   - "You need contact maps as a quick structural assessment without running a full structure prediction pipeline — ESM2 attention-derived contacts are fast and informative for fold-level analysis"
   - "Your sequences include proteins from diverse organisms (bacteria, archaea, eukaryotes, viruses) — UniRef50 training ensures broad taxonomic coverage"
@@ -84,7 +84,7 @@ complements:
     example_protocol: null
 
   - model: mpnn
-    workflow: "Use ESM2 predict_log_prob to score wild-type sequence fitness, then use ProteinMPNN to redesign specific regions (e.g., surface residues for stability), and finally re-score the designed sequences with ESM2 to verify evolutionary plausibility — published as part of the JACS 2024 protein design evaluation pipeline"
+    workflow: "Use ESM2 log_prob to score wild-type sequence fitness, then use ProteinMPNN to redesign specific regions (e.g., surface residues for stability), and finally re-score the designed sequences with ESM2 to verify evolutionary plausibility — published as part of the JACS 2024 protein design evaluation pipeline"
     example_protocol: null
 
   - model: biolmtox2
@@ -92,5 +92,5 @@ complements:
     example_protocol: null
 
   - model: esmstabp
-    workflow: "ESMStabP uses ESM2 embeddings internally for protein thermostability (melting temperature) prediction — use ESM2 predict_log_prob to identify stabilizing mutations, then validate predicted Tm changes with ESMStabP for quantitative stability engineering"
+    workflow: "ESMStabP uses ESM2 embeddings internally for protein thermostability (melting temperature) prediction — use ESM2 log_prob to identify stabilizing mutations, then validate predicted Tm changes with ESMStabP for quantitative stability engineering"
     example_protocol: null

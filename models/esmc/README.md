@@ -1,12 +1,12 @@
 # ESM C
 
-> **One-line summary**: Next-generation protein representation model from EvolutionaryScale providing high-quality embeddings, masked token prediction, and sequence log-probability scoring in 300M and 600M parameter variants.
+> **One-line summary**: Next-generation protein representation model from EvolutionaryScale providing high-quality embeddings, masked token prediction, and sequence log-probability scoring in a 300M parameter variant.
 
 ## Overview
 
-ESM C (ESM Cambrian) is the latest generation of protein language models from EvolutionaryScale (2024). It provides highly effective embeddings and logits for protein sequences, surpassing older ESM2 models on many benchmarks with improved parameter efficiency. The 300M variant surpasses ESM2-650M, and the 600M variant approaches ESM2-3B quality at a fraction of the parameter count.
+ESM C (ESM Cambrian) is the latest generation of protein language models from EvolutionaryScale (2024). It provides highly effective embeddings and logits for protein sequences, surpassing older ESM2 models on many benchmarks with improved parameter efficiency. The 300M variant surpasses ESM2-650M. EvolutionaryScale also publishes a 600M variant (Cambrian Non-Commercial); it is not distributed in this catalog.
 
-Three actions are available: `encode` for extracting embeddings and logits, `predict` for masked token prediction, and `predict_log_prob` for computing sequence fitness scores.
+Three actions are available: `encode` for extracting embeddings and logits, `predict` for masked token prediction, and `log_prob` for computing sequence fitness scores.
 
 ## Architecture
 
@@ -14,7 +14,6 @@ Three actions are available: `encode` for extracting embeddings and logits, `pre
 |----------|-------|
 | Architecture | Transformer (optimized for proteins) |
 | 300M variant | ~300M parameters |
-| 600M variant | ~600M parameters |
 | Max sequence length | 2048 residues |
 | Software package | `esm==3.1.3` |
 | Input | Amino acid sequences |
@@ -25,7 +24,6 @@ Three actions are available: `encode` for extracting embeddings and logits, `pre
 | Variant | Slug | GPU | HuggingFace Repo |
 |---------|------|-----|-----------------|
 | 300M | `esmc-300m` | A10G | `EvolutionaryScale/esmc-300m-2024-12` |
-| 600M | `esmc-600m` | A10G | `EvolutionaryScale/esmc-600m-2024-12` |
 
 ## Capabilities & Limitations
 
@@ -42,7 +40,7 @@ Three actions are available: `encode` for extracting embeddings and logits, `pre
 - Nucleic acid sequences (protein-only model)
 - Structure prediction directly (use ESMFold or Boltz)
 - Generating new protein sequences (use generative models like ProGen2 or Evo)
-- Non-canonical amino acid handling in predict_log_prob (requires standard 20 only)
+- Non-canonical amino acid handling in log_prob (requires standard 20 only)
 
 ## Actions / Endpoints
 
@@ -109,7 +107,7 @@ Predict per-token logits for sequences containing `<mask>` tokens.
 - `sequence_tokens`: Decoded sequence characters (including `<mask>` positions)
 - `vocab_tokens`: Amino acid identity for each logit column
 
-### `predict_log_prob`
+### `log_prob`
 
 Compute total log-probability of an unmasked sequence under the model.
 
@@ -226,13 +224,13 @@ From the EvolutionaryScale blog post (2024):
 | Model | Parameters | Relative Performance |
 |-------|------------|---------------------|
 | **ESMC-300M** | 300M | Surpasses ESM2-650M |
-| **ESMC-600M** | 600M | Approaches ESM2-3B |
+| ESMC-600M (upstream) | 600M | Approaches ESM2-3B (Cambrian Non-Commercial; not distributed here) |
 | ESM2-650M | 650M | Established baseline |
 | ESM2-3B | 3B | Previous best open model |
 
 ### SOTA Status
 
-ESM C represents the current state-of-the-art for open protein language models in its parameter class. The 600M variant achieves near-ESM2-3B quality at approximately 1/5 the parameter count, representing a significant advance in parameter efficiency.
+ESM C represents the current state-of-the-art for open protein language models in its parameter class. The distributed 300M variant surpasses ESM2-650M. EvolutionaryScale also publishes a 600M variant (Cambrian Non-Commercial) that approaches ESM2-3B quality; it is not distributed in this catalog.
 
 ## Implementation Verification
 
@@ -247,40 +245,37 @@ Option A -- Numerical Reproduction: embeddings, logits, and log-probabilities fr
 | 300m | encode (test 1) | cosine_distance < 0.02, rel_tol 1e-4 | PASS |
 | 300m | encode (test 2) | cosine_distance < 0.02, rel_tol 1e-4 | PASS |
 | 300m | predict | cosine_distance < 0.02, rel_tol 1e-4 | PASS |
-| 300m | predict_log_prob | Negative finite value | PASS |
-| 600m | encode (test 1) | cosine_distance < 0.02, rel_tol 1e-4 | PASS |
-| 600m | encode (test 2) | cosine_distance < 0.02, rel_tol 1e-4 | PASS |
-| 600m | predict | cosine_distance < 0.02, rel_tol 1e-4 | PASS |
-| 600m | predict_log_prob | Negative finite value | PASS |
+| 300m | log_prob | Negative finite value | PASS |
 
 ### Verification Status
 
-**Status: VERIFIED** -- All 8 test cases pass across both variants and all 3 actions.
+**Status: VERIFIED** -- All 4 test cases pass across all 3 actions for the 300M variant.
 
 ## Resource Requirements
 
-| Resource | 300M Variant | 600M Variant |
-|----------|-------------|-------------|
-| GPU | A10G | A10G |
-| Memory | 24 GB | 28 GB |
-| CPU | 2.0 cores | 4.0 cores |
-| Batch size | 8 | 8 |
-| Max sequence length | 2048 | 2048 |
-| Memory snapshot | Enabled (GPU snapshot) | Enabled (GPU snapshot) |
+| Resource | 300M Variant |
+|----------|-------------|
+| GPU | A10G |
+| Memory | 24 GB |
+| CPU | 2.0 cores |
+| Batch size | 8 |
+| Max sequence length | 2048 |
+| Memory snapshot | Enabled (GPU snapshot) |
 
 ## Implementation Notes
 
 - **Memory snapshots**: Uses `@modal.enter(snap=True)` with GPU memory snapshot enabled. Model is loaded directly on GPU during snapshot creation.
-- **Container image**: Based on `pytorch/pytorch:2.3.1-cuda11.8-cudnn8-runtime` with `esm==3.1.3` and `huggingface_hub`.
+- **Container image**: Based on `pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime` with `esm==3.1.3` and `huggingface_hub==0.36.2`.
 - **Model loading**: Uses `ESMC.from_pretrained(model_name, device)` from the official `esm` package. HuggingFace Hub cache directory is set to the R2-downloaded model directory via `HF_HUB_CACHE` environment variable, with forced reload of `huggingface_hub.constants` to pick up the new path.
 - **Canonical amino acid filtering**: At model setup, a mapping from each of the 20 canonical amino acids to its tokenizer index is built. This mapping is used to slice logits to only the 20 canonical amino acids across all three actions.
 - **Determinism**: All outputs are deterministic (seed 42 set at model load, no stochastic operations).
-- **HuggingFace revisions**: Pinned to specific commit hashes for reproducibility: 300M at `a19d363f`, 600M at `d11cc14d`.
+- **HuggingFace revisions**: Pinned to specific commit hash for reproducibility: 300M at `a19d363f`.
 
 ## License
 
-- **Code and weights**: ESM Open Model License ([GitHub](https://github.com/evolutionaryscale/esm/blob/main/LICENSE.md))
-- **Note**: Review license terms before commercial use. The ESM Open Model License has specific conditions.
+- **Model weights (ESM C)**: EvolutionaryScale Cambrian Open License Agreement ([agreement](https://www.evolutionaryscale.ai/policies/cambrian-open-license-agreement)). Requires a prominent "Built with ESM" attribution and an "ESM"-prefixed name for derivative works. See the per-model `LICENSE` file.
+- **`esm` package code**: MIT-licensed separately ([GitHub](https://github.com/evolutionaryscale/esm/blob/main/LICENSE.md)); this does not extend to the model weights.
+- **Note**: Review the Cambrian Open License Agreement before commercial use.
 
 ## References & Citations
 
@@ -304,7 +299,7 @@ Option A -- Numerical Reproduction: embeddings, logits, and log-probabilities fr
 - **Blog post**: [EvolutionaryScale ESM Cambrian](https://www.evolutionaryscale.ai/blog/esm-cambrian)
 - **Code**: [GitHub evolutionaryscale/esm](https://github.com/evolutionaryscale/esm)
 - **HuggingFace (300M)**: [EvolutionaryScale/esmc-300m-2024-12](https://huggingface.co/EvolutionaryScale/esmc-300m-2024-12)
-- **HuggingFace (600M)**: [EvolutionaryScale/esmc-600m-2024-12](https://huggingface.co/EvolutionaryScale/esmc-600m-2024-12)
+- **HuggingFace (600M, upstream only)**: [EvolutionaryScale/esmc-600m-2024-12](https://huggingface.co/EvolutionaryScale/esmc-600m-2024-12) _(Cambrian Non-Commercial; not distributed in this catalog)_
 
 ---
 

@@ -201,13 +201,13 @@ Baseline comparison against paper specifications combined with architectural con
 ## Implementation Notes
 
 - **Memory snapshots**: Uses `@modal.enter(snap=True)` to load model directly on GPU for GPU memory snapshot.
-- **BillingMixinSnap**: Inherits from `BillingMixinSnap` for snapshot-compatible billing.
+- **ModelMixinSnap**: Inherits from `ModelMixinSnap` for snapshot-compatible model lifecycle hooks.
 - **GPU snapshots**: Enabled via `experimental_options={"enable_gpu_snapshot": True}`.
-- **Container image**: Built from `pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime`.
+- **Container image**: Built from `pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime`.
 - **Weight loading**: Uses `esm.pretrained.esm_msa1b_t12_100M_UR50S()` with `torch.hub.set_dir()` for caching.
 - **Determinism**: Seeds set to 42 at model load time.
 - **Contact prediction**: Contacts are computed by the ESM library's internal `return_contacts=True` mechanism, which applies symmetrization and APC correction to attention weights.
-- **Caching**: Standard Redis/R2 two-tier caching via `BillingMixinSnap`.
+- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
 
 ## License
 

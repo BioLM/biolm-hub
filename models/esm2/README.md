@@ -38,7 +38,7 @@ The default variant is **esm2-650m**. This is the recommended choice for most pr
 **CAN be used for:**
 - Generating per-residue and mean-pooled sequence embeddings for downstream ML tasks
 - Masked token prediction (fill-in-the-blank for protein sequences)
-- Zero-shot variant effect prediction via pseudo-log-likelihood scoring (`predict_log_prob`)
+- Zero-shot variant effect prediction via pseudo-log-likelihood scoring (`log_prob`)
 - Extracting attention maps and contact predictions
 - Feature extraction for downstream classifiers (stability, function, localization)
 
@@ -115,7 +115,7 @@ Performs masked token prediction. Input sequences must contain one or more `<mas
 
 `logits` shape is `[L, 20]` where L is the sequence length (excluding BOS/EOS) and 20 is the standard amino acid vocabulary.
 
-### `predict_log_prob`
+### `log_prob`
 
 Computes the total log-probability of an unmasked sequence under the ESM2 model. This is the sum of log P(residue_i | context) across all positions, useful for zero-shot variant effect prediction and sequence scoring.
 
@@ -209,7 +209,7 @@ The test suite covers all three actions across all five variants:
 | Single sequence encode | `encode` | 1 protein sequence | Cosine similarity to golden output |
 | Multiple sequence encode | `encode` | Multiple sequences with params | Cosine similarity to golden output |
 | Masked prediction | `predict` | Sequence with `<mask>` tokens | Logit comparison to golden output |
-| Log probability | `predict_log_prob` | Unmasked sequence | Validates output is negative finite float |
+| Log probability | `log_prob` | Unmasked sequence | Validates output is negative finite float |
 
 ### Verification Status
 
@@ -237,7 +237,7 @@ The test suite covers all three actions across all five variants:
 - **Tokenization**: Uses the built-in ESM alphabet and `FastaBatchedDataset` for efficient batching. BOS and EOS tokens are automatically prepended/appended.
 - **Logit slicing**: Raw logits are sliced `[4:-9]` to remove special tokens and return only the 20 standard amino acid positions.
 - **Tokens per batch**: The 3B model uses 1024 tokens per batch (vs 4096 for smaller variants) to fit within L40S GPU memory.
-- **Caching**: Inherits standard Redis/R2 two-tier caching from `BillingMixinSnap`.
+- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
 
 ## License
 

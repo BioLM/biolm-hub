@@ -156,7 +156,7 @@ Request
 
 For `predict`, the pipeline tokenizes sequences containing `<mask>` tokens, runs a forward pass, and returns per-position logits over the canonical amino acid vocabulary.
 
-For `predict_log_prob`, the pipeline calls `_encode_forward_pass` with `include=["logits"]`, then computes log-softmax and sums log P(residue_i) at each position for canonical amino acids.
+For `log_prob`, the pipeline calls `_encode_forward_pass` with `include=["logits"]`, then computes log-softmax and sums log P(residue_i) at each position for canonical amino acids.
 
 ### Memory & Compute Profile
 
@@ -184,7 +184,7 @@ The model produces reproducible outputs on the same GPU architecture. Small nume
 
 ### Caching Behavior
 
-ESM-1b inherits standard two-tier caching from `BillingMixinSnap`:
+Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
 - **Redis (Modal Dict)**: Fast lookup, TTL-based expiration
 - **R2**: Persistent storage for cached results
 - **Cache key**: Determined by the request payload (sequences, params, include options)
@@ -193,7 +193,7 @@ ESM-1b inherits standard two-tier caching from `BillingMixinSnap`:
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v1 | 2025-12 | Initial implementation with encode, predict, and predict_log_prob actions |
+| v1 | 2025-12 | Initial implementation with encode, predict, and log_prob actions |
 | v1 | 2025-12 | Biological verification against ubiquitin and hemoglobin test cases |
 
 ---

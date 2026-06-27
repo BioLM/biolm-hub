@@ -30,7 +30,7 @@ use_when:
 
 dont_use_when:
   - "You do not have precomputed MSAs or the computational resources to build them — use ESM2 or ESMC for instant single-sequence embedding and scoring"
-  - "You need variant effect prediction scores — use ESM1v, ESM2 predict_log_prob, SaProt score, or PoET score, which are purpose-built for variant scoring"
+  - "You need variant effect prediction scores — use ESM1v, ESM2 log_prob, SaProt score, or PoET score, which are purpose-built for variant scoring"
   - "You need accurate 3D protein structure prediction — use Boltz, Chai-1, or ESMFold, which produce full atomic coordinates rather than just contact maps"
   - "You are working with orphan proteins that have no detectable homologs — MSA Transformer provides no advantage over single-sequence models when no meaningful alignment can be built"
   - "You need high-throughput processing of millions of sequences — the MSA construction bottleneck makes MSA Transformer impractical for proteome-scale analyses"
@@ -39,7 +39,7 @@ dont_use_when:
 
 alternatives:
   - model: esm2
-    when_better: "ESM2 requires no MSA computation, processes single sequences in milliseconds, offers five size variants, and provides a broader action repertoire (encode, predict, predict_log_prob, contacts) — orders of magnitude faster throughput"
+    when_better: "ESM2 requires no MSA computation, processes single sequences in milliseconds, offers five size variants, and provides a broader action repertoire (encode, predict, log_prob, contacts) — orders of magnitude faster throughput"
     when_worse: "ESM2 cannot access co-evolutionary coupling information from MSAs; MSA Transformer's explicit inter-sequence attention produces richer representations when deep alignments are available"
 
   - model: esmc
@@ -55,7 +55,7 @@ alternatives:
     when_worse: "SaProt requires structure input and focuses on individual protein analysis; MSA Transformer captures family-level evolutionary patterns across multiple sequences"
 
   - model: esm1b
-    when_better: "ESM-1b provides single-sequence embeddings instantly with no MSA dependency and includes predict and predict_log_prob actions for variant analysis"
+    when_better: "ESM-1b provides single-sequence embeddings instantly with no MSA dependency and includes predict and log_prob actions for variant analysis"
     when_worse: "ESM-1b cannot capture co-evolutionary information; MSA Transformer's evolutionary covariation signal improves predictions for well-studied protein families with deep alignments"
 
 complements:

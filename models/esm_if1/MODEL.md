@@ -145,7 +145,7 @@ When no seed is provided, the model uses time-based entropy for diversity across
 
 ### Caching Behavior
 
-Standard BioLM caching via `BillingMixinSnap`:
+Response caching is handled by the BioLM platform layer (not the model container):
 - Redis (Modal Dict) caching for fast repeated lookups
 - R2 caching for persistence
 - Cache keys determined by full request payload (PDB content + parameters + seed)

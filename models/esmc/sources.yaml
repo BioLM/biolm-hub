@@ -1,10 +1,11 @@
 model_slug: esmc
 display_name: ESM C
 license:
-  type: ESM Open Model License
-  url: https://github.com/evolutionaryscale/esm/blob/main/LICENSE.md
-  notes: ESM Cambrian open model weights are subject to the EvolutionaryScale ESM Open Model License. Review terms before
-    commercial use.
+  type: EvolutionaryScale Cambrian Open License Agreement
+  url: https://www.evolutionaryscale.ai/policies/cambrian-open-license-agreement
+  notes: ESM C (Cambrian) model weights are licensed by EvolutionaryScale, PBC under the Cambrian Open License Agreement.
+    Requires a prominent "Built with ESM" attribution and an "ESM"-prefixed name for any derivative works. The esm Python
+    package code is separately MIT-licensed; the weights are NOT MIT. Review terms before commercial use.
 molecule_types:
 - protein
 applicable_to:
@@ -36,8 +37,9 @@ source_repos:
   readme_md_r2: knowledge-base/models/esmc/primary/pages/gh-esm-readme.md
 - type: huggingface
   url: https://huggingface.co/EvolutionaryScale/esmc-300m-2024-12
-  notes: 'Two sizes: 300M (a19d363f07313a10a64d08a2d6b41376a73df5c8) and 600M (d11cc14d44078eaecbc6a843d5eb20f4eecc1e7e).
-    Uses esm==3.1.3 pip package.'
+  notes: 'EvolutionaryScale publishes two sizes (300M and 600M). This catalog distributes ONLY the
+    300M variant (a19d363f07313a10a64d08a2d6b41376a73df5c8), which is under the Cambrian Open license;
+    the 600M weights are Cambrian Non-Commercial and are excluded. Uses esm==3.1.3 pip package.'
   page_md_r2: knowledge-base/models/esmc/primary/pages/hf-esmc-300m-2024-12.md
 - type: other
   url: https://www.evolutionaryscale.ai/blog/esm-cambrian

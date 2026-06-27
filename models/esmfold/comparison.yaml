@@ -59,7 +59,7 @@ complements:
     workflow: "Use ESMFold for rapid structural screening of large candidate sets (thousands of sequences), then run Boltz on the top candidates (pLDDT > 0.7) for high-accuracy complex structure prediction and affinity estimation"
     example_protocol: null
   - model: esm2
-    workflow: "Use ESM2 predict_log_prob to score variant effects at the sequence level, then use ESMFold to assess structural impact of top-ranked variants -- combining sequence fitness with structural stability assessment"
+    workflow: "Use ESM2 log_prob to score variant effects at the sequence level, then use ESMFold to assess structural impact of top-ranked variants -- combining sequence fitness with structural stability assessment"
     example_protocol: null
   - model: mpnn
     workflow: "Use ESMFold to generate initial structure models for protein scaffolds, then use ProteinMPNN for inverse folding to redesign sequences that fold into the predicted structure with improved stability"

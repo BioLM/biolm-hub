@@ -1,5 +1,3 @@
-import logging
-
 import modal
 
 from models.commons.core.decorator import modal_endpoint
@@ -184,7 +182,7 @@ class ESMIF1Model(ModelMixinSnap):
 
             except RuntimeError as e:
                 if "CUDA out of memory" in str(e):
-                    logging.error(
+                    logger.error(
                         f"Failed (CUDA out of memory) on batch with sequences: {pdb_string[:500]}."
                     )
                     empty_result = [

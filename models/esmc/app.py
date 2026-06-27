@@ -333,7 +333,6 @@ if __name__ == "__main__":
     """
     Usage:
         MODEL_SIZE="300m" python models/esmc/app.py
-        MODEL_SIZE="600m" python models/esmc/app.py
 
         # Force deploy in QA/prod:
         MODEL_SIZE="300m" python models/esmc/app.py --force-deploy

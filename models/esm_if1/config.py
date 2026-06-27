@@ -28,6 +28,8 @@ ESMIF1ResourceSpec = ModalResourceSpec(
 MODEL_FAMILY = ModelFamily(
     base_model_slug=ESMIF1Params.base_model_slug,
     display_name=ESMIF1Params.display_name,
+    # The @biolm_model_class container class in app.py (gateway routing, W8).
+    modal_class_name="ESMIF1Model",
     tags=ModelTags(
         input_modality=[InputModality.STRUCTURE],
         input_molecule=[InputMolecule.PROTEIN],

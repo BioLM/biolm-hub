@@ -36,7 +36,7 @@ Single variant -- no size options. The sole deployment is the full 652M paramete
 **CAN be used for:**
 - Generating per-residue and mean-pooled sequence embeddings for downstream ML tasks
 - Masked token prediction (fill-in-the-blank for protein sequences)
-- Zero-shot variant effect prediction via pseudo-log-likelihood scoring (`predict_log_prob`)
+- Zero-shot variant effect prediction via pseudo-log-likelihood scoring (`log_prob`)
 - Extracting attention maps for structural analysis
 - Remote homology detection via embedding space similarity
 
@@ -113,7 +113,7 @@ Performs masked token prediction. Input sequences must contain one or more `<mas
 
 `logits` shape is `[L, V]` where L is the sequence length (excluding BOS/EOS) and V is the number of canonical amino acid tokens.
 
-### `predict_log_prob`
+### `log_prob`
 
 Computes the total log-probability of an unmasked sequence under the ESM-1b model. This is the sum of log P(residue_i | context) across all canonical amino acid positions, useful for zero-shot variant effect prediction and sequence scoring.
 
@@ -239,10 +239,10 @@ Known extremes (Option B): The BioLM implementation was verified against protein
 - **Memory snapshots**: ESM-1b uses `@modal.enter(snap=True)` with GPU memory snapshots enabled (`enable_memory_snapshot=True`, `experimental_options={"enable_gpu_snapshot": True}`) for fast cold starts.
 - **Determinism**: Seeds are set (`torch.manual_seed(42)`, `torch.cuda.manual_seed_all(42)`) for reproducible outputs.
 - **Weight loading**: Weights are downloaded from R2 (with HuggingFace Hub fallback) and loaded via HuggingFace `EsmForMaskedLM.from_pretrained()`. HF revision pinned to `7b37824baec4d3658e1df7479222a7c79b465b76`.
-- **Container image**: Built on `pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime` with `transformers==4.36.2`, `safetensors==0.5.3`, `huggingface_hub==0.26.0`.
+- **Container image**: Built on `pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime` with `transformers==4.36.2`, `safetensors==0.5.3`, `huggingface_hub==0.26.0`.
 - **Tokenization**: Uses HuggingFace `EsmTokenizer` with padding and truncation. BOS and EOS tokens are automatically handled.
 - **Logit filtering**: Raw logits are filtered to canonical single-letter uppercase amino acids for the `logits` and `predict` outputs.
-- **Caching**: Inherits standard Redis/R2 two-tier caching from `BillingMixinSnap`.
+- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
 
 ## License
 

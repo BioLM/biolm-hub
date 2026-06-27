@@ -6,7 +6,7 @@
 
 ESM C (ESM Cambrian) is the latest generation of protein representation models from EvolutionaryScale (2024). It represents a significant advancement over the ESM2 family, achieving comparable or superior performance with substantially fewer parameters and more efficient inference. The "Cambrian" name references the Cambrian explosion of biodiversity, reflecting the model's improved ability to capture the diversity of protein sequence space.
 
-ESM C uses a Transformer architecture optimized for protein sequences, with improvements in training procedure, tokenization, and model scaling that yield better embeddings than ESM2 at equivalent or smaller model sizes. The 600M variant approaches the quality of ESM2-3B while being ~5x smaller.
+ESM C uses a Transformer architecture optimized for protein sequences, with improvements in training procedure, tokenization, and model scaling that yield better embeddings than ESM2 at equivalent or smaller model sizes. EvolutionaryScale also publishes a 600M variant (Cambrian Non-Commercial) that approaches the quality of ESM2-3B; it is not distributed in this catalog.
 
 ### Parameters & Layers
 
@@ -14,7 +14,6 @@ ESM C uses a Transformer architecture optimized for protein sequences, with impr
 |-----------|---------|
 | Architecture | Transformer (optimized for proteins) |
 | 300M variant | ~300M parameters |
-| 600M variant | ~600M parameters |
 | Input | Amino acid sequences (up to 2048 residues) |
 | Output | Per-residue embeddings, logits over vocabulary, log-probabilities |
 | Tokenizer | ESM Cambrian tokenizer (20 canonical amino acids + special tokens) |
@@ -50,7 +49,7 @@ From the EvolutionaryScale blog post (2024):
 | Model | Parameters | Benchmark Performance |
 |-------|------------|----------------------|
 | **ESMC-300M** | 300M | Surpasses ESM2-650M on multiple benchmarks |
-| **ESMC-600M** | 600M | Approaches ESM2-3B quality |
+| ESMC-600M (upstream) | 600M | Approaches ESM2-3B quality (Cambrian Non-Commercial; not distributed here) |
 | ESM2-650M | 650M | Established baseline |
 | ESM2-3B | 3B | Previous state-of-the-art open model |
 
@@ -63,18 +62,13 @@ From the EvolutionaryScale blog post (2024):
 | 300m | encode (test 1) | cosine_distance < 0.02, rel_tol 1e-4 | PASS |
 | 300m | encode (test 2) | cosine_distance < 0.02, rel_tol 1e-4 | PASS |
 | 300m | predict | cosine_distance < 0.02, rel_tol 1e-4 | PASS |
-| 300m | predict_log_prob | Negative finite value validation | PASS |
-| 600m | encode (test 1) | cosine_distance < 0.02, rel_tol 1e-4 | PASS |
-| 600m | encode (test 2) | cosine_distance < 0.02, rel_tol 1e-4 | PASS |
-| 600m | predict | cosine_distance < 0.02, rel_tol 1e-4 | PASS |
-| 600m | predict_log_prob | Negative finite value validation | PASS |
+| 300m | log_prob | Negative finite value validation | PASS |
 
 ### Comparison to Alternatives
 
 | Model | Strength | When to prefer |
 |-------|----------|----------------|
 | **ESMC-300M** | Efficient, surpasses ESM2-650M | Quick prototyping, resource-constrained |
-| **ESMC-600M** | Near ESM2-3B quality, 5x smaller | High-quality embeddings, moderate resources |
 | ESM2-650M | Well-established, widely benchmarked | Backward compatibility with existing pipelines |
 | ESM2-3B | Largest ESM2 model | Maximum ESM2-era quality |
 | ESM1v | Variant effect prediction specialist | Specifically optimized for mutation effect scoring |
@@ -88,12 +82,12 @@ From the EvolutionaryScale blog post (2024):
 - Multi-layer embedding extraction with user-specified layers
 - Mean-pooled, per-token, and logit outputs available from encode
 - Log-probability scoring for sequence fitness assessment
-- Two model sizes for accuracy/speed tradeoff
+- Efficient 300M model surpassing ESM2-650M on multiple benchmarks
 - Supports gap character (`-`) in encode for alignment-aware embeddings
 
 ### Cons
 
-- ESM Open Model License may restrict certain commercial uses (review terms)
+- EvolutionaryScale Cambrian Open License may restrict certain commercial uses (review terms)
 - Maximum sequence length of 2048 residues
 - Predict action requires at least one `<mask>` token
 - No ensemble mode (unlike ESM1v with 5 models)
@@ -151,13 +145,13 @@ Request
 
 ### Memory & Compute Profile
 
-| Resource | 300M Variant | 600M Variant |
-|----------|-------------|-------------|
-| GPU | A10G | A10G |
-| Memory | 24 GB RAM | 28 GB RAM |
-| CPU | 2.0 cores | 4.0 cores |
-| Batch size | 8 | 8 |
-| Max sequence length | 2048 | 2048 |
+| Resource | 300M Variant |
+|----------|-------------|
+| GPU | A10G |
+| Memory | 24 GB RAM |
+| CPU | 2.0 cores |
+| Batch size | 8 |
+| Max sequence length | 2048 |
 
 ### Determinism & Reproducibility
 
@@ -169,7 +163,7 @@ Request
 
 ### Caching Behavior
 
-Standard BioLM caching via `BillingMixinSnap`:
+Response caching is handled by the BioLM platform layer (not the model container):
 - Redis (Modal Dict) caching for fast repeated lookups
 - R2 caching for persistence
 - Cache keys determined by full request payload (sequences + parameters)
@@ -178,7 +172,7 @@ Standard BioLM caching via `BillingMixinSnap`:
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v1 | 2024 | Initial implementation with encode, predict, predict_log_prob actions |
+| v1 | 2024 | Initial implementation with encode, predict, log_prob actions |
 
 ---
 

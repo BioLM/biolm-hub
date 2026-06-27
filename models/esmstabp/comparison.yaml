@@ -52,7 +52,7 @@ alternatives:
 
 complements:
   - model: esm2
-    workflow: "ESM2 provides the embedding backbone that ESMStabP uses for Tm prediction; additionally, ESM2 predict_log_prob can identify evolutionarily plausible mutations, and ESMStabP can then predict the Tm of each mutant sequence to quantify stability impact"
+    workflow: "ESM2 provides the embedding backbone that ESMStabP uses for Tm prediction; additionally, ESM2 log_prob can identify evolutionarily plausible mutations, and ESMStabP can then predict the Tm of each mutant sequence to quantify stability impact"
     example_protocol: null
   - model: camsol
     workflow: "Use ESMStabP to predict Tm (thermostability) and CamSol to predict solubility for each candidate -- thermostability and solubility are related but distinct properties, and optimizing both produces more developable proteins"

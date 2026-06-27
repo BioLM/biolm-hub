@@ -6,7 +6,7 @@ strengths:
   - "Historical significance — the first protein language model to demonstrate that transformer representations spontaneously encode 3D structural information (contact maps from attention heads), a finding that launched the field of protein foundation models"
   - "Well-validated in published applied studies: plant PPI prediction (AUPR 0.810), domain-adaptive pretraining for DNA-binding proteins, and few-shot fitness prediction across 87 DMS datasets"
   - "Permissive MIT license with no commercial restrictions, suitable for any deployment scenario without licensing concerns"
-  - "Full action repertoire — encode, predict, predict_log_prob — provides embeddings, masked token prediction, and sequence fitness scoring from a single model"
+  - "Full action repertoire — encode, predict, log_prob — provides embeddings, masked token prediction, and sequence fitness scoring from a single model"
   - "1280-dimensional embeddings are compatible with many published downstream pipelines originally designed for ESM-1b, enabling direct reproduction of literature results"
   - "Runs efficiently on T4 GPU (16GB VRAM) at 650M parameters, making it accessible on standard cloud GPU instances"
 
@@ -31,7 +31,7 @@ dont_use_when:
   - "You need the highest-quality protein embeddings — use ESM2-3B, ESMC-600M, or ESM3 for improved representation quality"
   - "You need structure-aware representations — use SaProt or ProstT5 when structural information is available"
   - "You need to process sequences longer than 1022 residues — use ESM2 (up to 2046 residues) or ESMC (up to 2048 residues)"
-  - "You need variant effect prediction with competitive accuracy — use ESM1v (5-model ensemble optimized for this task), ESM2 predict_log_prob, or PoET (MSA-conditioned scoring)"
+  - "You need variant effect prediction with competitive accuracy — use ESM1v (5-model ensemble optimized for this task), ESM2 log_prob, or PoET (MSA-conditioned scoring)"
   - "You need multimodal protein understanding (sequence + structure + function) — use ESM3"
   - "You need multiple size variants for cost-performance optimization — use ESM2, which offers 8M to 3B parameters"
 
@@ -42,7 +42,7 @@ alternatives:
 
   - model: esmc
     when_better: "ESMC-600M provides state-of-the-art parameter efficiency with updated training, achieving quality comparable to ESM2-3B — a two-generation improvement over ESM-1b"
-    when_worse: "ESM-1b has MIT license while ESMC requires ESM Open Model License review; ESM-1b has more published downstream applications due to its longer history"
+    when_worse: "ESM-1b has MIT license while ESMC requires EvolutionaryScale Cambrian Open License review; ESM-1b has more published downstream applications due to its longer history"
 
   - model: esm1v
     when_better: "ESM-1v uses a 5-model ensemble trained on UniRef90 specifically for variant effect prediction, achieving higher accuracy on DMS benchmarks than ESM-1b's single-model scoring"
@@ -58,7 +58,7 @@ alternatives:
 
 complements:
   - model: boltz
-    workflow: "Use ESM-1b predict_log_prob to score variant libraries for evolutionary plausibility, then predict 3D structures of top-ranked candidates with Boltz to validate structural integrity — useful when reproducing a legacy pipeline"
+    workflow: "Use ESM-1b log_prob to score variant libraries for evolutionary plausibility, then predict 3D structures of top-ranked candidates with Boltz to validate structural integrity — useful when reproducing a legacy pipeline"
     example_protocol: null
 
   - model: esmstabp

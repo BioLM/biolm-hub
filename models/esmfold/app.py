@@ -1,4 +1,3 @@
-import logging
 from collections.abc import Generator
 
 import modal
@@ -165,7 +164,7 @@ class ESMFoldModel(ModelMixinSnap):
 
             except RuntimeError as e:
                 if "CUDA out of memory" in str(e):
-                    logging.error(
+                    logger.error(
                         f"Failed (CUDA out of memory) on batch with sequences: {headers}."
                     )
                     empty_result = ESMFoldPredictResponseResult(

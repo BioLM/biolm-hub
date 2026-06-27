@@ -191,7 +191,7 @@ Option A -- Numerical Reproduction: outputs from the BioLM implementation are co
 ## Implementation Notes
 
 - **Memory snapshots**: Uses `@modal.enter(snap=True)` with GPU memory snapshot enabled. Models are loaded directly on GPU during snapshot creation.
-- **Container image**: Based on `pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime` with `transformers==4.36.2` and `safetensors==0.5.3`.
+- **Container image**: Based on `pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime` with `transformers==4.36.2` and `safetensors==0.5.3`.
 - **Model loading**: Uses HuggingFace `EsmForMaskedLM.from_pretrained()` and `EsmTokenizer.from_pretrained()` from local model directories downloaded from R2. For the "all" variant, all 5 model directories are loaded and wrapped in separate `fill-mask` pipelines.
 - **Pipeline**: Uses HuggingFace `pipeline("fill-mask")` with targets restricted to the 20 standard unambiguous amino acids.
 - **Response format**: Individual variants (n1--n5) return a flat list of predictions per sequence. The "all" variant returns a dictionary mapping each model name (e.g., "esm1v-n1") to its predictions.

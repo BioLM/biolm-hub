@@ -37,7 +37,7 @@ ESM-2 handles **globular proteins** best, as these are the most abundant in trai
 
 **Problem**: Predicting the functional impact of amino acid substitutions (missense mutations) is critical for clinical genetics, protein engineering, and understanding disease mechanisms. Experimental methods (deep mutational scanning) are expensive and limited to one protein at a time.
 
-**How ESM-2 helps**: The `predict_log_prob` action computes the pseudo-log-likelihood of a full sequence. By comparing log P(wildtype) vs log P(mutant), researchers can estimate variant effects without any task-specific training. The masked language model naturally assigns higher likelihood to residues that are evolutionarily conserved at a given position.
+**How ESM-2 helps**: The `log_prob` action computes the pseudo-log-likelihood of a full sequence. By comparing log P(wildtype) vs log P(mutant), researchers can estimate variant effects without any task-specific training. The masked language model naturally assigns higher likelihood to residues that are evolutionarily conserved at a given position.
 
 **Biological meaning**: A large negative delta-log-probability (mutant much less likely than wildtype) suggests the mutation disrupts an evolutionarily conserved position and is likely deleterious. This correlates with experimental measures of protein fitness (stability, activity, binding affinity) as benchmarked on datasets like ProteinGym.
 
@@ -88,7 +88,7 @@ ESM-2 embeddings have additionally been widely adopted for other downstream appl
 ### Predecessor Models
 
 - **ESM-1b** (Rives et al., 2021): The direct predecessor to ESM-2. A 650M parameter transformer trained on UniRef50. ESM-2 improves on ESM-1b at every model scale by using improved training procedures and scaling. ESM-1b is superseded and not available on this platform.
-- **ESM-1v** (Meier et al., 2021): A variant of ESM-1b specifically evaluated for variant effect prediction. ESM-2's `predict_log_prob` action provides equivalent functionality with better representations.
+- **ESM-1v** (Meier et al., 2021): A variant of ESM-1b specifically evaluated for variant effect prediction. ESM-2's `log_prob` action provides equivalent functionality with better representations.
 
 ### Complementary Models
 
@@ -99,7 +99,7 @@ ESM-2 is the foundation for several downstream models on the BioLM platform:
 
 Typical multi-model workflows:
 1. Use ESM-2 `encode` to generate embeddings, then feed into a custom downstream classifier
-2. Use ESM-2 `predict_log_prob` to score mutant libraries, then use Boltz to predict structures of top candidates
+2. Use ESM-2 `log_prob` to score mutant libraries, then use Boltz to predict structures of top candidates
 
 ### Alternative Models
 

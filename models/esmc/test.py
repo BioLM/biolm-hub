@@ -17,7 +17,7 @@ test_suite = TestSuite(
     model_family=MODEL_FAMILY,
     r2_fixture_subdir="models",
     variant_test_mappings=[
-        # Single mapping that applies to ALL variants (both 300m and 600m)
+        # Single mapping — esmc ships the 300m variant only
         VariantTestMapping(
             variant_config={},  # Empty dict means applies to ALL variants
             test_cases=[

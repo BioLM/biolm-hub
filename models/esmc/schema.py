@@ -29,7 +29,6 @@ class ESMCParams(ModelParams):
 
 class ESMCModelSizes(EnhancedStringEnum):
     SIZE_300M = "300m"
-    SIZE_600M = "600m"
 
 
 ### ESM C Requests

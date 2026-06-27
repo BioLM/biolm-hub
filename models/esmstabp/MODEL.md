@@ -209,8 +209,8 @@ The model is fully deterministic at inference time. Random Forest prediction is 
 
 ### Caching Behavior
 
-- **Redis caching**: Enabled via BillingMixin (standard platform caching)
-- **R2 caching**: Enabled via BillingMixin
+- **Redis caching**: Provided by the BioLM platform layer (standard platform caching)
+- **R2 caching**: Provided by the BioLM platform layer
 - **Cache key**: Composed from action name + serialized request payload (sequence + metadata)
 - **Cache invalidation**: Standard platform TTL-based expiry
 

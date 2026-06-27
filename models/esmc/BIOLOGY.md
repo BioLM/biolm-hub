@@ -55,7 +55,7 @@ Users can request embeddings from any Transformer layer via `repr_layers`, enabl
 
 **Biological context**: Assessing the overall "fitness" or "naturalness" of a protein sequence is useful for evaluating designed sequences, scoring variant libraries, and filtering computationally generated candidates. A sequence that deviates significantly from the statistical patterns learned from natural sequences is more likely to be non-functional.
 
-**How ESMC helps**: The `predict_log_prob` action computes the total log-probability of an unmasked sequence, summing over all positions. This provides a single scalar score that reflects how well the sequence matches the patterns learned from the training data. More negative values indicate less "natural" sequences.
+**How ESMC helps**: The `log_prob` action computes the total log-probability of an unmasked sequence, summing over all positions. This provides a single scalar score that reflects how well the sequence matches the patterns learned from the training data. More negative values indicate less "natural" sequences.
 
 **Output interpretation**: The log-probability is always negative (or zero for a theoretically perfect sequence). Relative comparisons are more meaningful than absolute values: comparing log-probabilities of a wild-type sequence versus a mutant, or ranking a library of designed sequences by their log-probabilities. Note that log-probabilities are computed over only the 20 canonical amino acids at each position.
 
@@ -83,7 +83,7 @@ ESM C was released in late 2024 and the applied literature is still emerging. Th
 ESMC works well in combination with other models on the BioLM platform:
 
 - **ESMFold**: Uses ESM2 embeddings for structure prediction. ESMC embeddings may be useful in similar structure prediction pipelines.
-- **ESM1v**: Specialized for variant effect prediction. ESMC's predict and predict_log_prob actions provide alternative (potentially superior) variant scoring.
+- **ESM1v**: Specialized for variant effect prediction. ESMC's predict and log_prob actions provide alternative (potentially superior) variant scoring.
 - **AbLEF**: Uses AbLang embeddings for antibody developability. ESMC embeddings could serve a similar role for general proteins.
 - **Structure prediction models** (Boltz, ESMFold): ESMC embeddings can complement structural features for integrated analysis.
 
@@ -92,7 +92,7 @@ ESMC works well in combination with other models on the BioLM platform:
 | Alternative | Advantage over ESMC | Disadvantage vs ESMC |
 |-------------|--------------------|--------------------|
 | ESM2-650M | Well-established, widely benchmarked | Lower parameter efficiency |
-| ESM2-3B | Larger model, more capacity | ESMC-600M achieves comparable quality at 5x fewer parameters |
+| ESM2-3B | Larger model, more capacity | EvolutionaryScale's 600M variant (Cambrian Non-Commercial; not distributed here) approaches ESM2-3B quality; the distributed 300M variant surpasses ESM2-650M |
 | ESM1v | Specifically optimized for variant effects | Only variant prediction, no embeddings |
 | ProtTrans (ProtT5) | Available through HuggingFace | Older architecture, lower efficiency |
 

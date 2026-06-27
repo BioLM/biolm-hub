@@ -81,7 +81,7 @@ ESMFold is closely related to other models on the BioLM platform:
 
 Typical multi-model workflows:
 1. Use ESMFold for rapid structure prediction of a candidate set, then use Boltz for high-accuracy prediction of the top candidates
-2. Use ESM-2 `predict_log_prob` to score variant effects, then use ESMFold to assess structural impact of top-ranked variants
+2. Use ESM-2 `log_prob` to score variant effects, then use ESMFold to assess structural impact of top-ranked variants
 3. Use ESMFold to generate initial structure models, then use MPNN for sequence design on the predicted structures
 
 ### Alternative Models

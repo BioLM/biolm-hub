@@ -44,6 +44,8 @@ ESM1v_VARIANT_RESOURCE_SPECS = {
 MODEL_FAMILY = ModelFamily(
     base_model_slug=ESM1vParams.base_model_slug,
     display_name=ESM1vParams.display_name,
+    # The @biolm_model_class container class in app.py (gateway routing, W8).
+    modal_class_name="ESM1vModel",
     tags=ModelTags(
         input_modality=[InputModality.SEQUENCE],
         input_molecule=[InputMolecule.PROTEIN],

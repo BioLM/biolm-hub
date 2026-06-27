@@ -181,7 +181,7 @@ All outputs are deterministic on the same hardware. Verified with max_diff=0.0 a
 
 ### Caching Behavior
 
-- Standard BioLM Redis + R2 two-tier caching via `BillingMixinSnap`
+- Response caching (Redis + R2 two-tier) is handled by the BioLM platform layer, not the model container
 - GPU memory snapshots enabled (`enable_memory_snapshot=True`, `enable_gpu_snapshot=True`)
 - Cache key includes MSA sequences, params, and include options
 

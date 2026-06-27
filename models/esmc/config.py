@@ -20,15 +20,16 @@ from models.esmc.schema import (
 )
 
 ### Static configuration values
+# Only the 300M variant ships: the ESM C 600M weights are under EvolutionaryScale's
+# Cambrian *Non-Commercial* license, so they are excluded from this open catalog
+# (the 300M weights are Cambrian Open). See sources.yaml / LICENSE.
 # HuggingFace repository mapping for ESMC models
 ESMC_HF_REPO_MAP = {
     ESMCModelSizes.SIZE_300M: "EvolutionaryScale/esmc-300m-2024-12",
-    ESMCModelSizes.SIZE_600M: "EvolutionaryScale/esmc-600m-2024-12",
 }
 # Pin specific revisions for reproducibility
 ESMC_HF_REVISION_MAP = {
     ESMCModelSizes.SIZE_300M: "a19d363f07313a10a64d08a2d6b41376a73df5c8",
-    ESMCModelSizes.SIZE_600M: "d11cc14d44078eaecbc6a843d5eb20f4eecc1e7e",
 }
 
 
@@ -40,20 +41,17 @@ ESMC_VARIANT_RESOURCE_SPECS = {
         memory=24 * 1024,  # 8 GB
         gpu=ModalGPU.A10G,
     ),
-    ESMCModelSizes.SIZE_600M: ModalResourceSpec(
-        cpu=4.0,
-        memory=28 * 1024,  # 16 GB
-        gpu=ModalGPU.A10G,
-    ),
 }
 
 
 # ESM-C configuration:
-# - Axes: MODEL_SIZE (300m, 600m)
+# - Axes: MODEL_SIZE (300m only; 600m excluded — non-commercial license)
 # - Actions: encode, predict, log_prob
 MODEL_FAMILY = ModelFamily(
     base_model_slug=ESMCParams.base_model_slug,
     display_name=ESMCParams.display_name,
+    # The @biolm_model_class container class in app.py (gateway routing, W8).
+    modal_class_name="ESMCModel",
     tags=ModelTags(
         input_modality=[InputModality.SEQUENCE],
         input_molecule=[InputMolecule.PROTEIN],
@@ -83,7 +81,7 @@ MODEL_FAMILY = ModelFamily(
             response_schema=ESMCPredictLogProbResponse,
         ),
     ],
-    # Single axis: MODEL_SIZE with values 300m, 600m
+    # Single axis: MODEL_SIZE — 300m only (600m excluded, non-commercial license)
     variant_axes={
         "MODEL_SIZE": list(ESMCModelSizes),
     },

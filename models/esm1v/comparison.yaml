@@ -34,16 +34,16 @@ dont_use_when:
   - "You need to score insertions or deletions (indels) — use PoET, which is the only model in this group that natively handles variable-length variants"
   - "You need structure-aware variant scoring — use SaProt, which integrates Foldseek 3Di tokens and outperforms sequence-only methods on ProteinGym (0.457 vs ~0.45 Spearman)"
   - "You need MSA-conditioned variant scoring for maximum accuracy on proteins with deep evolutionary alignments — use PoET or MSA Transformer"
-  - "You want the latest-generation model for new projects — use ESM2 predict_log_prob or ESMC predict_log_prob, which provide comparable or better variant scoring with broader functionality"
+  - "You want the latest-generation model for new projects — use ESM2 log_prob or ESMC log_prob, which provide comparable or better variant scoring with broader functionality"
   - "You need multimodal protein analysis combining sequence, structure, and function — use ESM3"
 
 alternatives:
   - model: esm2
-    when_better: "ESM2 provides predict_log_prob for variant scoring plus embeddings, masked prediction, and contact maps in a single model; longer context (2046 residues), five size variants, and broader functionality make it more versatile"
+    when_better: "ESM2 provides log_prob for variant scoring plus embeddings, masked prediction, and contact maps in a single model; longer context (2046 residues), five size variants, and broader functionality make it more versatile"
     when_worse: "ESM2 uses a single model for variant scoring, not a 5-model ensemble, so predictions may have higher variance; ESM1v's dedicated optimization on UniRef90 can yield marginally better variant effect correlations"
 
   - model: esmc
-    when_better: "ESMC provides updated architecture with better parameter efficiency, broader action repertoire (encode, predict, predict_log_prob), and longer context (2048 residues)"
+    when_better: "ESMC provides updated architecture with better parameter efficiency, broader action repertoire (encode, predict, log_prob), and longer context (2048 residues)"
     when_worse: "ESMC does not offer a multi-model ensemble for variance reduction; ESM1v's focused design and CPU-friendly individual models are more cost-effective for high-throughput variant screening"
 
   - model: saprot

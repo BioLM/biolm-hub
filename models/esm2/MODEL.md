@@ -129,7 +129,7 @@ The BioLM implementation uses official pre-trained weights loaded via `esm.pretr
 | Relative tolerance | 1e-4 | PASS |
 | Cosine distance | < 0.02 | PASS |
 
-Tests cover all five variants (8m, 35m, 150m, 650m, 3b) across encode, predict, and predict_log_prob actions.
+Tests cover all five variants (8m, 35m, 150m, 650m, 3b) across encode, predict, and log_prob actions.
 
 ### Comparison to Alternatives
 
@@ -198,7 +198,7 @@ Request
   |-- 7. Return ESM2EncodeResponse
 ```
 
-For `predict_log_prob`, the pipeline calls `_encode_forward_pass` with `include=["logits"]`, then computes log-softmax and sums log P(residue_i) at each position.
+For `log_prob`, the pipeline calls `_encode_forward_pass` with `include=["logits"]`, then computes log-softmax and sums log P(residue_i) at each position.
 
 ### Memory & Compute Profile
 
@@ -228,7 +228,7 @@ The model produces reproducible outputs on the same GPU architecture. Small nume
 
 ### Caching Behavior
 
-ESM2 inherits standard two-tier caching from `BillingMixinSnap`:
+Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
 - **Redis (Modal Dict)**: Fast lookup, TTL-based expiration
 - **R2**: Persistent storage for cached results
 - **Cache key**: Determined by the request payload (sequences, params, include options, model variant)
@@ -238,7 +238,7 @@ ESM2 inherits standard two-tier caching from `BillingMixinSnap`:
 | Version | Date | Changes |
 |---------|------|---------|
 | v1 | 2024-10-23 | Initial implementation with encode and predict actions |
-| v1 (updated) | 2025-01-20 | Added `predict_log_prob` action for zero-shot variant scoring |
+| v1 (updated) | 2025-01-20 | Added `log_prob` action for zero-shot variant scoring |
 | v1 (updated) | 2025-09-14 | Added 3B variant with L40S GPU support |
 | v1 (updated) | 2026-03-14 | Migrated to declarative download system and source layer setup |
 

@@ -40,11 +40,11 @@ ESM-1b handles **globular, soluble proteins** best, as these dominate the traini
 
 **Problem**: Predicting the functional impact of amino acid substitutions (missense mutations) is critical for clinical genetics, protein engineering, and understanding disease. Experimental methods (deep mutational scanning) are expensive and limited to one protein at a time.
 
-**How ESM-1b helps**: The `predict_log_prob` action computes the pseudo-log-likelihood of a protein sequence. By comparing log P(wildtype) vs log P(mutant), researchers can estimate variant effects without task-specific training. Evolutionarily conserved positions will have high log-probability for the wildtype amino acid and low probability for substitutions.
+**How ESM-1b helps**: The `log_prob` action computes the pseudo-log-likelihood of a protein sequence. By comparing log P(wildtype) vs log P(mutant), researchers can estimate variant effects without task-specific training. Evolutionarily conserved positions will have high log-probability for the wildtype amino acid and low probability for substitutions.
 
 **Biological meaning**: A large negative change in log-probability (mutant much less likely than wildtype) suggests the mutation disrupts an evolutionarily conserved position and is likely deleterious. The BioLM verification confirms this: real ubiquitin scores dramatically higher (-0.17 per-residue log-prob) than a shuffled version with identical composition (-36.74), demonstrating the model captures evolutionary constraints.
 
-**Note**: ESM-2's `predict_log_prob` provides equivalent functionality with superior representations. For variant effect prediction, ESM-2 is recommended.
+**Note**: ESM-2's `log_prob` provides equivalent functionality with superior representations. For variant effect prediction, ESM-2 is recommended.
 
 ### Masked Token Prediction (Sequence Completion)
 

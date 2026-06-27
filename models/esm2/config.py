@@ -54,6 +54,8 @@ model_id_mapping = {
 MODEL_FAMILY = ModelFamily(
     base_model_slug=ESM2Params.base_model_slug,
     display_name=ESM2Params.display_name,
+    # The @biolm_model_class container class in app.py (gateway routing, W8).
+    modal_class_name="ESM2Model",
     tags=ModelTags(
         input_modality=[InputModality.SEQUENCE],
         input_molecule=[InputMolecule.PROTEIN],

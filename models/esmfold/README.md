@@ -186,7 +186,7 @@ Numerical reproduction (Option A): The BioLM implementation loads official pre-t
 - **Recycling**: Fixed at 4 recycles (`num_recycles=4`) per prediction for accuracy/speed balance.
 - **Batching**: Sequences are batched by total token count (max 1024 tokens per batch) to optimize GPU utilization while staying within memory limits.
 - **OOM handling**: CUDA out-of-memory errors during inference are caught and return empty results (`pdb=""`, `mean_plddt=0.0`, `ptm=0.0`) for the affected batch, allowing the remaining batches to complete.
-- **Caching**: Inherits standard Redis/R2 two-tier caching from `BillingMixinSnap`.
+- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
 - **Container image**: Built from `pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime` with OpenFold installed from source (requires `--no-build-isolation` for setup.py that imports torch).
 
 ## License

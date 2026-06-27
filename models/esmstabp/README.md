@@ -235,8 +235,8 @@ Higher MAE versus the paper's 3.4 degrees C is expected: validation proteins are
 
 ## Implementation Notes
 
-- **No memory snapshots**: Uses `BillingMixin` (not `BillingMixinSnap`) -- the model is lightweight enough that snapshots provide no benefit
-- **Caching**: Standard Redis/R2 caching via BillingMixin
+- **No memory snapshots**: Uses `ModelMixin` (not `ModelMixinSnap`) -- the model is lightweight enough that snapshots provide no benefit
+- **Caching**: Response caching (Redis/R2) is handled by the BioLM platform layer, not the model container
 - **Determinism**: NumPy seed set to 42 at startup; RF inference is inherently deterministic
 - **External dependency**: Calls `esm2-650m` endpoint via `Cls.from_name("esm2-650m", "ESM2Model")` for embeddings. If that endpoint is down, ESMStabP cannot function.
 - **Container image**: Debian slim (no GPU drivers), ~minimal footprint. Dependencies: scikit-learn 1.3.2, joblib 1.3.2, numpy 1.23.5.
