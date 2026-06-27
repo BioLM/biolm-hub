@@ -200,8 +200,10 @@ lists its exit criteria.
   `peptides`** (pure CPU), **and (iii) a conda/micromamba model** (e.g. `immunebuilder` or `mpnn`) so
   commons decoupling meets the nasty build patterns *before* the fan-out, not during. These three are
   also the **first writes to public R2** (cache-miss → fetch from source → cache to R2).
-- **Exit (gate before Stage 3):** all three slices deploy + test from the new repo with zero internal
-  dependencies.
+- **Exit (gate before Stage 3):** the three slices are **ported + review-clean** (T0/T1 + Opus review,
+  zero internal deps). Their **live deploy is "Modal Milestone A"** — a deliberate, bounded spend (do
+  the cheapest, `peptides`, at minimum) per the cost-discipline policy; not an every-change gate.
+  See `04_TESTING_STRATEGY.md` §0.
 
 ### Stage 2 — Global standardization & framework hardening *(do this BEFORE the per-model fan-out)*
 A **global pass across all models per criterion** that sets the canonical rules and implements them
@@ -297,7 +299,8 @@ each wave** so the read-only reference doesn't drift.
 - **Wave 2 — Commons sequence (SERIALIZED on shared files):** W3a (decouple + simplify) lands first →
   W-acq rebases on it → then W6, W7, W17 branch from post-W3a commons (W6↔W7 still coordinate on
   per-model `app.py`; the `modal_class_name` field is *defined* here).
-- **Wave 3 — Slice gate:** W-slice (esm2 + peptides + one conda model) must go green before Wave 4.
+- **Wave 3 — Slice gate:** W-slice (esm2 + peptides + one conda model) **review-clean** before Wave 4;
+  its live deploy is **Modal Milestone A** (cheap contract smoke — see `04` §0).
 - **Wave 4 — Per-model fan-out:** W4 (R2 population, incremental) + W5 batches A–H (each: writer →
   fresh-Opus reviewer). Depends on Waves 2–3.
 - **Wave 5 — Platform surfaces:** W8, W9, W10, W11 (+ finalize W12 shared assets).
@@ -364,6 +367,7 @@ its keep.
 | CLI command name | Provisional **`bm`** (now reads "biolm-models"); alts `biolm`/`blm` | Zero-churn, short; revisit at §10 | Low |
 | Modal environment | Dedicated env (provisional `biolm-models`) for BioLM's own reference deployments | Cloning users deploy to their own default env regardless | Low |
 | Commons | Refactor freely **in the new repo** (it's the framework we ship) | The internal commons-freeze rule does not apply to the OSS fork | — |
+| Modal spend during dev | **Minimize.** Validate via T0+T1+**Opus review** during the port; **batch** live deploy/integration/deployment into Modal **milestones** (A = cheap contract smoke; B = comprehensive at the end) | Keep porting costs low; live deploys cost real money (GPU/conda builds). See `04` §0 | Low |
 | Git history | Start fresh in `biolm-models` (no internal history) | Cleanest secret hygiene | — |
 
 ---

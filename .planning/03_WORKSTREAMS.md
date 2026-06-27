@@ -92,17 +92,21 @@ full test matrix green.
 R2; `bm r2 ls` (read-only) works anonymously.
 **Depends on:** bucket confirmed (done). Incremental as models are hardened; final population at Stage 7.
 
-## W-slice — Stage-1d vertical slices (contract proof + slice gate) · Stage 1d
-**Goal:** Prove the end-to-end contract on a clean Modal account *before* the fan-out, exercising the
-nasty build patterns early.
-**Tasks:** deploy + test, from the new repo against public R2 with zero internal deps: **esm2** (GPU
-pytorch), **peptides** (pure CPU), **and one conda/micromamba model** (`immunebuilder` or `mpnn`).
-These are the **first writes to public R2** (cache-miss → fetch from source → cache to R2), so they
-also smoke-test W4's population path. If the conda slice exposes commons gaps, fix them in **W3a** (not
-here).
-**Acceptance (GATE before Stage 3):** all three slices deploy + pass integration + deployment tests
-from the new repo; a second (cache-hit) deploy serves weights straight from `biolm-public`.
-**Depends on:** W3a (decoupled commons), W4 (bucket). **Blocks:** W5.
+## W-slice — Stage-1d vertical slices (contract proof) · Stage 1d
+**Goal:** Prove the end-to-end contract *before* the fan-out, exercising the nasty build patterns
+early — under the cost-discipline policy (`04` §0), the **code** is review-validated continuously and
+the **live deploy** is a deliberate, batched Modal spend (Milestone A).
+**Slice set:** **esm2** (GPU pytorch), **peptides** (pure CPU), **and one conda/micromamba model**
+(`immunebuilder` or `mpnn`). If the conda slice exposes commons gaps, fix them in **W3a** (not here).
+**Tasks:**
+- *(continuous, cheap)* port the three slice models to house style; T0 + T1 + Opus review clean.
+- *(Modal Milestone A — bounded spend, surface cost first)* deploy at least the cheapest (`peptides`,
+  CPU) — the full slice if budget allows — against public R2; run integration + deployment; a second
+  (cache-hit) deploy serves weights straight from `biolm-public`. These are the **first writes to
+  public R2** (cache-miss → fetch → cache), so this also smoke-tests W4's population path.
+**Acceptance:** slices review-clean (gate the fan-out on this); Milestone-A deploy of ≥`peptides`
+passes integration + deployment (confirms the decoupled commons actually deploys).
+**Depends on:** W3a (decoupled commons), W4 (bucket). **Blocks:** W5 (on the review-clean gate).
 
 ## W5 — Per-model hardening (batched fan-out) · Stage 3 *(the big parallel effort)*
 **Goal:** Every shipped model meets house style and is green from the new repo.

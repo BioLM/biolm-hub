@@ -11,6 +11,30 @@ fixtures), W11 (CI gating), W-slice (the canary). Per-model acceptance in `02` m
 
 ---
 
+## 0. Modal cost discipline (READ FIRST — 2026-06-27 user directive)
+
+**Minimize Modal spend during development.** Live Modal deploys + T2/T3 testing cost real money
+(GPU/conda builds especially). So during the port we validate **cheaply** and **batch** the expensive
+Modal runs:
+
+- **Development validation (cheap, the default):** every change is validated by **T0 (static) + T1
+  (unit) + a fresh-context Opus review** of the diff (correctness, contract adherence, commons-API
+  breakage, schema/action/logging/error conformance). The Opus review *replaces a live deploy* during
+  the port. **Do NOT deploy per-change.**
+- **Modal milestones (deliberate, bounded spend — surface the intended cost to the user first):**
+  - **Milestone A — contract smoke (recommended, cheap):** once the Stage-2 commons sequence + the
+    three slice models are review-clean, deploy the **single cheapest model (`peptides`, pure CPU)** —
+    or the full slice if budget allows — to confirm the decoupled commons actually deploys + runs.
+    Catches systemic commons breakage before the fan-out piles on.
+  - **Milestone B — comprehensive (required, the big spend):** once all models are ported +
+    review-hardened, run the full T2+T3 matrix (deploy + integration + deployment) so CI is green for
+    real. The user is fine doing this as a single pass at the end.
+- **Tradeoff:** review-based validation reduces but does not eliminate the risk that only a live
+  deploy would catch (a subtle Modal-build break). Keeping Milestone A early bounds that risk; the
+  user has accepted the rest.
+
+---
+
 ## 1. The test tiers (what exists, what each needs)
 
 The internal `TestSuite`/`generate_tests_from_suite` infra emits pytest tests with markers
@@ -34,14 +58,16 @@ tolerances/validators.
 
 ## 2. The change → verify loop (every agent, every workstream)
 
-1. Work in an isolated git worktree.
+1. Work in an isolated git worktree (or in-tree for serialized solo work like W3a).
 2. **T0 static** — must pass before anything else. (Cheap; catches most mistakes.)
 3. **T1 unit** — must pass.
-4. If the change touches a model's behavior, schema, build, or `commons/`: **T2 integration** on the
-   dev env, then **T3 deployment**. Run via the canonical command: `python -m pytest
-   models/<m>/test.py -m integration` (then `-m deployment`).
-5. A **fresh-context Opus reviewer** checks the diff (house rule; required for W5 batches + W3a/W3b).
-6. Only then mark the checklist item / workstream acceptance done.
+4. A **fresh-context Opus reviewer** checks the diff (correctness, contract/commons-API breakage,
+   schema/action/logging/error conformance). **During the port this is the primary validation**, in
+   place of a live deploy (cost discipline, §0). Required for W3a/W3b and every W5 batch.
+5. **T2/T3 (Modal) are deferred to milestones (§0)** — not run per-change. When a milestone runs, use
+   the canonical command `python -m pytest models/<m>/test.py -m integration` (then `-m deployment`).
+6. Mark a checklist item done when T0 + T1 + review pass; mark **deploy-dependent** acceptance done
+   only after the relevant Modal milestone confirms it.
 
 **Golden-fixture discipline (critical):** the golden output in R2 is the **oracle**. Do **not**
 blindly regenerate goldens to make a test pass — that masks regressions. Regenerate a golden only when
@@ -85,11 +111,12 @@ on every change.** Scope by blast radius:
 - [ ] **Dev Modal env created** (e.g. `biolm-models-dev`) + **R2 write creds wired** (so T2/T3 can deploy
       + populate). *(user provisions — see master plan §10.)*
 - [ ] **W3a commons-decouple merged** so a model deploys from the new repo with zero internal deps.
-- [ ] **W-slice green** (esm2 + peptides + one conda model through T0→T3) — the canary that proves the
-      whole loop before fan-out.
+- [ ] **W-slice review-clean** (esm2 + peptides + one conda model: code ported + T0/T1 + Opus review)
+      before fan-out. Its **live T2/T3 deploy is Milestone A** (§0) — a deliberate, bounded Modal
+      spend, not an every-change gate.
 - [ ] **W12 shared-asset convention locked** (so fixtures are written right the first time).
 - [ ] **W11 CI** runs T0+T1 on every PR and gates T2+T3.
 
-Until these are checked, agents can do T0/T1-verifiable work (W1 scaffolding, lint/format passes,
-pure refactors) but **cannot truthfully verify** model deploys — so the orchestrator must not mark
-deploy-dependent acceptance criteria done.
+During the port, agents validate via T0 + T1 + Opus review (§0); **deploy-dependent acceptance is
+confirmed only at the Modal milestones (A/B)**, not continuously. The orchestrator must not claim a
+model "deploys + tests green" until the relevant milestone has actually run it.
