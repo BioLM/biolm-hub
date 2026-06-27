@@ -124,8 +124,7 @@ Request --> Validate PDB + mutations
 
 ### Caching Behavior
 
-- Redis (Modal Dict) caching: Enabled via `BillingMixinSnap`
-- R2 caching: Enabled via `BillingMixinSnap`
+Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container.
 
 ## Versions & Changelog
 

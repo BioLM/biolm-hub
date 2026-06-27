@@ -190,7 +190,7 @@ Golden output comparison: Test fixtures compare outputs against reference values
 - **SPURS repository**: Cloned at pinned commit (`2bae5fed`) into `/opt/spurs`
 - **Structure handling**: CIF files converted to PDB via biotite before SPURS processing
 - **Determinism**: Seeds set via SPURS `seed_everything(42)` utility
-- **Caching**: Inherits standard Redis/R2 two-tier caching from `BillingMixinSnap`
+- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container
 
 ## License
 

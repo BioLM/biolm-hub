@@ -4,6 +4,7 @@ from pathlib import Path
 import modal
 
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.error import ValidationError400
 from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
@@ -302,7 +303,9 @@ class SpursModel(ModelMixinSnap):
             return item.pdb, "pdb"
         if item.cif:
             return item.cif, "cif"
-        raise ValueError("Expected either PDB or CIF content in request item")
+        raise ValidationError400(
+            "Expected either pdb or cif content in the request item"
+        )
 
 
 if __name__ == "__main__":

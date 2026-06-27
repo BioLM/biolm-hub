@@ -58,7 +58,7 @@ complements:
     workflow: "Predict 3D structure with Boltz for proteins without experimental structures, then use SPURS for comprehensive stability analysis including full DMS matrix and multi-mutation ddG predictions"
     example_protocol: null
   - model: esm2
-    workflow: "Use ESM2 predict_log_prob for fast sequence-based mutation screening to identify evolutionarily plausible mutations, then validate with SPURS structure-based ddG for a two-layer stability assessment"
+    workflow: "Use ESM2 log_prob for fast sequence-based mutation screening to identify evolutionarily plausible mutations, then validate with SPURS structure-based ddG for a two-layer stability assessment"
     example_protocol: null
   - model: gemme
     workflow: "Use GEMME for MSA-based evolutionary variant scoring to capture conservation-driven constraints, then use SPURS for structure-based ddG prediction -- combining evolutionary and structural evidence for higher-confidence mutation prioritization"

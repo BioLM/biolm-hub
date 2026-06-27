@@ -39,6 +39,7 @@ PROTEIN_MPNN_CHECKPOINT = "v_48_020.pt"  # Base ProteinMPNN model
 # - Actions: predict
 MODEL_FAMILY = ModelFamily(
     base_model_slug=ThermoMPNNParams.base_model_slug,
+    modal_class_name="ThermoMPNNModel",
     display_name=ThermoMPNNParams.display_name,
     tags=ModelTags(
         input_modality=[InputModality.STRUCTURE],

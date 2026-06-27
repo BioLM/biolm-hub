@@ -167,7 +167,7 @@ class ThermoMPNNDModel(ModelMixinSnap):
     @modal.enter(snap=False)
     def setup_model(self):
         """
-        Transfers models to GPU and starts billing.
+        Transfers models to GPU after restoring from memory snapshot.
         """
         # Set deterministic behavior for consistent results across GPU loading
         if self.torch.cuda.is_available():

@@ -53,6 +53,7 @@ TEMPRO_VARIANT_RESOURCE_SPECS = {
 # - Actions: predict (melting temperature prediction)
 MODEL_FAMILY = ModelFamily(
     base_model_slug=TemproParams.base_model_slug,
+    modal_class_name="TemproModel",
     display_name=TemproParams.display_name,
     tags=ModelTags(
         input_modality=[InputModality.SEQUENCE],

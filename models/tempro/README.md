@@ -134,7 +134,7 @@ Tests include single-sequence prediction, batch prediction (4 sequences), and va
 - Uses Modal memory snapshots for faster cold starts
 - Keras model is loaded during snapshot creation; TensorFlow runs on CPU
 - ESM2 embeddings are obtained via Modal function lookup (`modal.Cls.from_name`), not local inference
-- The `app_username` parameter is passed through to ESM2 for billing attribution
+- The `app_username` parameter is forwarded to ESM2 for request attribution
 - TensorFlow CPU-only build is used to minimize image size (no GPU needed for the Keras head)
 
 ## License

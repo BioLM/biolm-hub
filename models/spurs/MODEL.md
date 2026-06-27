@@ -138,7 +138,7 @@ Request
 
 ### Caching Behavior
 
-SPURS uses `BillingMixinSnap` with GPU memory snapshots enabled for fast cold starts. Standard Redis/R2 two-tier caching applies.
+Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container. GPU memory snapshots are enabled for fast cold starts.
 
 ## Versions & Changelog
 

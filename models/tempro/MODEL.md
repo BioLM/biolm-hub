@@ -105,9 +105,7 @@ Request --> Validate sequences (100-160 AA)
 
 ### Caching Behavior
 
-- Redis (Modal Dict) caching: Enabled via `BillingMixinSnap`
-- R2 caching: Enabled via `BillingMixinSnap`
-- ESM2 calls may benefit from ESM2's own caching
+Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container. ESM2 calls may benefit from ESM2's own platform-layer caching.
 
 ## Versions & Changelog
 

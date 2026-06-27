@@ -38,6 +38,7 @@ SpursResourceSpec = ModalResourceSpec(
 # - Actions: predict (ΔΔG prediction)
 MODEL_FAMILY = ModelFamily(
     base_model_slug=SpursParams.base_model_slug,
+    modal_class_name="SpursModel",
     display_name=SpursParams.display_name,
     tags=ModelTags(
         input_modality=[InputModality.SEQUENCE, InputModality.STRUCTURE],

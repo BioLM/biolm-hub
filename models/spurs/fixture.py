@@ -21,10 +21,18 @@ PREDICT_VARIANT_OUTPUT = "predict_variant_expected_output.json"
 TSHR260_CIF_FILENAME = "tshr260_chai1_structure.cif"
 
 
-_R2_BASE_PATH = f"{r2_test_data_dir}/models/{MODEL_FAMILY.base_model_slug}"
-r2_key = f"{_R2_BASE_PATH}/{TSHR260_CIF_FILENAME}"
-record = read_json_from_r2(r2_bucket_name, r2_key)
-_TSHR260_CIF = record.get("tshr260_cif")
+def _load_tshr260_cif() -> str:
+    """Load the TSHR260 CIF structure from R2.
+
+    R2 read lives here, NOT at module scope, so importing this module (e.g. for
+    ``pytest --collect-only`` via test.py) never touches R2. Only ``generate()``
+    (run explicitly) loads the structure from R2.
+    """
+    r2_base_path = f"{r2_test_data_dir}/models/{MODEL_FAMILY.base_model_slug}"
+    r2_key = f"{r2_base_path}/{TSHR260_CIF_FILENAME}"
+    record = read_json_from_r2(r2_bucket_name, r2_key)
+    return record.get("tshr260_cif")
+
 
 # Sample sequence (extracted from tshr260_chai1_structure.cif, chain A)
 _SAMPLE_SEQUENCE = (
@@ -49,6 +57,7 @@ fixture_generation_suite = TestSuite(
 
 def generate():
     """Configures and runs the fixture generator"""
+    tshr260_cif = _load_tshr260_cif()
     generator = FixtureGenerator(fixture_generation_suite)
 
     # Test Case 1: single mutation prediction
@@ -59,7 +68,7 @@ def generate():
                 items=[
                     SpursPredictRequestItem(
                         sequence=_SAMPLE_SEQUENCE,
-                        cif=_TSHR260_CIF,
+                        cif=tshr260_cif,
                         mutations=["P121I"],
                     )
                 ]
@@ -78,7 +87,7 @@ def generate():
                 items=[
                     SpursPredictRequestItem(
                         sequence=_SAMPLE_SEQUENCE,
-                        cif=_TSHR260_CIF,
+                        cif=tshr260_cif,
                         mutations=["I232R", "P147Y"],
                     )
                 ]
@@ -97,7 +106,7 @@ def generate():
                 items=[
                     SpursPredictRequestItem(
                         sequence=_SAMPLE_SEQUENCE,
-                        cif=_TSHR260_CIF,
+                        cif=tshr260_cif,
                         mutations=None,
                     )
                 ]
@@ -110,10 +119,10 @@ def generate():
 
     # Test Case 4: variant_sequence auto-calculation (I232R, P147Y from variant)
     # Create variant sequence with I232R and P147Y mutations
-    _VARIANT_SEQUENCE = list(_SAMPLE_SEQUENCE)
-    _VARIANT_SEQUENCE[231] = "R"  # I232R (0-indexed: 231)
-    _VARIANT_SEQUENCE[146] = "Y"  # P147Y (0-indexed: 146)
-    _VARIANT_SEQUENCE = "".join(_VARIANT_SEQUENCE)
+    variant_sequence = list(_SAMPLE_SEQUENCE)
+    variant_sequence[231] = "R"  # I232R (0-indexed: 231)
+    variant_sequence[146] = "Y"  # P147Y (0-indexed: 146)
+    variant_sequence = "".join(variant_sequence)
 
     generator.add_test_case(
         ActionTestCase(
@@ -122,8 +131,8 @@ def generate():
                 items=[
                     SpursPredictRequestItem(
                         sequence=_SAMPLE_SEQUENCE,  # Wild-type
-                        variant_sequence=_VARIANT_SEQUENCE,  # Variant with I232R, P147Y
-                        cif=_TSHR260_CIF,
+                        variant_sequence=variant_sequence,  # Variant with I232R, P147Y
+                        cif=tshr260_cif,
                         mutations=None,
                         return_full_dms=False,
                     )

@@ -201,7 +201,7 @@ After a batch is committed, tick its models in the `02` per-model checklist and 
 | B | dnabert2, omni_dna, e1, evo, dna_chisel | DONE (commit fe5b084) |
 | C | ablang2, igbert, igt5, nanobert, sadie, antifold | pending |
 | D | abodybuilder3, immunebuilder, immunefold, propermab | pending |
-| E | boltz, chai1, rf3, rfd3, boltzgen | pending |
-| F | thermompnn, thermompnn_d, deepviscosity, temberture, tempro, spurs | pending |
+| E | boltz, chai1, rf3, rfd3, boltzgen | DONE (commit 4bc1a17) |
+| F | thermompnn, thermompnn_d, deepviscosity, temberture, tempro, spurs | DONE |
 | G | progen2, zymctrl, dsm, evo2, prostt5, pro1 | DONE (commit 4fae668) |
 | H | peptides, biotite, prody, clean | DONE |

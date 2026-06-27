@@ -46,6 +46,7 @@ TEMBERTURE_VARIANT_RESOURCE_SPECS = {
 # - Actions: encode, predict
 MODEL_FAMILY = ModelFamily(
     base_model_slug=TemBERTureParams.base_model_slug,
+    modal_class_name="TemBERTureModel",
     display_name=TemBERTureParams.display_name,
     tags=ModelTags(
         input_modality=[InputModality.SEQUENCE],

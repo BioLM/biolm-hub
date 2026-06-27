@@ -61,7 +61,7 @@ complements:
     workflow: "Use ThermoMPNN for initial single-mutation SSM scanning to identify candidate stabilizing positions, then use ThermoMPNN-D to evaluate promising pairs of mutations for synergistic (epistatic) stability improvements"
     example_protocol: null
   - model: esm2
-    workflow: "Use ESM2 predict_log_prob for fast sequence-based variant scoring to identify evolutionarily plausible mutations, then validate the top candidates with ThermoMPNN's structure-based ddG prediction for a two-layer screening approach"
+    workflow: "Use ESM2 log_prob for fast sequence-based variant scoring to identify evolutionarily plausible mutations, then validate the top candidates with ThermoMPNN's structure-based ddG prediction for a two-layer screening approach"
     example_protocol: null
   - model: camsol
     workflow: "Use ThermoMPNN to identify stabilizing mutations, then screen the mutant sequences with CamSol to ensure the engineered variants maintain acceptable solubility -- optimizing both stability and solubility simultaneously"

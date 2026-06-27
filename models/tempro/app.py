@@ -76,7 +76,7 @@ app = modal.App(app_name, image=image)
 
 @lru_cache(maxsize=128)
 def get_esm2_modal_class(esm_app_name: str, app_username: str):
-    """Get cached user-specific ESM2 Modal class instance for billing attribution."""
+    """Get cached user-specific ESM2 Modal class instance for request attribution."""
     try:
         ESM2Model = modal.Cls.from_name(esm_app_name, "ESM2Model")
         return ESM2Model(app_username=app_username)
@@ -151,7 +151,7 @@ class TemproModel(ModelMixinSnap):
             items=[ESM2EncodeRequestItem(sequence=seq) for seq in sequences],
         )
 
-        # Get ESM2 model using Modal function lookup with username for billing
+        # Get ESM2 model using Modal function lookup with username for attribution
         esm_app_name = f"esm2-{self.esm2_size}"
         logger.info(
             "📞 Looking up ESM2 app: %s for user: %s", esm_app_name, self.app_username
