@@ -1,7 +1,10 @@
+from models.commons.core.logging import get_logger
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
 from models.commons.testing.fixture import FixtureGenerator
 from models.mpnn.config import MODEL_FAMILY
+
+logger = get_logger(__name__)
 
 # Test input/output filenames (manually created and stored in R2)
 # MPNN uses multiple input files for all variants
@@ -67,11 +70,12 @@ def generate(hyper_only: bool = False):
         ]
 
         if not hyper_variants:
-            print("❌ No hyper-mpnn variant found in resolved variants")
+            logger.warning("❌ No hyper-mpnn variant found in resolved variants")
             return
 
-        print(
-            f"🎯 Generating fixtures only for: {[v.modal_app_name for v in hyper_variants]}"
+        logger.info(
+            "🎯 Generating fixtures only for: %s",
+            [v.modal_app_name for v in hyper_variants],
         )
 
         # Manually process only hyper variants
@@ -84,30 +88,32 @@ def generate(hyper_only: bool = False):
             if not test_cases:
                 continue
 
-            print(f"\n⚙️  Processing variant '{variant.modal_app_name}'...")
+            logger.info("\n⚙️  Processing variant '%s'...", variant.modal_app_name)
             generator._write_input_files(test_cases, variant, written_inputs)
 
             from models.commons.testing.runner import setup_and_get_local_model_instance
 
-            print(
-                f"  - Setting up Modal instance for variant '{variant.modal_app_name}'..."
+            logger.info(
+                "  - Setting up Modal instance for variant '%s'...",
+                variant.modal_app_name,
             )
             model_instance, app_object = setup_and_get_local_model_instance(
                 generator.suite, variant
             )
 
-            print(
-                f"  - Generating fixture outputs for variant '{variant.modal_app_name}'..."
+            logger.info(
+                "  - Generating fixture outputs for variant '%s'...",
+                variant.modal_app_name,
             )
             generator._generate_output_files(
                 model_instance, app_object, test_cases, variant
             )
 
-            print(
-                f"✅ Wrote all output fixtures for variant '{variant.modal_app_name}'."
+            logger.info(
+                "✅ Wrote all output fixtures for variant '%s'.", variant.modal_app_name
             )
 
-        print("\n--- ✅ HyperMPNN fixture generation complete! ---")
+        logger.info("\n--- ✅ HyperMPNN fixture generation complete! ---")
     else:
         generator = FixtureGenerator(fixture_generation_suite)
         generator.generate()
@@ -122,8 +128,8 @@ if __name__ == "__main__":
     hyper_only = "--hyper" in sys.argv or "-h" in sys.argv
 
     if hyper_only:
-        print("🎯 Generating fixtures only for hyper-mpnn variant...")
+        logger.info("🎯 Generating fixtures only for hyper-mpnn variant...")
     else:
-        print("🚀 Generating fixtures for all MPNN variants...")
+        logger.info("🚀 Generating fixtures for all MPNN variants...")
 
     generate(hyper_only=hyper_only)

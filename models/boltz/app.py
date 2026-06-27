@@ -37,13 +37,14 @@ from models.boltz.utils import (
     construct_yaml_data,
     parse_structure_from_cif,
 )
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
 from models.commons.core.error import UserError
+from models.commons.core.logging import get_logger
 from models.commons.data.validator import validate_smiles_with_rdkit
 from models.commons.modal.deployment import run_or_deploy_modal_app
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -51,6 +52,8 @@ from models.commons.util.config import (
 )
 from models.commons.util.device import get_torch_device
 from models.commons.util.environment import parse_variant
+
+logger = get_logger(__name__)
 
 # Parse variant configuration
 variant_config = parse_variant(
@@ -94,7 +97,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config(**variant_config)
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 # Define the Modal volume for mols (needed for Boltz2)
@@ -200,12 +203,13 @@ def _generate_msa_for_entities(
             proteins_needing_msa.append((idx, mol))
 
     if not proteins_needing_msa:
-        print("[Boltz MSA] No protein entities need automatic MSA generation")
+        logger.info("[Boltz MSA] No protein entities need automatic MSA generation")
         return
 
-    print(
-        f"[Boltz MSA] Generating MSA for {len(proteins_needing_msa)} protein(s) "
-        f"using MSA Search NIM ({msa_mode})"
+    logger.info(
+        "[Boltz MSA] Generating MSA for %s protein(s) using MSA Search NIM (%s)",
+        len(proteins_needing_msa),
+        msa_mode,
     )
 
     try:
@@ -220,26 +224,30 @@ def _generate_msa_for_entities(
         else:
             # >8 proteins: encode_paired() supports max 8 chains, fall back
             # to individual encode() calls for each protein
-            print(
-                f"[Boltz MSA] >8 protein chains ({len(proteins_needing_msa)}), "
-                "using individual MSA search (paired MSA supports max 8 chains)"
+            logger.warning(
+                "[Boltz MSA] >8 protein chains (%s), "
+                "using individual MSA search (paired MSA supports max 8 chains)",
+                len(proteins_needing_msa),
             )
             for protein in proteins_needing_msa:
                 try:
                     _generate_msa_single([protein], msa_service)
                 except Exception as e:
                     _idx, entity = protein
-                    print(
-                        f"[Boltz MSA] WARNING: MSA failed for entity "
-                        f"'{entity.id}': {e}. Continuing with remaining proteins."
+                    logger.warning(
+                        "[Boltz MSA] WARNING: MSA failed for entity '%s': %s. "
+                        "Continuing with remaining proteins.",
+                        entity.id,
+                        e,
                     )
 
     except Exception as e:
         # Graceful fallback: leave alignments as None
         # (Boltz will use empty MSA for these entities)
-        print(
-            f"[Boltz MSA] WARNING: MSA Search NIM failed ({e}). "
-            "Falling back to empty MSA for affected protein entities."
+        logger.warning(
+            "[Boltz MSA] WARNING: MSA Search NIM failed (%s). "
+            "Falling back to empty MSA for affected protein entities.",
+            e,
         )
 
 
@@ -249,7 +257,7 @@ def _generate_msa_single(
 ) -> None:
     """Generate MSA for a single protein entity via encode()."""
     _idx, entity = proteins[0]
-    print(f"[Boltz MSA] Running monomer MSA search for entity '{entity.id}'")
+    logger.info("[Boltz MSA] Running monomer MSA search for entity '%s'", entity.id)
 
     from models.msa_search_nim.schema import MSASearchEncodeRequest
 
@@ -266,18 +274,21 @@ def _generate_msa_single(
 
     results = response.get("results", [])
     if not results:
-        print("[Boltz MSA] WARNING: MSA search returned no results")
+        logger.warning("[Boltz MSA] WARNING: MSA search returned no results")
         return
 
     alignments = _extract_alignments_from_nim_result(results[0].get("alignments", {}))
     if alignments:
         entity.alignment = alignments
-        print(
-            f"[Boltz MSA] Populated MSA for entity '{entity.id}' "
-            f"with databases: {[db.value for db in alignments]}"
+        logger.info(
+            "[Boltz MSA] Populated MSA for entity '%s' with databases: %s",
+            entity.id,
+            [db.value for db in alignments],
         )
     else:
-        print(f"[Boltz MSA] No usable alignments returned for entity '{entity.id}'")
+        logger.warning(
+            "[Boltz MSA] No usable alignments returned for entity '%s'", entity.id
+        )
 
 
 def _generate_msa_paired(
@@ -287,8 +298,10 @@ def _generate_msa_paired(
     """Generate paired MSA for multiple protein entities via encode_paired()."""
     sequences = [entity.sequence for _idx, entity in proteins]
     entity_ids = [entity.id for _idx, entity in proteins]
-    print(
-        f"[Boltz MSA] Running paired MSA search for {len(proteins)} chains: {entity_ids}"
+    logger.info(
+        "[Boltz MSA] Running paired MSA search for %s chains: %s",
+        len(proteins),
+        entity_ids,
     )
 
     from models.msa_search_nim.schema import MSAPairedEncodeRequest
@@ -306,9 +319,11 @@ def _generate_msa_paired(
 
     results = response.get("results", [])
     if len(results) != len(proteins):
-        print(
-            f"[Boltz MSA] WARNING: Expected {len(proteins)} results from paired "
-            f"MSA search, got {len(results)}. Skipping MSA population."
+        logger.warning(
+            "[Boltz MSA] WARNING: Expected %s results from paired "
+            "MSA search, got %s. Skipping MSA population.",
+            len(proteins),
+            len(results),
         )
         return
 
@@ -316,12 +331,15 @@ def _generate_msa_paired(
         alignments = _extract_alignments_from_nim_result(result.get("alignments", {}))
         if alignments:
             entity.alignment = alignments
-            print(
-                f"[Boltz MSA] Populated paired MSA for entity '{entity.id}' "
-                f"with databases: {[db.value for db in alignments]}"
+            logger.info(
+                "[Boltz MSA] Populated paired MSA for entity '%s' with databases: %s",
+                entity.id,
+                [db.value for db in alignments],
             )
         else:
-            print(f"[Boltz MSA] No usable alignments returned for entity '{entity.id}'")
+            logger.warning(
+                "[Boltz MSA] No usable alignments returned for entity '%s'", entity.id
+            )
 
 
 @app.cls(
@@ -340,11 +358,13 @@ class BoltzModel(ModelMixinSnap):
     @modal.enter(snap=True)
     def load_model(self):
         """Load model components on CPU for memory snapshot."""
-        print(f"📸 Loading Boltz {model_version} model on CPU for memory snapshot...")
+        logger.info(
+            "Loading Boltz %s model on CPU for memory snapshot...", model_version
+        )
 
         self.model_dir = get_model_dir(model_version)
 
-        print(f"🔍 Boltz model directory: {self.model_dir}")
+        logger.info("Boltz model directory: %s", self.model_dir)
 
         # Setup mols directory symlink for Boltz2
         if model_version == BoltzModelVersion.BOLTZ2:
@@ -352,19 +372,19 @@ class BoltzModel(ModelMixinSnap):
 
         # Save snapshot timing for billing
         self.save_snapshot_uptime()
-        print(f"✅ Boltz {model_version} model loaded on CPU, snapshot saved")
+        logger.info("Boltz %s model loaded on CPU, snapshot saved", model_version)
 
     @modal.enter(snap=False)
     def setup_gpu(self):
         """Transfer model to GPU after snapshot restore."""
-        print(f"🚀 Setting up Boltz {model_version} model on GPU...")
+        logger.info("Setting up Boltz %s model on GPU...", model_version)
 
         # Initialize GPU-specific components if needed
         device = get_torch_device()
-        print(f"📍 Using device: {device}")
+        logger.info("Using device: %s", device)
 
         # Note: Billing is automatically started by ModelMixinSnap's billing_enter method
-        print(f"✅ Boltz {model_version} model ready on GPU")
+        logger.info("Boltz %s model ready on GPU", model_version)
 
     def _setup_mols_directory(self):
         """Setup the mols directory symlink for Boltz2."""
@@ -377,23 +397,25 @@ class BoltzModel(ModelMixinSnap):
         # Path where you want the mols dir to appear in your model_dir
         mols_symlink = self.model_dir / "mols"
 
-        print("Setting up mols directory for Boltz2...")
-        print(f"  mols.tar path: {mols_tar} (exists: {mols_tar.exists()})")
-        print(f"  volume path: {mols_vol_path} (exists: {mols_vol_path.exists()})")
+        logger.info("Setting up mols directory for Boltz2...")
+        logger.debug("  mols.tar path: %s (exists: %s)", mols_tar, mols_tar.exists())
+        logger.debug(
+            "  volume path: %s (exists: %s)", mols_vol_path, mols_vol_path.exists()
+        )
 
         # Ensure volume directory exists
         mols_vol_path.mkdir(parents=True, exist_ok=True)
 
         # Extract to the volume if not already extracted
         if mols_tar.exists() and not any(mols_vol_path.iterdir()):
-            print(f"Extracting {mols_tar} to {mols_vol_path}")
+            logger.info("Extracting %s to %s", mols_tar, mols_vol_path)
             with tarfile.open(mols_tar, "r") as tar:
                 tar.extractall(mols_vol_path)
-            print(f"✅ Extracted mols.tar to {mols_vol_path}")
+            logger.info("Extracted mols.tar to %s", mols_vol_path)
         elif not mols_tar.exists():
-            print(f"⚠️ WARNING: mols.tar not found at {mols_tar}")
+            logger.warning("mols.tar not found at %s", mols_tar)
         else:
-            print("ℹ️ Volume already contains files, skipping extraction")
+            logger.info("Volume already contains files, skipping extraction")
 
         # Ensure model directory exists
         self.model_dir.mkdir(parents=True, exist_ok=True)
@@ -405,17 +427,17 @@ class BoltzModel(ModelMixinSnap):
         # Check if the source directory exists before creating symlink
         mols_source = mols_vol_path / "mols"
         if not mols_source.exists():
-            print(f"⚠️ WARNING: Source directory {mols_source} does not exist")
+            logger.warning("Source directory %s does not exist", mols_source)
             # Try without the nested 'mols' directory
             if mols_vol_path.exists() and any(mols_vol_path.iterdir()):
-                print(f"  Using volume root directly: {mols_vol_path}")
+                logger.info("Using volume root directly: %s", mols_vol_path)
                 os.symlink(mols_vol_path, mols_symlink)
             else:
-                print("⚠️ ERROR: No valid mols directory found to symlink")
+                logger.error("No valid mols directory found to symlink")
         else:
             os.symlink(mols_source, mols_symlink)
 
-        print(
+        logger.info(
             f"Symlinked {mols_symlink} -> {mols_symlink.resolve() if mols_symlink.exists() else 'BROKEN'}"
         )
 
@@ -479,8 +501,10 @@ class BoltzModel(ModelMixinSnap):
                         "Check alignment files and molecule definitions."
                     ) from e
 
-                print("[Boltz] Final YAML to be used for prediction:")
-                print(yaml_string)
+                logger.debug(
+                    "[Boltz] Final YAML to be used for prediction:\n%s",
+                    yaml_string[:500],
+                )
 
                 # Write YAML to temporary file
                 yaml_path = tmp_dir / "input.yaml"
@@ -518,25 +542,29 @@ class BoltzModel(ModelMixinSnap):
 
     def _log_input_details(self, input_item, params):
         """Log input details for debugging."""
-        print(f"[Boltz] Constructing YAML for {len(input_item.molecules)} molecule(s)")
+        logger.info(
+            "[Boltz] Constructing YAML for %s molecule(s)", len(input_item.molecules)
+        )
 
         for idx, mol in enumerate(input_item.molecules):
-            print(f"  Molecule {idx}: id={mol.id}, type={mol.type}")
+            logger.debug("  Molecule %s: id=%s, type=%s", idx, mol.id, mol.type)
             if mol.alignment:
-                print(f"    Alignment sources: {list(mol.alignment.keys())}")
+                logger.debug("    Alignment sources: %s", list(mol.alignment.keys()))
             if mol.sequence:
-                print(f"    Sequence: {mol.sequence[:20]}... (len={len(mol.sequence)})")
+                logger.debug(
+                    "    Sequence: %s... (len=%s)", mol.sequence[:20], len(mol.sequence)
+                )
             if mol.smiles:
-                print(f"    SMILES: {mol.smiles}")
+                logger.debug("    SMILES: %s", mol.smiles[:64])
             if mol.ccd:
-                print(f"    CCD: {mol.ccd}")
+                logger.debug("    CCD: %s", mol.ccd)
 
         if getattr(input_item, "constraints", None):
-            print(f"[Boltz] Constraints: {input_item.constraints}")
+            logger.debug("[Boltz] Constraints: %s", input_item.constraints)
         if getattr(params, "affinity", None):
-            print(f"[Boltz] Affinity property: {params.affinity}")
+            logger.debug("[Boltz] Affinity property: %s", params.affinity)
         if getattr(params, "include", None):
-            print(f"[Boltz] Include parameters: {params.include}")
+            logger.debug("[Boltz] Include parameters: %s", params.include)
 
     def _run_boltz_prediction(self, yaml_path: Path, out_dir: Path, params) -> Path:
         """Execute the Boltz prediction command."""
@@ -544,10 +572,12 @@ class BoltzModel(ModelMixinSnap):
         if not self.model_dir.exists():
             raise UserError(f"Model directory does not exist: {self.model_dir}")
 
-        print(f"Model directory contents: {list(self.model_dir.glob('*'))[:10]}")
+        logger.debug(
+            "Model directory contents: %s", list(self.model_dir.glob("*"))[:10]
+        )
 
         cmd = self._build_boltz_command(yaml_path, out_dir, params)
-        print(f"Running command: {' '.join(cmd)}")
+        logger.info("Running command: %s", " ".join(cmd))
 
         process = self._execute_boltz_process(cmd)
         self._stream_process_output(process)
@@ -610,7 +640,7 @@ class BoltzModel(ModelMixinSnap):
 
     def _add_optional_parameters(self, cmd: list[str], params) -> None:
         """Add optional parameters to the command."""
-        print(f"[Boltz] Processing include parameters: {params.include}")
+        logger.debug("[Boltz] Processing include parameters: %s", params.include)
         if params.seed is not None:
             cmd.extend(["--seed", str(params.seed)])
         # Always write PAE so ipSAE/ipae interface metrics are computed for
@@ -618,13 +648,13 @@ class BoltzModel(ModelMixinSnap):
         # response (too large); only the derived metrics are included.
         cmd.append("--write_full_pae")
         if BoltzIncludeParams.PAE in params.include:
-            print("[Boltz] PAE explicitly requested via include params")
+            logger.info("[Boltz] PAE explicitly requested via include params")
         if BoltzIncludeParams.PDE in params.include:
             cmd.append("--write_full_pde")
-            print("[Boltz] Added --write_full_pde flag")
+            logger.info("[Boltz] Added --write_full_pde flag")
         if BoltzIncludeParams.EMBEDDINGS in params.include:
             cmd.append("--write_embeddings")
-            print("[Boltz] Added --write_embeddings flag")
+            logger.info("[Boltz] Added --write_embeddings flag")
         if getattr(params, "affinity_mw_correction", False):
             cmd.append("--affinity_mw_correction")
         if params.subsample_msa:
@@ -664,7 +694,7 @@ class BoltzModel(ModelMixinSnap):
             try:
                 for line in process.stdout:
                     stripped = line.rstrip("\n")
-                    print(stripped)
+                    logger.info("%s", stripped)
                     stdout_lines.append(stripped)
             except (OSError, ValueError):
                 # Pipe closed or I/O on closed file — expected during kill.
@@ -691,7 +721,7 @@ class BoltzModel(ModelMixinSnap):
             try:
                 process.wait(timeout=10)
             except subprocess.TimeoutExpired:
-                print("[Boltz] Warning: process did not exit after kill")
+                logger.warning("[Boltz] Warning: process did not exit after kill")
             stdout_thread.join(timeout=5)
             stderr_thread.join(timeout=5)
             self._last_stdout = "\n".join(stdout_lines)
@@ -706,9 +736,13 @@ class BoltzModel(ModelMixinSnap):
         stdout_thread.join(timeout=10)
         stderr_thread.join(timeout=10)
         if stdout_thread.is_alive():
-            print("[Boltz] Warning: stdout reader thread did not finish draining")
+            logger.warning(
+                "[Boltz] Warning: stdout reader thread did not finish draining"
+            )
         if stderr_thread.is_alive():
-            print("[Boltz] Warning: stderr reader thread did not finish draining")
+            logger.warning(
+                "[Boltz] Warning: stderr reader thread did not finish draining"
+            )
 
         self._last_stdout = "\n".join(stdout_lines)
         self._last_stderr = "".join(stderr_chunks)
@@ -722,7 +756,7 @@ class BoltzModel(ModelMixinSnap):
         stderr = getattr(self, "_last_stderr", "") or ""
         stdout = getattr(self, "_last_stdout", "") or ""
         if stderr:
-            print(f"Boltz CLI stderr output:\n{stderr[:10000]}")
+            logger.debug("Boltz CLI stderr output:\n%s", stderr[:10000])
 
         if process.returncode == 0:
             return
@@ -850,20 +884,23 @@ class BoltzModel(ModelMixinSnap):
                         residue_types,
                         pae_cutoff=10.0,
                     )
-                    print(
-                        f"[Boltz] Calculated ipSAE for {len(pair_chains_ipsae)} chains"
+                    logger.info(
+                        "[Boltz] Calculated ipSAE for %s chains", len(pair_chains_ipsae)
                     )
 
                     pair_chains_ipae = calculate_ipae(pae_matrix, chain_ids)
-                    print(f"[Boltz] Calculated ipae for {len(pair_chains_ipae)} chains")
+                    logger.info(
+                        "[Boltz] Calculated ipae for %s chains", len(pair_chains_ipae)
+                    )
                 else:
-                    print(
-                        f"[Boltz] Warning: Structure dimensions don't match PAE matrix. "
-                        f"Chain IDs: {len(chain_ids) if chain_ids else 0}, "
-                        f"PAE matrix: {pae_matrix.shape[0]}"
+                    logger.warning(
+                        "[Boltz] Warning: Structure dimensions don't match PAE matrix. "
+                        "Chain IDs: %s, PAE matrix: %s",
+                        len(chain_ids) if chain_ids else 0,
+                        pae_matrix.shape[0],
                     )
             except Exception as e:
-                print(f"[Boltz] Warning: Failed to calculate ipSAE/ipae: {e}")
+                logger.warning("[Boltz] Warning: Failed to calculate ipSAE/ipae: %s", e)
 
         # Add ipae and ipSAE to confidence data if calculated
         if pair_chains_ipae is not None:
@@ -924,25 +961,26 @@ class BoltzModel(ModelMixinSnap):
 
         if BoltzIncludeParams.EMBEDDINGS in params.include:
             embeddings_path = active_paths["embeddings"]
-            print(f"[Boltz] Checking for embeddings file: {embeddings_path}")
+            logger.debug("[Boltz] Checking for embeddings file: %s", embeddings_path)
             if embeddings_path.exists():
                 try:
                     embeddings_data = np.load(embeddings_path)
-                    print(
-                        f"[Boltz] Embeddings data keys: "
-                        f"{list(embeddings_data.keys())}"
+                    logger.debug(
+                        "[Boltz] Embeddings data keys: %s", list(embeddings_data.keys())
                     )
 
                     s_data = embeddings_data["s"]
                     z_data = embeddings_data["z"]
 
-                    print(
-                        f"[Boltz] Original s shape: {s_data.shape}, "
-                        f"dtype: {s_data.dtype}"
+                    logger.debug(
+                        "[Boltz] Original s shape: %s, dtype: %s",
+                        s_data.shape,
+                        s_data.dtype,
                     )
-                    print(
-                        f"[Boltz] Original z shape: {z_data.shape}, "
-                        f"dtype: {z_data.dtype}"
+                    logger.debug(
+                        "[Boltz] Original z shape: %s, dtype: %s",
+                        z_data.shape,
+                        z_data.dtype,
                     )
 
                     # Remove batch dimension
@@ -953,9 +991,10 @@ class BoltzModel(ModelMixinSnap):
                     z_list = z_data.tolist()
 
                     embeddings = BoltzEmbeddings(s=s_list, z=z_list)
-                    print(
-                        f"[Boltz] Created embeddings: "
-                        f"s={len(embeddings.s)}, z={len(embeddings.z)}"
+                    logger.debug(
+                        "[Boltz] Created embeddings: s=%s, z=%s",
+                        len(embeddings.s),
+                        len(embeddings.z),
                     )
                 except (KeyError, ValueError, IndexError) as e:
                     raise UserError(
@@ -964,7 +1003,7 @@ class BoltzModel(ModelMixinSnap):
                         "unexpected format."
                     ) from e
             else:
-                print(
+                logger.warning(
                     "[Boltz] Warning: embeddings were requested but "
                     "the file was not produced. The prediction may have "
                     "failed to write embeddings (e.g., OOM)."
@@ -991,9 +1030,11 @@ class BoltzModel(ModelMixinSnap):
             try:
                 if os.path.exists(temp_file):
                     os.unlink(temp_file)
-                    print(f"[Boltz] Cleaned up temp file: {temp_file}")
+                    logger.debug("[Boltz] Cleaned up temp file: %s", temp_file)
             except Exception as e:
-                print(f"[Boltz] Warning: Failed to clean up temp file {temp_file}: {e}")
+                logger.warning(
+                    "[Boltz] Warning: Failed to clean up temp file %s: %s", temp_file, e
+                )
 
 
 if __name__ == "__main__":

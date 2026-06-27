@@ -2,6 +2,10 @@
 
 import io
 
+from models.commons.core.logging import get_logger
+
+logger = get_logger(__name__)
+
 
 def extract_sequence_from_structure(
     structure: str,
@@ -198,8 +202,11 @@ def validate_sequence_compatibility(
         res_ids = sorted(residue_mapping.keys())
         expected_range = res_ids[-1] - res_ids[0] + 1
         if len(res_ids) != expected_range:
-            print(
-                f"⚠️  Warning: Structure has non-contiguous residue numbering "
-                f"(found {len(res_ids)} residues across range {res_ids[0]}-{res_ids[-1]}). "
-                f"This may indicate missing residues in the structure."
+            logger.warning(
+                "Structure has non-contiguous residue numbering "
+                "(found %s residues across range %s-%s). "
+                "This may indicate missing residues in the structure.",
+                len(res_ids),
+                res_ids[0],
+                res_ids[-1],
             )

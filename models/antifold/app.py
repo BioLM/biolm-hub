@@ -19,19 +19,22 @@ from models.antifold.schema import (
     AntiFoldPredictRequest,
     AntiFoldScoreResponse,
 )
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.data.validator import (
     aa_unambiguous,
 )
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
     common_requirements,
 )
 from models.commons.util.device import get_torch_device
+
+logger = get_logger(__name__)
 
 
 def _py(x):
@@ -96,7 +99,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config()
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -119,7 +122,7 @@ class AntiFoldModel(ModelMixinSnap):
         import pandas as pd
         import torch
 
-        print("🚀 Loading AntiFold model directly on GPU for GPU memory snapshot...")
+        logger.info("Loading AntiFold model directly on GPU for GPU memory snapshot...")
 
         # Set deterministic behavior for consistent results
         torch.manual_seed(42)
@@ -136,8 +139,10 @@ class AntiFoldModel(ModelMixinSnap):
         self.antifold_antiscripts = antifold.antiscripts
         self.antifold_main = antifold.main
 
-        print(
-            f"⏳ Loading AntiFold model directly on {self.device} from: {self.model_dir}"
+        logger.info(
+            "Loading AntiFold model directly on %s from: %s",
+            self.device,
+            self.model_dir,
         )
 
         # Load model directly on GPU
@@ -150,8 +155,8 @@ class AntiFoldModel(ModelMixinSnap):
         # Pre-compute amino acid position mapping
         self.aa_to_pos = {aa: i for i, aa in enumerate(list(aa_unambiguous))}
 
-        print(
-            f"✅ AntiFold model loaded directly on {self.device} for GPU memory snapshot!"
+        logger.info(
+            "AntiFold model loaded directly on %s for GPU memory snapshot!", self.device
         )
 
         # Continue billing through snapshot creation (billing was started in a_billing_enter)
@@ -400,9 +405,7 @@ class AntiFoldModel(ModelMixinSnap):
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def log_prob(
-        self, payload: AntiFoldPredictRequest
-    ) -> AntiFoldLogProbResponse:
+    def log_prob(self, payload: AntiFoldPredictRequest) -> AntiFoldLogProbResponse:
         """
         Compute the log probability of each input pdb by:
           1. Writing a temporary pdb.

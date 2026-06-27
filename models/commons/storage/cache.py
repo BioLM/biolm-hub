@@ -4,6 +4,7 @@ from typing import Optional
 import orjson
 from botocore.exceptions import ClientError
 
+from models.commons.core.logging import get_logger
 from models.commons.storage.r2 import get_r2_client
 from models.commons.util.config import (
     cache_enabled,
@@ -17,6 +18,8 @@ R2-specific cache operations for long-term storage.
 This module handles the R2 (Cloudflare) layer of the caching system,
 providing functions for building cache keys, fetching from R2, and storing to R2.
 """
+
+logger = get_logger(__name__)
 
 
 def build_r2_key_for_item(
@@ -88,7 +91,7 @@ def fetch_from_r2(model_slug: str, model_action: str, item_key: str) -> Optional
     except r2_client.exceptions.NoSuchKey:
         return None
     except Exception as exc:
-        print(f"[WARNING] fetch_from_r2: error reading {obj_key}. {exc}")
+        logger.warning("fetch_from_r2: error reading %s. %s", obj_key, exc)
         return None
 
 
@@ -133,7 +136,7 @@ def store_in_r2(model_slug: str, model_action: str, item_key: str, value: dict) 
             ContentType="application/json",
         )
     except Exception as exc:
-        print(f"[WARNING] store_in_r2: failed storing {obj_key}. {exc}")
+        logger.warning("store_in_r2: failed storing %s. %s", obj_key, exc)
 
 
 def clear_r2_cache(
@@ -157,7 +160,7 @@ def clear_r2_cache(
         None
     """
     if not force:
-        print("Not deleting from R2 cache. Set force=True to proceed.")
+        logger.info("Not deleting from R2 cache. Set force=True to proceed.")
         return
 
     base_prefix = f"{r2_model_cache_dir}"
@@ -172,11 +175,11 @@ def clear_r2_cache(
     for page in pages:
         for obj in page.get("Contents", []):
             key = obj["Key"]
-            print(f"Deleting from R2: {key}")
+            logger.debug("Deleting from R2: %s", key)
             try:
                 r2_client.delete_object(Bucket=r2_bucket_name, Key=key)
             except ClientError as exc:
-                print(f"[WARNING] clear_r2_cache: failed deleting {key}. {exc}")
+                logger.warning("clear_r2_cache: failed deleting %s. %s", key, exc)
 
 
 def get_items_added_by_day(

@@ -1,5 +1,6 @@
 """Fixture generator for RosettaFold3 (RF3) model tests."""
 
+from models.commons.core.logging import get_logger
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
 from models.commons.testing.fixture import FixtureGenerator
@@ -7,6 +8,8 @@ from models.rf3.config import MODEL_FAMILY
 from models.rf3.schema import (
     RF3PredictRequest,
 )
+
+logger = get_logger(__name__)
 
 # Define test inputs inline as Pydantic models
 INPUT1 = RF3PredictRequest.model_validate(
@@ -154,6 +157,6 @@ def generate():
 
 
 if __name__ == "__main__":
-    print("🚀 Generating fixtures for RosettaFold3...")
+    logger.info("Generating fixtures for RosettaFold3...")
     generate()
-    print("✅ Fixture generation complete!")
+    logger.info("Fixture generation complete!")

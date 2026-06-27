@@ -2,10 +2,11 @@ import math
 
 import modal
 
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -24,6 +25,8 @@ from models.zymctrl.schema import (
     ZymCTRLParams,
     ZymCTRLPoolingType,
 )
+
+logger = get_logger(__name__)
 
 # Special tokens used during training (matching paper format)
 # Training format: <control tag><sep><start><ENZYME SEQUENCE><end><|endoftext|>
@@ -58,7 +61,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config()
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -144,7 +147,7 @@ class ZymCTRLModel(ModelMixinSnap):
         import torch
         from transformers import AutoTokenizer, GPT2LMHeadModel
 
-        print("Loading ZymCTRL model directly on GPU for GPU memory snapshot...")
+        logger.info("Loading ZymCTRL model directly on GPU for GPU memory snapshot...")
 
         self.torch = torch
 
@@ -153,7 +156,7 @@ class ZymCTRLModel(ModelMixinSnap):
 
         # Get model directory from download layer
         self.model_dir = get_model_dir()
-        print(f"Loading ZymCTRL model from: {self.model_dir}")
+        logger.info("Loading ZymCTRL model from: %s", self.model_dir)
 
         # Load tokenizer and model from local path
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_dir)
@@ -173,9 +176,11 @@ class ZymCTRLModel(ModelMixinSnap):
 
         self.max_sequence_len = ZymCTRLParams.max_sequence_len
 
-        print(
-            f"ZymCTRL model loaded on {self.device}! "
-            f"(layers={self.num_layers}, hidden_size={self.hidden_size})"
+        logger.info(
+            "ZymCTRL model loaded on %s! (layers=%s, hidden_size=%s)",
+            self.device,
+            self.num_layers,
+            self.hidden_size,
         )
 
     @modal.method()

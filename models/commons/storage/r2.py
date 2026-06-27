@@ -3,6 +3,10 @@ import json
 import os
 from typing import Any
 
+from models.commons.core.logging import get_logger
+
+logger = get_logger(__name__)
+
 
 def get_r2_transfer_config():
     """
@@ -133,6 +137,6 @@ def write_data_to_r2(bucket_name: str, file_key: str, data: Any) -> None:
         client.put_object(
             Bucket=bucket_name, Key=file_key, Body=content.encode("utf-8")
         )
-        print(f"Uploaded JSON to r2://{bucket_name}/{file_key}")
+        logger.info("Uploaded JSON to r2://%s/%s", bucket_name, file_key)
     except Exception as e:
         raise RuntimeError(f"Error writing {file_key} to R2: {str(e)}") from e

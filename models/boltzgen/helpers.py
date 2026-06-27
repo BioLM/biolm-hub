@@ -2,6 +2,9 @@ import os
 from typing import Optional
 
 from models.boltzgen.schema import BoltzGenPipelineStep
+from models.commons.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 # Amino acid 3-letter to 1-letter code mapping (used in CIF sequence extraction)
 THREE_TO_ONE = {
@@ -212,7 +215,7 @@ def extract_sequence_from_cif(cif_content: str) -> Optional[str]:  # noqa: C901
 
         return None
     except Exception as e:
-        print(f"   ⚠️ Failed to extract sequence from CIF: {e}")
+        logger.warning("Failed to extract sequence from CIF: %s", e, exc_info=True)
         import traceback
 
         traceback.print_exc()

@@ -1,9 +1,12 @@
 from typing import Optional
 
+from models.commons.core.logging import get_logger
 from models.commons.storage.download_helpers import r2_then_hf
 from models.commons.storage.downloads import get_model_dir_util
 from models.dnabert2.config import hf_pin_revision, hf_repo_id
 from models.dnabert2.schema import DNABERT2Params
+
+logger = get_logger(__name__)
 
 
 def get_model_dir():
@@ -24,7 +27,7 @@ def download_model_assets(
 
     from transformers import AutoModelForMaskedLM, AutoTokenizer
 
-    print(f"⏳ [Build phase] Snapshotting DNABERT-2 model '{hf_repo_id}'")
+    logger.info("[Build phase] Snapshotting DNABERT-2 model '%s'", hf_repo_id)
 
     result = r2_then_hf(
         base_model_slug=base_model_slug,
@@ -41,18 +44,18 @@ def download_model_assets(
         )
 
     snapshot_path = result.actual_model_path or result.target_dir
-    print(f"📍 Using HF snapshot path: {snapshot_path}")
+    logger.info("Using HF snapshot path: %s", snapshot_path)
 
     # ---- Final validation ----
-    print(f"🔍 [Build phase] Testing model loading from {snapshot_path}...")
+    logger.info("[Build phase] Testing model loading from %s...", snapshot_path)
 
     _ = AutoModelForMaskedLM.from_pretrained(snapshot_path, trust_remote_code=True)
-    print("✅ [Build phase] Model loaded successfully")
+    logger.info("[Build phase] Model loaded successfully")
 
     _ = AutoTokenizer.from_pretrained(
         snapshot_path, trust_remote_code=True, use_fast=True
     )
-    print("✅ [Build phase] Tokenizer loaded successfully")
+    logger.info("[Build phase] Tokenizer loaded successfully")
 
-    print(f"✅ [Build phase] Model snapshot ready at: {snapshot_path}")
+    logger.info("[Build phase] Model snapshot ready at: %s", snapshot_path)
     return snapshot_path

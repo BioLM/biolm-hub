@@ -2,12 +2,13 @@ import re
 
 import modal
 
-from models.commons.model.base import ModelMixin
 from models.commons.core.decorator import modal_endpoint
 from models.commons.core.error import UserError
+from models.commons.core.logging import get_logger
 from models.commons.data.validator import aa_unambiguous
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixin
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -29,6 +30,8 @@ from models.pro1.schema import (
     Pro1Params,
     Pro1Variant,
 )
+
+logger = get_logger(__name__)
 
 variant_config = parse_variant(
     env_var_name="MODEL_VARIANT",
@@ -89,7 +92,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using MODEL_FAMILY config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config(**variant_config)
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -297,7 +300,7 @@ class Pro1Model(ModelMixin):
         setup_hf_cache_env(model_dir)
 
         t0 = time.time()
-        print(f"🔬 Loading Pro-1 ({variant}) base model: {base_model}")
+        logger.info("Loading Pro-1 (%s) base model: %s", variant, base_model)
         # NOTE: unsloth's `fast_inference=True` (vLLM backend) refuses to load
         # Llama-3.1 because it has RoPE scaling, so we use unsloth's standard
         # 4-bit HF inference path. vLLM is still installed (a transitive build
@@ -310,10 +313,10 @@ class Pro1Model(ModelMixin):
         )
 
         adapter_path = model_dir / "adapter" / adapter_subfolder
-        print(f"🔬 Loading LoRA adapter: {adapter_path}")
+        logger.info("Loading LoRA adapter: %s", adapter_path)
         self.model.load_adapter(str(adapter_path))
         FastLanguageModel.for_inference(self.model)
-        print(f"✅ Pro-1 ({variant}) loaded and ready ({time.time() - t0:.1f}s)")
+        logger.info(f"Pro-1 ({variant}) loaded and ready ({time.time() - t0:.1f}s)")
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
@@ -339,17 +342,15 @@ class Pro1Model(ModelMixin):
             torch.cuda.manual_seed_all(seed)
 
         inputs = self.tokenizer(prompt, return_tensors="pt").to(self.model.device)
-        print(f"Prompt token count: {inputs['input_ids'].shape[1]}", flush=True)
+        logger.debug("Prompt token count: %s", inputs["input_ids"].shape[1])
 
         results = []
         last_error: str | None = None
         for iteration in range(params.max_iterations):
-            print(
-                f"=== Iteration {iteration + 1}/{params.max_iterations} ===", flush=True
-            )
+            logger.info("=== Iteration %s/%s ===", iteration + 1, params.max_iterations)
             try:
                 t_gen = time.time()
-                print("Generating...", flush=True)
+                logger.info("Generating...")
                 with torch.no_grad():
                     output_ids = self.model.generate(
                         **inputs,
@@ -360,9 +361,8 @@ class Pro1Model(ModelMixin):
                     )
                 new_ids = output_ids[0, inputs["input_ids"].shape[1] :]
                 response = self.tokenizer.decode(new_ids, skip_special_tokens=True)
-                print(
-                    f"Generation done ({time.time() - t_gen:.1f}s) — {len(response)} chars",
-                    flush=True,
+                logger.info(
+                    f"Generation done ({time.time() - t_gen:.1f}s) — {len(response)} chars"
                 )
 
                 parsed_mutations = _parse_mutations_from_reasoning(response)
@@ -374,13 +374,16 @@ class Pro1Model(ModelMixin):
                         item.sequence, mut_strs
                     )
                     if modified_seq:
-                        print(f"Applied {len(mut_strs)} mutations deterministically")
+                        logger.info(
+                            "Applied %s mutations deterministically", len(mut_strs)
+                        )
 
                 if modified_seq is not None:
                     invalid_aa = set(modified_seq) - _VALID_AA
                     if invalid_aa:
-                        print(
-                            f"Invalid AA in extracted sequence: {invalid_aa} — discarding"
+                        logger.warning(
+                            "Invalid AA in extracted sequence: %s — discarding",
+                            invalid_aa,
                         )
                         modified_seq = None
 
@@ -404,8 +407,10 @@ class Pro1Model(ModelMixin):
                 # internal details (stack frames, library internals) to the
                 # caller via UserError.
                 last_error = type(e).__name__
-                print(f"Error in iteration {iteration + 1}: {e}")
-                print(traceback.format_exc(), flush=True)
+                logger.error(
+                    "Error in iteration %s: %s", iteration + 1, e, exc_info=True
+                )
+                logger.debug(traceback.format_exc())
                 continue
 
         if not results:

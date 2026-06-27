@@ -1,9 +1,10 @@
 import modal
 
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -22,6 +23,8 @@ from models.evo.schema import (
     EvoPredictLogProbResponse,
     EvoPredictLogProbResponseResult,
 )
+
+logger = get_logger(__name__)
 
 variant_config = parse_variant(
     env_var_name="MODEL_VARIANT",
@@ -66,7 +69,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config(**variant_config)
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -102,7 +105,7 @@ class EvoModel(ModelMixinSnap):
         self.generate_fn = generate  # for generate
 
         model_name = EVO_VARIANT_TO_MODEL_NAME[EvoModelVariants(model_variant)]
-        print(f"[Evo] Loading Evo model '{model_name}' ...")
+        logger.info("[Evo] Loading Evo model '%s' ...", model_name)
         self.device = get_torch_device()
         evo_obj = Evo(model_name, device=self.device)
 
@@ -116,13 +119,11 @@ class EvoModel(ModelMixinSnap):
         self.torch = torch
         torch.set_grad_enabled(False)
 
-        print(f"[Evo] Loaded '{model_name}' on {self.device}.")
+        logger.info("[Evo] Loaded '%s' on %s.", model_name, self.device)
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def log_prob(
-        self, payload: EvoPredictLogProbRequest
-    ) -> EvoPredictLogProbResponse:
+    def log_prob(self, payload: EvoPredictLogProbRequest) -> EvoPredictLogProbResponse:
         """
         Sums the log probability of each DNA sequence.
         This calls evo.scoring.score_sequences(...), which:

@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Optional
 
+from models.commons.core.logging import get_logger
 from models.commons.storage.acquisition import (
     AcquisitionConfig,
     AcquisitionStrategy,
@@ -28,6 +29,8 @@ from models.temberture.config import (
     temberture_github_repo,
 )
 from models.temberture.schema import TemBERTureParams
+
+logger = get_logger(__name__)
 
 
 def get_shared_base_model_dir() -> Path:
@@ -115,7 +118,7 @@ def _download_shared_base_model(
             f"Download succeeded but files are in unexpected location."
         )
 
-    print(f"✅ Shared ProtBERT model ready at snapshot: {snapshot_dir}")
+    logger.info("Shared ProtBERT model ready at snapshot: %s", snapshot_dir)
 
     # Return the result with snapshot path
     result.actual_model_path = snapshot_dir
@@ -139,8 +142,9 @@ def _download_temberture_archive(target_dir: Path, **_kwargs) -> dict:
     zip_url = f"https://github.com/{temberture_github_repo}/archive/{temberture_github_commit}.zip"
     zip_path = target_dir / "temberture.zip"
 
-    print(
-        f"📥 Downloading TemBERTure adapters from GitHub (commit: {temberture_github_commit[:8]})..."
+    logger.info(
+        "Downloading TemBERTure adapters from GitHub (commit: %s)...",
+        temberture_github_commit[:8],
     )
 
     # Use the shared download_archive helper
@@ -172,7 +176,7 @@ def _extract_temberture_adapters(
 
     # Clean up the zip file
     zip_path.unlink(missing_ok=True)
-    print("🧹 Cleaned up temporary archive file")
+    logger.info("Cleaned up temporary archive file")
 
     # Verify expected directories exist
     expected_dir = dest_dir / adapter_subdir
@@ -247,7 +251,7 @@ def download_model_assets(
 
     # Get directory for shared base model
     base_model_dir = get_shared_base_model_dir()
-    print(f"🔧 TemBERTure: Setting up shared base model at {base_model_dir}")
+    logger.info("TemBERTure: Setting up shared base model at %s", base_model_dir)
 
     # ---- Download shared base model ----
     _download_shared_base_model(base_model_slug, params_version, base_model_dir)

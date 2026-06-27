@@ -1,11 +1,14 @@
 from typing import Optional
 
+from models.commons.core.logging import get_logger
 from models.commons.storage.download_helpers import (
     extract_model_variant,
     standard_r2_download,
 )
 from models.commons.storage.downloads import get_model_dir_util
 from models.progen2.schema import ProGen2Params
+
+logger = get_logger(__name__)
 
 
 def get_model_dir():
@@ -60,5 +63,5 @@ def download_model_assets(
     if not result.success:
         raise RuntimeError(f"Model download failed: {result.error_message}")
 
-    print(f"✅ Downloaded {result.files_downloaded} files using acquisition system")
+    logger.info("Downloaded %s files using acquisition system", result.files_downloaded)
     return result.actual_model_path or result.target_dir

@@ -1,3 +1,4 @@
+from models.commons.core.logging import get_logger
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import (
     ActionTestCase,
@@ -11,6 +12,8 @@ from models.thermompnn.schema import (
     ThermoMPNNPredictRequest,
     ThermoMPNNPredictRequestItem,
 )
+
+logger = get_logger(__name__)
 
 # Test input/output filenames
 INPUT1 = "input1.json"
@@ -188,5 +191,5 @@ def generate():
 
 
 if __name__ == "__main__":
-    print("🚀 Generating fixtures for ThermoMPNN...")
+    logger.info("Generating fixtures for ThermoMPNN...")
     generate()

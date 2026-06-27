@@ -11,17 +11,20 @@ from models.chai1.schema import (
     Chai1PredictResponseResult,
     Chai1ScoreOptions,
 )
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
 from models.commons.core.error import UserError
+from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
     common_requirements,
 )
 from models.commons.util.device import get_torch_device
+
+logger = get_logger(__name__)
 
 # Build Modal container image
 image = (
@@ -56,7 +59,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config()
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -81,7 +84,7 @@ class Chai1Model(ModelMixinSnap):
 
         import torch
 
-        print("📸 Loading Chai1 environment on CPU for memory snapshot...")
+        logger.info("Loading Chai1 environment on CPU for memory snapshot...")
 
         # Set deterministic behavior for consistent results
         torch.manual_seed(42)
@@ -90,16 +93,16 @@ class Chai1Model(ModelMixinSnap):
         self.torch = torch
         self.model_dir = get_model_dir()
 
-        print(f"🔍 Chai1 model directory: {self.model_dir}")
+        logger.info("Chai1 model directory: %s", self.model_dir)
 
         # Verify the CHAI_DOWNLOADS_DIR is already set (from download phase)
         chai_dir = os.environ.get("CHAI_DOWNLOADS_DIR")
         if chai_dir:
-            print(f"✅ CHAI_DOWNLOADS_DIR already set to: {chai_dir}")
+            logger.info("CHAI_DOWNLOADS_DIR already set to: %s", chai_dir)
         else:
             # Set it if not already set
             os.environ["CHAI_DOWNLOADS_DIR"] = str(self.model_dir)
-            print(f"📌 Set CHAI_DOWNLOADS_DIR to: {self.model_dir}")
+            logger.info("Set CHAI_DOWNLOADS_DIR to: %s", self.model_dir)
 
         # Verify key files exist
         from pathlib import Path
@@ -108,20 +111,24 @@ class Chai1Model(ModelMixinSnap):
         if models_v2_dir.exists():
             pt_files = list(models_v2_dir.glob("*.pt"))
             lock_files = list(models_v2_dir.glob("*.download_lock"))
-            print(
-                f"✅ models_v2 directory found with {len(pt_files)} .pt files and {len(lock_files)} lock files"
+            logger.info(
+                "models_v2 directory found with %s .pt files and %s lock files",
+                len(pt_files),
+                len(lock_files),
             )
         else:
-            print(f"⚠️ Warning: models_v2 directory not found at {models_v2_dir}")
-            print("    Chai1 may attempt to download weights")
+            logger.warning(
+                "Warning: models_v2 directory not found at %s", models_v2_dir
+            )
+            logger.warning("Chai1 may attempt to download weights")
 
         conformers_file = Path(self.model_dir) / "conformers_v1.apkl"
         if conformers_file.exists():
-            print(
-                f"✅ conformers_v1.apkl found ({conformers_file.stat().st_size / 1024**2:.1f} MB)"
+            logger.info(
+                f"conformers_v1.apkl found ({conformers_file.stat().st_size / 1024**2:.1f} MB)"
             )
         else:
-            print("⚠️ Warning: conformers_v1.apkl not found")
+            logger.warning("Warning: conformers_v1.apkl not found")
 
         # Import chai-lab components (imports are fine during snap=True)
         from chai_lab.chai1 import run_inference
@@ -130,7 +137,7 @@ class Chai1Model(ModelMixinSnap):
         self.run_inference = run_inference
         self.merge_a3m_in_directory = merge_a3m_in_directory
 
-        print("📦 Chai1 environment prepared for memory snapshot")
+        logger.info("Chai1 environment prepared for memory snapshot")
 
         # Diagnostic: Check if chai1 created any bypass directories
         bypass_locations = [
@@ -140,12 +147,14 @@ class Chai1Model(ModelMixinSnap):
         ]
         for location in bypass_locations:
             if location.exists():
-                print(f"⚠️ Found chai1 directory at {location} - may indicate bypass")
+                logger.warning(
+                    "Found chai1 directory at %s - may indicate bypass", location
+                )
 
     @modal.enter(snap=False)
     def setup_model(self):
         """Set up GPU device after snapshot restore."""
-        print("🚀 Setting up Chai1 on GPU after snapshot restore...")
+        logger.info("Setting up Chai1 on GPU after snapshot restore...")
 
         if self.torch.cuda.is_available():
             self.torch.cuda.manual_seed_all(42)
@@ -153,8 +162,8 @@ class Chai1Model(ModelMixinSnap):
         # Get device for GPU inference
         self.device = get_torch_device()
 
-        print(f"✅ Chai1 ready for inference on {self.device}")
-        print("📝 Model will be loaded on first inference call")
+        logger.info("Chai1 ready for inference on %s", self.device)
+        logger.info("Model will be loaded on first inference call")
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
@@ -188,24 +197,24 @@ class Chai1Model(ModelMixinSnap):
 
         # Join lines with newlines and add final newline
         fasta_content = "\n".join(fasta_lines) + "\n"
-        print("✅ Converted molecules to FASTA format.")
+        logger.info("Converted molecules to FASTA format.")
 
         # Use a temporary file to pass the FASTA data
         with tempfile.NamedTemporaryFile(delete=True, suffix=".fasta") as temp_fasta:
             temp_fasta.write(fasta_content.encode("utf-8"))
             temp_fasta.flush()  # Ensure the file is written to disk
 
-            print(f"✅ Temporary FASTA file created at: {temp_fasta.name}")
+            logger.info("Temporary FASTA file created at: %s", temp_fasta.name)
 
             # Use a temporary directory for the output
             with tempfile.TemporaryDirectory() as temp_output_dir:
                 output_dir = Path(temp_output_dir)
-                print(f"✅ Temporary output directory created at: {output_dir}")
+                logger.info("Temporary output directory created at: %s", output_dir)
 
                 # Create a temporary directory for MSAs
                 with tempfile.TemporaryDirectory() as temp_msa_dir:
                     msa_dir = Path(temp_msa_dir)
-                    print(f"✅ Temporary MSA directory created at: {msa_dir}")
+                    logger.info("Temporary MSA directory created at: %s", msa_dir)
 
                     # Process alignments for protein molecules
                     for molecule in item.molecules:
@@ -227,15 +236,19 @@ class Chai1Model(ModelMixinSnap):
                                 a3m_path = molecule_msa_dir / filename
                                 with open(a3m_path, "w") as f:
                                     f.write(a3m_content)
-                                print(
-                                    f"✅ Written {filename} for molecule {molecule.name}"
+                                logger.info(
+                                    "Written %s for molecule %s",
+                                    filename,
+                                    molecule.name,
                                 )
 
                             # Merge a3m files for this molecule
                             self.merge_a3m_in_directory(
                                 str(molecule_msa_dir), output_directory=str(msa_dir)
                             )
-                            print(f"✅ Merged a3m files for molecule {molecule.name}")
+                            logger.info(
+                                "Merged a3m files for molecule %s", molecule.name
+                            )
 
                     # Run inference using the temporary files and directory
                     candidates = self.run_inference(
@@ -250,9 +263,9 @@ class Chai1Model(ModelMixinSnap):
                         device=self.device,
                     )
 
-                    print("✅ Run inference completed.")
-                    print(
-                        f"🔍 Number of CIF paths generated: {len(candidates.cif_paths)}"
+                    logger.info("Run inference completed.")
+                    logger.info(
+                        "Number of CIF paths generated: %s", len(candidates.cif_paths)
                     )
 
                     if len(candidates.cif_paths) == 0:
@@ -269,8 +282,11 @@ class Chai1Model(ModelMixinSnap):
                                 f"Missing CIF file: {cif_file_path}"
                             )
 
-                        print(
-                            f"🔍 Processing CIF file {idx + 1}/{len(candidates.cif_paths)}: {cif_file_path}"
+                        logger.info(
+                            "Processing CIF file %s/%s: %s",
+                            idx + 1,
+                            len(candidates.cif_paths),
+                            cif_file_path,
                         )
 
                         # Read the CIF content
@@ -293,7 +309,7 @@ class Chai1Model(ModelMixinSnap):
                         )
                         results.append(result)
 
-                    print("✅ All CIF files processed successfully.")
+                    logger.info("All CIF files processed successfully.")
 
         # Return the response with all CIF files and their metadata
         return Chai1PredictResponse(results=[results])

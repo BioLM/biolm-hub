@@ -2,10 +2,11 @@ from typing import TYPE_CHECKING
 
 import modal
 
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -26,6 +27,7 @@ from models.dnabert2.schema import (
 if TYPE_CHECKING:
     import torch
 
+logger = get_logger(__name__)
 
 # Build Modal container image
 # Pinned: PyTorch 2.6.0's triton crashes without GPU during download layer model validation
@@ -60,7 +62,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config()
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -81,7 +83,7 @@ class DNABERT2Model(ModelMixinSnap):
         import torch
         from transformers import AutoModelForMaskedLM, AutoTokenizer
 
-        print("🚀 Loading DNABERT2 model directly on GPU for GPU memory snapshot...")
+        logger.info("Loading DNABERT2 model directly on GPU for GPU memory snapshot...")
 
         # Set deterministic behavior for consistent results
         torch.manual_seed(42)
@@ -106,10 +108,11 @@ class DNABERT2Model(ModelMixinSnap):
         # HF always uses: {model_dir}/models--{repo}--{name}/snapshots/{revision}/
         cache_name = f"models--{hf_repo_id.replace('/', '--')}"
         self.snapshot_path = str(model_dir / cache_name / "snapshots" / hf_pin_revision)
-        print(f"📍 Using HF snapshot path: {self.snapshot_path}")
-
-        print(
-            f"⏳ Loading DNABERT2 model directly on {self.device} from snapshot: {self.snapshot_path}"
+        logger.info("Using HF snapshot path: %s", self.snapshot_path)
+        logger.info(
+            "Loading DNABERT2 model directly on %s from snapshot: %s",
+            self.device,
+            self.snapshot_path,
         )
 
         # Load model and move to GPU using the returned snapshot path
@@ -129,8 +132,8 @@ class DNABERT2Model(ModelMixinSnap):
             return_tensors="pt",
         )
 
-        print(
-            f"✅ DNABERT2 model loaded directly on {self.device} for GPU memory snapshot!"
+        logger.info(
+            "DNABERT2 model loaded directly on %s for GPU memory snapshot!", self.device
         )
 
     def _mean_pooling(

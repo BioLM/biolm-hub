@@ -3,10 +3,11 @@ from pathlib import Path
 
 import modal
 
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.storage.downloads import (
     build_hf_snapshot_path,
@@ -35,6 +36,8 @@ from models.spurs.schema import (
 from models.spurs.util import (
     calculate_mutations,
 )
+
+logger = get_logger(__name__)
 
 # Build Modal container image
 # Pinned: hydra dataclass bug on Python 3.12
@@ -80,7 +83,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config()
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -105,7 +108,7 @@ class SpursModel(ModelMixinSnap):
         """Load SPURS model directly for GPU memory snapshot with deterministic behavior."""
         import torch
 
-        print("🚀 Loading SPURS model directly for GPU memory snapshot...")
+        logger.info("Loading SPURS model directly for GPU memory snapshot...")
 
         # Set deterministic behavior for consistent results
         torch.manual_seed(42)
@@ -131,10 +134,10 @@ class SpursModel(ModelMixinSnap):
                 "SPURS repository not found. Set SPURS_REPO_PATH to a valid clone."
             )
 
-        print(f"📂 Using SPURS repository: {repo_path}")
-        print(f"📂 SPURS weight base directory: {weights_base}")
-        print(f"📦 SPURS snapshot directory: {self.weights_root}")
-        print(f"📂 Using ESM2 cache: {self.esm2_cache}")
+        logger.info("Using SPURS repository: %s", repo_path)
+        logger.info("SPURS weight base directory: %s", weights_base)
+        logger.info("SPURS snapshot directory: %s", self.weights_root)
+        logger.info("Using ESM2 cache: %s", self.esm2_cache)
 
         self.runner = SpursRunner(
             repo_root=repo_path,
@@ -142,8 +145,8 @@ class SpursModel(ModelMixinSnap):
             esm2_cache_path=self.esm2_cache,
         )
 
-        print(
-            f"✅ SPURS model loaded directly on {self.device} for GPU memory snapshot!"
+        logger.info(
+            "SPURS model loaded directly on %s for GPU memory snapshot!", self.device
         )
 
     @modal.method()
@@ -158,7 +161,7 @@ class SpursModel(ModelMixinSnap):
         returns the predicted change in free energy (ΔΔG) in kcal/mol.
         For multiple mutations, also returns per-mutation contributions.
         """
-        print(f"🧬 Predicting ΔΔG for {len(payload.items)} items...")
+        logger.info("Predicting ΔΔG for %s items...", len(payload.items))
 
         results = []
         auto_calculated_items = []  # Track which items had auto-calculated mutations
@@ -173,14 +176,20 @@ class SpursModel(ModelMixinSnap):
 
             # If variant_sequence provided, calculate mutations automatically
             if item.variant_sequence and not item.return_full_dms:
-                print(
-                    f"  Processing item {i+1}/{len(payload.items)}: auto-calculating mutations from variant_sequence"
+                logger.info(
+                    "  Processing item %s/%s: auto-calculating mutations from variant_sequence",
+                    i + 1,
+                    len(payload.items),
                 )
-                print(
-                    f"    Wild-type sequence:  {item.sequence[:50]}{'...' if len(item.sequence) > 50 else ''}"
+                logger.info(
+                    "    Wild-type sequence:  %s%s",
+                    item.sequence[:50],
+                    "..." if len(item.sequence) > 50 else "",
                 )
-                print(
-                    f"    Variant sequence:    {item.variant_sequence[:50]}{'...' if len(item.variant_sequence) > 50 else ''}"
+                logger.info(
+                    "    Variant sequence:    %s%s",
+                    item.variant_sequence[:50],
+                    "..." if len(item.variant_sequence) > 50 else "",
                 )
 
                 # Calculate mutations: wild-type (sequence) -> variant (variant_sequence)
@@ -192,23 +201,32 @@ class SpursModel(ModelMixinSnap):
                 sequence_for_spurs = item.sequence
 
                 if not mutations:
-                    print(
-                        "    ⚠️  No mutations detected - wild-type and variant sequences are identical"
+                    logger.warning(
+                        "    No mutations detected - wild-type and variant sequences are identical"
                     )
                 else:
-                    print(
-                        f"    ✓ Calculated {len(mutations)} mutation(s): {', '.join(mutations)}"
+                    logger.info(
+                        "    Calculated %s mutation(s): %s",
+                        len(mutations),
+                        ", ".join(mutations),
                     )
 
             mutation_count = len(mutations) if mutations else 0
             if mutation_count:
                 if not calculated_from_variant:
-                    print(
-                        f"  Processing item {i+1}/{len(payload.items)}: {mutation_count} manual mutation(s)"
+                    logger.info(
+                        "  Processing item %s/%s: %s manual mutation(s)",
+                        i + 1,
+                        len(payload.items),
+                        mutation_count,
                     )
-                    print(f"    Mutations: {', '.join(mutations)}")
+                    logger.info("    Mutations: %s", ", ".join(mutations))
             else:
-                print(f"  Processing item {i+1}/{len(payload.items)}: full ΔΔG matrix")
+                logger.info(
+                    "  Processing item %s/%s: full ΔΔG matrix",
+                    i + 1,
+                    len(payload.items),
+                )
 
             structure_text, structure_format = self._extract_structure(item)
             runtime_result = self.runner.predict(
@@ -231,16 +249,20 @@ class SpursModel(ModelMixinSnap):
             ddg_value = runtime_result.get("ddg_value")
             ddg_matrix = runtime_result.get("ddg_matrix")
             if ddg_value is not None:
-                print(f"    → ΔΔG = {ddg_value:.3f} kcal/mol")
+                logger.info(f"    → ΔΔG = {ddg_value:.3f} kcal/mol")
                 if calculated_from_variant:
-                    print(f"       (auto-calculated mutations: {', '.join(mutations)})")
+                    logger.info(
+                        "       (auto-calculated mutations: %s)", ", ".join(mutations)
+                    )
             elif ddg_matrix is not None:
                 matrix_rows = len(ddg_matrix["values"])
-                print(
-                    f"    → ΔΔG matrix generated with shape {matrix_rows}x{len(ddg_matrix['amino_acid_axis'])}"
+                logger.info(
+                    "    → ΔΔG matrix generated with shape %sx%s",
+                    matrix_rows,
+                    len(ddg_matrix["amino_acid_axis"]),
                 )
 
-        print(f"\n✅ SPURS prediction complete for {len(results)} items")
+        logger.info("SPURS prediction complete for %s items", len(results))
 
         # Log summary of results
         manual_mut_count = sum(
@@ -251,13 +273,14 @@ class SpursModel(ModelMixinSnap):
         matrix_count = sum(1 for r in results if r.ddG_matrix is not None)
 
         if len(auto_calculated_items) > 0:
-            print(
-                f"   • {len(auto_calculated_items)} item(s) with auto-calculated mutations from variant_sequence"
+            logger.info(
+                "   • %s item(s) with auto-calculated mutations from variant_sequence",
+                len(auto_calculated_items),
             )
         if manual_mut_count > 0:
-            print(f"   • {manual_mut_count} item(s) with manual mutations")
+            logger.info("   • %s item(s) with manual mutations", manual_mut_count)
         if matrix_count > 0:
-            print(f"   • {matrix_count} item(s) with full DMS matrix")
+            logger.info("   • %s item(s) with full DMS matrix", matrix_count)
 
         return SpursPredictResponse(results=results)
 

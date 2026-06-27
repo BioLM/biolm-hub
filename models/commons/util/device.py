@@ -1,7 +1,12 @@
 from typing import TYPE_CHECKING
 
+from models.commons.core.logging import get_logger
+
 if TYPE_CHECKING:
     import torch
+
+
+logger = get_logger(__name__)
 
 
 def get_torch_device() -> "torch.device":
@@ -16,10 +21,10 @@ def get_torch_device() -> "torch.device":
     import torch
 
     if torch.cuda.is_available():
-        print("CUDA detected. Using GPU.")
+        logger.info("CUDA detected. Using GPU.")
         device = torch.device("cuda")
     else:
-        print("CUDA not detected. Using CPU.")
+        logger.info("CUDA not detected. Using CPU.")
         device = torch.device("cpu")
 
     return device

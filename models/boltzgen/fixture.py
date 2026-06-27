@@ -15,9 +15,12 @@ from models.boltzgen.schema import (
     BoltzGenProtocol,
     BoltzGenStructureGroup,
 )
+from models.commons.core.logging import get_logger
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
 from models.commons.testing.fixture import FixtureGenerator
+
+logger = get_logger(__name__)
 
 # BoltzGen repository configuration for fetching example files
 # Pinned to same commit used in app.py for reproducibility
@@ -136,7 +139,7 @@ def generate():
 
     # Example 1: cyclic_against_hiv_antibody_site/9d3d.yaml
     # Design a cyclic peptide (8-18 residues) to bind HIV antibody
-    print("📥 Fetching 9d3d.cif from boltzgen repository...")
+    logger.info("Fetching 9d3d.cif from boltzgen repository...")
     cif_9d3d = get_cif_content("9d3d", "cyclic_against_hiv_antibody_site")
 
     generator.add_test_case(
@@ -200,7 +203,7 @@ def generate():
 
     # Example 5: streptavidin_partially_flexible_target/cyclic.yaml
     # Design a cyclic peptide (8-18 residues) to bind streptavidin with partial flexibility
-    print("📥 Fetching 1mk5.cif from boltzgen repository...")
+    logger.info("Fetching 1mk5.cif from boltzgen repository...")
     cif_1mk5 = get_cif_content("1mk5", "streptavidin_partially_flexible_target")
 
     generator.add_test_case(
@@ -295,7 +298,7 @@ def generate():
 
     # Example 7: nanobody_scaffolds/7eow.yaml (simplified version)
     # Design nanobody by redesigning CDR regions of chain B in 7eow.cif
-    print("📥 Fetching 7eow.cif from boltzgen repository...")
+    logger.info("Fetching 7eow.cif from boltzgen repository...")
     cif_7eow = get_cif_content("7eow", "nanobody_scaffolds", strip_water=True)
 
     generator.add_test_case(
@@ -337,9 +340,9 @@ def generate():
 
     # Example 8: hard_targets/1g13nano.yaml (simplified - single nanobody scaffold)
     # Design a nanobody to bind to chain A of 1g13
-    print("📥 Fetching 1g13.cif from boltzgen repository...")
+    logger.info("Fetching 1g13.cif from boltzgen repository...")
     cif_1g13 = get_cif_content("1g13", "vanilla_protein")
-    print("📥 Fetching 7xl0.cif from boltzgen repository...")
+    logger.info("Fetching 7xl0.cif from boltzgen repository...")
     cif_7xl0 = get_cif_content("7xl0", "nanobody_scaffolds", strip_water=True)
 
     generator.add_test_case(
@@ -382,11 +385,12 @@ def generate():
         )
     )
 
-    print("\n" + "=" * 80)
-    print(
-        f"✅ Added {len(fixture_generation_suite.variant_test_mappings[0].test_cases)} test cases to fixture generation suite"
+    logger.info("=" * 80)
+    logger.info(
+        "Added %s test cases to fixture generation suite",
+        len(fixture_generation_suite.variant_test_mappings[0].test_cases),
     )
-    print("=" * 80 + "\n")
+    logger.info("=" * 80)
 
     generator.generate()
 

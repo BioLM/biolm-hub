@@ -1,9 +1,10 @@
 import modal
 
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -20,6 +21,8 @@ from models.msa_transformer.schema import (
     MSATransformerEncodeResponseResult,
     MSATransformerParams,
 )
+
+logger = get_logger(__name__)
 
 # Build Modal container image
 image = modal.Image.from_registry("pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime")
@@ -50,7 +53,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config()
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -71,7 +74,7 @@ class MSATransformerModel(ModelMixinSnap):
         import esm
         import torch
 
-        print(
+        logger.info(
             "Loading MSA Transformer model directly on GPU for GPU memory snapshot..."
         )
 
@@ -88,7 +91,7 @@ class MSATransformerModel(ModelMixinSnap):
         torch.hub.set_dir(self.model_dir)
 
         # Load the MSA Transformer model
-        print("Loading MSA Transformer (esm_msa1b_t12_100M_UR50S)...")
+        logger.info("Loading MSA Transformer (esm_msa1b_t12_100M_UR50S)...")
         self.model, self.alphabet = esm.pretrained.esm_msa1b_t12_100M_UR50S()
         self.model.eval()
         self.model.to(device=self.device)
@@ -100,9 +103,11 @@ class MSATransformerModel(ModelMixinSnap):
         self.num_layers = self.model.num_layers
         self.max_sequence_len = MSATransformerParams.max_sequence_len
 
-        print(
-            f"MSA Transformer loaded on {self.device}! "
-            f"(layers={self.num_layers}, max_len={self.max_sequence_len})"
+        logger.info(
+            "MSA Transformer loaded on %s! (layers=%s, max_len=%s)",
+            self.device,
+            self.num_layers,
+            self.max_sequence_len,
         )
 
     @modal.method()
@@ -134,7 +139,7 @@ class MSATransformerModel(ModelMixinSnap):
 
         results = []
         for idx, item in enumerate(payload.items):
-            print(f"Processing MSA {idx + 1} of {len(payload.items)}")
+            logger.debug("Processing MSA %s of %s", idx + 1, len(payload.items))
             result = self._encode_msa(
                 msa=item.msa,
                 repr_layers=repr_layers,
@@ -191,7 +196,7 @@ class MSATransformerModel(ModelMixinSnap):
                     return_contacts=return_contacts,
                 )
         except Exception as e:
-            print(f"Model call failed with error [{e}]")
+            logger.error("Model call failed with error [%s]", e, exc_info=True)
             raise e
 
         # Extract outputs

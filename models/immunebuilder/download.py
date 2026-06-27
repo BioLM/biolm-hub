@@ -1,11 +1,14 @@
 from typing import Optional
 
+from models.commons.core.logging import get_logger
 from models.commons.storage.download_helpers import (
     extract_model_variant,
     r2_then_urls,
 )
 from models.commons.storage.downloads import get_model_dir_util
 from models.immunebuilder.schema import ImmuneBuilderParams
+
+logger = get_logger(__name__)
 
 # Define Zenodo URLs for each model type
 ZENODO_URLS = {
@@ -57,7 +60,7 @@ def download_model_assets(
     if model_variant not in ZENODO_URLS:
         raise ValueError(f"Unknown model variant: {model_variant}")
 
-    print(f"📥 Downloading ImmuneBuilder {model_variant}")
+    logger.info("Downloading ImmuneBuilder %s", model_variant)
 
     result = r2_then_urls(
         base_model_slug=base_model_slug,
@@ -73,8 +76,8 @@ def download_model_assets(
         )
 
     if result.cache_hit:
-        print("✅ Downloaded from R2 cache")
+        logger.info("Downloaded from R2 cache")
     else:
-        print(f"✅ Downloaded {result.files_downloaded} files")
+        logger.info("Downloaded %s files", result.files_downloaded)
 
     return result.actual_model_path or result.target_dir

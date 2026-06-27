@@ -5,6 +5,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Optional
 
+from models.commons.core.logging import get_logger
 from models.commons.storage.r2 import get_r2_client
 from models.commons.util.config import r2_bucket_name
 
@@ -26,6 +27,8 @@ Notes:
 - Methods here are intentionally generic and side-effect free (besides I/O).
 - Use download_helpers/acquisition from models; this module serves those layers.
 """
+
+logger = get_logger(__name__)
 
 
 class R2Utils:
@@ -152,10 +155,15 @@ class R2Utils:
                     files_downloaded += 1
 
                     if files_downloaded % 10 == 0:
-                        print(f"   📥 Downloaded {files_downloaded} files...")
+                        logger.info("   📥 Downloaded %s files...", files_downloaded)
 
         except Exception as e:
-            print(f"❌ Failed to download from R2 prefix {r2_prefix}: {e}")
+            logger.error(
+                "❌ Failed to download from R2 prefix %s: %s",
+                r2_prefix,
+                e,
+                exc_info=True,
+            )
 
         return files_downloaded
 
@@ -208,7 +216,7 @@ class R2Utils:
             return True
 
         except Exception as e:
-            print(f"❌ Failed to upload completion marker: {e}")
+            logger.error("❌ Failed to upload completion marker: %s", e, exc_info=True)
             return False
 
     @staticmethod
@@ -252,7 +260,7 @@ class R2Utils:
                 age_hours = (current_time - completed_at) / 3600
 
                 if age_hours > timeout_hours:
-                    print(
+                    logger.warning(
                         f"⚠️ Cache expired: {age_hours:.1f} hours old (timeout: {timeout_hours}h)"
                     )
                     return False
@@ -262,7 +270,7 @@ class R2Utils:
         except r2_client.exceptions.NoSuchKey:
             return False
         except Exception as e:
-            print(f"⚠️ Error checking completion marker: {e}")
+            logger.warning("⚠️ Error checking completion marker: %s", e)
             return False
 
     @staticmethod
@@ -303,7 +311,7 @@ class R2Utils:
                     manifest[str(relative_path)] = file_info
 
         except Exception as e:
-            print(f"⚠️ Error creating manifest: {e}")
+            logger.warning("⚠️ Error creating manifest: %s", e)
 
         return manifest
 
@@ -334,15 +342,18 @@ class R2Utils:
 
                 # Check if file exists
                 if not file_path.exists():
-                    print(f"❌ Missing file: {relative_path}")
+                    logger.error("❌ Missing file: %s", relative_path)
                     return False
 
                 # Check file size
                 actual_size = file_path.stat().st_size
                 expected_size = file_metadata.get("size", 0)
                 if actual_size != expected_size:
-                    print(
-                        f"❌ Size mismatch for {relative_path}: expected {expected_size}, got {actual_size}"
+                    logger.error(
+                        "❌ Size mismatch for %s: expected %s, got %s",
+                        relative_path,
+                        expected_size,
+                        actual_size,
                     )
                     return False
 
@@ -352,15 +363,15 @@ class R2Utils:
                     actual_sha256 = R2Utils.calculate_file_checksum(file_path)
 
                     if actual_sha256 != expected_sha256:
-                        print(f"❌ Checksum mismatch for {relative_path}")
-                        print(f"   Expected: {expected_sha256}")
-                        print(f"   Actual:   {actual_sha256}")
+                        logger.error("❌ Checksum mismatch for %s", relative_path)
+                        logger.error("   Expected: %s", expected_sha256)
+                        logger.error("   Actual:   %s", actual_sha256)
                         return False
 
             return True
 
         except Exception as e:
-            print(f"❌ Manifest validation error: {e}")
+            logger.error("❌ Manifest validation error: %s", e, exc_info=True)
             return False
 
     @staticmethod
@@ -418,7 +429,7 @@ class R2Utils:
 
         # Always report for small file counts, or every 10 for large counts
         if total_files <= 10 or file_num % 10 == 0:
-            print(
+            logger.info(
                 f"   📤 [{file_num}/{total_files}] Uploaded {file_name} "
                 f"({size_mb:.1f}/{total_mb:.1f} MB, {percent:.0f}%)"
             )
@@ -464,12 +475,12 @@ class R2Utils:
             ...     print("Upload completed successfully")
         """
         if not source_dir.exists():
-            print(f"❌ Source directory does not exist: {source_dir}")
+            logger.error("❌ Source directory does not exist: %s", source_dir)
             return False
 
         try:
             r2_client = get_r2_client()
-            print(f"🔄 Starting atomic upload to R2: {r2_prefix}")
+            logger.info("🔄 Starting atomic upload to R2: %s", r2_prefix)
 
             # Pre-scan to count files and calculate total size
             files_to_upload = []
@@ -482,12 +493,12 @@ class R2Utils:
 
             total_files = len(files_to_upload)
             if total_files == 0:
-                print(f"⚠️ No files to upload in {source_dir}")
+                logger.warning("⚠️ No files to upload in %s", source_dir)
                 return False
 
             # Report what we're about to upload
             total_mb = total_bytes / (1024 * 1024)
-            print(
+            logger.info(
                 f"📊 Preparing to upload {total_files} files ({total_mb:.1f} MB total)..."
             )
 
@@ -543,12 +554,14 @@ class R2Utils:
             )
 
             if success:
-                print(f"✅ Atomic upload complete: {total_files} files to {r2_prefix}")
+                logger.info(
+                    "✅ Atomic upload complete: %s files to %s", total_files, r2_prefix
+                )
 
             return success
 
         except Exception as e:
-            print(f"❌ Atomic upload failed: {e}")
+            logger.error("❌ Atomic upload failed: %s", e, exc_info=True)
             return False
 
     @staticmethod
@@ -586,10 +599,10 @@ class R2Utils:
             if not R2Utils.check_completion_marker(
                 r2_client, r2_prefix, bucket_name, timeout_hours
             ):
-                print(f"⚠️ No valid completion marker found at {r2_prefix}")
+                logger.warning("⚠️ No valid completion marker found at %s", r2_prefix)
                 return False
 
-            print(f"🔄 Starting atomic restore from R2: {r2_prefix}")
+            logger.info("🔄 Starting atomic restore from R2: %s", r2_prefix)
 
             # Download files from R2
             target_dir.mkdir(parents=True, exist_ok=True)
@@ -598,7 +611,7 @@ class R2Utils:
             )
 
             if files_downloaded == 0:
-                print(f"⚠️ No files found under prefix {r2_prefix}")
+                logger.warning("⚠️ No files found under prefix %s", r2_prefix)
                 return False
 
             # Validate manifest if requested and available
@@ -612,27 +625,30 @@ class R2Utils:
                         manifest_obj["Body"].read().decode("utf-8")
                     )
 
-                    print(
-                        f"🔍 Validating {len(manifest_data)} files using manifest checksums..."
+                    logger.info(
+                        "🔍 Validating %s files using manifest checksums...",
+                        len(manifest_data),
                     )
                     if not R2Utils.validate_manifest(target_dir, manifest_data):
-                        print("❌ Manifest validation failed")
+                        logger.error("❌ Manifest validation failed")
                         return False
-                    print("✅ Manifest validation successful")
+                    logger.info("✅ Manifest validation successful")
 
                 except r2_client.exceptions.NoSuchKey:
-                    print("⚠️ No manifest found, skipping checksum validation")
+                    logger.warning("⚠️ No manifest found, skipping checksum validation")
                 except Exception as e:
-                    print(f"⚠️ Manifest validation failed: {e}")
+                    logger.warning("⚠️ Manifest validation failed: %s", e)
                     return False
 
-            print(
-                f"✅ Atomic restore complete: {files_downloaded} files to {target_dir}"
+            logger.info(
+                "✅ Atomic restore complete: %s files to %s",
+                files_downloaded,
+                target_dir,
             )
             return True
 
         except Exception as e:
-            print(f"❌ Atomic restore failed: {e}")
+            logger.error("❌ Atomic restore failed: %s", e, exc_info=True)
             return False
 
     @staticmethod

@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Optional
 
+from models.commons.core.logging import get_logger
 from models.commons.storage.download_helpers import (
     extract_model_variant,
     r2_then_hf,
@@ -8,6 +9,8 @@ from models.commons.storage.download_helpers import (
 from models.commons.storage.downloads import get_model_dir_util
 from models.esmc.config import ESMC_HF_REPO_MAP, ESMC_HF_REVISION_MAP
 from models.esmc.schema import ESMCParams
+
+logger = get_logger(__name__)
 
 
 def get_model_id(model_size: str):
@@ -41,7 +44,7 @@ def download_model_assets(
             f"No HuggingFace repository mapped for model size: {model_size}"
         )
 
-    print(f"📥 Downloading ESMC {model_size}")
+    logger.info("Downloading ESMC %s", model_size)
 
     result = r2_then_hf(
         base_model_slug=base_model_slug,
@@ -59,9 +62,9 @@ def download_model_assets(
     snapshot_path = result.actual_model_path or result.target_dir
 
     if result.cache_hit:
-        print(f"✅ ESMC {model_size} restored from cache")
+        logger.info("ESMC %s restored from cache", model_size)
     else:
-        print(f"✅ ESMC {model_size} downloaded: {result.files_downloaded} files")
+        logger.info("ESMC %s downloaded: %s files", model_size, result.files_downloaded)
 
-    print(f"📁 Using deterministic HF snapshot path: {snapshot_path}")
+    logger.info("Using deterministic HF snapshot path: %s", snapshot_path)
     return snapshot_path

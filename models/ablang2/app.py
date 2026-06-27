@@ -23,16 +23,19 @@ from models.ablang2.schema import (
     AbLang2SeqcodingResponse,
     AbLang2SeqcodingResult,
 )
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
     common_requirements,
 )
 from models.commons.util.device import get_torch_device
+
+logger = get_logger(__name__)
 
 # TODOs:
 #   * Add fix so that ablang2 uses weights at self.model_dir (it might currently be downloading it)
@@ -64,7 +67,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config()
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -89,7 +92,7 @@ class AbLang2Model(ModelMixinSnap):
         import torch
         from ablang2.pretrained import pretrained
 
-        print("📸 Loading Ablang2 model on CPU for memory snapshot...")
+        logger.info("Loading Ablang2 model on CPU for memory snapshot...")
 
         # Set deterministic behavior for consistent results across CPU loading
         torch.manual_seed(42)
@@ -97,7 +100,7 @@ class AbLang2Model(ModelMixinSnap):
         self.torch = torch
         self.model_dir = get_model_dir()
 
-        print(f"🔍 AbLang2 model directory: {self.model_dir}")
+        logger.info("AbLang2 model directory: %s", self.model_dir)
 
         # Verify the symlink exists (should have been created during download phase)
         import ablang2
@@ -106,27 +109,29 @@ class AbLang2Model(ModelMixinSnap):
         expected_symlink = module_dir / "model-weights-ablang2-paired"
 
         if expected_symlink.exists() and expected_symlink.is_symlink():
-            print(
-                f"✅ Symlink verified: {expected_symlink} -> {expected_symlink.resolve()}"
+            logger.info(
+                "Symlink verified: %s -> %s",
+                expected_symlink,
+                expected_symlink.resolve(),
             )
 
             # Verify model files are accessible through the symlink
             if (expected_symlink / "model.pt").exists():
-                print("✅ model.pt accessible through symlink")
+                logger.info("model.pt accessible through symlink")
             else:
-                print("⚠️ Warning: model.pt not found through symlink")
+                logger.warning("model.pt not found through symlink")
 
             if (expected_symlink / "hparams.json").exists():
-                print("✅ hparams.json accessible through symlink")
+                logger.info("hparams.json accessible through symlink")
             else:
-                print("⚠️ Warning: hparams.json not found through symlink")
+                logger.warning("hparams.json not found through symlink")
         else:
-            print(f"⚠️ Warning: Expected symlink not found at {expected_symlink}")
-            print("    AbLang2 may attempt to download weights on its own")
+            logger.warning("Expected symlink not found at %s", expected_symlink)
+            logger.warning("AbLang2 may attempt to download weights on its own")
 
         # Load the model on CPU first
         # AbLang2 will use the symlinked weights directory
-        print("⏳ Loading AbLang2 pretrained model...")
+        logger.info("Loading AbLang2 pretrained model...")
         self.model = pretrained(
             model_to_use="ablang2-paired",
             random_init=False,
@@ -137,7 +142,7 @@ class AbLang2Model(ModelMixinSnap):
 
         self.vocab_tokens = [self.model.tokenizer.token_to_aa[i] for i in range(1, 21)]
 
-        print("✅ Completed CPU load of AbLang2 model for memory snapshot")
+        logger.info("Completed CPU load of AbLang2 model for memory snapshot")
 
         # Diagnostic: Check if ablang2 created any new download directories
         common_download_locations = [
@@ -147,7 +152,9 @@ class AbLang2Model(ModelMixinSnap):
         ]
         for location in common_download_locations:
             if location.exists():
-                print(f"⚠️ Found ablang2 directory at {location} - may indicate bypass")
+                logger.warning(
+                    "Found ablang2 directory at %s - may indicate bypass", location
+                )
 
     @modal.enter(snap=False)
     def setup_model(self):
@@ -162,11 +169,11 @@ class AbLang2Model(ModelMixinSnap):
         # Get device and transfer model to GPU
         self.device = get_torch_device()
 
-        print(f"Transferring AbLang2 model to device={self.device}...")
+        logger.info("Transferring AbLang2 model to device=%s...", self.device)
         self.model.AbLang.to(self.device)
         self.model.AbLang.eval()
 
-        print("✅ AbLang2 model ready for inference")
+        logger.info("AbLang2 model ready for inference")
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
@@ -288,9 +295,7 @@ class AbLang2Model(ModelMixinSnap):
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def log_prob(
-        self, payload: AbLang2LogProbRequest
-    ) -> AbLang2LogProbResponse:
+    def log_prob(self, payload: AbLang2LogProbRequest) -> AbLang2LogProbResponse:
         # 1. Format the input sequences (using the same convention as elsewhere)
         formatted_batch = [f"<{item.heavy}>|<{item.light}>" for item in payload.items]
 

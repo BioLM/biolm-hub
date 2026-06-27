@@ -6,11 +6,12 @@ from statistics import mode
 
 import modal
 
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
 from models.commons.core.error import UserError
+from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -28,6 +29,8 @@ from models.propermab.schema import (
     ProperMABSequenceFeatures,
     ProperMABStructureFeatures,
 )
+
+logger = get_logger(__name__)
 
 
 def prebuild_amber_siz() -> None:
@@ -54,7 +57,7 @@ def prebuild_amber_siz() -> None:
 
     from models.propermab.download import download_amber_siz
 
-    print("🔧 Pre-downloading amber.siz during image build...")
+    logger.info("Pre-downloading amber.siz during image build...")
 
     # Download using the proper R2-first infrastructure
     cached_path = download_amber_siz()
@@ -66,7 +69,7 @@ def prebuild_amber_siz() -> None:
     if os.path.exists(target_path):
         os.remove(target_path)
     os.symlink(str(cached_path), target_path)
-    print(f"✅ Created symlink: {target_path} -> {cached_path}")
+    logger.info("Created symlink: %s -> %s", target_path, cached_path)
 
 
 def install_apbs_dependencies() -> None:
@@ -87,7 +90,7 @@ def install_apbs_dependencies() -> None:
     import subprocess
     import tarfile
 
-    print("🔧 Installing APBS 3.0.0 and dependencies...")
+    logger.info("Installing APBS 3.0.0 and dependencies...")
 
     # Create installation directories
     os.makedirs("/opt", exist_ok=True)
@@ -95,7 +98,7 @@ def install_apbs_dependencies() -> None:
 
     try:
         # Download APBS 3.0.0
-        print("📥 Downloading APBS 3.0.0...")
+        logger.info("Downloading APBS 3.0.0...")
         subprocess.run(
             [
                 "wget",
@@ -108,7 +111,7 @@ def install_apbs_dependencies() -> None:
         )
 
         # Extract APBS
-        print("📦 Extracting APBS...")
+        logger.info("Extracting APBS...")
         subprocess.run(
             [
                 "unzip",
@@ -125,7 +128,7 @@ def install_apbs_dependencies() -> None:
         )
 
         # Install readline 7.0 (APBS dependency)
-        print("📥 Installing readline 7.0...")
+        logger.info("Installing readline 7.0...")
         subprocess.run(
             [
                 "wget",
@@ -142,7 +145,7 @@ def install_apbs_dependencies() -> None:
             tar.extractall("/tmp/apbs_install/")
 
         # Compile and install readline
-        print("🔨 Compiling readline 7.0...")
+        logger.info("Compiling readline 7.0...")
         os.chdir("/tmp/apbs_install/readline-7.0")
         subprocess.run(
             ["./configure", "--prefix=/opt/readline"],
@@ -164,19 +167,19 @@ def install_apbs_dependencies() -> None:
         )
 
         # Verify installations
-        print("✅ Verifying APBS installation...")
+        logger.info("Verifying APBS installation...")
         apbs_version = subprocess.run(
             ["/opt/APBS-3.0.0.Linux/bin/apbs", "--version"],
             capture_output=True,
             text=True,
         )
-        print(f"   APBS version: {apbs_version.stdout.strip()}")
+        logger.info("   APBS version: %s", apbs_version.stdout.strip())
 
-        print("✅ APBS and dependencies installed successfully!")
+        logger.info("APBS and dependencies installed successfully!")
 
     except Exception as e:
-        print(f"⚠️ Error installing APBS: {e}")
-        print("   ProperMAB will attempt to continue but may fail at runtime")
+        logger.error("Error installing APBS: %s", e, exc_info=True)
+        logger.warning("ProperMAB will attempt to continue but may fail at runtime")
 
     finally:
         # Clean up installation files
@@ -195,8 +198,8 @@ def prebuild_abodybuilder2() -> None:
     """
     model_dir = get_model_dir()
 
-    print("🔄 Pre-verifying ABodyBuilder2 weights during build phase...")
-    print(f"📂 Model directory: {model_dir}")
+    logger.info("Pre-verifying ABodyBuilder2 weights during build phase...")
+    logger.info("Model directory: %s", model_dir)
 
     # Expected weight files for ABodyBuilder2
     expected_weights = [
@@ -210,22 +213,22 @@ def prebuild_abodybuilder2() -> None:
     if model_dir.exists():
         existing_files = list(model_dir.iterdir())
         existing_names = [f.name for f in existing_files]
-        print(f"📋 Found {len(existing_files)} files in model directory")
+        logger.info("Found %s files in model directory", len(existing_files))
 
         missing = [w for w in expected_weights if w not in existing_names]
         if missing:
-            print(f"⚠️ Missing weight files: {missing}")
-            print("💡 Weights will be downloaded at runtime from Zenodo")
+            logger.warning("Missing weight files: %s", missing)
+            logger.info("Weights will be downloaded at runtime from Zenodo")
         else:
-            print("✅ All ABodyBuilder2 weight files present!")
+            logger.info("All ABodyBuilder2 weight files present!")
             for w in expected_weights:
                 weight_path = model_dir / w
                 if weight_path.exists():
                     size_mb = weight_path.stat().st_size / (1024 * 1024)
-                    print(f"   ✓ {w}: {size_mb:.1f} MB")
+                    logger.info(f"   {w}: {size_mb:.1f} MB")
     else:
-        print("⚠️ Model directory does not exist")
-        print("💡 Weights will be downloaded at runtime from Zenodo")
+        logger.warning("Model directory does not exist")
+        logger.info("Weights will be downloaded at runtime from Zenodo")
 
 
 # Build Modal container image with all ProperMAB dependencies
@@ -335,7 +338,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config()
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -385,17 +388,17 @@ class ProperMABModel(ModelMixinSnap):
         import propermab
         from propermab import defaults
 
-        print("🔧 Configuring ProperMAB...")
+        logger.info("Configuring ProperMAB...")
 
         # Get model directory with R2-cached ABodyBuilder2 weights
         model_dir = get_model_dir()
-        print(f"📂 ABodyBuilder2 weights directory: {model_dir}")
+        logger.info("ABodyBuilder2 weights directory: %s", model_dir)
 
         # Verify weights exist
         if model_dir.exists() and any(model_dir.iterdir()):
-            print("🚀 Using R2-cached ABodyBuilder2 weights")
+            logger.info("Using R2-cached ABodyBuilder2 weights")
         else:
-            print("⚠️ Warning: ABodyBuilder2 weights not found in cache")
+            logger.warning("ABodyBuilder2 weights not found in cache")
 
         # ProperMAB configuration for external binaries
         propermab_config = {
@@ -415,14 +418,14 @@ class ProperMABModel(ModelMixinSnap):
         defaults.system_config.override_defaults(propermab_config)
 
         # Verify configuration
-        print("📋 ProperMAB configuration:")
+        logger.info("ProperMAB configuration:")
         for key, value in propermab_config.items():
-            print(f"   {key}: {value}")
+            logger.info("   %s: %s", key, value)
 
         # Store propermab module for later use
         self.propermab = propermab
 
-        print("✅ ProperMAB configured successfully!")
+        logger.info("ProperMAB configured successfully!")
 
     @modal.enter(snap=False)
     def setup_model(self) -> None:
@@ -430,8 +433,9 @@ class ProperMABModel(ModelMixinSnap):
 
         This runs after memory snapshot is loaded (billing starts here).
         """
-        print(
-            f"✅ {ProperMABParams.display_name} model ready for inference from memory snapshot!"
+        logger.info(
+            "%s model ready for inference from memory snapshot!",
+            ProperMABParams.display_name,
         )
 
     def seed_everything(self, seed: int = 42, deterministic: bool = True) -> None:
@@ -590,13 +594,18 @@ class ProperMABModel(ModelMixinSnap):
 
                 # Use temporary directory for intermediate files
                 with tempfile.TemporaryDirectory() as tmp_dir:
-                    print(
-                        f"🔬 Extracting features: num_runs={num_runs}, is_fv={is_fv}, "
-                        f"isotype={isotype}, lc_type={lc_type}, seed={seed}"
+                    logger.info(
+                        "Extracting features: num_runs=%s, is_fv=%s, "
+                        "isotype=%s, lc_type=%s, seed=%s",
+                        num_runs,
+                        is_fv,
+                        isotype,
+                        lc_type,
+                        seed,
                     )
 
                     # STEP 1: Extract sequence-based features (7 features, instant)
-                    print("📊 Computing sequence features (7 features)...")
+                    logger.info("Computing sequence features (7 features)...")
                     seq_features_raw = feature_utils.get_all_seq_features(
                         heavy_seq=heavy_seq,
                         light_seq=light_seq,
@@ -612,8 +621,9 @@ class ProperMABModel(ModelMixinSnap):
                     )
 
                     # STEP 2: Extract structure-based features (27 features, ~60s per run)
-                    print(
-                        f"🧬 Computing structure features (27 features, {num_runs} run(s))..."
+                    logger.info(
+                        "Computing structure features (27 features, %s run(s))...",
+                        num_runs,
                     )
                     struct_features_raw = feature_utils.get_all_mol_features(
                         heavy_seq=heavy_seq,
@@ -735,8 +745,8 @@ class ProperMABModel(ModelMixinSnap):
                     )
                     results.append(result)
 
-                    print(
-                        "✅ Successfully extracted 34 features (7 sequence + 27 structure)"
+                    logger.info(
+                        "Successfully extracted 34 features (7 sequence + 27 structure)"
                     )
 
             except ValueError as e:
@@ -765,7 +775,7 @@ class ProperMABModel(ModelMixinSnap):
                 import traceback
 
                 error_trace = traceback.format_exc()
-                print(f"❌ Error extracting features: {error_trace}")
+                logger.error("Error extracting features: %s", error_trace)
                 raise UserError(
                     f"Unexpected error during feature extraction: {str(e)}"
                 ) from e

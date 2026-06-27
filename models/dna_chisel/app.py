@@ -3,9 +3,10 @@ import itertools
 import modal
 import numpy as np
 
-from models.commons.model.base import ModelMixin
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixin
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -19,6 +20,8 @@ from models.dna_chisel.schema import (
     DnaChiselPredictResponse,
     DnaChiselPredictResponseResult,
 )
+
+logger = get_logger(__name__)
 
 # Build Modal container image
 image = (
@@ -39,7 +42,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config()
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -62,8 +65,9 @@ class DnaChiselModel(ModelMixin):
         from python_codon_tables import get_codons_table
         from scipy.stats import entropy as scipy_entropy
 
-        print(
-            f"📸 Loading {DnaChiselParams.display_name} model on CPU for memory snapshot..."
+        logger.info(
+            "Loading %s model on CPU for memory snapshot...",
+            DnaChiselParams.display_name,
         )
 
         # Save modules and key functions as attributes for later use.
@@ -94,8 +98,9 @@ class DnaChiselModel(ModelMixin):
 
     @modal.enter(snap=False)
     def setup_model(self):
-        print(
-            f"✅ {DnaChiselParams.display_name} model ready for inference on from memory snapshot!"
+        logger.info(
+            "%s model ready for inference from memory snapshot!",
+            DnaChiselParams.display_name,
         )
 
     # 1) GC Content

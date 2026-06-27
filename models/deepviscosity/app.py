@@ -1,10 +1,11 @@
 import modal
 import numpy as np
 
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -20,6 +21,8 @@ from models.deepviscosity.schema import (
     DeepViscosityPredictResponseResult,
 )
 from models.deepviscosity.util import load_scaler
+
+logger = get_logger(__name__)
 
 # Build Modal container image (micromamba for bioconda packages, Python 3.10 for TF 2.11)
 image = modal.Image.micromamba(python_version="3.10")
@@ -56,7 +59,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config()
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -89,17 +92,17 @@ class DeepViscosityModel(ModelMixinSnap):
         os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
         os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
-        print("Loading DeepViscosity models...")
+        logger.info("Loading DeepViscosity models...")
 
         # Set deterministic seeds
         np.random.seed(42)
         tf.random.set_seed(42)
 
         self.model_dir = get_model_dir()
-        print(f"Model directory: {self.model_dir}")
+        logger.info("Model directory: %s", self.model_dir)
 
         # Load DeepSP CNN models for feature generation
-        print("Loading DeepSP CNN models...")
+        logger.info("Loading DeepSP CNN models...")
         self.deepsp_models = {}
 
         cnn_dir = self.model_dir / "DeepSP_CNN_model"
@@ -116,14 +119,14 @@ class DeepViscosityModel(ModelMixinSnap):
             model.load_weights(str(h5_path))
             model.compile(optimizer="adam", loss="mae", metrics=["mae"])
             self.deepsp_models[model_name] = model
-            print(f"  Loaded {model_name}")
+            logger.debug("  Loaded %s", model_name)
 
         # Load StandardScaler from embedded parameters
-        print("Loading feature scaler...")
+        logger.info("Loading feature scaler...")
         self.scaler = load_scaler()
 
         # Load 102 ensemble ANN models
-        print("Loading ensemble ANN models...")
+        logger.info("Loading ensemble ANN models...")
         self.ensemble_models = []
         ensemble_dir = self.model_dir / "DeepViscosity_ANN_ensemble_models"
 
@@ -140,13 +143,13 @@ class DeepViscosityModel(ModelMixinSnap):
             )
             self.ensemble_models.append(model)
 
-        print(f"  Loaded {len(self.ensemble_models)} ensemble models")
-        print("DeepViscosity models loaded successfully!")
+        logger.info("  Loaded %s ensemble models", len(self.ensemble_models))
+        logger.info("DeepViscosity models loaded successfully!")
 
     @modal.enter(snap=False)
     def setup_model(self) -> None:
         """Called after restoring from snapshot."""
-        print(f"{DeepViscosityParams.display_name} ready for inference!")
+        logger.info("%s ready for inference!", DeepViscosityParams.display_name)
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
@@ -156,7 +159,9 @@ class DeepViscosityModel(ModelMixinSnap):
         """Predict antibody viscosity class from VH/VL sequences."""
         from models.deepviscosity.util import align_and_encode
 
-        print(f"DeepViscosity predict called with {len(payload.items)} antibodies")
+        logger.info(
+            "DeepViscosity predict called with %s antibodies", len(payload.items)
+        )
 
         # Check if we should include DeepSP features in response
         include_features = False
@@ -220,7 +225,7 @@ class DeepViscosityModel(ModelMixinSnap):
 
             results.append(result)
 
-        print(f"DeepViscosity predict completed for {len(results)} antibodies")
+        logger.info("DeepViscosity predict completed for %s antibodies", len(results))
         return DeepViscosityPredictResponse(results=results)
 
 

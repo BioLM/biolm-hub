@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 
 import requests
 
+from models.commons.core.logging import get_logger
 from models.commons.storage.downloads import (
     download_model_from_r2,
 )
@@ -48,6 +49,8 @@ Notes on current state:
   use) to trigger the third-party library downloads. A future migration to
   CustomSourceConfig is possible, but custom_function remains supported.
 """
+
+logger = get_logger(__name__)
 
 
 class AcquisitionStrategy(Enum):
@@ -196,7 +199,7 @@ def _calculate_directory_size(directory: Path) -> int:
             if file_path.is_file():
                 total_size += file_path.stat().st_size
     except Exception as e:
-        print(f"⚠️ Error calculating directory size: {e}")
+        logger.warning("⚠️ Error calculating directory size: %s", e)
     return total_size
 
 
@@ -232,7 +235,7 @@ def _try_r2_restore(
         return None
 
     r2_prefix = R2Utils.get_r2_prefix_from_target_dir(target_dir)
-    print(f"🔍 Checking R2 cache at {r2_prefix}")
+    logger.info("🔍 Checking R2 cache at %s", r2_prefix)
 
     # Extract cache config parameters
     timeout_hours = None
@@ -240,7 +243,7 @@ def _try_r2_restore(
         timeout_hours = config.cache_config.cache_timeout_hours
     validate_manifest = config.cache_config.validate_checksums
 
-    print(f"🔄 [acquisition.py] Starting atomic restore from R2: {r2_prefix}")
+    logger.info("🔄 [acquisition.py] Starting atomic restore from R2: %s", r2_prefix)
     restored = R2Utils.restore_from_r2_atomic(
         target_dir=target_dir,
         r2_prefix=r2_prefix,
@@ -252,7 +255,7 @@ def _try_r2_restore(
     if not restored:
         return None
 
-    print("📦 Found in R2 cache, restored successfully")
+    logger.info("📦 Found in R2 cache, restored successfully")
 
     # Resolve actual model path (e.g. HF snapshot subdirectory)
     actual_model_path = target_dir
@@ -301,15 +304,15 @@ def _download_file_with_progress(
                     # Only print at 0%, 25%, 50%, 75%, 100% milestones
                     if progress >= 0 and progress != last_percent_printed:
                         if progress in [0, 25, 50, 75, 100]:
-                            print(
+                            logger.info(
                                 f"   Progress: {progress}% ({downloaded/(1024**2):.1f}MB/{file_size/(1024**2):.1f}MB)"
                             )
                             last_percent_printed = progress
 
     if file_size > 0:
-        print(f"   ✅ Downloaded {file_path.name} ({file_size/(1024**2):.1f}MB)")
+        logger.info(f"   ✅ Downloaded {file_path.name} ({file_size/(1024**2):.1f}MB)")
     else:
-        print(f"   ✅ Downloaded {file_path.name} ({downloaded/(1024**2):.1f}MB)")
+        logger.info(f"   ✅ Downloaded {file_path.name} ({downloaded/(1024**2):.1f}MB)")
 
     return max(file_size, downloaded)
 
@@ -346,8 +349,8 @@ def _cache_to_r2(
         return True
 
     r2_prefix = R2Utils.get_r2_prefix_from_target_dir(r2_prefix_dir or source_dir)
-    print(f"📤 Caching to R2 at {r2_prefix}")
-    print(f"🔄 [acquisition.py] Starting atomic upload to R2: {r2_prefix}")
+    logger.info("📤 Caching to R2 at %s", r2_prefix)
+    logger.info("🔄 [acquisition.py] Starting atomic upload to R2: %s", r2_prefix)
 
     success = R2Utils.upload_to_r2_atomic(
         source_dir=source_dir,
@@ -356,7 +359,7 @@ def _cache_to_r2(
         create_manifest=True,
     )
     if not success:
-        print("⚠️ R2 upload failed, but download succeeded")
+        logger.warning("⚠️ R2 upload failed, but download succeeded")
     return success
 
 
@@ -413,7 +416,7 @@ def _acquire_direct_urls(config: AcquisitionConfig) -> AcquisitionResult:
     target_dir = config.target_dir
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"📥 Acquiring model weights from direct URLs to {target_dir}")
+    logger.info("📥 Acquiring model weights from direct URLs to %s", target_dir)
 
     # Check R2 cache first
     cache_result = _try_r2_restore(config, target_dir, start_time, "direct_urls")
@@ -433,7 +436,7 @@ def _acquire_direct_urls(config: AcquisitionConfig) -> AcquisitionResult:
             file_path = target_dir / filename
             file_path.parent.mkdir(parents=True, exist_ok=True)
 
-            print(f"⬇️ Downloading {filename} from {urlparse(url).netloc}")
+            logger.info("⬇️ Downloading %s from %s", filename, urlparse(url).netloc)
 
             bytes_downloaded = _download_file_with_progress(
                 session, url, file_path, url_conf
@@ -441,7 +444,7 @@ def _acquire_direct_urls(config: AcquisitionConfig) -> AcquisitionResult:
             downloaded_files.append(filename)
             total_bytes += bytes_downloaded
 
-        print(
+        logger.info(
             f"✅ Downloaded {len(downloaded_files)} files ({total_bytes/(1024**3):.2f}GB total)"
         )
 
@@ -466,7 +469,7 @@ def _acquire_direct_urls(config: AcquisitionConfig) -> AcquisitionResult:
 
     except Exception as e:
         error_msg = f"Failed to download from URLs: {str(e)}"
-        print(f"❌ {error_msg}")
+        logger.error("❌ %s", error_msg, exc_info=True)
         return AcquisitionResult(
             success=False,
             target_dir=target_dir,
@@ -502,14 +505,16 @@ def _acquire_r2_only(config: AcquisitionConfig) -> AcquisitionResult:
     target_dir = config.target_dir
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"📥 Acquiring model weights from R2 storage to {target_dir}")
-    print(f"   📦 Model: {r2_config.base_model_slug}/{r2_config.params_version}")
+    logger.info("📥 Acquiring model weights from R2 storage to %s", target_dir)
+    logger.info(
+        "   📦 Model: %s/%s", r2_config.base_model_slug, r2_config.params_version
+    )
     if r2_config.model_variant:
-        print(f"   🏷️ Variant: {r2_config.model_variant}")
+        logger.info("   🏷️ Variant: %s", r2_config.model_variant)
     if r2_config.sub_path:
-        print(f"   📂 Sub-path: {r2_config.sub_path}")
+        logger.info("   📂 Sub-path: %s", r2_config.sub_path)
     if r2_config.filter_func:
-        print("   🔍 Using custom filter function")
+        logger.info("   🔍 Using custom filter function")
 
     try:
         # Use the existing download_model_from_r2 function
@@ -538,12 +543,13 @@ def _acquire_r2_only(config: AcquisitionConfig) -> AcquisitionResult:
 
         files_downloaded = sync_result.downloaded
         if sync_result.skipped > 0:
-            print(
-                f"✅ R2 sync complete: {files_downloaded} downloaded, "
-                f"{sync_result.skipped} already up-to-date"
+            logger.info(
+                "✅ R2 sync complete: %s downloaded, %s already up-to-date",
+                files_downloaded,
+                sync_result.skipped,
             )
         else:
-            print(f"✅ R2 download complete: {files_downloaded} files")
+            logger.info("✅ R2 download complete: %s files", files_downloaded)
 
         return AcquisitionResult(
             success=True,
@@ -564,7 +570,7 @@ def _acquire_r2_only(config: AcquisitionConfig) -> AcquisitionResult:
 
     except Exception as e:
         error_msg = f"Failed to download from R2: {str(e)}"
-        print(f"❌ {error_msg}")
+        logger.error("❌ %s", error_msg, exc_info=True)
         return AcquisitionResult(
             success=False,
             target_dir=target_dir,
@@ -593,7 +599,7 @@ def _resolve_hf_snapshot_path(config: AcquisitionConfig) -> Callable[[Path], Pat
                 hf_config.revision,
                 repo_type=hf_config.repo_type,
             )
-            print(f"   📁 Using deterministic snapshot path: {snapshot_dir}")
+            logger.info("   📁 Using deterministic snapshot path: %s", snapshot_dir)
         else:
             # Branch name like "main" - find the actual snapshot directory
             prefix = "datasets--" if hf_config.repo_type == "dataset" else "models--"
@@ -603,7 +609,7 @@ def _resolve_hf_snapshot_path(config: AcquisitionConfig) -> Callable[[Path], Pat
                 snapshots = list(cache_dir.iterdir())
                 if len(snapshots) == 1 and snapshots[0].is_dir():
                     snapshot_dir = snapshots[0]
-                    print(f"   📁 Found snapshot path: {snapshot_dir}")
+                    logger.info("   📁 Found snapshot path: %s", snapshot_dir)
                 else:
                     raise ValueError(
                         f"Cannot determine snapshot path for {hf_config.repo_id} "
@@ -647,14 +653,14 @@ def _acquire_huggingface_hub(config: AcquisitionConfig) -> AcquisitionResult:
     target_dir = config.target_dir
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    print("📥 Acquiring model weights from HuggingFace Hub")
-    print(f"   📦 Repository: {hf_config.repo_id}")
+    logger.info("📥 Acquiring model weights from HuggingFace Hub")
+    logger.info("   📦 Repository: %s", hf_config.repo_id)
     if hf_config.revision:
-        print(f"   📌 Revision: {hf_config.revision}")
+        logger.info("   📌 Revision: %s", hf_config.revision)
     if hf_config.allow_patterns:
-        print(f"   ✅ Include patterns: {hf_config.allow_patterns}")
+        logger.info("   ✅ Include patterns: %s", hf_config.allow_patterns)
     if hf_config.ignore_patterns:
-        print(f"   ❌ Exclude patterns: {hf_config.ignore_patterns}")
+        logger.info("   ❌ Exclude patterns: %s", hf_config.ignore_patterns)
 
     # Check R2 cache first
     cache_result = _try_r2_restore(
@@ -675,7 +681,7 @@ def _acquire_huggingface_hub(config: AcquisitionConfig) -> AcquisitionResult:
     try:
         from models.commons.storage.downloads import download_from_hf
 
-        print("⬇️ Downloading from HuggingFace Hub...")
+        logger.info("⬇️ Downloading from HuggingFace Hub...")
         snapshot_dir = download_from_hf(
             model_dir=target_dir,
             hf_repo_id=hf_config.repo_id,
@@ -690,10 +696,10 @@ def _acquire_huggingface_hub(config: AcquisitionConfig) -> AcquisitionResult:
         file_count = len([f for f in downloaded_files if f.is_file()])
         total_size = sum(f.stat().st_size for f in downloaded_files if f.is_file())
 
-        print(
+        logger.info(
             f"✅ HuggingFace download complete: {file_count} files ({total_size/(1024**3):.2f}GB)"
         )
-        print(f"   📁 Snapshot directory: {snapshot_dir}")
+        logger.info("   📁 Snapshot directory: %s", snapshot_dir)
 
         # Cache to R2
         upload_success = _cache_to_r2(config, target_dir)
@@ -722,7 +728,7 @@ def _acquire_huggingface_hub(config: AcquisitionConfig) -> AcquisitionResult:
 
     except Exception as e:
         error_msg = f"Failed to download from HuggingFace Hub: {str(e)}"
-        print(f"❌ {error_msg}")
+        logger.error("❌ %s", error_msg, exc_info=True)
         return AcquisitionResult(
             success=False,
             target_dir=target_dir,
@@ -740,11 +746,11 @@ def _setup_library_environment(library_config: LibrarySourceConfig) -> dict:
     """Set environment variables for library and return original values."""
     original_env = {}
     if library_config.env_vars:
-        print(f"🌍 Setting {len(library_config.env_vars)} environment variables")
+        logger.info("🌍 Setting %s environment variables", len(library_config.env_vars))
         for var, value in library_config.env_vars.items():
             original_env[var] = os.environ.get(var)
             os.environ[var] = value
-            print(f"   {var} = {value}")
+            logger.debug("   Set env var: %s", var)
     return original_env
 
 
@@ -773,7 +779,9 @@ def _acquire_library_managed(config: AcquisitionConfig) -> AcquisitionResult:
     target_dir = config.target_dir
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"📥 Acquiring model weights using {library_config.library_name} library")
+    logger.info(
+        "📥 Acquiring model weights using %s library", library_config.library_name
+    )
 
     # Check R2 cache first
     cache_result = _try_r2_restore(
@@ -790,8 +798,9 @@ def _acquire_library_managed(config: AcquisitionConfig) -> AcquisitionResult:
     original_env = _setup_library_environment(library_config)
 
     try:
-        print(
-            f"🚀 Calling library initialization function for {library_config.library_name}"
+        logger.info(
+            "🚀 Calling library initialization function for %s",
+            library_config.library_name,
         )
 
         # Record initial state
@@ -809,8 +818,9 @@ def _acquire_library_managed(config: AcquisitionConfig) -> AcquisitionResult:
         final_file_count = len([f for f in final_files if f.is_file()])
         files_downloaded = final_file_count - initial_file_count
 
-        print(
-            f"✅ Library function completed, {files_downloaded} files added to target directory"
+        logger.info(
+            "✅ Library function completed, %s files added to target directory",
+            files_downloaded,
         )
 
         # Ensure the library actually wrote files to the target directory.
@@ -848,7 +858,7 @@ def _acquire_library_managed(config: AcquisitionConfig) -> AcquisitionResult:
 
     except Exception as e:
         error_msg = f"Library-managed download failed: {str(e)}"
-        print(f"❌ {error_msg}")
+        logger.error("❌ %s", error_msg, exc_info=True)
 
         return AcquisitionResult(
             success=False,
@@ -891,8 +901,9 @@ def _execute_custom_function(
 ) -> AcquisitionResult:
     """Execute the custom acquisition function and handle results."""
     try:
-        print(
-            f"🔧 [acquisition.py] Executing custom acquisition function: {custom_name}..."
+        logger.info(
+            "🔧 [acquisition.py] Executing custom acquisition function: %s...",
+            custom_name,
         )
 
         # Call the custom function with target_dir and any additional kwargs
@@ -908,7 +919,7 @@ def _execute_custom_function(
         file_count = len([f for f in downloaded_files if f.is_file()])
         total_size = sum(f.stat().st_size for f in downloaded_files if f.is_file())
 
-        print(
+        logger.info(
             f"✅ Custom acquisition complete: {file_count} files ({total_size/(1024**3):.2f}GB)"
         )
 
@@ -920,7 +931,7 @@ def _execute_custom_function(
 
         # Run post-processing if provided
         if custom_config.post_process_fn:
-            print("🔧 [acquisition.py] Running post-processing...")
+            logger.info("🔧 [acquisition.py] Running post-processing...")
             custom_config.post_process_fn(
                 target_dir, **custom_config.post_process_kwargs
             )
@@ -957,15 +968,15 @@ def _execute_custom_function(
 
     except Exception as e:
         error_msg = f"Custom acquisition failed: {str(e)}"
-        print(f"❌ {error_msg}")
+        logger.error("❌ %s", error_msg, exc_info=True)
 
         # Try to provide helpful debugging info
         if hasattr(e, "__traceback__"):
             import traceback
 
-            print("   Traceback:")
+            logger.debug("   Traceback:")
             for line in traceback.format_tb(e.__traceback__):
-                print(f"   {line.strip()}")
+                logger.debug("   %s", line.strip())
 
         return AcquisitionResult(
             success=False,
@@ -1050,9 +1061,9 @@ def _acquire_custom(config: AcquisitionConfig) -> AcquisitionResult:
     target_dir.mkdir(parents=True, exist_ok=True)
 
     custom_name = custom_config.name or "custom_function"
-    print(f"📥 Acquiring model weights using custom strategy: {custom_name}")
+    logger.info("📥 Acquiring model weights using custom strategy: %s", custom_name)
     if custom_config.description:
-        print(f"   Description: {custom_config.description}")
+        logger.info("   Description: %s", custom_config.description)
 
     # Check R2 cache first
     cache_result = _try_r2_restore(
@@ -1117,7 +1128,7 @@ def _validate_required_files(
 
     try:
         verify_model_dir(actual_path, required_files)
-        print("✅ Required files validation successful")
+        logger.info("✅ Required files validation successful")
         return None
     except Exception as e:
         return f"Required files check failed: {e}"
@@ -1132,7 +1143,7 @@ def _validate_size_constraints(
         return errors
 
     total_size = _calculate_directory_size(actual_path)
-    print(f"📏 Directory size: {total_size/(1024**3):.2f}GB")
+    logger.info(f"📏 Directory size: {total_size/(1024**3):.2f}GB")
 
     if (
         validation_config.min_size_bytes
@@ -1151,18 +1162,18 @@ def _validate_size_constraints(
         )
 
     if not errors:
-        print("✅ Size constraints validation successful")
+        logger.info("✅ Size constraints validation successful")
     return errors
 
 
 def _run_custom_validator(actual_path: Path, custom_validator) -> Optional[str]:
     """Run custom validation function."""
-    print("🔧 Running custom validator...")
+    logger.info("🔧 Running custom validator...")
     try:
         custom_result = custom_validator(actual_path)
         if not custom_result:
             return "Custom validator returned False"
-        print("✅ Custom validation successful")
+        logger.info("✅ Custom validation successful")
         return None
     except Exception as e:
         return f"Custom validator failed: {e}"
@@ -1217,8 +1228,8 @@ def acquire_model_weights(config: AcquisitionConfig) -> AcquisitionResult:
     Returns:
         AcquisitionResult with detailed information about the acquisition
     """
-    print(f"🚀 Starting model weight acquisition: {config.strategy.value}")
-    print(f"   📁 Target directory: {config.target_dir}")
+    logger.info("🚀 Starting model weight acquisition: %s", config.strategy.value)
+    logger.info("   📁 Target directory: %s", config.target_dir)
 
     # Route to strategy-specific implementation
     strategy_handlers = {
@@ -1247,7 +1258,7 @@ def acquire_model_weights(config: AcquisitionConfig) -> AcquisitionResult:
         if validation_errors:
             result.success = False
             result.error_message = f"Validation failed: {'; '.join(validation_errors)}"
-            print(f"❌ Validation failed: {result.error_message}")
+            logger.error("❌ Validation failed: %s", result.error_message)
         elif any(
             [
                 config.validation_config.required_files,
@@ -1257,14 +1268,14 @@ def acquire_model_weights(config: AcquisitionConfig) -> AcquisitionResult:
             ]
         ):
             actual_path = result.actual_model_path or result.target_dir
-            print(f"✅ All validations passed for {actual_path}")
+            logger.info("✅ All validations passed for %s", actual_path)
 
     # Log final result
     if result.success:
-        print(
+        logger.info(
             f"🎉 Acquisition complete: {result.files_downloaded} files in {result.acquisition_time_seconds:.1f}s"
         )
     else:
-        print(f"❌ Acquisition failed: {result.error_message}")
+        logger.error("❌ Acquisition failed: %s", result.error_message)
 
     return result

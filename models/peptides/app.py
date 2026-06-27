@@ -1,8 +1,9 @@
 import modal
 
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -21,6 +22,8 @@ from models.peptides.schema import (
     PeptidesParams,
 )
 
+logger = get_logger(__name__)
+
 # Build Modal container image
 image = (
     modal.Image.debian_slim(python_version="3.12")
@@ -33,7 +36,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config()
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -55,8 +58,9 @@ class PeptidesModel(ModelMixinSnap):
 
     @modal.enter(snap=False)
     def setup_model(self):
-        print(
-            f"✅ {PeptidesParams.display_name} model ready for inference on from memory snapshot!"
+        logger.info(
+            "%s model ready for inference from memory snapshot!",
+            PeptidesParams.display_name,
         )
 
     @modal.method()

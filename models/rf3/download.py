@@ -6,9 +6,12 @@ Based on RosettaCommons/foundry implementation (BSD 3-Clause License).
 from pathlib import Path
 from typing import Optional
 
+from models.commons.core.logging import get_logger
 from models.commons.storage.download_helpers import r2_then_urls
 from models.commons.storage.downloads import get_model_dir_util
 from models.rf3.schema import RF3Params
+
+logger = get_logger(__name__)
 
 # RF3 checkpoint URLs from IPD
 # Multiple versions available - using latest by default
@@ -50,7 +53,7 @@ def download_model_assets(
     checkpoint_filename = RF3_CHECKPOINT_FILENAMES[checkpoint_version]
     checkpoint_url = RF3_CHECKPOINT_URLS[checkpoint_version]
 
-    print(f"📥 Downloading RosettaFold3 ({checkpoint_version} checkpoint)")
+    logger.info("Downloading RosettaFold3 (%s checkpoint)", checkpoint_version)
 
     result = r2_then_urls(
         base_model_slug=base_model_slug,
@@ -68,8 +71,8 @@ def download_model_assets(
         )
 
     if result.cache_hit:
-        print("✅ RosettaFold3 restored from R2 cache")
+        logger.info("RosettaFold3 restored from R2 cache")
     else:
-        print(f"✅ RosettaFold3 downloaded: {result.files_downloaded} files")
+        logger.info("RosettaFold3 downloaded: %s files", result.files_downloaded)
 
     return result.actual_model_path or result.target_dir

@@ -4,10 +4,11 @@ import re
 
 import modal
 
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -32,6 +33,8 @@ from models.prostt5.schema import (
     ProstT5Params,
     ProstT5Types,
 )
+
+logger = get_logger(__name__)
 
 variant_config = parse_variants(
     [
@@ -80,7 +83,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config(**variant_config)
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -107,7 +110,7 @@ class ProstT5Model(ModelMixinSnap):
             T5Tokenizer,
         )
 
-        print("🚀 Loading ProstT5 model directly on GPU for GPU memory snapshot...")
+        logger.info("Loading ProstT5 model directly on GPU for GPU memory snapshot...")
 
         self.torch = torch
         self.model_dir = get_model_dir()
@@ -118,8 +121,11 @@ class ProstT5Model(ModelMixinSnap):
         # Set the Torch Hub cache directory to the internal model path
         torch.hub.set_dir(self.model_dir)
 
-        print(
-            f"⏳ Loading ProstT5 in mode {self.model_action} directly on {self.device} from: {self.model_dir}"
+        logger.info(
+            "Loading ProstT5 in mode %s directly on %s from: %s",
+            self.model_action,
+            self.device,
+            self.model_dir,
         )
 
         # Load tokenizer
@@ -143,10 +149,12 @@ class ProstT5Model(ModelMixinSnap):
 
         # Skip half precision when using memory snapshots to avoid CPU compatibility issues
         # Half precision operations are not well supported on CPU where model initially loads
-        print("⚠️ Skipping half precision with memory snapshots for CPU compatibility")
+        logger.warning(
+            "Skipping half precision with memory snapshots for CPU compatibility"
+        )
 
-        print(
-            f"✅ ProstT5 model loaded directly on {self.device} for GPU memory snapshot!"
+        logger.info(
+            "ProstT5 model loaded directly on %s for GPU memory snapshot!", self.device
         )
 
     @modal.method()
@@ -390,7 +398,7 @@ class ProstT5Model(ModelMixinSnap):
                 # this is only triggered rarely and only if processing in batched mode,
                 # happens esp. for proteins with L>512 (beyond training length)
                 if t_len != s_len:
-                    print(f"source length={s_len} vs target length={t_len}")
+                    logger.warning("source length=%s vs target length=%s", s_len, t_len)
                     if t_len > s_len:  # truncate if target longer than groundtruth
                         t_seq = t_seq[:s_len]
                     elif s_len < t_len:

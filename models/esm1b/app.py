@@ -1,9 +1,10 @@
 import modal
 
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -24,6 +25,8 @@ from models.esm1b.schema import (
     ESM1bPredictResponse,
     ESM1bPredictResponseResult,
 )
+
+logger = get_logger(__name__)
 
 # Build Modal container image
 image = modal.Image.from_registry("pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime")
@@ -52,7 +55,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config()
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -73,7 +76,7 @@ class ESM1bModel(ModelMixinSnap):
         import torch
         from transformers import EsmForMaskedLM, EsmTokenizer
 
-        print("Loading ESM-1b model directly on GPU for GPU memory snapshot...")
+        logger.info("Loading ESM-1b model directly on GPU for GPU memory snapshot...")
 
         # Set deterministic behavior for consistent results
         torch.manual_seed(42)
@@ -84,7 +87,7 @@ class ESM1bModel(ModelMixinSnap):
         self.device = get_torch_device()
         self.model_dir = get_model_dir()
 
-        print(f"Loading ESM-1b model from: {self.model_dir}")
+        logger.info("Loading ESM-1b model from: %s", self.model_dir)
 
         # Load tokenizer
         self.tokenizer = EsmTokenizer.from_pretrained(self.model_dir)
@@ -111,7 +114,9 @@ class ESM1bModel(ModelMixinSnap):
             if len(tok) == 1 and tok.isupper()
         ]
 
-        print(f"ESM-1b model loaded directly on {self.device} for GPU memory snapshot!")
+        logger.info(
+            "ESM-1b model loaded directly on %s for GPU memory snapshot!", self.device
+        )
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
@@ -136,7 +141,7 @@ class ESM1bModel(ModelMixinSnap):
                 include=include,
             )
         except Exception as e:
-            print(f"Model call failed with error [{e}]")
+            logger.error("Model call failed with error [%s]", e, exc_info=True)
             raise e
 
         return ESM1bEncodeResponse(results=results)
@@ -158,7 +163,7 @@ class ESM1bModel(ModelMixinSnap):
         try:
             results = self._predict_forward_pass(sequences=sequences)
         except Exception as e:
-            print(f"Model call failed with error [{e}]")
+            logger.error("Model call failed with error [%s]", e, exc_info=True)
             raise e
 
         return ESM1bPredictResponse(results=results)

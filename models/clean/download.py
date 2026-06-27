@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Optional
 
 from models.clean.schema import CLEANParams
+from models.commons.core.logging import get_logger
 from models.commons.storage.acquisition import (
     AcquisitionConfig,
     AcquisitionStrategy,
@@ -13,6 +14,8 @@ from models.commons.storage.acquisition import (
 )
 from models.commons.storage.download_helpers import download_with_fallback
 from models.commons.storage.downloads import get_model_dir_util
+
+logger = get_logger(__name__)
 
 # Google Drive file ID for pretrained weights
 # Source: https://drive.google.com/file/d/1kwYd4VtzYuMvJMWXy6Vks91DSUAOcKpZ/view
@@ -63,7 +66,7 @@ def _download_from_gdrive(file_id: str, output_path: Path) -> None:
     import gdown
 
     url = f"https://drive.google.com/uc?id={file_id}"
-    print(f"Downloading from Google Drive: {url}")
+    logger.info("Downloading from Google Drive: %s", url)
     gdown.download(url, str(output_path), quiet=False)
 
 
@@ -77,7 +80,7 @@ def _download_from_url(url: str, output_path: Path) -> None:
     """
     import urllib.request
 
-    print(f"Downloading from URL: {url}")
+    logger.info("Downloading from URL: %s", url)
     urllib.request.urlretrieve(url, output_path)
 
 
@@ -129,7 +132,7 @@ def _extract_clean_files(target_dir: Path) -> None:
     """
     zip_path = target_dir / "pretrained.zip"
 
-    print("Extracting CLEAN pretrained weights from zip archive...")
+    logger.info("Extracting CLEAN pretrained weights from zip archive...")
 
     try:
         with zipfile.ZipFile(zip_path, "r") as zip_ref:
@@ -139,7 +142,7 @@ def _extract_clean_files(target_dir: Path) -> None:
                 raise zipfile.BadZipFile(f"Corrupted file in archive: {bad_file}")
 
             namelist = zip_ref.namelist()
-            print(f"ZIP contains {len(namelist)} files")
+            logger.debug("ZIP contains %s files", len(namelist))
 
             # Extract each required pretrained file
             for filename in PRETRAINED_FILES:
@@ -158,7 +161,7 @@ def _extract_clean_files(target_dir: Path) -> None:
                     with open(target_file, "wb") as target:
                         shutil.copyfileobj(source, target)
 
-                print(f"  Extracted {filename}")
+                logger.debug("  Extracted %s", filename)
 
         # Validate all files exist and are non-empty
         for filename in REQUIRED_FILES:
@@ -168,7 +171,9 @@ def _extract_clean_files(target_dir: Path) -> None:
             if filepath.stat().st_size == 0:
                 raise RuntimeError(f"File is empty: {filename}")
 
-        print(f"Successfully extracted and validated {len(REQUIRED_FILES)} files")
+        logger.info(
+            "Successfully extracted and validated %s files", len(REQUIRED_FILES)
+        )
 
     except zipfile.BadZipFile as e:
         raise RuntimeError(f"Downloaded ZIP file is corrupted: {e}") from e
@@ -178,7 +183,7 @@ def _extract_clean_files(target_dir: Path) -> None:
         # Clean up zip file
         if zip_path.exists():
             zip_path.unlink()
-            print("Cleaned up temporary zip file")
+            logger.info("Cleaned up temporary zip file")
 
 
 def _create_r2_config(
@@ -275,7 +280,7 @@ def download_model_assets(
     Raises:
         RuntimeError: If both R2 and fallback download strategies fail
     """
-    print("Downloading CLEAN model assets...")
+    logger.info("Downloading CLEAN model assets...")
 
     # Get target directory (no variant for CLEAN - single variant model)
     model_dir = get_model_dir_util(
@@ -284,10 +289,10 @@ def download_model_assets(
         sub_path=sub_path,
     )
 
-    print(f"Target directory: {model_dir}")
+    logger.info("Target directory: %s", model_dir)
 
     # Stage 1: Try R2 cache (fast path)
-    print("Checking R2 cache...")
+    logger.info("Checking R2 cache...")
     primary_config = _create_r2_config(
         base_model_slug=base_model_slug,
         params_version=params_version,
@@ -308,8 +313,8 @@ def download_model_assets(
         raise RuntimeError(f"Failed to download CLEAN model: {result.error_message}")
 
     if result.cache_hit:
-        print("Downloaded from R2 cache")
+        logger.info("Downloaded from R2 cache")
     else:
-        print("Downloaded from Google Drive + GitHub (files cached to R2)")
+        logger.info("Downloaded from Google Drive + GitHub (files cached to R2)")
 
     return result.actual_model_path or result.target_dir

@@ -3,10 +3,11 @@ from typing import Any
 import modal
 from modal import Cls
 
-from models.commons.model.base import ModelMixin
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixin
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -26,6 +27,8 @@ from models.esmstabp.schema import (
     ESMStabPPredictResponse,
     ESMStabPPredictResponseResult,
 )
+
+logger = get_logger(__name__)
 
 # Build Modal container image
 # Using slim Python image since no GPU needed (ESM2 runs on separate endpoint)
@@ -59,7 +62,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config()
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -84,39 +87,39 @@ class ESMStabPModel(ModelMixin):
         import joblib
         import numpy as np
 
-        print("Loading ESMStabP model...")
+        logger.info("Loading ESMStabP model...")
         np.random.seed(42)
         self.np = np
         self.model_dir = get_model_dir()
         self.max_sequence_len = ESMStabPParams.max_sequence_len
 
         # ESM2 endpoint reference (lightweight, no model loading)
-        print("Initializing ESM2 endpoint reference...")
+        logger.info("Initializing ESM2 endpoint reference...")
         self.esm2_model = Cls.from_name("esm2-650m", "ESM2Model")(
             app_username=self.app_username
         )
 
         # Load Random Forest models
-        print("Loading Random Forest models...")
+        logger.info("Loading Random Forest models...")
         self.rf_models: dict[int, Any] = {}
         for model_num in [1, 2, 3, 4]:
             model_path = self.model_dir / f"{model_num}.joblib"
             if model_path.exists():
                 self.rf_models[model_num] = joblib.load(model_path)
-                print(f"  Loaded {model_num}.joblib")
+                logger.info("  Loaded %s.joblib", model_num)
             else:
-                print(f"  Warning: {model_num}.joblib not found")
+                logger.warning("  %s.joblib not found", model_num)
 
         if not self.rf_models:
             raise RuntimeError("No RF models found. Upload joblib files to R2.")
 
-        print("ESMStabP model loaded!")
+        logger.info("ESMStabP model loaded!")
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
     def predict(self, payload: ESMStabPPredictRequest) -> ESMStabPPredictResponse:
         """Predict protein melting temperatures (Tm) from sequences."""
-        print(f"ESMStabP predict called with {len(payload.items)} sequences")
+        logger.info("ESMStabP predict called with %s sequences", len(payload.items))
 
         # Batch ESM2 embeddings (single RPC for all sequences)
         sequences = [item.sequence for item in payload.items]
@@ -148,7 +151,7 @@ class ESMStabPModel(ModelMixin):
                 )
             )
 
-        print(f"ESMStabP predict completed for {len(results)} sequences")
+        logger.info("ESMStabP predict completed for %s sequences", len(results))
         return ESMStabPPredictResponse(results=results)
 
     def _extract_embeddings_batch(self, sequences: list[str]) -> list[list[float]]:

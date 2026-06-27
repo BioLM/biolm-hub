@@ -1,10 +1,13 @@
 from pathlib import Path
 from typing import Optional
 
+from models.commons.core.logging import get_logger
 from models.commons.storage.download_helpers import r2_then_hf
 from models.commons.storage.downloads import get_model_dir_util
 from models.spurs.config import HF_REPO_ID, HF_REVISION
 from models.spurs.schema import SpursParams
+
+logger = get_logger(__name__)
 
 
 def get_model_dir(sub_path: Optional[str] = None) -> Path:
@@ -24,7 +27,7 @@ def download_model_assets(
     sub_path: Optional[str] = None,
 ) -> Path:
     """Download SPURS model assets."""
-    print("🔧 SPURS: Downloading model assets")
+    logger.info("SPURS: Downloading model assets")
 
     result = r2_then_hf(
         base_model_slug=base_model_slug,
@@ -46,9 +49,9 @@ def download_model_assets(
         )
 
     if result.cache_hit:
-        print("✅ SPURS assets restored from cache")
+        logger.info("SPURS assets restored from cache")
     else:
-        print(f"✅ SPURS assets downloaded: {result.files_downloaded} files")
+        logger.info("SPURS assets downloaded: %s files", result.files_downloaded)
 
     snapshot_root = result.actual_model_path or result.target_dir
 

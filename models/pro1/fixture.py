@@ -1,3 +1,4 @@
+from models.commons.core.logging import get_logger
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import (
     ActionTestCase,
@@ -14,6 +15,8 @@ from models.pro1.schema import (
     Pro1Reaction,
     Pro1Variant,
 )
+
+logger = get_logger(__name__)
 
 # Test input/output filenames
 INPUT1 = "input1.json"  # FGF-1 short fragment, default 8b variant
@@ -139,5 +142,5 @@ def generate():
 
 
 if __name__ == "__main__":
-    print("🚀 Generating fixtures for Pro-1...")
+    logger.info("Generating fixtures for Pro-1...")
     generate()

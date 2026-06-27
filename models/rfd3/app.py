@@ -11,11 +11,12 @@ from pathlib import Path
 
 import modal
 
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
 from models.commons.core.error import UserError
+from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -30,6 +31,8 @@ from models.rfd3.schema import (
     RFD3DesignResponseResult,
     RFD3Params,
 )
+
+logger = get_logger(__name__)
 
 # Build Modal container image with Python 3.12 (foundry requires >=3.12)
 # Using micromamba for proper Python 3.12 setup
@@ -99,7 +102,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config()
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -119,7 +122,7 @@ class RFD3Model(ModelMixinSnap):
         """Load RFdiffusion3 model on GPU for GPU memory snapshot."""
         import torch
 
-        print("🚀 Loading RFdiffusion3 model on GPU for GPU memory snapshot...")
+        logger.info("Loading RFdiffusion3 model on GPU for GPU memory snapshot...")
 
         # Set deterministic behavior
         torch.manual_seed(42)
@@ -129,7 +132,7 @@ class RFD3Model(ModelMixinSnap):
         self.torch = torch
         self.model_dir = get_model_dir()
 
-        print(f"🔍 RFD3 model directory: {self.model_dir}")
+        logger.info("RFD3 model directory: %s", self.model_dir)
 
         # Set up environment for foundry
         os.environ["PROJECT_ROOT"] = str(Path(__file__).parent.parent.parent)
@@ -141,9 +144,9 @@ class RFD3Model(ModelMixinSnap):
         self.ckpt_path = self.model_dir / "rfd3_latest.ckpt"
 
         if self.ckpt_path.exists():
-            print(f"✅ Found RFD3 checkpoint at {self.ckpt_path}")
+            logger.info("Found RFD3 checkpoint at %s", self.ckpt_path)
         else:
-            print(f"ℹ️ Checkpoint will be downloaded to: {self.ckpt_path}")
+            logger.info("Checkpoint will be downloaded to: %s", self.ckpt_path)
 
         # Import RFD3 inference engine from foundry
         try:
@@ -176,13 +179,13 @@ class RFD3Model(ModelMixinSnap):
                 "seed": None,
             }
 
-            print("✅ RFdiffusion3 dependencies loaded successfully")
+            logger.info("RFdiffusion3 dependencies loaded successfully")
         except ImportError as e:
-            print(f"⚠️ Warning: Could not import foundry/rfd3: {e}")
-            print("    This may be expected if foundry is not yet installed")
+            logger.warning("Could not import foundry/rfd3: %s", e)
+            logger.info("This may be expected if foundry is not yet installed")
             # Don't raise here - just log the warning
 
-        print(f"✅ RFD3 model setup complete on {self.device}")
+        logger.info("RFD3 model setup complete on %s", self.device)
 
         # Cache to R2 at runtime if checkpoint was just downloaded (not in R2)
         # This ensures future builds can use R2 cache
@@ -214,14 +217,15 @@ class RFD3Model(ModelMixinSnap):
 
             try:
                 r2_client.head_object(Bucket=r2_bucket_name, Key=manifest_key)
-                print(f"✅ Model already cached in R2 at {r2_prefix}")
+                logger.info("Model already cached in R2 at %s", r2_prefix)
                 return
             except Exception:
                 # Not in R2, proceed with upload
                 pass
 
-            print(
-                f"📤 Caching checkpoint to R2 at {r2_prefix} (runtime, non-blocking)..."
+            logger.info(
+                "Caching checkpoint to R2 at %s (runtime, non-blocking)...",
+                r2_prefix,
             )
             success = R2Utils.upload_to_r2_atomic(
                 source_dir=self.model_dir,
@@ -230,11 +234,13 @@ class RFD3Model(ModelMixinSnap):
                 create_manifest=True,
             )
             if success:
-                print("✅ Cached to R2 successfully - future builds will use R2 cache")
+                logger.info(
+                    "Cached to R2 successfully - future builds will use R2 cache"
+                )
             else:
-                print("⚠️ Failed to cache to R2 (non-fatal)")
+                logger.warning("Failed to cache to R2 (non-fatal)")
         except Exception as e:
-            print(f"⚠️ Failed to cache to R2 (non-fatal): {e}")
+            logger.warning("Failed to cache to R2 (non-fatal): %s", e)
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
@@ -251,10 +257,10 @@ class RFD3Model(ModelMixinSnap):
         params = payload.params
         item = payload.items[0]  # Batch size fixed to 1
 
-        print(f"🎨 Starting RFdiffusion3 design for '{item.name}'")
-        print(f"   Components: {len(item.components)}")
-        print(f"   Diffusion steps: {params.num_diffusion_steps}")
-        print(f"   Batch size: {params.diffusion_batch_size}")
+        logger.info("Starting RFdiffusion3 design for %r", item.name)
+        logger.info("   Components: %s", len(item.components))
+        logger.info("   Diffusion steps: %s", params.num_diffusion_steps)
+        logger.info("   Batch size: %s", params.diffusion_batch_size)
 
         # Create temporary directory for all files
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -273,7 +279,7 @@ class RFD3Model(ModelMixinSnap):
                 temp_input_path = temp_dir_path / "input_structure.cif"
                 with open(temp_input_path, "w") as f:
                     f.write(structure_cif_from_component)
-                print(f"✅ Wrote structure_cif to temp file: {temp_input_path}")
+                logger.info("Wrote structure_cif to temp file: %s", temp_input_path)
 
                 # Update the specification to use the temp path
                 item_copy = item.model_copy()
@@ -319,7 +325,7 @@ class RFD3Model(ModelMixinSnap):
             with open(input_json_path, "w") as f:
                 json.dump(design_spec, f, indent=2)
 
-            print(f"✅ Created design specification at: {input_json_path}")
+            logger.info("Created design specification at: %s", input_json_path)
 
             # Create output directory
             output_dir = temp_dir_path / "output"
@@ -367,74 +373,74 @@ class RFD3Model(ModelMixinSnap):
                 )
 
                 # Run inference
-                print("🔄 Running RFdiffusion3 inference...")
+                logger.info("Running RFdiffusion3 inference...")
                 outputs = engine.run(
                     inputs=str(input_json_path),
                     n_batches=None,
                     out_dir=str(output_dir),
                 )
 
-                print("✅ RFdiffusion3 inference completed")
+                logger.info("RFdiffusion3 inference completed")
 
             except Exception as e:
-                print(f"❌ RFdiffusion3 inference failed: {e}")
+                logger.error("RFdiffusion3 inference failed: %s", e, exc_info=True)
                 raise UserError(f"RFdiffusion3 inference failed: {str(e)}") from e
 
             # Process outputs
             results = []
 
             # Debug: Check what outputs contains
-            print(f"🔍 Output type: {type(outputs)}, value: {outputs}")
+            logger.debug("Output type: %s, value: %s", type(outputs), outputs)
 
             # Check if outputs is a list (direct output) or dict (in-memory mode)
             if isinstance(outputs, list):
                 # Outputs is a list of results directly
-                print(f"📦 Processing {len(outputs)} outputs from list")
+                logger.info("Processing %s outputs from list", len(outputs))
                 for output in outputs:
                     result = self._process_output(output, params)
                     results.append(result)
             elif isinstance(outputs, dict):
                 # If outputs returned as dict (in-memory mode)
-                print(f"📦 Processing outputs from dict with {len(outputs)} keys")
+                logger.info("Processing outputs from dict with %s keys", len(outputs))
                 for _example_id, output_list in outputs.items():
                     for output in output_list:
                         result = self._process_output(output, params)
                         results.append(result)
             elif outputs is None:
                 # Outputs were written to disk (engine.run returns None when writing to disk)
-                print("📦 Outputs written to disk, searching for files...")
+                logger.info("Outputs written to disk, searching for files...")
             else:
                 # Outputs were written to disk (engine.run returns None when writing to disk)
-                print(f"📦 Outputs type {type(outputs)} - assuming written to disk")
+                logger.info("Outputs type %s - assuming written to disk", type(outputs))
 
             # If no results yet, check disk
             if not results:
                 # Outputs were written to disk
                 # Find all generated CIF files in output directory (recursively, as they may be in subdirectories)
-                print(f"🔍 Searching for CIF files in {output_dir}...")
+                logger.info("Searching for CIF files in %s...", output_dir)
                 cif_files = sorted(output_dir.rglob("*.cif.gz"))
 
                 if not cif_files:
                     # Also check for uncompressed CIF files
-                    print(
-                        "🔍 No compressed CIF files found, checking for uncompressed..."
+                    logger.info(
+                        "No compressed CIF files found, checking for uncompressed..."
                     )
                     cif_files = sorted(output_dir.rglob("*.cif"))
 
                 if not cif_files:
                     # List what files actually exist for debugging
                     all_files = list(output_dir.rglob("*"))
-                    print("❌ No CIF files found. Files in output directory:")
+                    logger.error("No CIF files found. Files in output directory:")
                     for f in all_files[:20]:  # Show first 20 files
-                        print(f"   {f}")
+                        logger.debug("   %s", f)
                     if len(all_files) > 20:
-                        print(f"   ... and {len(all_files) - 20} more files")
+                        logger.debug("   ... and %s more files", len(all_files) - 20)
                     raise UserError(
                         f"No structures generated. Checked {output_dir} for *.cif.gz and *.cif files. "
                         "Check input parameters and try again."
                     )
 
-                print(f"🔍 Found {len(cif_files)} generated structures")
+                logger.info("Found %s generated structures", len(cif_files))
 
                 import gzip
 
@@ -473,7 +479,7 @@ class RFD3Model(ModelMixinSnap):
                     )
                     results.append(result)
 
-            print(f"✅ Processed {len(results)} design results")
+            logger.info("Processed %s design results", len(results))
 
             # Ensure we have at least some results
             if not results:

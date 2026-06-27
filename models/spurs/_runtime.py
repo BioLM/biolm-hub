@@ -10,7 +10,10 @@ if TYPE_CHECKING:  # pragma: no cover - used for type hints only
     import torch
     from omegaconf import OmegaConf
 
+from models.commons.core.logging import get_logger
 from models.commons.util.device import get_torch_device
+
+logger = get_logger(__name__)
 
 AMINO_ACID_ALPHABET = "ACDEFGHIKLMNPQRSTVWY"
 
@@ -141,9 +144,9 @@ class SpursRunner:
         }
         missing, unexpected = model.load_state_dict(state_dict, strict=False)
         if missing:
-            print(f"⚠️ Missing keys during load: {missing}")
+            logger.warning("Missing keys during load: %s", missing)
         if unexpected:
-            print(f"⚠️ Unexpected keys during load: {unexpected}")
+            logger.warning("Unexpected keys during load: %s", unexpected)
         model.eval()
         model.to(self.device)
         train_cfg = getattr(cfg, "train", None)

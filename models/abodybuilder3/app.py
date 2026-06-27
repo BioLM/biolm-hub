@@ -15,10 +15,11 @@ from models.abodybuilder3.schema import (
     AbodyBuilder3PredictResponse,
     AbodyBuilder3PredictResponseResult,
 )
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -26,6 +27,8 @@ from models.commons.util.config import (
 )
 from models.commons.util.device import get_torch_device
 from models.commons.util.environment import parse_variant
+
+logger = get_logger(__name__)
 
 variant_config = parse_variant(
     env_var_name="MODEL_TYPE",
@@ -88,7 +91,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config(**variant_config)
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -109,7 +112,7 @@ class AbodyBuilder3Model(ModelMixinSnap):
 
         from abodybuilder3.language.model import ProtT5
 
-        print("Loading ProtT5 language model directly on GPU...")
+        logger.info("Loading ProtT5 language model directly on GPU...")
 
         with torch.no_grad():
             self.plm = ProtT5(weights_dir=f"{self.model_dir}/prott5/")
@@ -119,21 +122,21 @@ class AbodyBuilder3Model(ModelMixinSnap):
         """Load LitABB3 checkpoint directly on device for GPU memory snapshot."""
         from abodybuilder3.lightning_module import LitABB3
 
-        print(f"Loading LitABB3 {model_type_name} checkpoint directly on GPU...")
+        logger.info("Loading LitABB3 %s checkpoint directly on GPU...", model_type_name)
         module = LitABB3.load_from_checkpoint(
             f"{self.model_dir}/{model_type}-loss/best_second_stage.ckpt",
             map_location=device,
         )
         self.model = module.model.to(device)
-        print(f"✅ LitABB3 {model_type_name} checkpoint loaded successfully on GPU")
+        logger.info("LitABB3 %s checkpoint loaded successfully on GPU", model_type_name)
 
     @modal.enter(snap=True)
     def setup_model(self):
         """Load model directly on GPU for GPU memory snapshot with deterministic behavior."""
         import torch
 
-        print(
-            "🚀 Loading AbodyBuilder3 model directly on GPU for GPU memory snapshot..."
+        logger.info(
+            "Loading AbodyBuilder3 model directly on GPU for GPU memory snapshot..."
         )
 
         # Set deterministic behavior for consistent results
@@ -147,8 +150,11 @@ class AbodyBuilder3Model(ModelMixinSnap):
         # Get device and setup for GPU inference
         self.device = get_torch_device()
 
-        print(
-            f"⏳ Loading AbodyBuilder3 model '{self.model_type}' directly on {self.device} from: {self.model_dir}"
+        logger.info(
+            "Loading AbodyBuilder3 model %r directly on %s from: %s",
+            self.model_type,
+            self.device,
+            self.model_dir,
         )
 
         # Load models directly on GPU for snapshot - only load what's needed for each model type
@@ -161,8 +167,10 @@ class AbodyBuilder3Model(ModelMixinSnap):
         else:
             raise ValueError(f"Unsupported model type: {model_type}")
 
-        print(
-            f"✅ AbodyBuilder3 model '{self.model_type}' loaded directly on {self.device} for GPU memory snapshot!"
+        logger.info(
+            "AbodyBuilder3 model %r loaded directly on %s for GPU memory snapshot!",
+            self.model_type,
+            self.device,
         )
 
     @modal.method()
@@ -204,7 +212,7 @@ class AbodyBuilder3Model(ModelMixinSnap):
                             light,
                         ],
                     )
-                    print(f"{embedding[0].shape=}")
+                    logger.debug(f"{embedding[0].shape=}")
                     ab_input["single"] = embedding[0].unsqueeze(0)
 
                 ab_input_batch = {
@@ -227,7 +235,7 @@ class AbodyBuilder3Model(ModelMixinSnap):
                 results.append(AbodyBuilder3PredictResponseResult(**result_dict))
 
         except Exception as e:
-            print(f"Model call failed with error [{e}]")
+            logger.error("Model call failed with error [%s]", e, exc_info=True)
             raise e
 
         return AbodyBuilder3PredictResponse(results=results)
@@ -263,7 +271,9 @@ class AbodyBuilder3Model(ModelMixinSnap):
         # OS-level (hash-based randomness in Python)
         os.environ["PYTHONHASHSEED"] = str(seed)
 
-        print(f"🔒 Seeding everything with seed {seed}. Deterministic: {deterministic}")
+        logger.info(
+            "Seeding everything with seed %s. Deterministic: %s", seed, deterministic
+        )
 
 
 if __name__ == "__main__":

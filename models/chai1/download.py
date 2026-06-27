@@ -3,8 +3,11 @@ from pathlib import Path
 from typing import Optional
 
 from models.chai1.schema import Chai1Params
+from models.commons.core.logging import get_logger
 from models.commons.storage.download_helpers import r2_then_library
 from models.commons.storage.downloads import get_model_dir_util
+
+logger = get_logger(__name__)
 
 
 def get_model_dir():
@@ -31,7 +34,7 @@ def _create_chai1_lock_files(target_dir: Path):
     Without these .download_lock files, Chai1's FileLock() call will create them anyway,
     but having them pre-created signals that our R2 cache contains complete downloads.
     """
-    print("🔒 Creating Chai1 .download_lock files...")
+    logger.info("Creating Chai1 .download_lock files...")
 
     # Create .download_lock files for all .pt and .apkl files
     for root, _, files in os.walk(target_dir):
@@ -40,7 +43,7 @@ def _create_chai1_lock_files(target_dir: Path):
                 lock_file = Path(root) / f"{file.rsplit('.', 1)[0]}.download_lock"
                 if not lock_file.exists():
                     lock_file.touch()
-                    print(f"  ✅ Created: {lock_file.name}")
+                    logger.debug("Created: %s", lock_file.name)
 
 
 def _init_chai1_weights(target_dir: Path) -> Path:
@@ -58,7 +61,7 @@ def _init_chai1_weights(target_dir: Path) -> Path:
     """
     # Set CHAI_DOWNLOADS_DIR environment variable - critical for chai1 library
     os.environ["CHAI_DOWNLOADS_DIR"] = str(target_dir)
-    print(f"📌 Set CHAI_DOWNLOADS_DIR to: {target_dir}")
+    logger.info("Set CHAI_DOWNLOADS_DIR to: %s", target_dir)
 
     try:
         import torch
@@ -71,7 +74,7 @@ def _init_chai1_weights(target_dir: Path) -> Path:
         dummy_output.mkdir(exist_ok=True)
 
         # This should trigger the download
-        print("📥 Triggering Chai1 download via minimal inference...")
+        logger.info("Triggering Chai1 download via minimal inference...")
         run_inference(
             fasta_file=dummy_fasta,
             output_dir=dummy_output,
@@ -89,7 +92,7 @@ def _init_chai1_weights(target_dir: Path) -> Path:
 
             shutil.rmtree(dummy_output)
 
-        print("✅ Chai1 library download completed")
+        logger.info("Chai1 library download completed")
 
         # Create necessary lock files after download
         _create_chai1_lock_files(target_dir)
@@ -97,7 +100,7 @@ def _init_chai1_weights(target_dir: Path) -> Path:
         return target_dir
 
     except Exception as e:
-        print(f"❌ Chai1 library download failed: {e}")
+        logger.error("Chai1 library download failed: %s", e, exc_info=True)
         raise
 
 
@@ -105,13 +108,15 @@ def _verify_chai1_structure(model_path: str):
     """Verify Chai1 model directory structure and files."""
     models_v2_dir = Path(model_path) / "models_v2"
     if not models_v2_dir.exists():
-        print(f"⚠️ Warning: models_v2 directory not found at {models_v2_dir}")
-        print("    Chai1 may attempt its own download")
+        logger.warning("Warning: models_v2 directory not found at %s", models_v2_dir)
+        logger.warning("Chai1 may attempt its own download")
     else:
         pt_files = list(models_v2_dir.glob("*.pt"))
         lock_files = list(models_v2_dir.glob("*.download_lock"))
-        print(
-            f"✅ Found {len(pt_files)} .pt files and {len(lock_files)} .download_lock files"
+        logger.info(
+            "Found %s .pt files and %s .download_lock files",
+            len(pt_files),
+            len(lock_files),
         )
 
 
@@ -122,7 +127,7 @@ def download_model_assets(
     sub_path: Optional[str] = None,
 ):
     """Download model assets."""
-    print("🔧 Chai1: Setting up model assets")
+    logger.info("Chai1: Setting up model assets")
 
     expected_files = [
         "models_v2/bond_loss_input_proj.pt",
@@ -145,8 +150,8 @@ def download_model_assets(
         raise RuntimeError(f"Failed to acquire Chai1 model: {result.error_message}")
 
     if result.bypass_detected:
-        print(
-            f"⚠️ Chai1 bypass detected - model downloaded to: {result.bypass_locations}"
+        logger.warning(
+            "Chai1 bypass detected - model downloaded to: %s", result.bypass_locations
         )
 
     actual_path = result.actual_model_path or result.target_dir
@@ -157,5 +162,5 @@ def download_model_assets(
     # Verify the structure
     _verify_chai1_structure(actual_path)
 
-    print(f"✅ Chai1 download complete and verified at {actual_path}")
+    logger.info("Chai1 download complete and verified at %s", actual_path)
     return actual_path

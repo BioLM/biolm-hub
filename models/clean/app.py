@@ -14,19 +14,22 @@ from models.clean.schema import (
     CLEANPredictResult,
     ECPrediction,
 )
+from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
+from models.commons.modal.downloader import setup_download_layer
+from models.commons.modal.source import setup_source_layer
 
 # NOTE: models.clean.util is imported inside methods to avoid
 # torch dependency at module level (torch is only available in Modal container)
 from models.commons.model.base import ModelMixinSnap
-from models.commons.core.decorator import modal_endpoint
-from models.commons.modal.downloader import setup_download_layer
-from models.commons.modal.source import setup_source_layer
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
     common_requirements,
 )
 from models.commons.util.device import get_torch_device
+
+logger = get_logger(__name__)
 
 # Build Modal container image
 image = modal.Image.from_registry("pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime")
@@ -61,7 +64,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config()
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -89,7 +92,7 @@ class CLEANModel(ModelMixinSnap):
 
         from models.clean.util import LayerNormNet, load_ec_id_mapping
 
-        print("Loading CLEAN model components...")
+        logger.info("Loading CLEAN model components...")
 
         # Set deterministic behavior
         torch.manual_seed(42)
@@ -103,14 +106,14 @@ class CLEANModel(ModelMixinSnap):
         self.model_dir = get_model_dir()
 
         # Load ESM-1b model (backbone for embeddings)
-        print("Loading ESM-1b model...")
+        logger.info("Loading ESM-1b model...")
         self.esm_model, self.alphabet = esm.pretrained.esm1b_t33_650M_UR50S()
         self.esm_model.eval()
         self.esm_model.to(self.device)
         self.batch_converter = self.alphabet.get_batch_converter()
 
         # Load CLEAN projection network
-        print("Loading CLEAN projection network...")
+        logger.info("Loading CLEAN projection network...")
         self.clean_model = LayerNormNet(hidden_dim=512, out_dim=128)
         checkpoint = torch.load(
             self.model_dir / "split100.pth",
@@ -122,20 +125,22 @@ class CLEANModel(ModelMixinSnap):
         self.clean_model.to(self.device)
 
         # Load EC-ID mapping FIRST to know expected embedding count
-        print("Loading EC-ID mappings...")
+        logger.info("Loading EC-ID mappings...")
         _, self.ec_id_dict = load_ec_id_mapping(self.model_dir / "split100.csv")
         self.ec_list = list(self.ec_id_dict.keys())
 
         # Calculate expected total sequences from EC-ID dict
         expected_n_sequences = sum(len(ids) for ids in self.ec_id_dict.values())
         n_ec_classes = len(self.ec_list)
-        print(
-            f"Found {n_ec_classes} EC classes with {expected_n_sequences} total sequences"
+        logger.info(
+            "Found %s EC classes with %s total sequences",
+            n_ec_classes,
+            expected_n_sequences,
         )
 
         # Load precomputed per-sequence embeddings (shape: n_sequences x 128)
         # These are model embeddings for all training sequences, ordered by EC
-        print("Loading precomputed embeddings (100.pt)...")
+        logger.info("Loading precomputed embeddings (100.pt)...")
         self.ec_embeddings = torch.load(
             self.model_dir / "100.pt",
             map_location=self.device,
@@ -146,11 +151,11 @@ class CLEANModel(ModelMixinSnap):
         self._build_cluster_center_tensor(expected_n_sequences)
 
         # Load GMM ensemble for confidence estimation
-        print("Loading GMM ensemble...")
+        logger.info("Loading GMM ensemble...")
         with open(self.model_dir / "gmm_ensumble.pkl", "rb") as f:
             self.gmm_ensemble = pickle.load(f)
 
-        print(f"CLEAN model loaded with {len(self.ec_list)} EC classes")
+        logger.info("CLEAN model loaded with %s EC classes", len(self.ec_list))
 
     def _build_cluster_center_tensor(self, expected_n_sequences: int) -> None:
         """
@@ -176,16 +181,18 @@ class CLEANModel(ModelMixinSnap):
             )
 
         actual_n_sequences = actual_shape[0]
-        print(f"100.pt contains {actual_n_sequences} embeddings of dim {embedding_dim}")
+        logger.debug(
+            "100.pt contains %s embeddings of dim %s", actual_n_sequences, embedding_dim
+        )
 
         # Check if this is per-sequence embeddings or pre-averaged cluster centers
         if actual_n_sequences == n_ec_classes:
             # Already cluster centers - use directly
-            print("100.pt appears to contain pre-averaged cluster centers")
+            logger.info("100.pt appears to contain pre-averaged cluster centers")
             self.cluster_center_tensor = self.ec_embeddings.to(self.device)
         elif actual_n_sequences == expected_n_sequences:
             # Per-sequence embeddings - need to average by EC
-            print(
+            logger.info(
                 "100.pt contains per-sequence embeddings, computing cluster centers..."
             )
             self.cluster_center_tensor = torch.zeros(
@@ -207,7 +214,7 @@ class CLEANModel(ModelMixinSnap):
                 self.cluster_center_tensor[i] = ec_embs.mean(dim=0)
                 idx += n_seqs
 
-            print(f"Computed {n_ec_classes} cluster centers")
+            logger.info("Computed %s cluster centers", n_ec_classes)
         else:
             raise RuntimeError(
                 f"100.pt has {actual_n_sequences} embeddings, but expected either "
@@ -222,7 +229,9 @@ class CLEANModel(ModelMixinSnap):
     @modal.enter(snap=False)
     def setup_model(self) -> None:
         """Called after restoring from snapshot."""
-        print(f"{CLEANParams.display_name} ready for inference on {self.device}!")
+        logger.info(
+            "%s ready for inference on %s!", CLEANParams.display_name, self.device
+        )
 
     def _get_esm_embeddings(self, sequences: list[str]) -> Any:
         """
@@ -326,7 +335,7 @@ class CLEANModel(ModelMixinSnap):
 
         # Extract sequences
         sequences = [item.sequence for item in payload.items]
-        print(f"Predicting EC numbers for {len(sequences)} sequences...")
+        logger.info("Predicting EC numbers for %s sequences...", len(sequences))
 
         # Get CLEAN embeddings
         embeddings = self._get_clean_embeddings(sequences)
@@ -384,7 +393,7 @@ class CLEANModel(ModelMixinSnap):
 
             results.append(CLEANPredictResult(predictions=predictions))
 
-        print(f"Completed predictions for {len(results)} sequences")
+        logger.info("Completed predictions for %s sequences", len(results))
         return CLEANPredictResponse(results=results)
 
     @modal.method()
@@ -397,7 +406,7 @@ class CLEANModel(ModelMixinSnap):
         similar functions will have similar embeddings.
         """
         sequences = [item.sequence for item in payload.items]
-        print(f"Encoding {len(sequences)} sequences...")
+        logger.info("Encoding %s sequences...", len(sequences))
 
         # Get CLEAN embeddings
         embeddings = self._get_clean_embeddings(sequences)
@@ -407,7 +416,7 @@ class CLEANModel(ModelMixinSnap):
             CLEANEncodeResult(embedding=emb.cpu().tolist()) for emb in embeddings
         ]
 
-        print(f"Completed encoding for {len(results)} sequences")
+        logger.info("Completed encoding for %s sequences", len(results))
         return CLEANEncodeResponse(results=results)
 
 

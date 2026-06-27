@@ -1,6 +1,7 @@
 from urllib.error import URLError
 from urllib.request import urlopen
 
+from models.commons.core.logging import get_logger
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
 from models.commons.testing.fixture import FixtureGenerator
@@ -15,6 +16,8 @@ from models.prody.schema import (
     ProDyPredictRequestItem,
     ProDyPredictRequestParams,
 )
+
+logger = get_logger(__name__)
 
 # Fixture filename constants
 ENCODE_INPUT = "encode_input.json"
@@ -38,13 +41,13 @@ def _download_cif(pdb_id: str) -> str:
 # 3IY3: Multi-chain complex with A and B protein chains (good for multi-chain tests)
 # 1UBQ: Ubiquitin - single chain, small protein (~76 residues, good for single chain tests)
 # 1CRN: Crambin - single chain, small protein (~46 residues, different length from 1UBQ)
-print("Downloading CIF files from RCSB...")
+logger.info("Downloading CIF files from RCSB...")
 _CIF_3IY3 = _download_cif("3IY3")  # Multi-chain complex with A and B protein chains
 _CIF_1UBQ = _download_cif("1UBQ")  # Single chain protein (~76 residues)
 _CIF_1CRN = _download_cif(
     "1CRN"
 )  # Single chain protein (~46 residues, different length)
-print("CIF files downloaded successfully")
+logger.info("CIF files downloaded successfully")
 
 # TestSuite for fixture generation
 fixture_generation_suite = TestSuite(

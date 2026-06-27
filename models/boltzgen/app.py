@@ -27,17 +27,20 @@ from models.boltzgen.schema import (
     BoltzGenParams,
     BoltzGenPipelineStep,
 )
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
 from models.commons.core.error import UserError
+from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
     common_requirements,
     protocols_r2_bucket_secret,
 )
+
+logger = get_logger(__name__)
 
 # Build Modal container image
 # Match the official boltzgen Dockerfile: nvidia/cuda:12.2.2-cudnn8-devel-ubuntu22.04
@@ -132,7 +135,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config()
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -218,7 +221,7 @@ class BoltzGenModel(BoltzGenPipelineMixin, ModelMixinSnap):
         if mols_zip and mols_zip.exists() and not mols_dir.exists():
             import zipfile
 
-            print(f"📦 Extracting mols.zip to {mols_dir}")
+            logger.info("Extracting mols.zip to %s", mols_dir)
             mols_dir.mkdir(parents=True, exist_ok=True)
             with zipfile.ZipFile(mols_zip, "r") as zip_ref:
                 # Validate no path traversal in zip members
@@ -237,8 +240,8 @@ class BoltzGenModel(BoltzGenPipelineMixin, ModelMixinSnap):
                 if snapshots:
                     # Use the snapshot directory as moldir (boltzgen can handle zips)
                     self.moldir = str(snapshots[0])
-                    print(
-                        f"⚠️ Using HuggingFace cache directory as moldir: {self.moldir}"
+                    logger.warning(
+                        "Using HuggingFace cache directory as moldir: %s", self.moldir
                     )
 
         # Sentinel attrs for @modal.exit() checkpoint handler.
@@ -247,9 +250,9 @@ class BoltzGenModel(BoltzGenPipelineMixin, ModelMixinSnap):
         self._pipeline_output_dir = None
         self._pipeline_requested_steps = None
 
-        print("✅ BoltzGen model setup complete")
-        print(f"   Model directory: {self.model_dir}")
-        print(f"   Checkpoints: {list(self.checkpoints.keys())}")
+        logger.info("BoltzGen model setup complete")
+        logger.info("   Model directory: %s", self.model_dir)
+        logger.info("   Checkpoints: %s", list(self.checkpoints.keys()))
 
     @modal.exit()
     def checkpoint_on_exit(self):
@@ -263,9 +266,10 @@ class BoltzGenModel(BoltzGenPipelineMixin, ModelMixinSnap):
         if job is None:
             return
 
-        print(
-            f"Container shutting down with pipeline in-progress for job {job.job_id}. "
-            "Uploading checkpoint..."
+        logger.info(
+            "Container shutting down with pipeline in-progress for job %s. "
+            "Uploading checkpoint...",
+            job.job_id,
         )
         manifest = CheckpointManifest(
             job_id=job.job_id,
@@ -276,9 +280,9 @@ class BoltzGenModel(BoltzGenPipelineMixin, ModelMixinSnap):
         )
         ok = job.upload_checkpoint(self._pipeline_output_dir, manifest)
         if ok:
-            print(f"✅ Checkpoint uploaded for job {job.job_id}")
+            logger.info("Checkpoint uploaded for job %s", job.job_id)
         else:
-            print(f"⚠️ Checkpoint upload failed for job {job.job_id}")
+            logger.warning("Checkpoint upload failed for job %s", job.job_id)
 
     @modal.method()
     @modal_endpoint(app_name=app_name, debug=True)
@@ -309,7 +313,7 @@ class BoltzGenModel(BoltzGenPipelineMixin, ModelMixinSnap):
                 job = OutputJob(
                     "boltzgen", params.resume_job_id, namespace=get_r2_namespace()
                 )
-                print(f"🔄 Resuming BoltzGen job {job.job_id}")
+                logger.info("Resuming BoltzGen job %s", job.job_id)
                 manifest = job.download_checkpoint(tmp_path)
                 output_dir = tmp_path / "output"
                 yaml_file = output_dir / "design_spec.yaml"
@@ -338,21 +342,21 @@ class BoltzGenModel(BoltzGenPipelineMixin, ModelMixinSnap):
                     )
                 job = OutputJob.create("boltzgen", namespace=get_r2_namespace())
                 item = payload.items[0]
-                print(f"🔬 BoltzGen generate [job_id={job.job_id}]")
+                logger.info("BoltzGen generate [job_id=%s]", job.job_id)
 
                 # Convert Pydantic model to YAML and write to tmp_path
-                print("📝 Converting request to YAML format...")
+                logger.info("Converting request to YAML format...")
                 yaml_spec = self._convert_to_yaml_spec(item, params, tmp_path)
                 yaml_file = tmp_path / "design_spec.yaml"
                 with open(yaml_file, "w") as f:
                     yaml.dump(yaml_spec, f, default_flow_style=False)
-                print(f"✅ YAML spec written to {yaml_file}")
+                logger.info("YAML spec written to %s", yaml_file)
 
                 # Create output directory and copy spec into it so it is included in checkpoints
                 output_dir = tmp_path / "output"
                 output_dir.mkdir()
                 shutil.copy2(yaml_file, output_dir / "design_spec.yaml")
-                print(f"✅ Output directory created: {output_dir}")
+                logger.info("Output directory created: %s", output_dir)
 
             return self._run_boltzgen_pipeline(yaml_file, output_dir, params, job)
 

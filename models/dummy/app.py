@@ -3,9 +3,10 @@ import os
 
 import modal
 
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -19,6 +20,8 @@ from models.dummy.schema import (
     DummySvcResponseResult,
 )
 
+logger = get_logger(__name__)
+
 
 def initialize_data():
     data_file_path = "/dummy_test_data.json"
@@ -26,7 +29,7 @@ def initialize_data():
         test_data = {"hello": "world"}
         with open(data_file_path, "w") as f:
             json.dump(test_data, f)
-        print(f"✅ Created test data at {data_file_path}")
+        logger.info("Created test data at %s", data_file_path)
 
 
 # Build Modal container image
@@ -43,7 +46,7 @@ image = image.run_function(initialize_data)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config()
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -66,20 +69,22 @@ class DummyModel(ModelMixinSnap):
         """
         Load the data from the data file into memory for GPU memory snapshot.
         """
-        print(
-            f"🚀 Loading {DummyParams.display_name} model directly for GPU memory snapshot..."
+        logger.info(
+            "Loading %s model directly for GPU memory snapshot...",
+            DummyParams.display_name,
         )
 
         if os.path.exists(self.data_file_path):
             with open(self.data_file_path) as f:
                 self.data_file_content = json.load(f)
-            print(f"✅ Loaded data from {self.data_file_path}")
+            logger.info("Loaded data from %s", self.data_file_path)
         else:
             self.data_file_content = {"hello": "world"}
-            print("⚠️ No data file found; using default content.")
+            logger.warning("No data file found; using default content.")
 
-        print(
-            f"✅ {DummyParams.display_name} model ready for prediction from GPU memory snapshot!"
+        logger.info(
+            "%s model ready for prediction from GPU memory snapshot!",
+            DummyParams.display_name,
         )
 
     @modal.method()

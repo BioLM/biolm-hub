@@ -11,6 +11,8 @@ import numpy as np
 import torch
 from prody import writePDB
 
+from models.commons.core.logging import get_logger
+
 from .LigandMPNN.data_utils import (
     alphabet,
     element_dict_rev,
@@ -25,6 +27,8 @@ from .LigandMPNN.data_utils import (
 )
 from .LigandMPNN.model_utils import ProteinMPNN
 from .LigandMPNN.sc_utils import Packer, pack_side_chains
+
+logger = get_logger(__name__)
 
 # type: ignore
 # ruff: disable
@@ -207,7 +211,7 @@ def infer(  # noqa: C901
     # loop over PDB paths
     for pdb in pdb_paths:
         if args.verbose:
-            print("Designing protein from this path:", pdb)
+            logger.debug("Designing protein from this path: %s", pdb)
         fixed_residues = fixed_residues_multi[pdb]
         redesigned_residues = redesigned_residues_multi[pdb]
         parse_all_atoms_flag = args.ligand_mpnn_use_side_chain_context or (
@@ -329,8 +333,10 @@ def infer(  # noqa: C901
                 for item in range(protein_dict["chain_mask"].shape[0])
                 if protein_dict["chain_mask"][item] == 0
             ]
-            print("These residues will be redesigned: ", PDB_residues_to_be_redesigned)
-            print("These residues will be fixed: ", PDB_residues_to_be_fixed)
+            logger.debug(
+                "These residues will be redesigned: %s", PDB_residues_to_be_redesigned
+            )
+            logger.debug("These residues will be fixed: %s", PDB_residues_to_be_fixed)
 
         # specify which residues are linked
         if args.symmetry_residues:
@@ -352,7 +358,7 @@ def infer(  # noqa: C901
 
         if args.homo_oligomer:
             if args.verbose:
-                print("Designing HOMO-OLIGOMER")
+                logger.debug("Designing HOMO-OLIGOMER")
             chain_letters_set = list(set(chain_letters_list))
             reference_chain = chain_letters_set[0]
             lc = len(reference_chain)
@@ -390,18 +396,19 @@ def infer(  # noqa: C901
                     atom_mask = list(protein_dict["Y_m"].cpu().numpy())
                     number_of_atoms_parsed = np.sum(atom_mask)
                 else:
-                    print("No ligand atoms parsed")
+                    logger.debug("No ligand atoms parsed")
                     number_of_atoms_parsed = 0
                     atom_types = ""
                     atom_coords = []
                 if number_of_atoms_parsed == 0:
-                    print("No ligand atoms parsed")
+                    logger.debug("No ligand atoms parsed")
                 elif args.model_type == "ligand_mpnn":
-                    print(
-                        f"The number of ligand atoms parsed is equal to: {number_of_atoms_parsed}"
+                    logger.debug(
+                        "The number of ligand atoms parsed is equal to: %s",
+                        number_of_atoms_parsed,
                     )
                     for i, atom_type in enumerate(atom_types):
-                        print(
+                        logger.debug(
                             f"Type: {element_dict_rev[atom_type]}, Coords {atom_coords[i]}, Mask {atom_mask[i]}"
                         )
             feature_dict = featurize(
@@ -501,7 +508,7 @@ def infer(  # noqa: C901
 
             if args.pack_side_chains:
                 if args.verbose:
-                    print("Packing side chains...")
+                    logger.debug("Packing side chains...")
                 feature_dict_ = featurize(
                     protein_dict,
                     cutoff_for_score=8.0,

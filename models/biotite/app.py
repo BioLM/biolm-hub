@@ -13,9 +13,9 @@ from models.biotite.schema import (
     BiotiteRMSDResponse,
     BiotiteRMSDResponseResult,
 )
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -41,7 +41,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Get app configuration from MODEL_FAMILY
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config()
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 
 # Define the Modal app
 app = modal.App(app_name, image=image)
@@ -155,7 +155,12 @@ class BiotiteModel(ModelMixinSnap):
                             current_res_num = res_num
 
                     chain_sequences[chain_id] = sequence
-                    logger.debug(f"Chain {chain_id} sequence: {sequence}")
+                    logger.debug(
+                        "Chain %s sequence (len %d): %s…",
+                        chain_id,
+                        len(sequence),
+                        sequence[:32],
+                    )
                 except Exception as e:
                     logger.warning(
                         f"Error extracting sequence for chain {chain_id}: {e}"

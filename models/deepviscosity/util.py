@@ -12,6 +12,10 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+from models.commons.core.logging import get_logger
+
+logger = get_logger(__name__)
+
 # =============================================================================
 # Feature Scaling (StandardScaler for DeepSP Features)
 # =============================================================================
@@ -131,14 +135,14 @@ def load_scaler():
     import numpy as np
     from sklearn.preprocessing import StandardScaler
 
-    print("  Reconstructing scaler from embedded parameters...")
+    logger.info("  Reconstructing scaler from embedded parameters...")
     scaler = StandardScaler()
     scaler.n_features_in_ = SCALER_PARAMS["n_features_in_"]
     scaler.n_samples_seen_ = SCALER_PARAMS["n_samples_seen_"]
     scaler.mean_ = np.array(SCALER_PARAMS["mean_"], dtype=np.float64)
     scaler.var_ = np.array(SCALER_PARAMS["var_"], dtype=np.float64)
     scaler.scale_ = np.array(SCALER_PARAMS["scale_"], dtype=np.float64)
-    print("  Scaler reconstructed successfully")
+    logger.info("  Scaler reconstructed successfully")
     return scaler
 
 

@@ -1,9 +1,10 @@
 import modal
 
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.storage.downloads import build_hf_snapshot_path
 from models.commons.util.config import (
@@ -30,6 +31,8 @@ from models.omni_dna.schema import (
     OmniDNAPredictLogProbResponse,
     OmniDNAPredictLogProbResponseResult,
 )
+
+logger = get_logger(__name__)
 
 variant_config = parse_variant(
     env_var_name="MODEL_SIZE",
@@ -70,7 +73,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config(**variant_config)
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -99,7 +102,7 @@ class OmniDNAModel(ModelMixinSnap):
         from safetensors.torch import load_file
         from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 
-        print("🚀 Loading Omni-DNA model directly on GPU for GPU memory snapshot...")
+        logger.info("Loading Omni-DNA model directly on GPU for GPU memory snapshot...")
 
         # Set deterministic behavior for consistent results
         torch.manual_seed(42)
@@ -118,8 +121,10 @@ class OmniDNAModel(ModelMixinSnap):
         hf_revision = hf_pin_revision_mapping[model_size]
         snapshot_dir = build_hf_snapshot_path(model_cache_dir, hf_repo_id, hf_revision)
 
-        print(
-            f"⏳ Loading Omni-DNA model directly on {self.device} from snapshot: {snapshot_dir}"
+        logger.info(
+            "Loading Omni-DNA model directly on %s from snapshot: %s",
+            self.device,
+            snapshot_dir,
         )
 
         # Load config and create model directly on GPU
@@ -145,8 +150,10 @@ class OmniDNAModel(ModelMixinSnap):
             use_fast=True,
         )
 
-        print(
-            f"✅ Omni-DNA model ({model_size}) loaded directly on {self.device} for GPU memory snapshot!"
+        logger.info(
+            "Omni-DNA model (%s) loaded directly on %s for GPU memory snapshot!",
+            model_size,
+            self.device,
         )
 
     @modal.method()

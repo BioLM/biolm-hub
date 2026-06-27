@@ -41,6 +41,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
+from models.commons.core.logging import get_logger
+
+logger = get_logger(__name__)
+
 # Default presigned URL expiry: 24 hours
 DEFAULT_URL_EXPIRY_SECONDS = 86400
 
@@ -182,24 +186,33 @@ class OutputJob:
                         zf.write(file_path, file_path.relative_to(output_dir))
 
             zip_size_mb = zip_path.stat().st_size / (1024 * 1024)
-            print(f"[OutputJob {self.job_id}] Created zip: {zip_size_mb:.1f} MB")
+            logger.info(f"[OutputJob {self.job_id}] Created zip: {zip_size_mb:.1f} MB")
 
             client = get_r2_client()
             with open(zip_path, "rb") as f:
                 client.upload_fileobj(f, bucket, self.r2_key)
-            print(f"[OutputJob {self.job_id}] Uploaded to r2://{bucket}/{self.r2_key}")
+            logger.info(
+                "[OutputJob %s] Uploaded to r2://%s/%s",
+                self.job_id,
+                bucket,
+                self.r2_key,
+            )
 
             url = client.generate_presigned_url(
                 "get_object",
                 Params={"Bucket": bucket, "Key": self.r2_key},
                 ExpiresIn=expiry_seconds,
             )
-            print(
-                f"[OutputJob {self.job_id}] Presigned URL generated (expires in {expiry_seconds}s)"
+            logger.info(
+                "[OutputJob %s] Presigned URL generated (expires in %ss)",
+                self.job_id,
+                expiry_seconds,
             )
             return url
         except Exception as e:
-            print(f"[OutputJob {self.job_id}] Upload failed: {e}")
+            logger.error(
+                "[OutputJob %s] Upload failed: %s", self.job_id, e, exc_info=True
+            )
             import traceback
 
             traceback.print_exc()
@@ -233,8 +246,12 @@ class OutputJob:
             client = get_r2_client()
             with open(file_path, "rb") as f:
                 client.upload_fileobj(f, bucket, r2_key)
-            print(
-                f"[OutputJob {self.job_id}] Uploaded {file_path.name} to r2://{bucket}/{r2_key}"
+            logger.info(
+                "[OutputJob %s] Uploaded %s to r2://%s/%s",
+                self.job_id,
+                file_path.name,
+                bucket,
+                r2_key,
             )
 
             url = client.generate_presigned_url(
@@ -244,7 +261,9 @@ class OutputJob:
             )
             return url
         except Exception as e:
-            print(f"[OutputJob {self.job_id}] Upload failed: {e}")
+            logger.error(
+                "[OutputJob %s] Upload failed: %s", self.job_id, e, exc_info=True
+            )
             import traceback
 
             traceback.print_exc()
@@ -279,7 +298,9 @@ class OutputJob:
                 tf.add(output_dir, arcname="output")
 
             tar_size_mb = tar_path.stat().st_size / (1024 * 1024)
-            print(f"[OutputJob {self.job_id}] Checkpoint tar: {tar_size_mb:.1f} MB")
+            logger.info(
+                f"[OutputJob {self.job_id}] Checkpoint tar: {tar_size_mb:.1f} MB"
+            )
 
             client = get_r2_client()
             tar_key = f"{self._checkpoint_r2_prefix}/checkpoint.tar.gz"
@@ -287,18 +308,28 @@ class OutputJob:
 
             with open(tar_path, "rb") as f:
                 client.upload_fileobj(f, bucket, tar_key)
-            print(
-                f"[OutputJob {self.job_id}] Checkpoint uploaded to r2://{bucket}/{tar_key}"
+            logger.info(
+                "[OutputJob %s] Checkpoint uploaded to r2://%s/%s",
+                self.job_id,
+                bucket,
+                tar_key,
             )
 
             manifest_bytes = manifest.to_json().encode("utf-8")
             client.upload_fileobj(io.BytesIO(manifest_bytes), bucket, manifest_key)
-            print(
-                f"[OutputJob {self.job_id}] Manifest uploaded (completed={manifest.completed_steps})"
+            logger.info(
+                "[OutputJob %s] Manifest uploaded (completed=%s)",
+                self.job_id,
+                manifest.completed_steps,
             )
             return True
         except Exception as e:
-            print(f"[OutputJob {self.job_id}] Checkpoint upload failed: {e}")
+            logger.error(
+                "[OutputJob %s] Checkpoint upload failed: %s",
+                self.job_id,
+                e,
+                exc_info=True,
+            )
             import traceback
 
             traceback.print_exc()
@@ -337,9 +368,11 @@ class OutputJob:
             manifest = CheckpointManifest.from_json(
                 manifest_obj["Body"].read().decode("utf-8")
             )
-            print(
-                f"[OutputJob {self.job_id}] Checkpoint manifest: "
-                f"completed={manifest.completed_steps}, remaining={manifest.remaining_steps}"
+            logger.info(
+                "[OutputJob %s] Checkpoint manifest: completed=%s, remaining=%s",
+                self.job_id,
+                manifest.completed_steps,
+                manifest.remaining_steps,
             )
 
             # Download and extract the tar
@@ -350,7 +383,7 @@ class OutputJob:
                 client.download_fileobj(bucket, tar_key, f)
 
             tar_size_mb = tar_path.stat().st_size / (1024 * 1024)
-            print(
+            logger.info(
                 f"[OutputJob {self.job_id}] Downloaded checkpoint: {tar_size_mb:.1f} MB"
             )
 
@@ -358,12 +391,19 @@ class OutputJob:
             with tarfile.open(tar_path, "r:gz") as tf:
                 # filter="data" rejects path traversal, symlinks, and device files
                 tf.extractall(restore_dir, filter="data")
-            print(
-                f"[OutputJob {self.job_id}] Checkpoint extracted to {restore_dir / 'output'}"
+            logger.info(
+                "[OutputJob %s] Checkpoint extracted to %s",
+                self.job_id,
+                restore_dir / "output",
             )
             return manifest
         except Exception as e:
-            print(f"[OutputJob {self.job_id}] Checkpoint download failed: {e}")
+            logger.error(
+                "[OutputJob %s] Checkpoint download failed: %s",
+                self.job_id,
+                e,
+                exc_info=True,
+            )
             import traceback
 
             traceback.print_exc()

@@ -38,7 +38,10 @@ from typing import NamedTuple, Optional
 
 import requests
 
+from models.commons.core.logging import get_logger
 from models.commons.util.config import r2_bucket_name, r2_model_store_dir
+
+logger = get_logger(__name__)
 
 # Files at or below this size use put_object (single HTTP PUT, no thread pool).
 # Raising this above ~50MB risks high memory usage since put_object loads the
@@ -142,7 +145,7 @@ def get_model_dir_util(
         path_parts.append(sub_path)
 
     model_dir = Path("/".join(path_parts))
-    print(f"📂 [downloads.py] Resolved model directory: {model_dir}")
+    logger.info("📂 [downloads.py] Resolved model directory: %s", model_dir)
     return model_dir
 
 
@@ -174,7 +177,7 @@ def verify_model_dir(
         ... )
         True
     """
-    print(f"🔎 [downloads.py] Verifying model directory: {model_dir}")
+    logger.info("🔎 [downloads.py] Verifying model directory: %s", model_dir)
 
     if not model_dir.exists():
         raise RuntimeError(f"❌ Model directory does not exist: {model_dir}")
@@ -195,7 +198,7 @@ def verify_model_dir(
         if missing_files:
             raise RuntimeError(f"❌ Required files missing: {', '.join(missing_files)}")
 
-    print(f"✅ [downloads.py] Verification successful for {model_dir}")
+    logger.info("✅ [downloads.py] Verification successful for %s", model_dir)
     return True
 
 
@@ -210,7 +213,7 @@ def _should_skip_file(
     if local_size == remote_size:
         return True
 
-    print(
+    logger.warning(
         f"  - Size mismatch for {local_file_path.name}: "
         f"local={local_size/1024**3:.2f}GB, remote={remote_size/1024**3:.2f}GB"
     )
@@ -252,7 +255,7 @@ def _download_single_file(
 
     file_gb = remote_size / (1024**3)
     status = "📝 Updating" if local_file_path.exists() else "📥 Downloading"
-    print(f"  [{idx}/{total}] {status} {local_file_path.name} ({file_gb:.2f} GB)")
+    logger.info(f"  [{idx}/{total}] {status} {local_file_path.name} ({file_gb:.2f} GB)")
 
     # Use optimized download based on file size
     download_file_with_size_optimization(
@@ -261,7 +264,7 @@ def _download_single_file(
     if (
         file_gb > 0.5 and remote_size > 100 * 1024 * 1024
     ):  # Only log for large files > 500MB
-        print(
+        logger.debug(
             f"    ✅ Used optimized transfer config for large file ({file_gb:.2f} GB)"
         )
 
@@ -319,7 +322,7 @@ def download_model_from_r2(
     """
     from models.commons.storage.r2 import get_r2_client
 
-    print(f"▶️ [downloads.py] Starting R2 sync for directory: {model_dir}")
+    logger.info("▶️ [downloads.py] Starting R2 sync for directory: %s", model_dir)
     model_dir.mkdir(parents=True, exist_ok=True)
 
     r2_client = get_r2_client()
@@ -340,20 +343,23 @@ def download_model_from_r2(
             r2_objects.extend(page.get("Contents", []))
 
         if not r2_objects:
-            print(f"⚠️ [downloads.py] No files found in R2 at prefix: '{r2_dir_prefix}'")
+            logger.warning(
+                "⚠️ [downloads.py] No files found in R2 at prefix: '%s'", r2_dir_prefix
+            )
             return R2SyncResult(downloaded=0, skipped=0, total=0)
 
-        print(f"🔍 [downloads.py] Found {len(r2_objects)} objects in R2")
+        logger.info("🔍 [downloads.py] Found %s objects in R2", len(r2_objects))
 
         # Pre-filter to get accurate counts
         files_to_process = _filter_r2_objects(r2_objects, filter_func)
 
         if not files_to_process:
-            print("✅ [downloads.py] No files to process after filtering")
+            logger.info("✅ [downloads.py] No files to process after filtering")
             return R2SyncResult(downloaded=0, skipped=0, total=0)
 
-        print(
-            f"📋 [downloads.py] Processing {len(files_to_process)} files after filtering"
+        logger.info(
+            "📋 [downloads.py] Processing %s files after filtering",
+            len(files_to_process),
         )
 
         download_count = 0
@@ -383,10 +389,10 @@ def download_model_from_r2(
             download_count += 1
 
         # Summary
-        print("\n✅ [downloads.py] R2 sync complete:")
-        print(f"   • Downloaded: {download_count} files")
-        print(f"   • Skipped (up-to-date): {skip_count} files")
-        print(f"   • Total processed: {len(files_to_process)} files")
+        logger.info("✅ [downloads.py] R2 sync complete:")
+        logger.info("   • Downloaded: %s files", download_count)
+        logger.info("   • Skipped (up-to-date): %s files", skip_count)
+        logger.info("   • Total processed: %s files", len(files_to_process))
 
         return R2SyncResult(
             downloaded=download_count,
@@ -395,7 +401,7 @@ def download_model_from_r2(
         )
 
     except Exception as e:
-        print(f"❌ [downloads.py] R2 sync failed: {e}")
+        logger.error("❌ [downloads.py] R2 sync failed: %s", e, exc_info=True)
         raise
 
 
@@ -440,21 +446,21 @@ def download_from_hf(
     """
     from huggingface_hub import snapshot_download
 
-    print(f"▶️ [downloads.py] Downloading from HuggingFace: {hf_repo_id}")
+    logger.info("▶️ [downloads.py] Downloading from HuggingFace: %s", hf_repo_id)
     if hf_revision:
-        print(f"   📌 [downloads.py] Revision: {hf_revision}")
+        logger.info("   📌 [downloads.py] Revision: %s", hf_revision)
         # Check if revision looks like a full commit hash (40 hex chars)
         if len(hf_revision) == 40 and all(
             c in "0123456789abcdef" for c in hf_revision.lower()
         ):
-            print("   🔒 [downloads.py] Using deterministic commit hash")
+            logger.info("   🔒 [downloads.py] Using deterministic commit hash")
     if allow_patterns:
-        print(f"   ✅ [downloads.py] Including patterns: {allow_patterns}")
+        logger.info("   ✅ [downloads.py] Including patterns: %s", allow_patterns)
     if ignore_patterns:
-        print(f"   ❌ [downloads.py] Excluding patterns: {ignore_patterns}")
+        logger.info("   ❌ [downloads.py] Excluding patterns: %s", ignore_patterns)
 
-    print(f"   📁 [downloads.py] Cache root directory: {model_dir}")
-    print("   ⏳ [downloads.py] HuggingFace Hub will show download progress...")
+    logger.info("   📁 [downloads.py] Cache root directory: %s", model_dir)
+    logger.info("   ⏳ [downloads.py] HuggingFace Hub will show download progress...")
 
     try:
         # snapshot_download returns the actual snapshot path
@@ -470,7 +476,7 @@ def download_from_hf(
         )
 
         snapshot_path = Path(local_dir)
-        print(f"✅ [downloads.py] Downloaded to snapshot: {snapshot_path}")
+        logger.info("✅ [downloads.py] Downloaded to snapshot: %s", snapshot_path)
 
         # If we have a deterministic revision, verify the path matches expected structure
         if hf_revision and len(hf_revision) == 40:
@@ -478,16 +484,18 @@ def download_from_hf(
                 model_dir, hf_repo_id, hf_revision, repo_type=repo_type
             )
             if snapshot_path != expected_path:
-                print(
+                logger.warning(
                     "   ⚠️ [downloads.py] Warning: Snapshot path differs from expected"
                 )
-                print(f"      Expected: {expected_path}")
-                print(f"      Actual:   {snapshot_path}")
+                logger.warning("      Expected: %s", expected_path)
+                logger.warning("      Actual:   %s", snapshot_path)
 
         return snapshot_path
 
     except Exception as e:
-        print(f"❌ [downloads.py] HuggingFace download failed: {e}")
+        logger.error(
+            "❌ [downloads.py] HuggingFace download failed: %s", e, exc_info=True
+        )
         raise
 
 
@@ -521,8 +529,10 @@ def setup_hf_cache_env(model_dir: Path) -> None:
     for var, value in env_vars.items():
         os.environ[var] = value
 
-    print(f"📌 [downloads.py] Set HuggingFace cache environment to: {cache_path}")
-    print(f"   [downloads.py] Variables set: {', '.join(env_vars.keys())}")
+    logger.info(
+        "📌 [downloads.py] Set HuggingFace cache environment to: %s", cache_path
+    )
+    logger.info("   [downloads.py] Variables set: %s", ", ".join(env_vars.keys()))
 
 
 def build_hf_snapshot_path(
@@ -593,7 +603,7 @@ def download_archive(
     # Ensure parent directory exists
     destination.parent.mkdir(parents=True, exist_ok=True)
 
-    print(f"📥 Downloading archive from {zip_url.split('/')[-1]}...")
+    logger.info(f"📥 Downloading archive from {zip_url.split('/')[-1]}...")
 
     try:
         response = requests.get(zip_url, stream=True, timeout=600)
@@ -612,7 +622,7 @@ def download_archive(
         should_show_progress = show_progress and total_size > 5 * 1024 * 1024
 
         if should_show_progress and total_size > 0:
-            print(f"📊 Total size: {total_size / (1024*1024):.1f} MB")
+            logger.info(f"📊 Total size: {total_size / (1024*1024):.1f} MB")
 
         with open(destination, "wb") as f:
             for chunk in response.iter_content(chunk_size=chunk_size):
@@ -631,11 +641,15 @@ def download_archive(
                         if progress_interval > last_reported_progress:
                             last_reported_progress = progress_interval
                             if progress_interval < 100:
-                                print(f"⬇️  Download progress: {progress_interval}%")
+                                logger.info(
+                                    f"⬇️  Download progress: {progress_interval}%"
+                                )
                             else:
-                                print("⬇️  Download progress: 100%")
+                                logger.info("⬇️  Download progress: 100%")
 
-        print(f"✅ Downloaded {destination.name} ({downloaded / (1024*1024):.1f} MB)")
+        logger.info(
+            f"✅ Downloaded {destination.name} ({downloaded / (1024*1024):.1f} MB)"
+        )
 
         return {
             "files_downloaded": 1,
@@ -680,11 +694,11 @@ def extract_archive_subtree(
     if not zip_path.exists():
         raise RuntimeError(f"Archive file not found: {zip_path}")
 
-    print(f"📦 Extracting archive subtree with prefix: {prefix}")
+    logger.info("📦 Extracting archive subtree with prefix: %s", prefix)
 
     # Remove existing destination directory if overwrite is True
     if overwrite and dest_dir.exists():
-        print(f"🗑️  Removing existing directory: {dest_dir}")
+        logger.info("🗑️  Removing existing directory: %s", dest_dir)
         shutil.rmtree(dest_dir)
 
     # Create destination directory
@@ -719,7 +733,7 @@ def extract_archive_subtree(
                                 target.write(source.read())
                         extracted_count += 1
 
-        print(f"✅ Extracted {extracted_count} files to {dest_dir}")
+        logger.info("✅ Extracted %s files to %s", extracted_count, dest_dir)
 
     except Exception as e:
         raise RuntimeError(f"Failed to extract archive: {e}") from e

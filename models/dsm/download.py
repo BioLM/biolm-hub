@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Optional
 
+from models.commons.core.logging import get_logger
 from models.commons.storage.download_helpers import (
     extract_model_variant,
     r2_then_hf,
@@ -8,6 +9,8 @@ from models.commons.storage.download_helpers import (
 from models.commons.storage.downloads import get_model_dir_util
 from models.dsm.config import DSM_HF_REPO_MAP, DSM_HF_REVISION_MAP
 from models.dsm.schema import DSMParams
+
+logger = get_logger(__name__)
 
 
 def get_model_id(model_size: str, variant: str) -> str:
@@ -46,7 +49,7 @@ def download_model_assets(
             f"No HuggingFace repository mapped for model size: {model_size}, variant: {variant}"
         )
 
-    print(f"📥 Downloading DSM {model_size} {variant}")
+    logger.info("Downloading DSM %s %s", model_size, variant)
 
     result = r2_then_hf(
         base_model_slug=base_model_slug,
@@ -87,15 +90,18 @@ def download_model_assets(
         )
 
     if result.cache_hit:
-        print(f"✅ DSM {model_size} {variant} restored from cache")
+        logger.info("DSM %s %s restored from cache", model_size, variant)
     else:
-        print(
-            f"✅ DSM {model_size} {variant} downloaded: {result.files_downloaded} files"
+        logger.info(
+            "DSM %s %s downloaded: %s files",
+            model_size,
+            variant,
+            result.files_downloaded,
         )
 
-    print(f"📁 Using deterministic HF snapshot path: {snapshot_path}")
-    print(
-        "✅ Verified snapshot path exists with required files (config.json, model weights)"
+    logger.info("Using deterministic HF snapshot path: %s", snapshot_path)
+    logger.info(
+        "Verified snapshot path exists with required files (config.json, model weights)"
     )
 
     return snapshot_path

@@ -1,10 +1,11 @@
 import modal
 
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.data.validator import aa_unambiguous
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -21,6 +22,8 @@ from models.esm1v.schema import (
     ESM1vPredictResponse,
     ESM1vPredictResponseLabel,
 )
+
+logger = get_logger(__name__)
 
 # Define the set of unambiguous amino acids
 aa_unambiguous_list = list(aa_unambiguous)
@@ -59,7 +62,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config(**variant_config)
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -81,7 +84,7 @@ class ESM1vModel(ModelMixinSnap):
         import torch
         from transformers import EsmForMaskedLM, EsmTokenizer, pipeline
 
-        print("🚀 Loading ESM1v model(s) directly on GPU for GPU memory snapshot...")
+        logger.info("Loading ESM1v model(s) directly on GPU for GPU memory snapshot...")
 
         # Set deterministic behavior for consistent results
         torch.manual_seed(42)
@@ -103,8 +106,11 @@ class ESM1vModel(ModelMixinSnap):
 
         for model_dir in model_dirs:
             model_name = model_dir.name
-            print(
-                f"⏳ Loading ESM1v model '{model_name}' directly on {self.device} from: {model_dir}"
+            logger.info(
+                "Loading ESM1v model '%s' directly on %s from: %s",
+                model_name,
+                self.device,
+                model_dir,
             )
             try:
                 tokenizer = EsmTokenizer.from_pretrained(model_dir)
@@ -122,13 +128,17 @@ class ESM1vModel(ModelMixinSnap):
                 fill_masker_pipeline.model.eval()
                 self.fill_masker_pipelines[model_name_key] = fill_masker_pipeline
 
-                print(f"✅ Loaded ESM1v model '{model_name}' directly on {self.device}")
+                logger.info(
+                    "Loaded ESM1v model '%s' directly on %s", model_name, self.device
+                )
             except Exception as e:
-                print(f"❌ Failed to load model '{model_name}': {e}")
+                logger.error(
+                    "Failed to load model '%s': %s", model_name, e, exc_info=True
+                )
                 raise e
 
-        print(
-            f"✅ ESM1v model(s) loaded directly on {self.device} for GPU memory snapshot!"
+        logger.info(
+            "ESM1v model(s) loaded directly on %s for GPU memory snapshot!", self.device
         )
 
     @modal.method()
@@ -149,15 +159,20 @@ class ESM1vModel(ModelMixinSnap):
         for idx, sequence in enumerate(sequences):
             result = {}
             for model_name, fill_masker_pipeline in self.fill_masker_pipelines.items():
-                print(f"Predicting for sequence {idx+1} with model {model_name}")
+                logger.debug(
+                    "Predicting for sequence %s with model %s", idx + 1, model_name
+                )
 
                 try:
                     resp = fill_masker_pipeline(
                         sequence, targets=aa_unambiguous_list, top_k=n_aa_unambiguous
                     )
                 except Exception as e:
-                    print(
-                        f"Model call failed for sequence {idx+1} with model {model_name}"
+                    logger.error(
+                        "Model call failed for sequence %s with model %s",
+                        idx + 1,
+                        model_name,
+                        exc_info=True,
                     )
                     raise e
 

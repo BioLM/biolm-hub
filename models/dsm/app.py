@@ -5,10 +5,11 @@ import modal
 if TYPE_CHECKING:
     from torch import Tensor
 
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -33,6 +34,8 @@ from models.dsm.schema import (
     DSMScoreResponseResult,
     DSMVariants,
 )
+
+logger = get_logger(__name__)
 
 # Parse variant configuration
 variant_config = parse_variants(
@@ -145,7 +148,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config(**variant_config)
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -178,7 +181,7 @@ class DSMModel(ModelMixinSnap):
 
         import torch
 
-        print(f"🚀 Loading DSM {self.model_size} {self.variant} model...")
+        logger.info("Loading DSM %s %s model...", self.model_size, self.variant)
 
         # Dynamic import of DSM model classes (EXACT COPY from dsm_rl approach)
         import importlib.util
@@ -217,7 +220,7 @@ class DSMModel(ModelMixinSnap):
 
         # Get model directory
         model_dir = get_model_dir(self.model_size, self.variant)
-        print(f"📂 Model directory: {model_dir}")
+        logger.info("Model directory: %s", model_dir)
 
         # Build deterministic HuggingFace snapshot path (like other models do)
         from models.commons.storage.downloads import build_hf_snapshot_path
@@ -236,7 +239,7 @@ class DSMModel(ModelMixinSnap):
         snapshot_path = build_hf_snapshot_path(
             model_dir, hf_repo_id, hf_revision, repo_type="model"
         )
-        print(f"📁 Using deterministic HF snapshot path: {snapshot_path}")
+        logger.info("Using deterministic HF snapshot path: %s", snapshot_path)
 
         # Convert to absolute Path and verify it exists
         # Files should have been downloaded during image build via setup_download_layer
@@ -253,7 +256,7 @@ class DSMModel(ModelMixinSnap):
         # Load DSM model from snapshot directory
         # Use local_files_only=True to prevent HuggingFace from trying to validate the path as a repo ID
         # Pass as absolute path string to ensure it's treated as a local directory
-        print(f"   📥 Loading model from: {snapshot_path_obj.absolute()}")
+        logger.info("Loading model from: %s", snapshot_path_obj.absolute())
         self.model = DSM.from_pretrained(
             str(snapshot_path_obj.absolute()),
             local_files_only=True,
@@ -264,16 +267,18 @@ class DSMModel(ModelMixinSnap):
 
         # Get tokenizer from the model (like dsm_rl does)
         self.tokenizer = self.model.tokenizer
-        print(f"✅ Tokenizer loaded: {len(self.tokenizer)} tokens")
+        logger.info("Tokenizer loaded: %s tokens", len(self.tokenizer))
 
         # Get hidden size from model config
         self.hidden_size = self.model.config.hidden_size
-        print(f"📊 Hidden size: {self.hidden_size}")
+        logger.info("Hidden size: %s", self.hidden_size)
 
         # Model configuration
         self.max_sequence_len = DSMParams.max_sequence_len
 
-        print(f"✅ DSM {self.model_size} {self.variant} loaded on {self.device}!")
+        logger.info(
+            "DSM %s %s loaded on %s!", self.model_size, self.variant, self.device
+        )
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
@@ -304,17 +309,20 @@ class DSMModel(ModelMixinSnap):
         if self.torch.cuda.is_available():
             self.torch.cuda.manual_seed_all(seed)
 
-        print(f"🧬 DSM generate called with {len(payload.items)} inputs (seed={seed})")
-        print(
-            f"Generation params: num_sequences={payload.params.num_sequences}, "
-            f"temp={payload.params.temperature}"
+        logger.info(
+            "DSM generate called with %s inputs (seed=%s)", len(payload.items), seed
+        )
+        logger.info(
+            "Generation params: num_sequences=%s, temp=%s",
+            payload.params.num_sequences,
+            payload.params.temperature,
         )
 
         results = []
 
         with self.torch.no_grad():
             for i, item in enumerate(payload.items):
-                print(f"\n📝 Processing input {i+1}/{len(payload.items)}")
+                logger.info("Processing input %s/%s", i + 1, len(payload.items))
 
                 input_seq = item.sequence
                 num_sequences = payload.params.num_sequences
@@ -324,7 +332,7 @@ class DSMModel(ModelMixinSnap):
                 # Generate sequences
                 if not input_seq or input_seq.strip() == "":
                     # Unconditional generation
-                    print("   Mode: Unconditional generation")
+                    logger.info("Mode: Unconditional generation")
                     generated = self._generate_unconditional(
                         payload=payload,
                         num_sequences=num_sequences,
@@ -335,7 +343,10 @@ class DSMModel(ModelMixinSnap):
                     )
                 elif "<mask>" in input_seq:
                     # Masked sequence filling
-                    print(f"   Mode: Mask filling ({input_seq.count('<mask>')} masks)")
+                    logger.info(
+                        "Mode: Mask filling (%s masks)",
+                        input_seq.count("<mask>"),
+                    )
                     generated = self._generate_mask_fill(
                         payload=payload,
                         input_sequence=input_seq,
@@ -346,8 +357,9 @@ class DSMModel(ModelMixinSnap):
                     )
                 else:
                     # Conditional generation from prefix
-                    print(
-                        f"   Mode: Conditional generation (prefix length: {len(input_seq)})"
+                    logger.info(
+                        "Mode: Conditional generation (prefix length: %s)",
+                        len(input_seq),
                     )
                     generated = self._generate_conditional(
                         payload=payload,
@@ -375,18 +387,18 @@ class DSMModel(ModelMixinSnap):
                     )
 
                 results.append(sequence_results)
-                print(f"   ✓ Generated {len(generated)} sequences")
+                logger.info("Generated %s sequences", len(generated))
 
-        print(f"\n✅ DSM generate completed for {len(results)} inputs")
+        logger.info("DSM generate completed for %s inputs", len(results))
         return DSMGenerateResponse(results=results)
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
     def encode(self, payload: DSMEncodeRequest) -> DSMEncodeResponse:
         """Extract embeddings from protein sequences."""
-        print(f"🔢 DSM encode called with {len(payload.items)} sequences")
+        logger.info("DSM encode called with %s sequences", len(payload.items))
         include = [option.value for option in payload.params.include]
-        print(f"Include options: {include}")
+        logger.info("Include options: %s", include)
 
         results = []
 
@@ -434,14 +446,14 @@ class DSMModel(ModelMixinSnap):
 
                 results.append(DSMEncodeResponseResult(**result_dict))
 
-        print(f"✅ DSM encode completed for {len(results)} sequences")
+        logger.info("DSM encode completed for %s sequences", len(results))
         return DSMEncodeResponse(results=results)
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
     def score(self, payload: DSMScoreRequest) -> DSMScoreResponse:
         """Calculate log probabilities for protein sequences."""
-        print(f"📊 DSM score called with {len(payload.items)} sequences")
+        logger.info("DSM score called with %s sequences", len(payload.items))
 
         results = []
 
@@ -457,7 +469,7 @@ class DSMModel(ModelMixinSnap):
                     )
                 )
 
-        print(f"✅ DSM score completed for {len(results)} sequences")
+        logger.info("DSM score completed for %s sequences", len(results))
         return DSMScoreResponse(results=results)
 
     def _calculate_log_prob(self, sequence: str) -> tuple[float, float]:

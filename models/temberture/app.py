@@ -2,10 +2,11 @@ from pathlib import Path
 
 import modal
 
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.storage.downloads import build_hf_snapshot_path
 from models.commons.util.config import (
@@ -32,6 +33,8 @@ from models.temberture.schema import (
     TemBERTurePredictResponse,
     TemBERTurePredictResponseResult,
 )
+
+logger = get_logger(__name__)
 
 variant_config = parse_variant(
     env_var_name="MODEL_TYPE",
@@ -71,7 +74,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config(**variant_config)
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -95,8 +98,9 @@ class TemBERTureModel(ModelMixinSnap):
         from adapters import BertAdapterModel
         from transformers import BertTokenizer
 
-        print(
-            f"🚀 Loading TemBERTure {self.model_type} model directly on GPU for GPU memory snapshot..."
+        logger.info(
+            "Loading TemBERTure %s model directly on GPU for GPU memory snapshot...",
+            self.model_type,
         )
 
         # Set deterministic behavior for consistent results
@@ -127,8 +131,8 @@ class TemBERTureModel(ModelMixinSnap):
                 str(adapters_base_dir / "temBERTure_TM" / "replica1") + "/"
             )
 
-        print(f"📂 Base model snapshot directory: {self.base_model_dir}")
-        print(f"📂 Using {self.model_type} adapters from: {self.adapter_path}")
+        logger.info("Base model snapshot directory: %s", self.base_model_dir)
+        logger.info("Using %s adapters from: %s", self.model_type, self.adapter_path)
 
         # Load tokenizer from shared base model directory (HF snapshot structure)
         self.tokenizer = BertTokenizer.from_pretrained(self.base_model_dir)
@@ -140,12 +144,12 @@ class TemBERTureModel(ModelMixinSnap):
         adapter_dir = self.adapter_path + "AdapterBERT_adapter"
         head_dir = self.adapter_path + "AdapterBERT_head_adapter"
 
-        print(f"🔧 Loading adapter from: {adapter_dir}")
-        print(f"🔧 Loading head from: {head_dir}")
+        logger.info("Loading adapter from: %s", adapter_dir)
+        logger.info("Loading head from: %s", head_dir)
 
         # Check if base model and adapter files exist
-        print(f"🔍 Checking base model snapshot: {self.base_model_dir}")
-        print(f"🔍 Checking adapter directory: {adapter_dir}")
+        logger.info("Checking base model snapshot: %s", self.base_model_dir)
+        logger.info("Checking adapter directory: %s", adapter_dir)
 
         if not Path(self.base_model_dir).exists():
             raise RuntimeError(
@@ -153,11 +157,11 @@ class TemBERTureModel(ModelMixinSnap):
             )
 
         if not Path(adapter_dir).exists():
-            print(f"❌ Adapter directory not found: {adapter_dir}")
-            print(f"🔍 Available directories in {self.adapter_dir}:")
+            logger.error("Adapter directory not found: %s", adapter_dir)
+            logger.error("Available directories in %s:", self.adapter_dir)
             if Path(self.adapter_dir).exists():
                 for item in Path(self.adapter_dir).iterdir():
-                    print(f"  - {item}")
+                    logger.debug("  - %s", item)
             raise RuntimeError(f"Adapter directory not found: {adapter_dir}")
 
         if not Path(head_dir).exists():
@@ -181,8 +185,10 @@ class TemBERTureModel(ModelMixinSnap):
         # Model configuration
         self.max_sequence_len = TemBERTureParams.max_sequence_len
 
-        print(
-            f"✅ TemBERTure {self.model_type} model loaded directly on {self.device} for GPU memory snapshot!"
+        logger.info(
+            "TemBERTure %s model loaded directly on %s for GPU memory snapshot!",
+            self.model_type,
+            self.device,
         )
 
     @modal.method()
@@ -191,21 +197,28 @@ class TemBERTureModel(ModelMixinSnap):
         """
         Extract embeddings from protein sequences using TemBERTure.
         """
-        print(
-            f"🔢 TemBERTure {self.model_type} encode called with {len(payload.items)} sequences"
+        logger.info(
+            "TemBERTure %s encode called with %s sequences",
+            self.model_type,
+            len(payload.items),
         )
         sequences = [item.sequence for item in payload.items]
         include = [option.value for option in payload.params.include]
-        print(f"📋 Include options: {include}")
+        logger.info("Include options: %s", include)
 
         try:
             results = self._encode_forward_pass(
                 sequences=sequences,
                 include=include,
             )
-            print(f"✅ TemBERTure {self.model_type} encode completed successfully")
+            logger.info("TemBERTure %s encode completed successfully", self.model_type)
         except Exception as e:
-            print(f"❌ TemBERTure {self.model_type} encode failed with error [{e}]")
+            logger.error(
+                "TemBERTure %s encode failed with error [%s]",
+                self.model_type,
+                e,
+                exc_info=True,
+            )
             raise e
 
         return TemBERTureEncodeResponse(results=results)
@@ -216,8 +229,10 @@ class TemBERTureModel(ModelMixinSnap):
         """
         Predict melting temperatures or thermophilicity for protein sequences.
         """
-        print(
-            f"🔮 TemBERTure {self.model_type} predict called with {len(payload.items)} sequences"
+        logger.info(
+            "TemBERTure %s predict called with %s sequences",
+            self.model_type,
+            len(payload.items),
         )
         sequences = [item.sequence for item in payload.items]
 
@@ -225,9 +240,14 @@ class TemBERTureModel(ModelMixinSnap):
             results = self._predict_forward_pass(
                 sequences=sequences,
             )
-            print(f"✅ TemBERTure {self.model_type} predict completed successfully")
+            logger.info("TemBERTure %s predict completed successfully", self.model_type)
         except Exception as e:
-            print(f"❌ TemBERTure {self.model_type} predict failed with error [{e}]")
+            logger.error(
+                "TemBERTure %s predict failed with error [%s]",
+                self.model_type,
+                e,
+                exc_info=True,
+            )
             raise e
 
         return TemBERTurePredictResponse(results=results)
@@ -336,21 +356,26 @@ class TemBERTureModel(ModelMixinSnap):
 
         import numpy as np
 
-        print(
-            f"🔍 Processing {len(sequences)} sequences for {self.model_type} prediction"
+        logger.info(
+            "Processing %s sequences for %s prediction",
+            len(sequences),
+            self.model_type,
         )
 
         batch_size = TemBERTureParams.batch_size
         nb_batches = math.ceil(len(sequences) / batch_size)
 
-        print(f"📦 Processing in {nb_batches} batches of size {batch_size}")
+        logger.info("Processing in %s batches of size %s", nb_batches, batch_size)
 
         results = []
 
         for i in range(nb_batches):
             batch_sequences = sequences[i * batch_size : (i + 1) * batch_size]
-            print(
-                f"⚙️  Processing batch {i+1}/{nb_batches} with {len(batch_sequences)} sequences"
+            logger.info(
+                "Processing batch %s/%s with %s sequences",
+                i + 1,
+                nb_batches,
+                len(batch_sequences),
             )
 
             # Preprocess sequences (add spaces between amino acids as required by protBERT)
@@ -370,7 +395,7 @@ class TemBERTureModel(ModelMixinSnap):
             with self.torch.no_grad():
                 outputs = self.model(**encoded)
                 logits = outputs.logits.reshape(-1).cpu().tolist()
-                print(f"📊 Got {len(logits)} predictions from model")
+                logger.info("Got %s predictions from model", len(logits))
 
             # Process predictions based on model type
             for j, pred in enumerate(logits):
@@ -385,14 +410,14 @@ class TemBERTureModel(ModelMixinSnap):
                     result_dict["classification"] = classification
                     # Return probability instead of logit
                     result_dict["prediction"] = float(prob)
-                    print(f"🏷️  Sequence {j+1}: {classification} (prob: {prob:.4f})")
+                    logger.info(f"Sequence {j+1}: {classification} (prob: {prob:.4f})")
                 else:
-                    print(f"🌡️  Sequence {j+1}: Tm = {pred:.2f}°C")
+                    logger.info(f"Sequence {j+1}: Tm = {pred:.2f}°C")
 
                 result = TemBERTurePredictResponseResult.model_validate(result_dict)
                 results.append(result)
 
-        print(f"✅ Completed prediction for {len(results)} sequences")
+        logger.info("Completed prediction for %s sequences", len(results))
         return results
 
 

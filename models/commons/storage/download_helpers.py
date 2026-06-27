@@ -2,6 +2,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any, Optional
 
+from models.commons.core.logging import get_logger
 from models.commons.storage.acquisition import (
     AcquisitionConfig,
     AcquisitionResult,
@@ -40,6 +41,8 @@ Notes:
 - Prefer these helpers from models/*/download.py; acquire_model_weights is still
   available for advanced/custom scenarios.
 """
+
+logger = get_logger(__name__)
 
 
 def standard_r2_download(
@@ -282,25 +285,27 @@ def download_with_fallback(
         >>> fallback = AcquisitionConfig(strategy=AcquisitionStrategy.HUGGINGFACE_HUB, ...)
         >>> result = download_with_fallback(primary, fallback)
     """
-    print("🔄 [download_helpers.py] Attempting primary acquisition strategy...")
+    logger.info("🔄 [download_helpers.py] Attempting primary acquisition strategy...")
     primary_result = acquire_model_weights(primary_config)
 
     if primary_result.success:
-        print("✅ [download_helpers.py] Primary strategy succeeded")
+        logger.info("✅ [download_helpers.py] Primary strategy succeeded")
         return primary_result
 
-    print(
-        f"⚠️ [download_helpers.py] Primary strategy failed: {primary_result.error_message}"
+    logger.warning(
+        "⚠️ [download_helpers.py] Primary strategy failed: %s",
+        primary_result.error_message,
     )
-    print("🔄 [download_helpers.py] Attempting fallback strategy...")
+    logger.info("🔄 [download_helpers.py] Attempting fallback strategy...")
 
     fallback_result = acquire_model_weights(fallback_config)
 
     if fallback_result.success:
-        print("✅ [download_helpers.py] Fallback strategy succeeded")
+        logger.info("✅ [download_helpers.py] Fallback strategy succeeded")
     else:
-        print(
-            f"❌ [download_helpers.py] Fallback strategy also failed: {fallback_result.error_message}"
+        logger.error(
+            "❌ [download_helpers.py] Fallback strategy also failed: %s",
+            fallback_result.error_message,
         )
 
     return fallback_result

@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Optional
 
+from models.commons.core.logging import get_logger
 from models.commons.storage.acquisition import (
     AcquisitionConfig,
     AcquisitionStrategy,
@@ -11,6 +12,8 @@ from models.commons.storage.acquisition import (
 from models.commons.storage.download_helpers import download_with_fallback
 from models.commons.storage.downloads import download_archive, get_model_dir_util
 from models.deepviscosity.schema import DeepViscosityParams
+
+logger = get_logger(__name__)
 
 # GitHub repository - pinned to specific commit for reproducibility
 # To update: change PINNED_COMMIT and bump DeepViscosityParams.params_version
@@ -60,7 +63,7 @@ def _download_deepviscosity_archive(target_dir: Path, **_kwargs) -> dict:
     """Download DeepViscosity repo ZIP to target directory."""
     zip_path = target_dir / "deepviscosity.zip"
 
-    print(f"📥 Downloading DeepViscosity from {DEEPVISCOSITY_ZIP_URL}...")
+    logger.info("📥 Downloading DeepViscosity from %s...", DEEPVISCOSITY_ZIP_URL)
 
     metadata = download_archive(DEEPVISCOSITY_ZIP_URL, zip_path)
     metadata["source"] = "github_lailabcode"
@@ -126,7 +129,7 @@ def _extract_deepviscosity_files(target_dir: Path) -> None:
     import zipfile
 
     zip_path = target_dir / "deepviscosity.zip"
-    print("📦 Extracting DeepViscosity model files from zip archive...")
+    logger.info("📦 Extracting DeepViscosity model files from zip archive...")
 
     try:
         with zipfile.ZipFile(zip_path, "r") as zip_ref:
@@ -136,7 +139,7 @@ def _extract_deepviscosity_files(target_dir: Path) -> None:
 
             namelist = zip_ref.namelist()
             repo_prefix = _find_repo_prefix(namelist)
-            print(f"Found repository prefix: {repo_prefix}")
+            logger.debug("Found repository prefix: %s", repo_prefix)
 
             for required_dir in REQUIRED_DIRS:
                 source_prefix = repo_prefix + required_dir + "/"
@@ -144,10 +147,12 @@ def _extract_deepviscosity_files(target_dir: Path) -> None:
                 files_extracted = _extract_single_directory(
                     zip_ref, namelist, source_prefix, target_subdir
                 )
-                print(f"  Extracted {files_extracted} files to {required_dir}/")
+                logger.debug(
+                    "  Extracted %s files to %s/", files_extracted, required_dir
+                )
 
         _validate_extracted_dirs(target_dir)
-        print(f"✅ Successfully extracted model files in {target_dir}")
+        logger.info("✅ Successfully extracted model files in %s", target_dir)
 
     except zipfile.BadZipFile as e:
         raise RuntimeError(f"Downloaded ZIP file is corrupted: {e}") from e
@@ -158,7 +163,7 @@ def _extract_deepviscosity_files(target_dir: Path) -> None:
     finally:
         if zip_path.exists():
             zip_path.unlink()
-            print("Cleaned up temporary zip file")
+            logger.info("Cleaned up temporary zip file")
 
 
 def _create_custom_fallback_config(target_dir: Path) -> AcquisitionConfig:
@@ -196,7 +201,7 @@ def download_model_assets(
     Note: StandardScaler is NOT downloaded - it's embedded directly in app.py
     to avoid sklearn version compatibility issues.
     """
-    print("📥 DeepViscosity: Downloading model assets")
+    logger.info("📥 DeepViscosity: Downloading model assets")
 
     model_dir = get_model_dir_util(
         base_model_slug=base_model_slug,
@@ -204,10 +209,10 @@ def download_model_assets(
         sub_path=sub_path,
     )
 
-    print(f"📂 Target directory: {model_dir}")
+    logger.info("📂 Target directory: %s", model_dir)
 
     # Primary: Try R2 cache
-    print("Checking R2 cache...")
+    logger.info("Checking R2 cache...")
     primary_config = _create_r2_config(
         base_model_slug=base_model_slug,
         params_version=params_version,
@@ -231,8 +236,8 @@ def download_model_assets(
     actual_path = result.actual_model_path or result.target_dir
 
     if result.cache_hit:
-        print("✅ Downloaded from R2 cache")
+        logger.info("✅ Downloaded from R2 cache")
     else:
-        print("✅ Downloaded from GitHub (files cached to R2)")
+        logger.info("✅ Downloaded from GitHub (files cached to R2)")
 
     return actual_path

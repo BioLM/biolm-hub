@@ -7,10 +7,11 @@ import modal
 if TYPE_CHECKING:
     import numpy as np
 
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -32,6 +33,8 @@ from models.tempro.schema import (
     TemproPredictResponse,
     TemproPredictResponseResult,
 )
+
+logger = get_logger(__name__)
 
 variant_config = parse_variant(
     env_var_name="ESM2_SIZE",
@@ -67,7 +70,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config(**variant_config)
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -103,7 +106,7 @@ class TemproModel(ModelMixinSnap):
         os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # 0=all, 1=info, 2=warning, 3=error
         tf.get_logger().setLevel("ERROR")
 
-        print(f"🔧 Loading TEMPRO {self.esm2_size} model for snapshot...")
+        logger.info("🔧 Loading TEMPRO %s model for snapshot...", self.esm2_size)
 
         # Set deterministic behavior for consistent results
         tf.random.set_seed(42)
@@ -112,19 +115,21 @@ class TemproModel(ModelMixinSnap):
         model_dir = get_model_dir(self.esm2_size)
         model_path = model_dir / "saved_models" / f"ESM_{self.esm2_size.upper()}.keras"
 
-        print(f"📂 Loading Keras model from: {model_path}")
+        logger.info("📂 Loading Keras model from: %s", model_path)
         self.keras_model = keras.models.load_model(model_path)
 
         # ESM2 configuration - layer to extract embeddings from
         self.esm_layer = TEMPRO_ESM_LAYER_MAPPING[TemproESM2Sizes(self.esm2_size)]
 
-        print(f"✅ TEMPRO {self.esm2_size} model loaded into memory snapshot")
+        logger.info("✅ TEMPRO %s model loaded into memory snapshot", self.esm2_size)
 
     @modal.enter(snap=False)
     def setup_model(self):
         """Post-snapshot setup."""
-        print(f"✅ TEMPRO {self.esm2_size} ready for inference from memory snapshot!")
-        print(f"🎯 Using ESM2 layer {self.esm_layer} for embeddings")
+        logger.info(
+            "✅ TEMPRO %s ready for inference from memory snapshot!", self.esm2_size
+        )
+        logger.info("🎯 Using ESM2 layer %s for embeddings", self.esm_layer)
 
     def get_esm2_embeddings(self, sequences: list[str]) -> "np.ndarray":
         """
@@ -136,7 +141,7 @@ class TemproModel(ModelMixinSnap):
         Returns:
             numpy array of mean-pooled embeddings, shape (batch_size, embedding_dim)
         """
-        print(f"🔗 Calling ESM2 for {len(sequences)} sequences...")
+        logger.info("🔗 Calling ESM2 for %s sequences...", len(sequences))
 
         # Prepare request for ESM2
         request_payload = ESM2EncodeRequest(
@@ -148,7 +153,9 @@ class TemproModel(ModelMixinSnap):
 
         # Get ESM2 model using Modal function lookup with username for billing
         esm_app_name = f"esm2-{self.esm2_size}"
-        print(f"📞 Looking up ESM2 app: {esm_app_name} for user: {self.app_username}")
+        logger.info(
+            "📞 Looking up ESM2 app: %s for user: %s", esm_app_name, self.app_username
+        )
 
         try:
             # Get cached ESM2 Modal class instance with proper username attribution
@@ -164,7 +171,7 @@ class TemproModel(ModelMixinSnap):
 
             # Everything is now a dict
             results = response["results"]
-            print(f"✅ ESM2 call successful, got {len(results)} results")
+            logger.info("✅ ESM2 call successful, got %s results", len(results))
 
             # Extract embeddings - results is a list of dicts
             embeddings = []
@@ -183,7 +190,7 @@ class TemproModel(ModelMixinSnap):
             return np.array(embeddings, dtype=np.float32)
 
         except Exception as e:
-            print(f"❌ Error calling ESM2: {e}")
+            logger.error("❌ Error calling ESM2: %s", e, exc_info=True)
             raise RuntimeError(f"Failed to get ESM2 embeddings: {e}") from e
 
     @modal.method()
@@ -194,8 +201,10 @@ class TemproModel(ModelMixinSnap):
         """
         sequences = [item.sequence for item in payload.items]
 
-        print(
-            f"🌡️ Predicting Tm for {len(sequences)} sequences using TEMPRO {self.esm2_size}"
+        logger.info(
+            "🌡️ Predicting Tm for %s sequences using TEMPRO %s",
+            len(sequences),
+            self.esm2_size,
         )
 
         try:
@@ -203,10 +212,10 @@ class TemproModel(ModelMixinSnap):
 
             # Step 1: Get ESM2 embeddings
             embeddings = self.get_esm2_embeddings(sequences)
-            print(f"📊 Got embeddings shape: {embeddings.shape}")
+            logger.debug("📊 Got embeddings shape: %s", embeddings.shape)
 
             # Step 2: Predict using Keras model
-            print("🧠 Running Keras model prediction...")
+            logger.info("🧠 Running Keras model prediction...")
             predictions = self.keras_model.predict(embeddings, verbose=0)
 
             # Step 3: Build response
@@ -224,13 +233,13 @@ class TemproModel(ModelMixinSnap):
                 result = TemproPredictResponseResult(tm=tm_value)
                 results.append(result)
 
-                print(f"  Sequence {i+1}: Tm = {tm_value:.2f}°C")
+                logger.debug(f"  Sequence {i+1}: Tm = {tm_value:.2f}°C")
 
-            print(f"✅ TEMPRO prediction complete for {len(results)} sequences")
+            logger.info("✅ TEMPRO prediction complete for %s sequences", len(results))
             return TemproPredictResponse(results=results)
 
         except Exception as e:
-            print(f"❌ TEMPRO prediction failed: {e}")
+            logger.error("❌ TEMPRO prediction failed: %s", e, exc_info=True)
             raise e
 
 

@@ -1,10 +1,13 @@
 from pathlib import Path
 from typing import Optional
 
+from models.commons.core.logging import get_logger
 from models.commons.storage.download_helpers import r2_then_hf
 from models.commons.storage.downloads import get_model_dir_util
 from models.zymctrl.config import HF_REPO_ID, HF_REVISION
 from models.zymctrl.schema import ZymCTRLParams
+
+logger = get_logger(__name__)
 
 
 def get_model_dir() -> Path:
@@ -22,7 +25,7 @@ def download_model_assets(
     sub_path: Optional[str] = None,
 ) -> Path:
     """Download ZymCTRL model assets."""
-    print("Downloading ZymCTRL")
+    logger.info("Downloading ZymCTRL")
 
     result = r2_then_hf(
         base_model_slug=base_model_slug,
@@ -39,9 +42,9 @@ def download_model_assets(
     snapshot_path = result.actual_model_path or result.target_dir
 
     if result.cache_hit:
-        print("ZymCTRL restored from R2 cache")
+        logger.info("ZymCTRL restored from R2 cache")
     else:
-        print(f"ZymCTRL downloaded: {result.files_downloaded} files")
+        logger.info("ZymCTRL downloaded: %s files", result.files_downloaded)
 
-    print(f"Using HF snapshot path: {snapshot_path}")
+    logger.info("Using HF snapshot path: %s", snapshot_path)
     return snapshot_path

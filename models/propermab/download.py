@@ -12,6 +12,7 @@ This module handles downloading and caching with R2-first strategy and URL fallb
 from pathlib import Path
 from typing import Optional
 
+from models.commons.core.logging import get_logger
 from models.commons.storage.acquisition import (
     AcquisitionConfig,
     AcquisitionStrategy,
@@ -21,6 +22,8 @@ from models.commons.storage.acquisition import (
 from models.commons.storage.download_helpers import r2_then_urls
 from models.commons.storage.downloads import get_model_dir_util
 from models.propermab.schema import ProperMABParams
+
+logger = get_logger(__name__)
 
 # ABodyBuilder2 weights from Zenodo (same as immunebuilder/abodybuilder2)
 # These are EGNN model checkpoints for antibody Fv structure prediction
@@ -74,7 +77,7 @@ def download_model_assets(
     sub_path: Optional[str] = None,
 ) -> Path:
     """Download ABodyBuilder2 model weights with R2 primary and Zenodo fallback."""
-    print("📥 ProperMAB: Downloading ABodyBuilder2 weights")
+    logger.info("ProperMAB: Downloading ABodyBuilder2 weights")
 
     result = r2_then_urls(
         base_model_slug=base_model_slug,
@@ -89,9 +92,9 @@ def download_model_assets(
         )
 
     if result.cache_hit:
-        print("✅ Downloaded from R2 cache")
+        logger.info("Downloaded from R2 cache")
     else:
-        print(f"✅ Downloaded {result.files_downloaded} files")
+        logger.info("Downloaded %s files", result.files_downloaded)
 
     return result.actual_model_path or result.target_dir
 
@@ -123,12 +126,12 @@ def download_amber_siz() -> Path:
     data_dir = get_data_dir()
     amber_siz_path = data_dir / "amber.siz"
 
-    print("🔧 ProperMAB: Downloading amber.siz atomic radii file")
-    print(f"📂 Target directory: {data_dir}")
+    logger.info("ProperMAB: Downloading amber.siz atomic radii file")
+    logger.info("Target directory: %s", data_dir)
 
     # ---- Primary strategy: Check if already cached locally ----
     if amber_siz_path.exists():
-        print(f"✅ amber.siz already exists at: {amber_siz_path}")
+        logger.info("amber.siz already exists at: %s", amber_siz_path)
         return amber_siz_path
 
     # ---- Try R2 cache first ----
@@ -146,13 +149,13 @@ def download_amber_siz() -> Path:
 
         result = acquire_model_weights(primary_config)
         if result.success and amber_siz_path.exists():
-            print(f"✅ Downloaded from R2 cache: {amber_siz_path}")
+            logger.info("Downloaded from R2 cache: %s", amber_siz_path)
             return amber_siz_path
     except Exception as e:
-        print(f"⚠️ R2 cache miss or error: {e}")
+        logger.warning("R2 cache miss or error: %s", e)
 
     # ---- Fallback: Download from Clemson and extract ----
-    print("📥 Downloading from Clemson University DelPhi parameters...")
+    logger.info("Downloading from Clemson University DelPhi parameters...")
     data_dir.mkdir(parents=True, exist_ok=True)
 
     try:
@@ -167,7 +170,7 @@ def download_amber_siz() -> Path:
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
 
-            print("📦 Extracting amber.siz from archive...")
+            logger.info("Extracting amber.siz from archive...")
 
             # Extract amber.siz from the archive
             with tarfile.open(archive_path, "r:gz") as tar:
@@ -183,7 +186,7 @@ def download_amber_siz() -> Path:
                 else:
                     raise RuntimeError("amber.siz not found in archive")
 
-        print(f"✅ amber.siz available at: {amber_siz_path}")
+        logger.info("amber.siz available at: %s", amber_siz_path)
 
         # ---- Cache to R2 for future use ----
         try:
@@ -191,16 +194,16 @@ def download_amber_siz() -> Path:
             from models.commons.util.config import r2_bucket_name
 
             r2_prefix = f"model-store/{ProperMABParams.base_model_slug}/{ProperMABParams.params_version}"
-            print(f"📤 Caching to R2 at {r2_prefix}")
+            logger.info("Caching to R2 at %s", r2_prefix)
             R2Utils.upload_to_r2_atomic(
                 source_dir=data_dir,
                 r2_prefix=r2_prefix,
                 bucket_name=r2_bucket_name,
                 create_manifest=True,
             )
-            print("✅ Successfully cached to R2 for future use")
+            logger.info("Successfully cached to R2 for future use")
         except Exception as e:
-            print(f"⚠️ Failed to cache to R2: {e}")
+            logger.warning("Failed to cache to R2: %s", e)
 
         return amber_siz_path
 

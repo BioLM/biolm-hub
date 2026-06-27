@@ -7,6 +7,10 @@ import numpy as np
 import torch
 from esm.inverse_folding.gvp_transformer import GVPTransformerModel  # type: ignore
 
+from models.commons.core.logging import get_logger
+
+logger = get_logger(__name__)
+
 """
 These functions below are adapted from the original ESM Inverse Folding repo
 
@@ -31,7 +35,7 @@ def _sample_seq_singlechain(
     coords, native_seq = _load_coords(pdb_string, chain)
     sampled_sequences = []
     for i in range(num_samples):
-        print(f"Sampling.. ({i+1} of {num_samples})")
+        logger.info("Sampling.. (%s of %s)", i + 1, num_samples)
         with torch.no_grad():
             sampled_seq = model.sample(coords, temperature=temperature, device=device)
         recovery = np.mean(
@@ -63,11 +67,11 @@ def _sample_seq_multichain(
     ) = esm.inverse_folding.multichain_util.extract_coords_from_complex(structure)
     target_chain_id = chain
     native_seq = native_seqs[target_chain_id]
-    print("Native sequence loaded from structure file:")
-    print(native_seq)
+    logger.info("Native sequence loaded from structure file:")
+    logger.debug("Native seq (first 32): %s", native_seq[:32])
     sampled_sequences = []
     for i in range(num_samples):
-        print(f"Sampling.. ({i+1} of {num_samples})")
+        logger.info("Sampling.. (%s of %s)", i + 1, num_samples)
         sampled_seq = esm.inverse_folding.multichain_util.sample_sequence_in_complex(
             model, coords, target_chain_id, temperature=temperature
         )

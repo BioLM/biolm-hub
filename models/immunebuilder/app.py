@@ -4,10 +4,11 @@ import tempfile
 
 import modal
 
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -25,6 +26,8 @@ from models.immunebuilder.schema import (
     ImmuneBuilderPredictResponse,
     ImmuneBuilderPredictResponseResult,
 )
+
+logger = get_logger(__name__)
 
 variant_config = parse_variant(
     env_var_name="MODEL_TYPE",
@@ -46,10 +49,12 @@ def prebuild_immunebuilder_models():
 
     model_dir = get_model_dir(model_type)
 
-    print(f"🔄 Pre-building ImmuneBuilder model '{model_type}' during build phase...")
-    print(f"📂 Model directory: {model_dir}")
-    print(f"🎯 Loading ONLY {model_type} model (not all variants!)")
-    print(f"🕒 Start time: {time.strftime('%H:%M:%S')}")
+    logger.info(
+        "Pre-building ImmuneBuilder model '%s' during build phase...", model_type
+    )
+    logger.info("Model directory: %s", model_dir)
+    logger.info("Loading ONLY %s model (not all variants!)", model_type)
+    logger.info(f"Start time: {time.strftime('%H:%M:%S')}")
 
     start_time = time.time()
 
@@ -58,19 +63,19 @@ def prebuild_immunebuilder_models():
 
     try:
         # Initialize the specific model based on enum (no string fallback needed)
-        print(f"🔍 Initializing {model_type} model...")
+        logger.info("Initializing %s model...", model_type)
 
         if model_type == ImmuneBuilderModelTypes.NANOBODYBUILDER2:
-            print("⏳ Initializing NanoBodyBuilder2...")
+            logger.info("Initializing NanoBodyBuilder2...")
             model = NanoBodyBuilder2(weights_dir=model_dir)
         elif model_type == ImmuneBuilderModelTypes.ABODYBUILDER2:
-            print("⏳ Initializing ABodyBuilder2...")
+            logger.info("Initializing ABodyBuilder2...")
             model = ABodyBuilder2(weights_dir=model_dir)
         elif model_type == ImmuneBuilderModelTypes.TCRBUILDER2PLUS:
-            print("⏳ Initializing TCRBuilder2Plus...")
+            logger.info("Initializing TCRBuilder2Plus...")
             model = TCRBuilder2(weights_dir=model_dir)
         elif model_type == ImmuneBuilderModelTypes.TCRBUILDER2:
-            print("⏳ Initializing TCRBuilder2...")
+            logger.info("Initializing TCRBuilder2...")
             model = TCRBuilder2(
                 weights_dir=model_dir, use_TCRBuilder2_PLUS_weights=False
             )
@@ -83,16 +88,16 @@ def prebuild_immunebuilder_models():
 
         end_time = time.time()
         duration = end_time - start_time
-        print(
-            f"✅ Successfully pre-built ImmuneBuilder model '{model_type}' in {duration:.2f}s"
+        logger.info(
+            f"Successfully pre-built ImmuneBuilder model '{model_type}' in {duration:.2f}s"
         )
-        print(f"🕒 End time: {time.strftime('%H:%M:%S')}")
+        logger.info(f"End time: {time.strftime('%H:%M:%S')}")
 
         # Check if weights were loaded from R2 or downloaded from library remote
         if model_dir.exists() and any(model_dir.iterdir()):
-            print("🚀 Model weights loaded from R2 cache!")
+            logger.info("Model weights loaded from R2 cache!")
         else:
-            print("🌐 Model weights downloaded from ImmuneBuilder library remote")
+            logger.info("Model weights downloaded from ImmuneBuilder library remote")
 
         # Clean up the model object to free memory
         del model
@@ -100,8 +105,8 @@ def prebuild_immunebuilder_models():
     except Exception as e:
         end_time = time.time()
         duration = end_time - start_time
-        print(f"⚠️ Error during model pre-build after {duration:.2f}s: {e}")
-        print("💡 Model will be downloaded during runtime instead")
+        logger.warning(f"Error during model pre-build after {duration:.2f}s: {e}")
+        logger.warning("Model will be downloaded during runtime instead")
         # Don't fail the build, just log the issue
 
 
@@ -135,7 +140,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config(**variant_config)
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -165,14 +170,16 @@ class ImmuneBuilderModel(ModelMixinSnap):
         if weights_dir is None:
             raise ValueError("weights_dir is required for _load_model_by_type()")
 
-        print(f"🎯 Loading {self.model_type} with weights_dir: {weights_dir}")
+        logger.info("Loading %s with weights_dir: %s", self.model_type, weights_dir)
 
         # Check if we're using R2 cache or library remote
         if weights_dir.exists() and any(weights_dir.glob(f"{self.model_type}/*")):
-            print(f"🚀 Using R2 cached weights from: {weights_dir}/{self.model_type}/")
+            logger.info(
+                "Using R2 cached weights from: %s/%s/", weights_dir, self.model_type
+            )
             source = "R2 cache"
         else:
-            print("🌐 No R2 cache found, will download from library remote")
+            logger.info("No R2 cache found, will download from library remote")
             source = "library remote"
 
         load_start = time.time()
@@ -191,7 +198,7 @@ class ImmuneBuilderModel(ModelMixinSnap):
             raise ValueError(f"Invalid ImmuneBuilder Model Type: {self.model_type}")
 
         load_duration = time.time() - load_start
-        print(f"✅ Model loaded from {source} in {load_duration:.2f}s")
+        logger.info(f"Model loaded from {source} in {load_duration:.2f}s")
         return model
 
     @modal.enter(snap=True)
@@ -201,10 +208,10 @@ class ImmuneBuilderModel(ModelMixinSnap):
 
         import torch
 
-        print(
-            "🚀 Loading ImmuneBuilder model directly on GPU for GPU memory snapshot..."
+        logger.info(
+            "Loading ImmuneBuilder model directly on GPU for GPU memory snapshot..."
         )
-        print(f"🕒 Load start time: {time.strftime('%H:%M:%S')}")
+        logger.info(f"Load start time: {time.strftime('%H:%M:%S')}")
 
         load_start_time = time.time()
 
@@ -219,44 +226,52 @@ class ImmuneBuilderModel(ModelMixinSnap):
         # Get device and setup for GPU inference
         self.device = get_torch_device()
 
-        print(
-            f"⏳ Loading ImmuneBuilder model '{self.model_type}' directly on GPU from: {self.model_dir}"
+        logger.info(
+            "Loading ImmuneBuilder model '%s' directly on GPU from: %s",
+            self.model_type,
+            self.model_dir,
         )
 
         # Load model - ImmuneBuilder models handle device loading internally
         # and will download models automatically if they don't exist
         try:
-            print(f"🔍 Attempting to load model from: {self.model_dir}")
+            logger.info("Attempting to load model from: %s", self.model_dir)
 
             # Check if we have R2 cached weights
             if self.model_dir.exists() and any(self.model_dir.iterdir()):
-                print("🚀 Found R2 cached weights - loading from cache")
+                logger.info("Found R2 cached weights - loading from cache")
             else:
-                print("🌐 No R2 cache found - will download from ImmuneBuilder library")
+                logger.info(
+                    "No R2 cache found - will download from ImmuneBuilder library"
+                )
 
             model_load_start = time.time()
             self.model = self._load_model_by_type(self.model_dir)
             model_load_duration = time.time() - model_load_start
 
-            print(f"⏱️ Model loading took {model_load_duration:.2f}s")
+            logger.info(f"Model loading took {model_load_duration:.2f}s")
 
         except Exception as e:
-            print(f"❌ Error loading model: {e}")
-            print(
-                "🔧 Attempting to resolve by allowing ImmuneBuilder to download models..."
+            logger.error("Error loading model: %s", e, exc_info=True)
+            logger.warning(
+                "Attempting to resolve by allowing ImmuneBuilder to download models..."
             )
 
             # Since weights_dir is now required, we can't retry without it
-            print(f"❌ Failed to load model from {self.model_dir}: {e}")
+            logger.error(
+                "Failed to load model from %s: %s", self.model_dir, e, exc_info=True
+            )
             raise e
 
         load_end_time = time.time()
         total_duration = load_end_time - load_start_time
-        print(
-            f"✅ ImmuneBuilder model '{self.model_type}' loaded directly on {self.device} for GPU memory snapshot!"
+        logger.info(
+            "ImmuneBuilder model '%s' loaded directly on %s for GPU memory snapshot!",
+            self.model_type,
+            self.device,
         )
-        print(f"🕒 Total load time: {total_duration:.2f}s")
-        print(f"🕒 Load end time: {time.strftime('%H:%M:%S')}")
+        logger.info(f"Total load time: {total_duration:.2f}s")
+        logger.info(f"Load end time: {time.strftime('%H:%M:%S')}")
 
     def _pre_process_payload(
         self, payload: ImmuneBuilderPredictRequest
@@ -319,7 +334,7 @@ class ImmuneBuilderModel(ModelMixinSnap):
                         os.remove(output_file)
 
         except Exception as e:
-            print(f"Model call failed with error [{e}]")
+            logger.error("Model call failed with error [%s]", e, exc_info=True)
             raise e
 
         return ImmuneBuilderPredictResponse(results=results)
@@ -352,7 +367,9 @@ class ImmuneBuilderModel(ModelMixinSnap):
         # OS-level (hash-based randomness in Python)
         os.environ["PYTHONHASHSEED"] = str(seed)
 
-        print(f"🔒 Seeding everything with seed {seed}. Deterministic: {deterministic}")
+        logger.info(
+            "Seeding everything with seed %s. Deterministic: %s", seed, deterministic
+        )
 
 
 if __name__ == "__main__":

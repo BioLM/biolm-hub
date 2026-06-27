@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from models.commons.core.logging import get_logger
 from models.commons.storage.download_helpers import (
     acquire_library_managed_model,
 )
@@ -14,6 +15,8 @@ from models.pro1.config import (
     PRO1_VARIANT_TO_HF_CONFIG,
 )
 from models.pro1.schema import Pro1Params, Pro1Variant
+
+logger = get_logger(__name__)
 
 
 def get_model_dir():
@@ -33,15 +36,19 @@ def _init_pro1_weights(
 
     # Download base model directly via HF hub (no GPU needed at download time;
     # newer unsloth requires GPU even at download).
-    print(f"📥 Downloading base model: {base_model}@{PRO1_BASE_MODEL_REVISION[:8]}")
+    logger.info(
+        "Downloading base model: %s@%s", base_model, PRO1_BASE_MODEL_REVISION[:8]
+    )
     snapshot_download(repo_id=base_model, revision=PRO1_BASE_MODEL_REVISION)
-    print(f"✅ Base model downloaded: {base_model}")
+    logger.info("Base model downloaded: %s", base_model)
 
     adapter_dir = target_dir / "adapter"
     adapter_dir.mkdir(parents=True, exist_ok=True)
-    print(
-        f"📥 Downloading LoRA adapter: "
-        f"{PRO1_HF_REPO}@{PRO1_ADAPTER_REVISION[:8]}/{adapter_subfolder}"
+    logger.info(
+        "Downloading LoRA adapter: %s@%s/%s",
+        PRO1_HF_REPO,
+        PRO1_ADAPTER_REVISION[:8],
+        adapter_subfolder,
     )
     snapshot_download(
         repo_id=PRO1_HF_REPO,
@@ -55,7 +62,7 @@ def _init_pro1_weights(
             f"LoRA adapter not found at expected path: {adapter_path}\n"
             f"Searched under: {adapter_dir}"
         )
-    print(f"✅ LoRA adapter downloaded: {adapter_path}")
+    logger.info("LoRA adapter downloaded: %s", adapter_path)
     return target_dir
 
 
@@ -95,5 +102,5 @@ def download_model_assets(
     if not result.success:
         raise RuntimeError(f"Pro-1 model download failed: {result.error_message}")
 
-    print(f"✅ Pro-1 ({model_variant}) download complete")
+    logger.info("Pro-1 (%s) download complete", model_variant)
     return target_dir

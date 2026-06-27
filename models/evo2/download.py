@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Optional
 
+from models.commons.core.logging import get_logger
 from models.commons.storage.acquisition import (
     AcquisitionConfig,
     AcquisitionStrategy,
@@ -20,6 +21,8 @@ from models.evo2.config import (
     EVO2_HF_REVISION_MAP,
 )
 from models.evo2.schema import Evo2Params
+
+logger = get_logger(__name__)
 
 
 def get_model_dir(model_variant: str):
@@ -73,9 +76,9 @@ def download_model_assets(
     hf_revision = EVO2_HF_REVISION_MAP.get(model_variant, "main")
     expected_filename = EVO2_FILENAME_MAP.get(model_variant)
 
-    print("🔧 Evo2: Setting up model assets")
-    print(f"   📁 Target directory: {model_dir}")
-    print(f"   🏷️ Model variant: {model_variant}")
+    logger.info("Evo2: Setting up model assets")
+    logger.info("   Target directory: %s", model_dir)
+    logger.info("   Model variant: %s", model_variant)
 
     # Create variant-specific filter to download only requested variant
     def evo2_filter_func(full_key: str) -> bool:
@@ -138,9 +141,8 @@ def download_model_assets(
 
     # Build deterministic path from HF details
     actual_path = build_hf_snapshot_path(model_dir, hf_repo_id, hf_revision)
-    print(f"📁 Using deterministic HF snapshot path: {actual_path}")
-
-    print(f"✅ Evo2 model ready at {actual_path}")
+    logger.info("Using deterministic HF snapshot path: %s", actual_path)
+    logger.info("Evo2 model ready at %s", actual_path)
 
     # Verify the expected model file exists
     # Handle the nested HF cache structure from R2
@@ -163,11 +165,11 @@ def download_model_assets(
 
         if found_file:
             file_size_gb = found_file.stat().st_size / (1024**3)
-            print(f"   - {expected_filename}: {file_size_gb:.2f} GB")
-            print(f"   - Located at: {found_file}")
+            logger.info(f"   - {expected_filename}: {file_size_gb:.2f} GB")
+            logger.info("   - Located at: %s", found_file)
         else:
-            print(f"⚠️ Warning: Expected file not found: {expected_filename}")
-            print(f"   Searched in: {direct_file}")
-            print(f"   And pattern: {nested_pattern}")
+            logger.warning("Expected file not found: %s", expected_filename)
+            logger.warning("   Searched in: %s", direct_file)
+            logger.warning("   And pattern: %s", nested_pattern)
 
     return str(actual_path)

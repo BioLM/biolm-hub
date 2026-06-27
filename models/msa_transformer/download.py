@@ -1,9 +1,12 @@
 from pathlib import Path
 from typing import Optional
 
+from models.commons.core.logging import get_logger
 from models.commons.storage.download_helpers import r2_then_library
 from models.commons.storage.downloads import get_model_dir_util, setup_hf_cache_env
 from models.msa_transformer.schema import MSATransformerParams
+
+logger = get_logger(__name__)
 
 
 def get_model_dir() -> Path:
@@ -23,11 +26,11 @@ def _init_msa_transformer_weights(target_dir: Path) -> Path:
 
     import esm
 
-    print(
-        "📥 Loading MSA Transformer (esm_msa1b_t12_100M_UR50S) to download weights..."
+    logger.info(
+        "Loading MSA Transformer (esm_msa1b_t12_100M_UR50S) to download weights..."
     )
     model, alphabet = esm.pretrained.esm_msa1b_t12_100M_UR50S()
-    print("✅ MSA Transformer weights downloaded successfully")
+    logger.info("MSA Transformer weights downloaded successfully")
 
     del model
     del alphabet
@@ -54,5 +57,5 @@ def download_model_assets(
     if not result.success:
         raise RuntimeError(f"Model download failed: {result.error_message}")
 
-    print(f"✅ Downloaded {result.files_downloaded} files using acquisition system")
+    logger.info("Downloaded %s files using acquisition system", result.files_downloaded)
     return result.actual_model_path or result.target_dir

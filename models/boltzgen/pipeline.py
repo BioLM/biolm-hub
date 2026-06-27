@@ -10,6 +10,9 @@ from models.boltzgen.schema import (
     BoltzGenDesignResult,
     BoltzGenPipelineStep,
 )
+from models.commons.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 # ---------------------------------------------------------------------------
 # Result-reading helpers (pure functions, no Modal dependency)
@@ -74,13 +77,13 @@ def _load_metrics(output_dir: Path, steps_run: set, budget: int):
         if candidate.exists():
             try:
                 df = pd.read_csv(candidate)
-                print(f"✅ Loaded metrics from {candidate} ({len(df)} designs)")
+                logger.info("Loaded metrics from %s (%s designs)", candidate, len(df))
                 return df
             except Exception as e:
-                print(f"⚠️ Failed to load metrics CSV: {e}")
+                logger.warning("Failed to load metrics CSV: %s", e, exc_info=True)
                 return None
 
-    print("⚠️ Metrics CSV not found (analysis step may not have produced one)")
+    logger.warning("Metrics CSV not found (analysis step may not have produced one)")
     return None
 
 
@@ -248,21 +251,21 @@ class BoltzGenPipelineMixin:
         if self.moldir:
             cmd.extend(["--moldir", self.moldir])
 
-        print("🔧 Running boltzgen configure...")
-        print(f"Command: {' '.join(cmd)}")
+        logger.info("Running boltzgen configure...")
+        logger.info("Command: %s", " ".join(cmd))
         result = subprocess.run(
             cmd,
             cwd="/opt/boltzgen",
             capture_output=True,
             text=True,
         )
-        print(f"Configure STDOUT: {result.stdout}")
+        logger.debug("Configure STDOUT: %s", result.stdout)
         if result.returncode != 0:
             raise RuntimeError(
                 f"boltzgen configure failed (rc={result.returncode})\n"
                 f"STDOUT: {result.stdout}\nSTDERR: {result.stderr}"
             )
-        print("✅ Configure complete")
+        logger.info("Configure complete")
 
     def _run_execute(self, output_dir: Path) -> None:
         """Run all configured pipeline steps via a single `boltzgen execute` call.
@@ -278,9 +281,9 @@ class BoltzGenPipelineMixin:
 
         cmd = ["boltzgen", "execute", str(output_dir)]
 
-        print(f"\n{'='*80}")
-        print(f"🚀 Executing pipeline: {' '.join(cmd)}")
-        print(f"{'='*80}", flush=True)
+        logger.info("=" * 80)
+        logger.info("Executing pipeline: %s", " ".join(cmd))
+        logger.info("=" * 80)
 
         process = subprocess.Popen(
             cmd,
@@ -294,14 +297,14 @@ class BoltzGenPipelineMixin:
         output_lines = []
         try:
             for line in process.stdout:
-                print(line, end="", flush=True)
+                logger.info("%s", line.rstrip())
                 output_lines.append(line)
         finally:
             process.stdout.close()
             process.wait()
 
-        print(f"Return code: {process.returncode}")
-        print("=" * 80)
+        logger.info("Return code: %s", process.returncode)
+        logger.info("=" * 80)
 
         if process.returncode != 0:
             output_text = "".join(output_lines)
@@ -309,7 +312,7 @@ class BoltzGenPipelineMixin:
                 f"boltzgen execute failed (rc={process.returncode})\n"
                 f"OUTPUT:\n{output_text}"
             )
-        print("✅ Pipeline execution complete")
+        logger.info("Pipeline execution complete")
 
     def _run_boltzgen_pipeline(
         self,
@@ -331,7 +334,7 @@ class BoltzGenPipelineMixin:
         steps_requested = params.steps if params.steps else DEFAULT_PIPELINE_STEPS
         requested_step_values = [s.value for s in steps_requested]
 
-        print(f"Pipeline steps requested: {requested_step_values}")
+        logger.info("Pipeline steps requested: %s", requested_step_values)
 
         # (Re-)generate per-step config YAMLs. Safe to run on existing output_dir —
         # boltzgen configure renames any previous config/ dir to previous-config-N.
@@ -362,7 +365,7 @@ class BoltzGenPipelineMixin:
         # Read and return results
         results = self._read_results(output_dir, params)
 
-        print(f"✅ Successfully read {len(results)} design(s)")
+        logger.info("Successfully read %s design(s)", len(results))
         return BoltzGenDesignResponse(
             results=results,
             job_id=job.job_id,
@@ -392,7 +395,7 @@ class BoltzGenPipelineMixin:
                 f"No CIF files found in {designs_dir}.\n"
                 "Pipeline completed but no design files were generated."
             )
-        print(f"✅ Found {len(cif_files)} design CIF files in {designs_dir}")
+        logger.info("Found %s design CIF files in %s", len(cif_files), designs_dir)
 
         from models.boltzgen.helpers import extract_sequence_from_cif
 

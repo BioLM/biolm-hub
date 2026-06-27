@@ -11,11 +11,12 @@ from pathlib import Path
 
 import modal
 
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
 from models.commons.core.error import UserError
+from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -31,6 +32,8 @@ from models.rf3.schema import (
     RF3PredictResponse,
     RF3PredictResponseResult,
 )
+
+logger = get_logger(__name__)
 
 # Build Modal container image with Python 3.12 (foundry requires >=3.12)
 # Using micromamba for proper Python 3.12 setup
@@ -107,7 +110,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config()
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -127,7 +130,7 @@ class RF3Model(ModelMixinSnap):
         """Load RosettaFold3 model on GPU for GPU memory snapshot."""
         import torch
 
-        print("🚀 Loading RosettaFold3 model on GPU for GPU memory snapshot...")
+        logger.info("Loading RosettaFold3 model on GPU for GPU memory snapshot...")
 
         # Set deterministic behavior
         torch.manual_seed(42)
@@ -137,7 +140,7 @@ class RF3Model(ModelMixinSnap):
         self.torch = torch
         self.model_dir = get_model_dir()
 
-        print(f"🔍 RF3 model directory: {self.model_dir}")
+        logger.info("RF3 model directory: %s", self.model_dir)
 
         # Set up environment for foundry
         os.environ["PROJECT_ROOT"] = str(Path(__file__).parent.parent.parent)
@@ -149,22 +152,22 @@ class RF3Model(ModelMixinSnap):
         self.ckpt_path = self.model_dir / "rf3_foundry_01_24_latest.ckpt"
 
         if self.ckpt_path.exists():
-            print(f"✅ Found RF3 checkpoint at {self.ckpt_path}")
+            logger.info("Found RF3 checkpoint at %s", self.ckpt_path)
         else:
-            print(f"ℹ️ Checkpoint will be downloaded to: {self.ckpt_path}")
+            logger.info("Checkpoint will be downloaded to: %s", self.ckpt_path)
 
         # Import RF3 inference engine from foundry
         try:
             from rf3.inference_engines.rf3 import RF3InferenceEngine
 
             self.RF3InferenceEngine = RF3InferenceEngine
-            print("✅ RosettaFold3 dependencies loaded successfully")
+            logger.info("RosettaFold3 dependencies loaded successfully")
         except ImportError as e:
-            print(f"⚠️ Warning: Could not import foundry/rf3: {e}")
-            print("    This may be expected if foundry is not yet installed")
+            logger.warning("Warning: Could not import foundry/rf3: %s", e)
+            logger.warning("This may be expected if foundry is not yet installed")
             # Don't raise here - just log the warning
 
-        print(f"✅ RF3 model setup complete on {self.device}")
+        logger.info("RF3 model setup complete on %s", self.device)
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
@@ -181,11 +184,11 @@ class RF3Model(ModelMixinSnap):
         params = payload.params
         item = payload.items[0]  # Batch size fixed to 1
 
-        print(f"🔬 Starting RosettaFold3 prediction for '{item.name}'")
-        print(f"   Components: {len(item.components)}")
-        print(f"   Recycles: {params.n_recycles}")
-        print(f"   Diffusion steps: {params.num_steps}")
-        print(f"   Diffusion batch size: {params.diffusion_batch_size}")
+        logger.info("Starting RosettaFold3 prediction for '%s'", item.name)
+        logger.info("Components: %s", len(item.components))
+        logger.info("Recycles: %s", params.n_recycles)
+        logger.info("Diffusion steps: %s", params.num_steps)
+        logger.info("Diffusion batch size: %s", params.diffusion_batch_size)
 
         # Create temporary directory for all files
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -199,7 +202,7 @@ class RF3Model(ModelMixinSnap):
             with open(input_json_path, "w") as f:
                 json.dump(input_spec, f, indent=2)
 
-            print(f"✅ Created input specification at: {input_json_path}")
+            logger.info("Created input specification at: %s", input_json_path)
 
             # Create output directory
             output_dir = temp_dir_path / "output"
@@ -227,7 +230,7 @@ class RF3Model(ModelMixinSnap):
                 )
 
                 # Run inference with run() parameters
-                print("🔄 Running RosettaFold3 inference...")
+                logger.info("Running RosettaFold3 inference...")
                 engine.run(
                     inputs=str(input_json_path),
                     out_dir=str(output_dir),
@@ -241,10 +244,10 @@ class RF3Model(ModelMixinSnap):
                     cyclic_chains=params.cyclic_chains or [],
                 )
 
-                print("✅ RosettaFold3 inference completed")
+                logger.info("RosettaFold3 inference completed")
 
             except Exception as e:
-                print(f"❌ RosettaFold3 inference failed: {e}")
+                logger.error("RosettaFold3 inference failed: %s", e, exc_info=True)
                 raise UserError(f"RosettaFold3 inference failed: {str(e)}") from e
 
             # Process outputs
@@ -254,12 +257,12 @@ class RF3Model(ModelMixinSnap):
             item_output_dir = output_dir / item.name
 
             # Debug: Check what files exist
-            print(f"🔍 Looking for outputs in: {item_output_dir}")
+            logger.debug("Looking for outputs in: %s", item_output_dir)
             if item_output_dir.exists():
                 all_files = list(item_output_dir.iterdir())
-                print(f"📁 Found {len(all_files)} files in output directory")
+                logger.debug("Found %s files in output directory", len(all_files))
                 for f in sorted(all_files)[:10]:  # Show first 10
-                    print(f"   - {f.name}")
+                    logger.debug("- %s", f.name)
 
             # Find all generated CIF files in output directory
             # RF3 can create files with pattern {name}_model.cif or {name}_model_{idx}.cif.gz
@@ -273,7 +276,7 @@ class RF3Model(ModelMixinSnap):
                 # Check if early stopped
                 score_file = item_output_dir / f"{item.name}.score"
                 if score_file.exists():
-                    print("⚠️ Prediction was early-stopped due to low confidence")
+                    logger.warning("Prediction was early-stopped due to low confidence")
                     # Return empty result with early_stopped flag
                     result = RF3PredictResponseResult(
                         structure_cif="",
@@ -287,7 +290,7 @@ class RF3Model(ModelMixinSnap):
                         "No structures generated and no score file found. Check input parameters."
                     )
             else:
-                print(f"🔍 Found {len(cif_files)} generated structures")
+                logger.info("Found %s generated structures", len(cif_files))
 
                 # Read confidence JSON if available
                 confidence_json_path = (
@@ -365,7 +368,7 @@ class RF3Model(ModelMixinSnap):
                     )
                     results.append(result)
 
-            print(f"✅ Processed {len(results)} prediction results")
+            logger.info("Processed %s prediction results", len(results))
 
         return RF3PredictResponse(results=[results])
 
@@ -407,14 +410,17 @@ class RF3Model(ModelMixinSnap):
                 from models.commons.data.a3m import combine_a3ms
 
                 if len(comp.alignment) > 1:
-                    print(
-                        f"[RF3] Merging {len(comp.alignment)} A3Ms for component {comp.name}: "
-                        f"{list(comp.alignment.keys())}"
+                    logger.debug(
+                        "[RF3] Merging %s A3Ms for component %s: %s",
+                        len(comp.alignment),
+                        comp.name,
+                        list(comp.alignment.keys()),
                     )
                 else:
-                    print(
-                        f"[RF3] Using single A3M for component {comp.name}: "
-                        f"{list(comp.alignment.keys())}"
+                    logger.debug(
+                        "[RF3] Using single A3M for component %s: %s",
+                        comp.name,
+                        list(comp.alignment.keys()),
                     )
 
                 # Combine all A3M strings in the dict into one temporary file

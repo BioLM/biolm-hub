@@ -4,10 +4,13 @@ from typing import Any, Optional
 
 import modal
 
+from models.commons.core.logging import get_logger
 from models.commons.util.config import (
     deployed_environment_names,
     prod_environment_name,
 )
+
+logger = get_logger(__name__)
 
 
 class ModelVariantError(ValueError):
@@ -66,9 +69,11 @@ def parse_variant(
         )
 
     if raw_value is None and default is not None:
-        print(f"✅ '{env_var_name}' not set, using default: '{canonical_match}'")
+        logger.info(
+            "✅ '%s' not set, using default: '%s'", env_var_name, canonical_match
+        )
     else:
-        print(f"✅ Using variant '{canonical_match}' for '{env_var_name}'")
+        logger.info("✅ Using variant '%s' for '%s'", canonical_match, env_var_name)
 
     return {env_var_name: canonical_match}
 
@@ -95,9 +100,9 @@ def parse_variants(variant_configs: list[dict[str, Any]]) -> dict[str, str]:
             # Re-raise with more context
             raise ModelVariantError(f"Configuration error for '{env_var}': {e}") from e
 
-    print("🔧 Model variant configuration:")
+    logger.info("🔧 Model variant configuration:")
     for env_var, value in results.items():
-        print(f"    {env_var}: {value}")
+        logger.debug("    %s: %s", env_var, value)
 
     return results
 
@@ -123,7 +128,7 @@ def is_prod_environment() -> bool:
         bool: True if environment is set to production, otherwise False.
     """
     current_environment = get_environment_name()
-    print(f"Current Modal environment: {current_environment}")
+    logger.info("Current Modal environment: %s", current_environment)
 
     return current_environment == prod_environment_name
 
@@ -138,6 +143,6 @@ def is_production() -> bool:
         bool: True if the environment is in the deployed list, otherwise False.
     """
     current_environment = get_environment_name()
-    print(f"Current Modal environment: {current_environment}")
+    logger.info("Current Modal environment: %s", current_environment)
 
     return current_environment in deployed_environment_names

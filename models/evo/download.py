@@ -1,11 +1,14 @@
 from pathlib import Path
 from typing import Optional
 
+from models.commons.core.logging import get_logger
 from models.commons.storage.download_helpers import (
     acquire_library_managed_model,
     extract_model_variant,
 )
 from models.evo.config import EVO_VARIANT_TO_MODEL_NAME
+
+logger = get_logger(__name__)
 
 
 def _init_evo_weights(target_dir: Path, model_name: str) -> Path:
@@ -14,7 +17,7 @@ def _init_evo_weights(target_dir: Path, model_name: str) -> Path:
     Evo manages its own cache paths via HuggingFace Hub, so target_dir
     is not used directly by the library.
     """
-    print(f"📥 Downloading Evo model {model_name}")
+    logger.info("Downloading Evo model %s", model_name)
 
     import torch
     from evo import Evo
@@ -22,7 +25,7 @@ def _init_evo_weights(target_dir: Path, model_name: str) -> Path:
     device = torch.device("cpu")
     _ = Evo(model_name, device=device)
 
-    print(f"✅ Evo download complete for {model_name}")
+    logger.info("Evo download complete for %s", model_name)
     return target_dir
 
 
@@ -60,11 +63,11 @@ def download_model_assets(
         raise RuntimeError(f"Failed to acquire Evo model: {result.error_message}")
 
     if result.bypass_detected:
-        print("✅ Evo bypass detected as expected")
-        print(
-            f"   📁 Model cached to library-managed locations: {result.bypass_locations}"
+        logger.info("Evo bypass detected as expected")
+        logger.info(
+            "Model cached to library-managed locations: %s", result.bypass_locations
         )
-        print("   💡 This is expected behavior - Evo library manages its own cache")
+        logger.info("This is expected behavior - Evo library manages its own cache")
 
-    print(f"✅ Download complete for {model_name}")
+    logger.info("Download complete for %s", model_name)
     return dummy_target

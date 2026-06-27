@@ -5,11 +5,12 @@ import tempfile
 import modal
 from pydantic import ValidationError
 
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
 from models.commons.core.error import UserError
+from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -30,6 +31,8 @@ from models.thermompnn.schema import (
     ThermoMPNNPredictResponse,
     ThermoMPNNPredictResponseItem,
 )
+
+logger = get_logger(__name__)
 
 # No variant config needed - single model
 variant_config = {}
@@ -106,7 +109,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config(**variant_config)
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -129,7 +132,7 @@ class ThermoMPNNModel(ModelMixinSnap):
 
         from models.thermompnn.util import load_thermompnn
 
-        print("📸 Loading ThermoMPNN model on CPU for memory snapshot...")
+        logger.info("Loading ThermoMPNN model on CPU for memory snapshot...")
 
         # Set deterministic behavior for consistent results across CPU loading
         torch.manual_seed(42)
@@ -137,8 +140,9 @@ class ThermoMPNNModel(ModelMixinSnap):
         self.torch = torch
         self.model_dir = get_model_dir()
 
-        print(
-            f"⏳ Loading ThermoMPNN model on CPU for memory snapshot from: {self.model_dir}"
+        logger.info(
+            "Loading ThermoMPNN model on CPU for memory snapshot from: %s",
+            self.model_dir,
         )
 
         # Load model on CPU first
@@ -149,7 +153,7 @@ class ThermoMPNNModel(ModelMixinSnap):
             device=torch.device("cpu"),  # Force CPU loading for snapshot
         )
 
-        print("✅ Completed CPU load of ThermoMPNN model for memory snapshot")
+        logger.info("Completed CPU load of ThermoMPNN model for memory snapshot")
 
     @modal.enter(snap=False)
     def setup_model(self):
@@ -163,11 +167,11 @@ class ThermoMPNNModel(ModelMixinSnap):
         # Get device and transfer model to GPU
         self.device = get_torch_device()
 
-        print(f"Transferring ThermoMPNN model to device={self.device}...")
+        logger.info("Transferring ThermoMPNN model to device=%s...", self.device)
 
         self.model = self.model.to(self.device)
 
-        print("✅ ThermoMPNN model ready for inference")
+        logger.info("ThermoMPNN model ready for inference")
 
     @modal.method()
     @modal_endpoint(app_name=app_name)

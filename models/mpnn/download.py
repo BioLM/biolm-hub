@@ -1,5 +1,6 @@
 from typing import Optional
 
+from models.commons.core.logging import get_logger
 from models.commons.storage.acquisition import (
     AcquisitionConfig,
     AcquisitionStrategy,
@@ -15,6 +16,8 @@ from models.commons.storage.download_helpers import (
 from models.commons.storage.downloads import get_model_dir_util
 from models.mpnn.config import MPNNModelCheckpoints, MPNNModelTypes
 from models.mpnn.schema import MPNNParams
+
+logger = get_logger(__name__)
 
 
 def get_model_dir():
@@ -82,8 +85,10 @@ def download_model_assets(
         # Check if the hyper checkpoint was actually downloaded
         # If not, use fallback to download from GitHub
         if not checkpoint_path.exists():
-            print(f"⚠️ HyperMPNN checkpoint not found in R2: {checkpoint_path}")
-            print("📥 Falling back to GitHub download...")
+            logger.warning(
+                "⚠️ HyperMPNN checkpoint not found in R2: %s", checkpoint_path
+            )
+            logger.warning("📥 Falling back to GitHub download...")
 
             # Note: Side chain model should already be in R2 from other MPNN variants.
             # We only download the HyperMPNN checkpoint from GitHub if not in R2.
@@ -131,10 +136,12 @@ def download_model_assets(
     if not result.success:
         raise RuntimeError(f"Model download failed: {result.error_message}")
 
-    print(f"✅ Downloaded {result.files_downloaded} files using acquisition system")
+    logger.info(
+        "✅ Downloaded %s files using acquisition system", result.files_downloaded
+    )
     if result.metadata.get("r2_upload_success"):
-        print("✅ Successfully cached to R2 for future use")
+        logger.info("✅ Successfully cached to R2 for future use")
     elif result.cache_hit:
-        print("✅ Downloaded from R2 cache")
+        logger.info("✅ Downloaded from R2 cache")
 
     return result.actual_model_path or result.target_dir

@@ -3,10 +3,11 @@ from pathlib import Path
 
 import modal
 
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -28,6 +29,8 @@ from models.immunefold.schema import (
     ImmuneFoldPredictResponse,
     ImmuneFoldPredictResponseResult,
 )
+
+logger = get_logger(__name__)
 
 variant_config = parse_variant(
     env_var_name="MODEL_TYPE",
@@ -125,7 +128,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config(**variant_config)
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -152,7 +155,9 @@ class ImmuneFoldModel(ModelMixinSnap):
         from models.commons.util.device import get_torch_device
         from models.immunefold.immunefold.inference import load
 
-        print("🚀 Loading ImmuneFold model directly on GPU for GPU memory snapshot...")
+        logger.info(
+            "Loading ImmuneFold model directly on GPU for GPU memory snapshot..."
+        )
 
         # Set deterministic behavior for consistent results
         torch.manual_seed(42)
@@ -178,8 +183,10 @@ class ImmuneFoldModel(ModelMixinSnap):
                 "device": str(self.device),  # Load directly on GPU device
             },
         )
-        print(
-            f"⏳ Loading ImmuneFold model '{self.model_type}' directly on GPU from: {self.model_dir}"
+        logger.info(
+            "Loading ImmuneFold model '%s' directly on GPU from: %s",
+            self.model_type,
+            self.model_dir,
         )
 
         # Load model directly on GPU
@@ -189,8 +196,10 @@ class ImmuneFoldModel(ModelMixinSnap):
         if hasattr(self.model, "eval"):
             self.model.eval()
 
-        print(
-            f"✅ ImmuneFold model '{self.model_type}' loaded directly on {self.device} for GPU memory snapshot!"
+        logger.info(
+            "ImmuneFold model '%s' loaded directly on %s for GPU memory snapshot!",
+            self.model_type,
+            self.device,
         )
 
     def _pre_process_payload(
@@ -340,7 +349,7 @@ class ImmuneFoldModel(ModelMixinSnap):
             except (AssertionError, RuntimeError, ValueError) as e:
                 self._handle_domain_numbering_error(e, request_kind)
             except Exception as e:
-                print(f"Model call failed with error [{e}]")
+                logger.error("Model call failed with error [%s]", e, exc_info=True)
                 raise e
         return ImmuneFoldPredictResponse(results=results)
 

@@ -11,7 +11,10 @@ from typing import Any
 import numpy as np
 
 from models.boltz.schema import BoltzEntity, BoltzEntityType, BoltzPredictConstraints
+from models.commons.core.logging import get_logger
 from models.commons.data.a3m import combine_a3ms
+
+logger = get_logger(__name__)
 
 
 def _sanitize_molecule_id(mol_id: str) -> str:
@@ -24,7 +27,7 @@ def _sanitize_molecule_id(mol_id: str) -> str:
     # Generate 4-letter hash ID (Boltz truncates longer IDs and parses special patterns)
     hash_val = hashlib.md5(mol_id.encode()).hexdigest()[:3]
     sanitized = "X" + "".join(chr(ord("a") + int(c, 16) % 26) for c in hash_val)
-    print(f"[Boltz] Sanitized molecule ID '{mol_id}' -> '{sanitized}'")
+    logger.debug("[Boltz] Sanitized molecule ID '%s' -> '%s'", mol_id, sanitized)
     return sanitized
 
 
@@ -126,14 +129,17 @@ def _get_entity_data(seq: BoltzEntity, temp_files: list = None) -> dict[str, Any
     # Handle multiple sequence alignments (MSAs)
     if seq.alignment is not None and isinstance(seq.alignment, dict):
         if len(seq.alignment) > 1:
-            print(
-                f"[Boltz] Merging {len(seq.alignment)} A3Ms for molecule id={seq.id}: "
-                f"{list(seq.alignment.keys())}"
+            logger.debug(
+                "[Boltz] Merging %s A3Ms for molecule id=%s: %s",
+                len(seq.alignment),
+                seq.id,
+                list(seq.alignment.keys()),
             )
         else:
-            print(
-                f"[Boltz] Using single A3M for molecule id={seq.id}: "
-                f"{list(seq.alignment.keys())}"
+            logger.debug(
+                "[Boltz] Using single A3M for molecule id=%s: %s",
+                seq.id,
+                list(seq.alignment.keys()),
             )
 
         # Combine all A3M strings in the dict into one temporary file

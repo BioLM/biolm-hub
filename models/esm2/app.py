@@ -1,9 +1,10 @@
 import modal
 
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -26,6 +27,8 @@ from models.esm2.schema import (
     ESM2PredictResponse,
     ESM2PredictResponseResult,
 )
+
+logger = get_logger(__name__)
 
 variant_config = parse_variant(
     env_var_name="MODEL_SIZE",
@@ -60,7 +63,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config(**variant_config)
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -83,7 +86,7 @@ class ESM2Model(ModelMixinSnap):
         import torch
         from esm.data import FastaBatchedDataset
 
-        print("🚀 Loading ESM2 model directly on GPU for GPU memory snapshot...")
+        logger.info("Loading ESM2 model directly on GPU for GPU memory snapshot...")
 
         # Set deterministic behavior for consistent results
         torch.manual_seed(42)
@@ -100,7 +103,7 @@ class ESM2Model(ModelMixinSnap):
 
         # Load the model and alphabet directly on GPU
         model_id = model_id_mapping[model_size]
-        print(f"⏳ Initiating load of ESM2 model '{model_id}' directly on GPU...")
+        logger.info("Initiating load of ESM2 model '%s' directly on GPU...", model_id)
         self.model, self.alphabet = esm.pretrained.load_model_and_alphabet_hub(model_id)
         self.model.eval()
 
@@ -123,8 +126,10 @@ class ESM2Model(ModelMixinSnap):
         # Get aa vocab tokens
         self.vocab_tokens = self.alphabet.all_toks[4:-9]
 
-        print(
-            f"✅ ESM2 model loaded directly on {self.device} for GPU memory snapshot! (toks_per_batch={self.toks_per_batch})"
+        logger.info(
+            "ESM2 model loaded directly on %s for GPU memory snapshot! (toks_per_batch=%s)",
+            self.device,
+            self.toks_per_batch,
         )
 
     @modal.method()
@@ -151,7 +156,7 @@ class ESM2Model(ModelMixinSnap):
                 max_sequence_len=self.max_sequence_len,
             )
         except Exception as e:
-            print(f"Model call failed with error [{e}]")
+            logger.error("Model call failed with error [%s]", e, exc_info=True)
             raise e
 
         return ESM2EncodeResponse(results=results)
@@ -175,7 +180,7 @@ class ESM2Model(ModelMixinSnap):
                 sequences=sequences,
             )
         except Exception as e:
-            print(f"Model call failed with error [{e}]")
+            logger.error("Model call failed with error [%s]", e, exc_info=True)
             raise e
 
         return ESM2PredictResponse(results=results)
@@ -258,8 +263,11 @@ class ESM2Model(ModelMixinSnap):
             # sequence_strings: List/Batch of raw amino acid sequences in string format, representing a batch of sequences for processing.
             # tokenized_sequences: A tensor containing the tokenized versions of the amino acid sequences in the batch, ready for model input.
 
-            print(
-                f"Processing {batch_idx + 1} of {len(batches)} batches ({tokenized_sequences.size(0)} sequences)"
+            logger.debug(
+                "Processing %s of %s batches (%s sequences)",
+                batch_idx + 1,
+                len(batches),
+                tokenized_sequences.size(0),
             )
 
             tokenized_sequences = tokenized_sequences.to(

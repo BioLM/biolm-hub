@@ -8,6 +8,7 @@ import subprocess
 from pathlib import Path
 from typing import Optional
 
+from models.commons.core.logging import get_logger
 from models.commons.storage.acquisition import (
     AcquisitionConfig,
     AcquisitionStrategy,
@@ -17,6 +18,8 @@ from models.commons.storage.acquisition import (
 )
 from models.commons.storage.downloads import get_model_dir_util
 from models.rfd3.schema import RFD3Params
+
+logger = get_logger(__name__)
 
 # RFD3 uses foundry's checkpoint registry
 # Install with: foundry install rfd3 --checkpoint-dir <path>
@@ -46,7 +49,7 @@ def _install_via_foundry_cli(checkpoint_dir: Path) -> bool:
         True if successful, False otherwise
     """
     try:
-        print("📦 Installing RFD3 checkpoint via foundry CLI...")
+        logger.info("Installing RFD3 checkpoint via foundry CLI...")
         checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
         # Run: foundry install rfd3 --checkpoint-dir <path>
@@ -58,35 +61,35 @@ def _install_via_foundry_cli(checkpoint_dir: Path) -> bool:
         )
 
         if result.returncode == 0:
-            print("✅ Foundry CLI installation successful")
-            print(f"📝 stdout: {result.stdout}")
-            print(f"📝 stderr: {result.stderr}")
+            logger.info("Foundry CLI installation successful")
+            logger.debug("stdout: %s", result.stdout)
+            logger.debug("stderr: %s", result.stderr)
 
             # List what was actually downloaded
             import os
 
-            print(f"📁 Contents of {checkpoint_dir}:")
+            logger.debug("Contents of %s:", checkpoint_dir)
             for root, _dirs, files in os.walk(checkpoint_dir):
                 level = root.replace(str(checkpoint_dir), "").count(os.sep)
                 indent = " " * 2 * level
-                print(f"{indent}{os.path.basename(root)}/")
+                logger.debug("%s%s/", indent, os.path.basename(root))
                 subindent = " " * 2 * (level + 1)
                 for file in files:
-                    print(f"{subindent}{file}")
+                    logger.debug("%s%s", subindent, file)
 
             return True
         else:
-            print(f"❌ Foundry CLI installation failed: {result.stderr}")
+            logger.error("Foundry CLI installation failed: %s", result.stderr)
             return False
 
     except subprocess.TimeoutExpired:
-        print("❌ Foundry CLI installation timed out")
+        logger.error("Foundry CLI installation timed out", exc_info=True)
         return False
     except FileNotFoundError:
-        print("❌ Foundry CLI not found - is rc-foundry installed?")
+        logger.error("Foundry CLI not found - is rc-foundry installed?", exc_info=True)
         return False
     except Exception as e:
-        print(f"❌ Foundry CLI installation error: {e}")
+        logger.error("Foundry CLI installation error: %s", e, exc_info=True)
         return False
 
 
@@ -129,8 +132,8 @@ def download_model_assets(
         sub_path=sub_path,
     )
 
-    print("🔧 RFdiffusion3: Setting up model assets")
-    print(f"   📁 Target directory: {model_dir}")
+    logger.info("RFdiffusion3: Setting up model assets")
+    logger.info("   Target directory: %s", model_dir)
 
     # Expected checkpoint file (foundry installs as rfd3_latest.ckpt)
     checkpoint_filename = "rfd3_latest.ckpt"
@@ -153,23 +156,23 @@ def download_model_assets(
     )
 
     # Try R2 first
-    print("🔄 [download_helpers.py] Attempting primary acquisition strategy...")
+    logger.info("[download_helpers.py] Attempting primary acquisition strategy...")
     from models.commons.storage.acquisition import acquire_model_weights
 
     primary_result = acquire_model_weights(primary_config)
 
     if primary_result.success:
-        print(f"✅ Downloaded {primary_result.files_downloaded} files from R2")
+        logger.info("Downloaded %s files from R2", primary_result.files_downloaded)
         return primary_result.actual_model_path or primary_result.target_dir
 
-    print("⚠️ R2 cache miss, trying foundry CLI...")
+    logger.warning("R2 cache miss, trying foundry CLI...")
 
     # ---- Fallback: Use foundry CLI (only once) ----
-    print("⚠️ R2 cache miss, trying foundry CLI fallback...")
+    logger.warning("R2 cache miss, trying foundry CLI fallback...")
     if _install_via_foundry_cli(model_dir):
         # Verify checkpoint exists
         if checkpoint_path.exists():
-            print(f"✅ RFD3 checkpoint installed at: {checkpoint_path}")
+            logger.info("RFD3 checkpoint installed at: %s", checkpoint_path)
 
             # Skip R2 upload during image build (too slow, causes timeouts)
             # R2 caching will happen at runtime in setup_model() when model is first used
@@ -185,7 +188,7 @@ def download_model_assets(
                     from models.commons.util.config import r2_bucket_name
 
                     r2_prefix = f"model-store/{base_model_slug}/{params_version}"
-                    print(f"📤 Caching checkpoint to R2 at {r2_prefix}...")
+                    logger.info("Caching checkpoint to R2 at %s...", r2_prefix)
                     success = R2Utils.upload_to_r2_atomic(
                         source_dir=model_dir,
                         r2_prefix=r2_prefix,
@@ -193,17 +196,19 @@ def download_model_assets(
                         create_manifest=True,
                     )
                     if success:
-                        print(
-                            "✅ Cached to R2 successfully - future downloads will use R2 cache"
+                        logger.info(
+                            "Cached to R2 successfully - future downloads will use R2 cache"
                         )
                     else:
-                        print(
-                            "⚠️ Failed to cache to R2 (non-fatal) - will fallback again next time"
+                        logger.warning(
+                            "Failed to cache to R2 (non-fatal) - will fallback again next time"
                         )
                 except Exception as e:
-                    print(f"⚠️ Failed to cache to R2 (non-fatal): {e}")
+                    logger.warning("Failed to cache to R2 (non-fatal): %s", e)
             else:
-                print("⏭️ Skipping R2 upload during image build (will cache at runtime)")
+                logger.info(
+                    "Skipping R2 upload during image build (will cache at runtime)"
+                )
 
             return model_dir
         else:

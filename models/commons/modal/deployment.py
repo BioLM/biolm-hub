@@ -5,7 +5,10 @@ from typing import Optional
 
 import modal
 
+from models.commons.core.logging import get_logger
 from models.commons.util.environment import get_environment_name, is_production
+
+logger = get_logger(__name__)
 
 
 def run_or_deploy_modal_app(
@@ -36,9 +39,9 @@ def run_or_deploy_modal_app(
 
     current_env = get_environment_name()
     if current_env in ("qa", "main"):
-        print(f"Production Modal environment detected: {current_env}")
+        logger.info("Production Modal environment detected: %s", current_env)
     else:
-        print(f"Local or dev Modal environment: {current_env}")
+        logger.info("Local or dev Modal environment: %s", current_env)
 
     with modal.enable_output():
 
@@ -47,7 +50,7 @@ def run_or_deploy_modal_app(
             try:
                 with app.run():
                     _model = model_cls()  # instantiate so build/setup is invoked
-                    print(f"✓ App '{app.name}' running successfully")
+                    logger.info("✓ App '%s' running successfully", app.name)
                 break  # If successful, exit the retry loop
 
             except modal.exception.RemoteError as e:
@@ -55,7 +58,7 @@ def run_or_deploy_modal_app(
                     e
                 )
                 if is_image_build_error and (attempt + 1) < MAX_ATTEMPTS:
-                    print(
+                    logger.warning(
                         "  - ⚠️ WARNING: Modal image build failed. Retrying in 5 seconds..."
                     )
                     time.sleep(5)
@@ -63,31 +66,36 @@ def run_or_deploy_modal_app(
                     continue
                 else:
                     # If it's a different error or the retry also failed, fail the process.
-                    print(
-                        f"❌ App '{app.name}' failed to run after {MAX_ATTEMPTS} attempts."
+                    logger.error(
+                        "❌ App '%s' failed to run after %s attempts.",
+                        app.name,
+                        MAX_ATTEMPTS,
+                        exc_info=True,
                     )
                     raise e
 
         should_deploy = True
         if is_production():
-            print(f"⚠️  Warning: Deploying to production environment '{current_env}'.")
+            logger.warning(
+                "⚠️  Warning: Deploying to production environment '%s'.", current_env
+            )
             if not args.force_deploy:
                 confirm = input("Continue deployment? [y/N] ")
                 should_deploy = confirm.lower().strip() in ("y", "yes")
 
         if should_deploy:
-            print(f"Deploying app '{app.name}' to environment '{current_env}'")
+            logger.info("Deploying app '%s' to environment '%s'", app.name, current_env)
 
             # Run make clean before deployment to ensure clean state
-            print("🧹 Running 'make clean' to ensure clean deployment state...")
+            logger.info("🧹 Running 'make clean' to ensure clean deployment state...")
             try:
                 subprocess.run(
                     ["make", "clean"], check=True, capture_output=True, text=True
                 )
-                print("✓ Cleanup completed successfully")
+                logger.info("✓ Cleanup completed successfully")
             except subprocess.CalledProcessError as e:
-                print(f"⚠️  Warning: 'make clean' failed: {e}")
-                print("Continuing with deployment anyway...")
+                logger.warning("⚠️  Warning: 'make clean' failed: %s", e)
+                logger.warning("Continuing with deployment anyway...")
 
             app.deploy()
-            print(f"✅  App '{app.name}' deployed successfully")
+            logger.info("✅  App '%s' deployed successfully", app.name)

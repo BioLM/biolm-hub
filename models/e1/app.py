@@ -4,10 +4,11 @@ from typing import TYPE_CHECKING
 
 import modal
 
-from models.commons.model.base import ModelMixin
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixin
 from models.commons.model.config import biolm_model_class
 from models.commons.storage.downloads import build_hf_snapshot_path
 from models.commons.util.config import (
@@ -34,6 +35,8 @@ from models.e1.schema import (
     LayerEmbedding,
     LayerPerTokenEmbeddings,
 )
+
+logger = get_logger(__name__)
 
 if TYPE_CHECKING:
     from transformers.modeling_outputs import MaskedLMOutput
@@ -76,7 +79,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config(**variant_config)
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -129,7 +132,7 @@ class E1Model(ModelMixin):
 
         # Set the Huggingface Hub cache dir
         os.environ["HF_HUB_CACHE"] = str(self.model_dir)
-        print("HF_HUB_CACHE is set to:", os.environ["HF_HUB_CACHE"])
+        logger.info("HF_HUB_CACHE is set to: %s", os.environ["HF_HUB_CACHE"])
 
         # Force reload of the huggingface_hub.constants module, so that HF_HUB_CACHE is properly set
         import huggingface_hub.constants
@@ -164,7 +167,7 @@ class E1Model(ModelMixin):
             }
             with open(config_path, "w") as f:
                 json.dump(config_data, f, indent=2)
-            print("📝 Patched config.json with auto_map for trust_remote_code")
+            logger.info("Patched config.json with auto_map for trust_remote_code")
 
         # Select dtype based on GPU: T4 (150m) uses float16 (native), A10G (300m/600m) uses bfloat16
         if self.device.type == "cuda":
@@ -174,8 +177,11 @@ class E1Model(ModelMixin):
         else:
             model_dtype = torch.float32
 
-        print(
-            f"⏳ Loading E1 model from snapshot: {snapshot_path} on {self.device} with {model_dtype}..."
+        logger.info(
+            "Loading E1 model from snapshot: %s on %s with %s...",
+            snapshot_path,
+            self.device,
+            model_dtype,
         )
         self.model = AutoModelForMaskedLM.from_pretrained(
             snapshot_path,
@@ -186,7 +192,9 @@ class E1Model(ModelMixin):
         self.model = self.model.to(self.device)
         self.model.eval()
 
-        print(f"✅ E1 model '{self.model_id}' loaded successfully on {self.device}")
+        logger.info(
+            "E1 model '%s' loaded successfully on %s", self.model_id, self.device
+        )
 
         # Import aa_unambiguous after other imports are done
         from models.commons.data.validator import aa_unambiguous
@@ -438,9 +446,7 @@ class E1Model(ModelMixin):
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def log_prob(
-        self, payload: E1PredictLogProbRequest
-    ) -> E1PredictLogProbResponse:
+    def log_prob(self, payload: E1PredictLogProbRequest) -> E1PredictLogProbResponse:
         """
         Computes the total log-prob of an unmasked sequence under E1.
         Sums over the canonical 20 amino acids only, ignoring positions with

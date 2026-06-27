@@ -4,11 +4,14 @@ from pathlib import Path
 from typing import Optional
 
 from models.boltz.schema import BoltzModelParams, BoltzModelVersion
+from models.commons.core.logging import get_logger
 from models.commons.storage.download_helpers import (
     extract_model_variant,
     standard_r2_download,
 )
 from models.commons.storage.downloads import get_model_dir_util
+
+logger = get_logger(__name__)
 
 
 def get_model_dir(model_version: str) -> Path:
@@ -51,7 +54,7 @@ def download_model_assets(
     # Extract MODEL_VERSION from variant_config
     model_version = extract_model_variant(variant_config, "MODEL_VERSION")
 
-    print(f"📥 Downloading Boltz {model_version} assets...")
+    logger.info("Downloading Boltz %s assets...", model_version)
 
     # Get expected files for validation
     if model_version == BoltzModelVersion.BOLTZ1:
@@ -75,5 +78,5 @@ def download_model_assets(
             f"Failed to download Boltz {model_version} model assets: {result.error_message}"
         )
 
-    print(f"✅ Downloaded {result.files_downloaded} files using acquisition system")
+    logger.info("Downloaded %s files using acquisition system", result.files_downloaded)
     return result.actual_model_path or result.target_dir

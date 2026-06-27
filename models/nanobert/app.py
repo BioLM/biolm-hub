@@ -1,12 +1,13 @@
 import modal
 
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.data.validator import (
     aa_unambiguous,
 )
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -28,6 +29,8 @@ from models.nanobert.schema import (
     NanoBERTLogProbResponseResult,
     NanoBERTParams,
 )
+
+logger = get_logger(__name__)
 
 # Build Modal container image
 image = modal.Image.from_registry("pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime")
@@ -54,7 +57,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config()
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -75,7 +78,7 @@ class NanoBERTModel(ModelMixinSnap):
         import torch
         from transformers import AutoModelForMaskedLM, RobertaTokenizer
 
-        print("🚀 Loading NanoBERT model directly on GPU for GPU memory snapshot...")
+        logger.info("Loading NanoBERT model directly on GPU for GPU memory snapshot...")
 
         # Set deterministic behavior for consistent results
         torch.manual_seed(42)
@@ -88,7 +91,7 @@ class NanoBERTModel(ModelMixinSnap):
         # Get device and setup for GPU inference
         self.device = get_torch_device()
 
-        print(f"⏳ Loading NanoBERT model directly on GPU from: {self.model_dir}")
+        logger.info("Loading NanoBERT model directly on GPU from: %s", self.model_dir)
 
         # Load tokenizer
         self.tokenizer = RobertaTokenizer.from_pretrained(
@@ -107,8 +110,8 @@ class NanoBERTModel(ModelMixinSnap):
             self.tokenizer.convert_tokens_to_ids(list(aa_unambiguous))
         )
 
-        print(
-            f"✅ NanoBERT model loaded directly on {self.device} for GPU memory snapshot!"
+        logger.info(
+            "NanoBERT model loaded directly on %s for GPU memory snapshot!", self.device
         )
 
     @modal.method()
@@ -131,7 +134,7 @@ class NanoBERTModel(ModelMixinSnap):
                 input_sequences=input_sequences, include=payload.params.include
             )
         except Exception as e:
-            print(f"Model call failed with error [{e}]")
+            logger.error("Model call failed with error [%s]", e, exc_info=True)
             raise e
 
         return results
@@ -284,9 +287,7 @@ class NanoBERTModel(ModelMixinSnap):
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def log_prob(
-        self, payload: NanoBERTLogProbRequest
-    ) -> NanoBERTLogProbResponse:
+    def log_prob(self, payload: NanoBERTLogProbRequest) -> NanoBERTLogProbResponse:
         """
         Compute the log probability of each input sequence by:
           1. Converting the input to sequences.

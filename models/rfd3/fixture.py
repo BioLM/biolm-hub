@@ -1,5 +1,6 @@
 """Fixture generator for RFdiffusion3 model tests."""
 
+from models.commons.core.logging import get_logger
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
 from models.commons.testing.fixture import FixtureGenerator
@@ -7,6 +8,8 @@ from models.rfd3.config import MODEL_FAMILY
 from models.rfd3.schema import (
     RFD3DesignRequest,
 )
+
+logger = get_logger(__name__)
 
 # Define test inputs inline as Pydantic models
 INPUT1 = RFD3DesignRequest.model_validate(
@@ -129,6 +132,6 @@ def generate():
 
 
 if __name__ == "__main__":
-    print("🚀 Generating fixtures for RFdiffusion3...")
+    logger.info("Generating fixtures for RFdiffusion3...")
     generate()
-    print("✅ Fixture generation complete!")
+    logger.info("Fixture generation complete!")

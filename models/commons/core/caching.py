@@ -278,19 +278,19 @@ def clear_short_term_model_cache(
         None
     """
     if not force:
-        print("Not clearing cache. Set force=True to proceed.")
+        logger.info("Not clearing cache. Set force=True to proceed.")
         return
 
     if model_slug:
         cache = get_model_cache(model_slug)
         cache.clear()
-        print(f"Cleared short-term cache for model: {model_slug}")
+        logger.info("Cleared short-term cache for model: %s", model_slug)
     else:
         for slug, cache in _model_cache_registry.items():
             cache.clear()
-            print(f"Cleared short-term cache for model: {slug}")
+            logger.info("Cleared short-term cache for model: %s", slug)
         if not _model_cache_registry:
-            print("No model caches in registry to clear.")
+            logger.info("No model caches in registry to clear.")
 
 
 ### ------- Reusable Cache Handler

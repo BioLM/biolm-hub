@@ -2,10 +2,11 @@ import logging
 
 import modal
 
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -19,6 +20,8 @@ from models.esm_if1.schema import (
     ESMIF1GenerateResponseSample,
     ESMIF1Params,
 )
+
+logger = get_logger(__name__)
 
 # Build Modal container image
 # Pinned: esm+openfold incompatible with Python 3.12
@@ -64,7 +67,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config()
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -85,7 +88,7 @@ class ESMIF1Model(ModelMixinSnap):
         import esm
         import torch
 
-        print("🚀 Loading ESM-IF1 model directly on GPU for GPU memory snapshot...")
+        logger.info("Loading ESM-IF1 model directly on GPU for GPU memory snapshot...")
 
         self.torch = torch
         self.device = get_torch_device()
@@ -102,15 +105,17 @@ class ESMIF1Model(ModelMixinSnap):
         torch.hub.set_dir(self.model_dir)
 
         # Load the model and alphabet directly on GPU
-        print(f"⏳ Initiating load of ESMIF1 from: {self.model_dir} directly on GPU...")
+        logger.info(
+            "Initiating load of ESMIF1 from: %s directly on GPU...", self.model_dir
+        )
         self.model, self.alphabet = esm.pretrained.esm_if1_gvp4_t16_142M_UR50()
         self.model = self.model.eval()
 
         # Move model to GPU
         self.model.to(device=self.device)
 
-        print(
-            f"✅ ESM-IF1 model loaded directly on {self.device} for GPU memory snapshot!"
+        logger.info(
+            "ESM-IF1 model loaded directly on %s for GPU memory snapshot!", self.device
         )
 
     @modal.method()

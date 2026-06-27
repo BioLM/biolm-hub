@@ -4,10 +4,11 @@ from typing import TYPE_CHECKING
 
 import modal
 
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -33,6 +34,8 @@ from models.esmc.schema import (
     LayerEmbedding,
     LayerPerTokenEmbeddings,
 )
+
+logger = get_logger(__name__)
 
 if TYPE_CHECKING:
     from esm.models.esmc import ESMCOutput
@@ -70,7 +73,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config(**variant_config)
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -113,7 +116,7 @@ class ESMCModel(ModelMixinSnap):
 
         # Set the Huggingface Hub cache dir
         os.environ["HF_HUB_CACHE"] = str(self.model_dir)
-        print("HF_HUB_CACHE is set to:", os.environ["HF_HUB_CACHE"])
+        logger.info("HF_HUB_CACHE is set to: %s", os.environ["HF_HUB_CACHE"])
 
         # Force reload of the huggingface_hub.constants module, so that HF_HUB_CACHE is properly set
         import huggingface_hub.constants
@@ -123,13 +126,17 @@ class ESMCModel(ModelMixinSnap):
         from esm.models.esmc import ESMC
 
         # Load the model on GPU
-        print(
-            f"⏳ Loading ESM C model from directory: {self.model_dir} on {self.device}..."
+        logger.info(
+            "Loading ESM C model from directory: %s on %s...",
+            self.model_dir,
+            self.device,
         )
         self.model = ESMC.from_pretrained(model_name=self.model_id, device=self.device)
         self.model.eval()
 
-        print(f"✅ ESM C model '{self.model_id}' loaded successfully on {self.device}")
+        logger.info(
+            "ESM C model '%s' loaded successfully on %s", self.model_id, self.device
+        )
 
         # Import aa_unambiguous after other imports are done
         from models.commons.data.validator import aa_unambiguous

@@ -2,10 +2,11 @@ import os
 
 import modal
 
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -34,6 +35,8 @@ from models.evo2.schema import (
     Evo2PredictLogProbResponse,
     Evo2PredictLogProbResponseResult,
 )
+
+logger = get_logger(__name__)
 
 variant_config = parse_variant(
     env_var_name="MODEL_VARIANT",
@@ -83,7 +86,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config(**variant_config)
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -115,30 +118,30 @@ class Evo2Model(ModelMixinSnap):
         """Prepare environment for memory snapshot without loading CUDA-dependent libraries."""
         import torch
 
-        print("📸 Loading Evo2 model on CPU for memory snapshot...")
+        logger.info("Loading Evo2 model on CPU for memory snapshot...")
 
         self.torch = torch
         self.model_dir = get_model_dir(model_variant)
 
         # Set Huggingface Hub cache dir
         os.environ["HF_HUB_CACHE"] = str(self.model_dir)
-        print("HF_HUB_CACHE is set to:", os.environ["HF_HUB_CACHE"])
+        logger.info("HF_HUB_CACHE is set to: %s", os.environ["HF_HUB_CACHE"])
 
         # Store model configuration for later initialization
         self.model_name = f"evo2_{self.model_variant.replace('-', '_')}"
 
-        print(f"📦 Environment prepared for Evo2 model '{self.model_variant}'")
+        logger.info("Environment prepared for Evo2 model '%s'", self.model_variant)
 
     @modal.enter(snap=False)
     def setup_model(self):
         """Load model and move to GPU after snapshot restore."""
-        print("🚀 Loading and setting up Evo2 model after snapshot restore...")
+        logger.info("Loading and setting up Evo2 model after snapshot restore...")
         from evo2 import Evo2
 
         # Initialize model
-        print(f"⏳ Loading Evo2 model variant '{self.model_variant}'...")
+        logger.info("Loading Evo2 model variant '%s'...", self.model_variant)
         self.model = Evo2(model_name=self.model_name)
-        print("✅ Successfully initialized Evo2 model")
+        logger.info("Successfully initialized Evo2 model")
 
         # Set model to eval mode
         self.model.model.eval()
@@ -147,7 +150,7 @@ class Evo2Model(ModelMixinSnap):
         # Move model to GPU
         self.device = get_torch_device()
         self.model.model.to(device=self.device, non_blocking=False)
-        print(f"✅ Evo2 model moved to {self.device}")
+        logger.info("Evo2 model moved to %s", self.device)
 
         # Determine max block index
         sd_keys = list(self.model.model.state_dict().keys())
@@ -155,9 +158,11 @@ class Evo2Model(ModelMixinSnap):
             {int(k.split(".")[1]) for k in sd_keys if k.startswith("blocks.")}
         )
         self.max_block = max(block_nums)
-        print(f"➡️ Found {self.max_block + 1} total blocks (0..{self.max_block}).")
+        logger.info(
+            "Found %s total blocks (0..%s).", self.max_block + 1, self.max_block
+        )
 
-        print(f"✅ Evo2 model '{self.model_variant}' fully loaded and ready.")
+        logger.info("Evo2 model '%s' fully loaded and ready.", self.model_variant)
 
     @modal.method()
     @modal_endpoint(app_name=app_name)

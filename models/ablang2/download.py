@@ -3,8 +3,11 @@ from pathlib import Path
 from typing import Optional
 
 from models.ablang2.schema import AbLang2Params
+from models.commons.core.logging import get_logger
 from models.commons.storage.download_helpers import r2_then_library
 from models.commons.storage.downloads import get_model_dir_util
+
+logger = get_logger(__name__)
 
 # Constants
 REQUIRED_FILES = ["model.pt", "hparams.json"]
@@ -44,7 +47,7 @@ def _copy_files(src_dir: Path, dst_dir: Path, files: list[str]):
         src = src_dir / filename
         dst = dst_dir / filename
         if src.exists() and not dst.exists():
-            print(f"   Copying {filename}")
+            logger.info("Copying %s", filename)
             shutil.copy2(src, dst)
 
 
@@ -69,7 +72,7 @@ def _setup_ablang2_symlink(model_dir: Path) -> bool:
         # Find where our weights actually are
         weights_dir = _find_weights_dir(model_dir)
         if not weights_dir:
-            print(f"   ❌ Cannot find weights in {model_dir}")
+            logger.error("Cannot find weights in %s", model_dir)
             return False
 
         # ---- Handle existing location ----
@@ -77,16 +80,16 @@ def _setup_ablang2_symlink(model_dir: Path) -> bool:
             if expected_location.is_symlink():
                 # Remove old symlink
                 expected_location.unlink()
-                print(f"   🔄 Removed existing symlink at {expected_location}")
+                logger.info("Removed existing symlink at %s", expected_location)
 
             elif expected_location.is_dir():
                 # Check if directory already has valid weights
                 if all((expected_location / f).exists() for f in REQUIRED_FILES):
-                    print(f"   ℹ️ Valid weights already exist at {expected_location}")
+                    logger.info("Valid weights already exist at %s", expected_location)
                     return True
                 # Remove invalid/incomplete directory
                 shutil.rmtree(expected_location)
-                print(f"   🧹 Cleaned up incomplete weights at {expected_location}")
+                logger.info("Cleaned up incomplete weights at %s", expected_location)
 
             else:
                 # Remove unexpected file
@@ -94,11 +97,13 @@ def _setup_ablang2_symlink(model_dir: Path) -> bool:
 
         # ---- Create new symlink ----
         expected_location.symlink_to(weights_dir.absolute())
-        print(f"   ✅ Created symlink: {expected_location} -> {weights_dir.absolute()}")
+        logger.info(
+            "Created symlink: %s -> %s", expected_location, weights_dir.absolute()
+        )
         return True
 
     except Exception as e:
-        print(f"   ❌ Failed to create symlink: {e}")
+        logger.error("Failed to create symlink: %s", e, exc_info=True)
         return False
 
 
@@ -116,7 +121,7 @@ def _init_ablang2_weights(target_dir: Path) -> Path:
     Returns:
         Path to directory containing reorganized weights
     """
-    print("🔧 Initializing ablang2 library-managed download")
+    logger.info("Initializing ablang2 library-managed download")
     target_dir.mkdir(parents=True, exist_ok=True)
 
     try:
@@ -131,9 +136,9 @@ def _init_ablang2_weights(target_dir: Path) -> Path:
         )
 
         if not weights_existed:
-            print("   📥 Triggering ablang2 built-in download...")
+            logger.info("Triggering ablang2 built-in download...")
         else:
-            print("   ℹ️ Using existing ablang2 weights")
+            logger.info("Using existing ablang2 weights")
 
         # Initialize model - this triggers download if weights don't exist
         _ = pretrained(
@@ -142,7 +147,7 @@ def _init_ablang2_weights(target_dir: Path) -> Path:
             ncpu=1,  # Single CPU for initialization
             device="cpu",  # CPU device for download
         )
-        print("   ✅ ablang2 model initialized successfully")
+        logger.info("ablang2 model initialized successfully")
 
         # Reorganize files to match our R2 structure
         if ablang2_weights_dir.exists():
@@ -153,7 +158,7 @@ def _init_ablang2_weights(target_dir: Path) -> Path:
             files_to_copy = REQUIRED_FILES + ["ablang2-weights.tar.gz"]
             _copy_files(ablang2_weights_dir, ablang2_paired_dir, files_to_copy)
 
-            print("   ✅ Files reorganized for R2 structure")
+            logger.info("Files reorganized for R2 structure")
 
         return target_dir
 
@@ -168,7 +173,7 @@ def download_model_assets(
     sub_path: Optional[str] = None,
 ):
     """Download ablang2 model assets with R2 caching and library-managed fallback."""
-    print("🔧 AbLang2: Setting up model assets")
+    logger.info("AbLang2: Setting up model assets")
 
     # Build list of directories to monitor for library bypass detection
     monitor_dirs = ["~/.cache/ablang2", "~/.ablang2"]
@@ -199,14 +204,16 @@ def download_model_assets(
     actual_dir = result.actual_model_path or result.target_dir
 
     if result.bypass_detected:
-        print("⚠️ Library bypass detected - weights downloaded to unexpected location")
+        logger.warning(
+            "Library bypass detected - weights downloaded to unexpected location"
+        )
         if result.bypass_locations:
-            print(f"   📍 Bypass locations: {result.bypass_locations}")
+            logger.warning("Bypass locations: %s", result.bypass_locations)
 
     # ---- Setup symlink for library compatibility ----
-    print("🔗 Setting up ablang2 library symlink...")
+    logger.info("Setting up ablang2 library symlink...")
     if not _setup_ablang2_symlink(Path(actual_dir)):
-        print("⚠️ Symlink setup failed - ablang2 may re-download weights")
+        logger.warning("Symlink setup failed - ablang2 may re-download weights")
 
     # ---- Final validation ----
     weights_dir = _find_weights_dir(Path(actual_dir))
@@ -215,13 +222,13 @@ def download_model_assets(
             f"AbLang2 weights validation failed - could not find required files in {actual_dir}"
         )
 
-    print(f"✅ AbLang2 model ready at {actual_dir}")
-    print(f"   📂 Weights location: {weights_dir}")
+    logger.info("AbLang2 model ready at %s", actual_dir)
+    logger.info("Weights location: %s", weights_dir)
 
     for required_file in REQUIRED_FILES:
         file_path = weights_dir / required_file
         if file_path.exists():
             file_size_mb = file_path.stat().st_size / (1024 * 1024)
-            print(f"   ✓ {required_file}: {file_size_mb:.1f} MB")
+            logger.info("  %s: %.1f MB", required_file, file_size_mb)
 
     return Path(actual_dir)

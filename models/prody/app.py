@@ -3,9 +3,9 @@ import logging
 import modal
 import numpy as np
 
-from models.commons.model.base import ModelMixin
 from models.commons.core.decorator import modal_endpoint
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixin
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,

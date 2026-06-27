@@ -1,5 +1,6 @@
 import io
 import logging
+import os
 import sys
 from typing import Any
 
@@ -7,6 +8,44 @@ from pydantic import BaseModel
 
 # Maximum length for string fields in debug logs (to prevent overwhelming output)
 DEBUG_MAX_FIELD_LENGTH = 500
+
+# Module-logger format. Mirrors DebugLogger's style minus the request-scoped
+# model_slug/model_action context (which is injected per-request by DebugLogger).
+_LOG_FORMAT = "[%(asctime)s] [%(levelname)s] [%(name)s] %(message)s"
+
+# Guard so the root logger is configured at most once per process.
+_configured = False
+
+
+def configure_logging(level: "str | int | None" = None) -> None:
+    """Idempotently configure the root logger for runtime code.
+
+    Installs a single ``StreamHandler(sys.stdout)`` with a simple formatter and
+    sets the level from the ``LOG_LEVEL`` env var (default ``INFO``). Modal
+    captures stdout, so there are deliberately no file handlers. Safe to call
+    multiple times — only the first call installs the handler.
+    """
+    global _configured
+    if _configured:
+        return
+    if level is None:
+        level = os.environ.get("LOG_LEVEL", "INFO")
+    root = logging.getLogger()
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(logging.Formatter(_LOG_FORMAT))
+    root.addHandler(handler)
+    root.setLevel(level)
+    _configured = True
+
+
+def get_logger(name: str) -> logging.Logger:
+    """Module logger. Usage: ``logger = get_logger(__name__)``.
+
+    Lazily applies a safe default configuration (see ``configure_logging``) so
+    callers get working stdout logging without an explicit setup step.
+    """
+    configure_logging()
+    return logging.getLogger(name)
 
 
 def truncate_for_debug(obj: Any, max_length: int = DEBUG_MAX_FIELD_LENGTH) -> Any:

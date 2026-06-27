@@ -1,9 +1,10 @@
 import modal
 
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -21,6 +22,8 @@ from models.igt5.schema import (
     IgT5ModelTypes,
     IgT5Params,
 )
+
+logger = get_logger(__name__)
 
 variant_config = parse_variant(
     env_var_name="MODEL_TYPE",
@@ -55,7 +58,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config(**variant_config)
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -77,7 +80,7 @@ class IgT5Model(ModelMixinSnap):
         import torch
         from transformers import T5EncoderModel, T5Tokenizer
 
-        print("🚀 Loading IgT5 model directly on GPU for GPU memory snapshot...")
+        logger.info("Loading IgT5 model directly on GPU for GPU memory snapshot...")
 
         # Set deterministic behavior for consistent results
         torch.manual_seed(42)
@@ -89,8 +92,11 @@ class IgT5Model(ModelMixinSnap):
         self.model_dir = get_model_dir(model_type)
         self.model_id = model_id_mapping[self.model_type]
 
-        print(
-            f"⏳ Loading IgT5 model '{self.model_id}' directly on {self.device} from: {self.model_dir}"
+        logger.info(
+            "Loading IgT5 model '%s' directly on %s from: %s",
+            self.model_id,
+            self.device,
+            self.model_dir,
         )
 
         # Load tokenizer and model directly on GPU
@@ -103,8 +109,10 @@ class IgT5Model(ModelMixinSnap):
         # Move model to GPU
         self.model.to(device=self.device, non_blocking=False)
 
-        print(
-            f"✅ IgT5 model '{self.model_id}' loaded directly on {self.device} for GPU memory snapshot!"
+        logger.info(
+            "IgT5 model '%s' loaded directly on %s for GPU memory snapshot!",
+            self.model_id,
+            self.device,
         )
 
     @modal.method()
@@ -149,7 +157,7 @@ class IgT5Model(ModelMixinSnap):
                 input_sequences=input_sequences, include=payload.params.include
             )
         except Exception as e:
-            print(f"Model call failed with error [{e}]")
+            logger.error("Model call failed with error [%s]", e, exc_info=True)
             raise e
 
         return results

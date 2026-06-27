@@ -1,7 +1,10 @@
 from models.boltz.config import MODEL_FAMILY
+from models.commons.core.logging import get_logger
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
 from models.commons.testing.fixture import FixtureGenerator
+
+logger = get_logger(__name__)
 
 """
 Test fixtures and file mappings for Boltz model testing.
@@ -102,10 +105,10 @@ def generate():
     model_version = os.getenv("MODEL_VERSION", "boltz2")
     if model_version == "boltz1":
         RequestClass = Boltz1PredictRequest
-        print(f"Using Boltz1PredictRequest for model version: {model_version}")
+        logger.info("Using Boltz1PredictRequest for model version: %s", model_version)
     else:
         RequestClass = Boltz2PredictRequest
-        print(f"Using Boltz2PredictRequest for model version: {model_version}")
+        logger.info("Using Boltz2PredictRequest for model version: %s", model_version)
 
     # Will collect test cases for this model version
     test_cases_for_model = []
@@ -165,9 +168,9 @@ def generate():
                 tolerances=DEFAULT_BOLTZ_TOLERANCES,
             )
             test_cases_for_model.append(test_case)
-            print(f"Added {test_name} test case for {model_version}")
+            logger.info("Added %s test case for %s", test_name, model_version)
         except Exception as e:
-            print(f"Warning: Could not load input file {input_path}: {e}")
+            logger.warning("Could not load input file %s: %s", input_path, e)
             continue
 
     # Add embeddings test case (applies to all variants)
@@ -210,7 +213,9 @@ def generate():
         embeddings_base["items"][0]["templates"] = None
 
     embeddings_input = embeddings_base
-    print(f"[Fixture] Embeddings input for {model_version}: {embeddings_input}")
+    logger.debug(
+        "[Fixture] Embeddings input for %s: %s", model_version, embeddings_input
+    )
 
     # Add embeddings test case - use model-specific constant
     embeddings_input_file = (

@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Optional
 
 from models.boltzgen.schema import BoltzGenParams
+from models.commons.core.logging import get_logger
 from models.commons.storage.acquisition import (
     AcquisitionConfig,
     AcquisitionStrategy,
@@ -12,6 +13,8 @@ from models.commons.storage.acquisition import (
 )
 from models.commons.storage.download_helpers import download_with_fallback
 from models.commons.storage.downloads import get_model_dir_util
+
+logger = get_logger(__name__)
 
 ### BoltzGen Model Artifacts Configuration
 
@@ -128,7 +131,7 @@ def _download_artifact(
             f"Failed to download {artifact_name}: {result.error_message}"
         )
 
-    print(f"✅ Downloaded {artifact_name} ({artifact_config['description']})")
+    logger.info("Downloaded %s (%s)", artifact_name, artifact_config["description"])
     return result.actual_model_path or target_dir
 
 
@@ -160,10 +163,10 @@ def download_model_assets(
         The mols.zip file is downloaded but NOT extracted here.
         Extraction is handled by app.py during container setup.
     """
-    print("📥 Downloading BoltzGen model assets...")
+    logger.info("Downloading BoltzGen model assets...")
 
     for artifact_name in ARTIFACTS:
         _download_artifact(artifact_name, base_model_slug, params_version, sub_path)
 
-    print("✅ All BoltzGen model assets downloaded successfully")
+    logger.info("All BoltzGen model assets downloaded successfully")
     return get_model_dir()

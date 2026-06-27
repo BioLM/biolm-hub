@@ -2,13 +2,14 @@ from typing import Union
 
 import modal
 
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.data.validator import (
     aa_extended,
 )
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -32,6 +33,8 @@ from models.igbert.schema import (
     IgBertModelTypes,
     IgBertParams,
 )
+
+logger = get_logger(__name__)
 
 variant_config = parse_variant(
     env_var_name="MODEL_TYPE",
@@ -66,7 +69,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config(**variant_config)
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -88,7 +91,7 @@ class IgBertModel(ModelMixinSnap):
         import torch
         from transformers import BertForMaskedLM, BertTokenizer
 
-        print("🚀 Loading IgBERT model directly on GPU for GPU memory snapshot...")
+        logger.info("Loading IgBERT model directly on GPU for GPU memory snapshot...")
 
         # Set deterministic behavior for consistent results
         torch.manual_seed(42)
@@ -100,8 +103,11 @@ class IgBertModel(ModelMixinSnap):
         self.model_dir = get_model_dir(self.model_type)
         self.model_id = get_model_id(self.model_type)
 
-        print(
-            f"⏳ Loading IgBert model '{self.model_id}' directly on {self.device} from: {self.model_dir}"
+        logger.info(
+            "Loading IgBert model '%s' directly on %s from: %s",
+            self.model_id,
+            self.device,
+            self.model_dir,
         )
 
         # Load tokenizer and model directly on GPU
@@ -118,8 +124,10 @@ class IgBertModel(ModelMixinSnap):
             self.tokenizer.convert_tokens_to_ids(list(aa_extended))
         )
 
-        print(
-            f"✅ IgBert model '{self.model_id}' loaded directly on {self.device} for GPU memory snapshot!"
+        logger.info(
+            "IgBert model '%s' loaded directly on %s for GPU memory snapshot!",
+            self.model_id,
+            self.device,
         )
 
     def _pre_process_payload(
@@ -173,7 +181,7 @@ class IgBertModel(ModelMixinSnap):
                 input_sequences=input_sequences, include=payload.params.include
             )
         except Exception as e:
-            print(f"Model call failed with error [{e}]")
+            logger.error("Model call failed with error [%s]", e, exc_info=True)
             raise e
 
         return results

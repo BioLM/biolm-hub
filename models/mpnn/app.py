@@ -5,11 +5,12 @@ from types import SimpleNamespace
 import modal
 from pydantic import ValidationError
 
-from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
 from models.commons.data.validator import aa_unambiguous
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -34,6 +35,8 @@ from models.mpnn.schema import (
     MPNNParams,
     MPNNSCGenerateResponseItem,
 )
+
+logger = get_logger(__name__)
 
 aa_unambiguous_list = list(aa_unambiguous)
 n_aa_unambiguous = len(aa_unambiguous_list)
@@ -105,7 +108,7 @@ image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
 
 # Define the app using unified config
 app_name, modal_resource_spec = MODEL_FAMILY.get_app_config(**variant_config)
-print(f"App name: {app_name}")
+logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
@@ -129,7 +132,7 @@ class MPNNModel(ModelMixinSnap):
 
         from models.mpnn.util import load_mpnn
 
-        print("📸 Loading MPNN model on CPU for memory snapshot...")
+        logger.info("📸 Loading MPNN model on CPU for memory snapshot...")
 
         # Set deterministic behavior for consistent results across CPU loading
         torch.manual_seed(42)
@@ -138,8 +141,10 @@ class MPNNModel(ModelMixinSnap):
         self.model_dir = get_model_dir()
 
         torch.hub.set_dir(self.model_dir)
-        print(
-            f"⏳ Loading MPNN {self.model_type} model on CPU for memory snapshot from: {self.model_dir}"
+        logger.info(
+            "⏳ Loading MPNN %s model on CPU for memory snapshot from: %s",
+            self.model_type,
+            self.model_dir,
         )
 
         self.model_checkpoint = MPNNModelCheckpoints[self.model_type]
@@ -162,8 +167,9 @@ class MPNNModel(ModelMixinSnap):
             ligand_mpnn_use_side_chain_context=False,
         )
 
-        print(
-            f"✅ Completed CPU load of MPNN model '{self.model_type}' for memory snapshot"
+        logger.info(
+            "✅ Completed CPU load of MPNN model '%s' for memory snapshot",
+            self.model_type,
         )
 
     @modal.enter(snap=False)
@@ -178,12 +184,12 @@ class MPNNModel(ModelMixinSnap):
         # Get device and transfer model to GPU
         self.device = get_torch_device()
 
-        print(f"Transferring MPNN model to device={self.device}...")
+        logger.info("Transferring MPNN model to device=%s...", self.device)
 
         self.model = self.model.to(self.device)
         self.model_sc = self.model_sc.to(self.device)
 
-        print(f"✅ MPNN model '{self.model_type}' ready for inference")
+        logger.info("✅ MPNN model '%s' ready for inference", self.model_type)
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
