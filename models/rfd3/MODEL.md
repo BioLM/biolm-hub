@@ -211,7 +211,7 @@ The BioLM deployment allocates 8 CPU cores and 64 GB system memory alongside the
 
 ### Caching Behavior
 
-- **Redis (Modal Dict) caching**: Enabled via `BillingMixinSnap` -- caches responses keyed by full request payload hash.
+- **Redis (Modal Dict) caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container. Responses are keyed by full request payload hash.
 - **R2 caching**: Model weights cached in R2 (`model-store/rfd3/v1/`). First container builds download via foundry CLI, then cache to R2 for subsequent builds.
 - **Memory snapshots**: GPU memory snapshot enabled (`enable_memory_snapshot=True`, `enable_gpu_snapshot=True`). Model loaded to GPU during `snap=True` phase; snapshot restores GPU state on container restart.
 - **Runtime R2 caching**: If R2 cache was not populated during image build, the model caches the checkpoint to R2 at runtime after first successful load (`_cache_to_r2_if_needed`).

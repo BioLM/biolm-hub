@@ -63,5 +63,5 @@ complements:
     workflow: "Use Boltz-2 to validate RFD3-designed complexes: predict the designed binder-target complex structure with Boltz and assess interface quality (ipSAE) and binding affinity (log10 IC50)"
     example_protocol: null
   - model: esm2
-    workflow: "Use ESM2 to analyze designed sequences for evolutionary plausibility: score designed sequences with predict_log_prob to verify they fall within the natural protein distribution; flag designs with very low log-probability as potentially unfoldable"
+    workflow: "Use ESM2 to analyze designed sequences for evolutionary plausibility: score designed sequences with log_prob to verify they fall within the natural protein distribution; flag designs with very low log-probability as potentially unfoldable"
     example_protocol: null

@@ -34,6 +34,7 @@ RF3ResourceSpec = ModalResourceSpec(
 # - Actions: fold
 MODEL_FAMILY = ModelFamily(
     base_model_slug=RF3Params.base_model_slug,
+    modal_class_name="RF3Model",
     display_name=RF3Params.display_name,
     tags=ModelTags(
         input_modality=[

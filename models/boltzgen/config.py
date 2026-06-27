@@ -29,6 +29,7 @@ BOLTZGEN_RESOURCE_SPEC = ModalResourceSpec(
 # - Actions: generate (designs protein variants)
 MODEL_FAMILY = ModelFamily(
     base_model_slug=BoltzGenParams.base_model_slug,
+    modal_class_name="BoltzGenModel",
     display_name=BoltzGenParams.display_name,
     tags=ModelTags(
         input_modality=[

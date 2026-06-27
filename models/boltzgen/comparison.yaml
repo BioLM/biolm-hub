@@ -58,7 +58,7 @@ alternatives:
 
 complements:
   - model: esm2
-    workflow: "After BoltzGen generates designed binder sequences, use ESM2 predict_log_prob to score each design for evolutionary plausibility -- low log-probability designs are likely to be difficult to express or may misfold"
+    workflow: "After BoltzGen generates designed binder sequences, use ESM2 log_prob to score each design for evolutionary plausibility -- low log-probability designs are likely to be difficult to express or may misfold"
     example_protocol: null
   - model: rf3
     workflow: "Use RF3 as an independent structure prediction oracle to cross-validate BoltzGen designs: predict the structure of the designed sequence with RF3 and compare to the BoltzGen-generated structure for consistency"

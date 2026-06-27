@@ -466,7 +466,7 @@ The remaining validated fixtures (`cyclic_hiv_9d3d`, `streptavidin_cyclic`,
 ## Implementation Notes
 
 - **GPU**: NVIDIA A100 40GB required. The diffusion model, folding model, and affinity predictor all require substantial VRAM. Configured with 64GB system RAM and 8 CPU cores.
-- **Memory snapshots**: Uses `BillingMixinSnap` with `enable_memory_snapshot=True` for faster cold starts. GPU snapshots are disabled (`enable_gpu_snapshot: False`) due to the large model size.
+- **Memory snapshots**: Uses `ModelMixinSnap` with `enable_memory_snapshot=True` for faster cold starts. GPU snapshots are disabled (`enable_gpu_snapshot: False`) due to the large model size.
 - **Container base**: `nvidia/cuda:12.2.2-cudnn8-devel-ubuntu22.04` with Python 3.11, matching the official BoltzGen Dockerfile.
 - **Source code**: BoltzGen repository cloned at commit `617e549` and installed as an editable package at `/opt/boltzgen`.
 - **Checkpoint source**: Weights downloaded from HuggingFace (`boltzgen/boltzgen-1` for model checkpoints, `boltzgen/inference-data` for molecule dictionary) with R2 caching fallback.

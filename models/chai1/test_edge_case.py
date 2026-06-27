@@ -47,8 +47,8 @@ def test_integration_edge_case():
     Model = modal.Cls.from_name(app_name, "Chai1Model")
     model = Model()
 
-    # Call the predict method
-    response = model.predict.remote(test_input)
+    # Call the fold method
+    response = model.fold.remote(test_input)
 
     # Basic validation - just check that response has results key
     assert "results" in response, "Response missing 'results' key"

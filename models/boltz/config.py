@@ -35,6 +35,7 @@ BOLTZ_VARIANT_RESOURCE_SPECS = {
 # - Actions: fold
 MODEL_FAMILY = ModelFamily(
     base_model_slug=BoltzModelParams.base_model_slug,
+    modal_class_name="BoltzModel",
     display_name=BoltzModelParams.display_name,
     tags=ModelTags(
         input_modality=[

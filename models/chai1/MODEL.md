@@ -194,7 +194,7 @@ GPU memory usage scales with the total number of tokens (residues + bases + liga
 
 ### Caching Behavior
 
-- Redis (Modal Dict) caching: Enabled via `BillingMixinSnap`
+- Redis (Modal Dict) caching: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
 - R2 caching: Model weights cached in R2 with fallback to chai-lab library download
 - Cache key composition: Determined by the `modal_endpoint` decorator based on request content
 - Structure predictions are cached per unique input + parameter combination

@@ -34,6 +34,7 @@ RFD3ResourceSpec = ModalResourceSpec(
 # - Actions: design
 MODEL_FAMILY = ModelFamily(
     base_model_slug=RFD3Params.base_model_slug,
+    modal_class_name="RFD3Model",
     display_name=RFD3Params.display_name,
     tags=ModelTags(
         input_modality=[

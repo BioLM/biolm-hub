@@ -27,6 +27,7 @@ Chai1ResourceSpec = ModalResourceSpec(
 # - Actions: fold
 MODEL_FAMILY = ModelFamily(
     base_model_slug=Chai1Params.base_model_slug,
+    modal_class_name="Chai1Model",
     display_name=Chai1Params.display_name,
     tags=ModelTags(
         input_modality=[

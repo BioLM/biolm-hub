@@ -370,7 +370,6 @@ class BoltzModel(ModelMixinSnap):
         if model_version == BoltzModelVersion.BOLTZ2:
             self._setup_mols_directory()
 
-        # Save snapshot timing for billing
         self.save_snapshot_uptime()
         logger.info("Boltz %s model loaded on CPU, snapshot saved", model_version)
 
@@ -383,7 +382,6 @@ class BoltzModel(ModelMixinSnap):
         device = get_torch_device()
         logger.info("Using device: %s", device)
 
-        # Note: Billing is automatically started by ModelMixinSnap's billing_enter method
         logger.info("Boltz %s model ready on GPU", model_version)
 
     def _setup_mols_directory(self):

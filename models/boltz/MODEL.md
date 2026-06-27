@@ -175,7 +175,7 @@ The BioLM deployment allocates 4 CPU cores and 24 GB system memory alongside the
 
 ### Caching Behavior
 
-- **Redis (Modal Dict) caching**: Enabled via `BillingMixinSnap`  --  caches responses keyed by full request payload hash.
+- **Redis (Modal Dict) caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container. Responses are keyed by full request payload hash.
 - **R2 caching**: Model weights cached on container via `setup_download_layer`.
 - **Memory snapshots**: Model weights loaded on CPU during `snap=True` phase, transferred to GPU during `snap=False` phase. This reduces cold start time.
 - **Boltz-2 mols volume**: The ~2 GB molecular component library (`mols.tar`) is extracted to a persistent Modal volume (`boltz2-mols-vol`) and symlinked into the model directory. This avoids re-extraction on every container restart.
