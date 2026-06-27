@@ -11,7 +11,6 @@ import requests
 
 from models.commons.storage.downloads import (
     download_model_from_r2,
-    verify_model_dir,
 )
 from models.commons.storage.r2_utils import R2Utils
 from models.commons.util.config import r2_bucket_name
@@ -34,7 +33,6 @@ Key APIs:
 - acquire_model_weights(): Strategy router and validator
 - AcquisitionConfig (+ R2OnlyConfig, HfSourceConfig, LibrarySourceConfig, UrlSourceConfig)
 - AcquisitionResult: reports actual path, cache hits, and validation details
-- TargetedBypassDetector: optional diagnostics for library-managed sources
 
 Non-obvious details:
 - For HF downloads, the returned path differs from target_dir (points to the
@@ -50,194 +48,6 @@ Notes on current state:
   use) to trigger the third-party library downloads. A future migration to
   CustomSourceConfig is possible, but custom_function remains supported.
 """
-
-
-class TargetedBypassDetector:
-    """
-    Monitor specific directories for unexpected downloads during model acquisition.
-
-    This class provides targeted bypass detection by monitoring known cache locations
-    where libraries might download files instead of using our intended target directory.
-    It takes snapshots before and after operations to detect new files.
-    """
-
-    LIBRARY_CACHE_LOCATIONS = {
-        "huggingface": [Path.home() / ".cache" / "huggingface"],
-        "torch": [Path.home() / ".cache" / "torch"],
-        "ablang2": [Path.home() / ".ablang", Path("/tmp") / "ablang2"],
-        "chai1": [Path.home() / ".chai_lab"],
-        "esm": [Path.home() / ".cache" / "huggingface"],
-    }
-
-    def __init__(self, target_dir: Path, library_name: Optional[str] = None):
-        """
-        Initialize the bypass detector.
-
-        Args:
-            target_dir: The intended directory where files should be downloaded
-            library_name: Optional library name to monitor specific cache locations
-        """
-        self.target_dir = target_dir
-        self.library_name = library_name
-        self.start_time = time.time()
-        self.monitored_directories = self._get_monitored_directories()
-        self.initial_snapshots = {}
-
-    def _get_monitored_directories(self) -> list[Path]:
-        """Get list of directories to monitor based on library name."""
-        directories = []
-
-        if self.library_name and self.library_name in self.LIBRARY_CACHE_LOCATIONS:
-            directories.extend(self.LIBRARY_CACHE_LOCATIONS[self.library_name])
-        else:
-            # Monitor all common locations if no specific library
-            for locations in self.LIBRARY_CACHE_LOCATIONS.values():
-                directories.extend(locations)
-
-        # Add some additional common bypass locations
-        directories.extend(
-            [
-                Path.home() / ".cache",
-                Path("/tmp"),
-                Path.home() / ".local" / "share",
-            ]
-        )
-
-        # Only return directories that exist
-        return [d for d in directories if d.exists()]
-
-    def start_monitoring(self) -> None:
-        """Start monitoring by taking initial snapshots of directories."""
-        self.start_time = time.time()
-        self.initial_snapshots = {}
-
-        for directory in self.monitored_directories:
-            try:
-                self.initial_snapshots[str(directory)] = self._snapshot_directory(
-                    directory
-                )
-            except Exception as e:
-                print(f"⚠️ Could not snapshot {directory}: {e}")
-                self.initial_snapshots[str(directory)] = {}
-
-    def stop_monitoring(self) -> dict:
-        """Stop monitoring and return bypass detection report."""
-        return self._detect_bypasses()
-
-    def _snapshot_directory(self, directory: Path) -> dict:
-        """Take a snapshot of files in directory with timestamps."""
-        snapshot = {}
-
-        if not directory.exists():
-            return snapshot
-
-        try:
-            for file_path in directory.rglob("*"):
-                if file_path.is_file():
-                    try:
-                        relative_path = file_path.relative_to(directory)
-                        snapshot[str(relative_path)] = {
-                            "size": file_path.stat().st_size,
-                            "mtime": file_path.stat().st_mtime,
-                            "path": str(file_path),
-                        }
-                    except (ValueError, OSError):
-                        # Skip files we can't access or process
-                        continue
-        except Exception:
-            # Skip directories we can't access
-            pass
-
-        return snapshot
-
-    def _detect_bypasses(self) -> dict:
-        """Detect files created in monitored directories after start time."""
-        current_time = time.time()
-        bypasses = []
-        total_bypass_files = 0
-        total_bypass_size = 0
-
-        for directory in self.monitored_directories:
-            directory_str = str(directory)
-            initial_snapshot = self.initial_snapshots.get(directory_str, {})
-            current_snapshot = self._snapshot_directory(directory)
-
-            # Find new files (files in current but not in initial, or modified after start)
-            new_files = []
-            for rel_path, file_info in current_snapshot.items():
-                is_new = (
-                    rel_path not in initial_snapshot
-                    or file_info["mtime"] > self.start_time
-                )
-
-                if is_new:
-                    new_files.append(
-                        {
-                            "relative_path": rel_path,
-                            "full_path": file_info["path"],
-                            "size": file_info["size"],
-                            "mtime": file_info["mtime"],
-                        }
-                    )
-                    total_bypass_files += 1
-                    total_bypass_size += file_info["size"]
-
-            if new_files:
-                bypasses.append(
-                    {
-                        "directory": directory_str,
-                        "library_association": self._get_library_association(directory),
-                        "new_files": new_files,
-                        "file_count": len(new_files),
-                        "total_size": sum(f["size"] for f in new_files),
-                    }
-                )
-
-        # Generate the bypass report
-        bypass_detected = total_bypass_files > 0
-        report = {
-            "bypass_detected": bypass_detected,
-            "monitoring_duration": current_time - self.start_time,
-            "target_directory": str(self.target_dir),
-            "library_name": self.library_name,
-            "monitored_directories": [str(d) for d in self.monitored_directories],
-            "total_bypass_files": total_bypass_files,
-            "total_bypass_size": total_bypass_size,
-            "bypass_locations": bypasses,
-            "timestamp": current_time,
-        }
-
-        if bypass_detected:
-            print(
-                f"⚠️ BYPASS DETECTED! Found {total_bypass_files} files ({total_bypass_size/(1024**2):.1f}MB) in unexpected locations:"
-            )
-            for bypass in bypasses[:3]:  # Show first 3 directories
-                print(
-                    f"  📁 {bypass['directory']} ({bypass['library_association']}): {bypass['file_count']} files"
-                )
-                for file_info in bypass["new_files"][
-                    :2
-                ]:  # Show first 2 files per directory
-                    print(
-                        f"    - {file_info['relative_path']} ({file_info['size']/(1024**2):.1f}MB)"
-                    )
-                if len(bypass["new_files"]) > 2:
-                    print(f"    ... and {len(bypass['new_files']) - 2} more files")
-            if len(bypasses) > 3:
-                print(f"  ... and {len(bypasses) - 3} more directories")
-
-        return report
-
-    def _get_library_association(self, directory: Path) -> str:
-        """Determine which library is associated with a directory."""
-        directory_str = str(directory)
-
-        for library, locations in self.LIBRARY_CACHE_LOCATIONS.items():
-            for location in locations:
-                if str(location) == directory_str or str(location) in directory_str:
-                    return library
-
-        return "unknown"
 
 
 class AcquisitionStrategy(Enum):
@@ -635,13 +445,6 @@ def _acquire_direct_urls(config: AcquisitionConfig) -> AcquisitionResult:
             f"✅ Downloaded {len(downloaded_files)} files ({total_bytes/(1024**3):.2f}GB total)"
         )
 
-        # Validate if requested
-        if config.validation_config.required_files:
-            from models.commons.storage.downloads import verify_model_dir
-
-            verify_model_dir(target_dir, config.validation_config.required_files)
-            print(f"✅ Validation successful for {target_dir}")
-
         # Cache to R2
         upload_success = _cache_to_r2(config, target_dir)
 
@@ -741,11 +544,6 @@ def _acquire_r2_only(config: AcquisitionConfig) -> AcquisitionResult:
             )
         else:
             print(f"✅ R2 download complete: {files_downloaded} files")
-
-        # Validate if requested
-        if config.validation_config.required_files:
-            verify_model_dir(target_dir, config.validation_config.required_files)
-            print(f"✅ Validation successful for {target_dir}")
 
         return AcquisitionResult(
             success=True,
@@ -897,11 +695,6 @@ def _acquire_huggingface_hub(config: AcquisitionConfig) -> AcquisitionResult:
         )
         print(f"   📁 Snapshot directory: {snapshot_dir}")
 
-        # Validate if requested
-        if config.validation_config.required_files:
-            verify_model_dir(snapshot_dir, config.validation_config.required_files)
-            print(f"✅ Validation successful for {snapshot_dir}")
-
         # Cache to R2
         upload_success = _cache_to_r2(config, target_dir)
 
@@ -964,21 +757,8 @@ def _restore_environment(original_env: dict):
             os.environ[var] = value
 
 
-def _process_bypass_report(bypass_report: dict) -> tuple[bool, list[Path]]:
-    """Process bypass detection report and return detected status and locations."""
-    bypass_detected = bypass_report["bypass_detected"]
-    bypass_locations = []
-
-    if bypass_detected:
-        for bypass_location in bypass_report["bypass_locations"]:
-            for file_info in bypass_location["new_files"]:
-                bypass_locations.append(Path(file_info["full_path"]))
-
-    return bypass_detected, bypass_locations
-
-
 def _acquire_library_managed(config: AcquisitionConfig) -> AcquisitionResult:
-    """Implement library-managed acquisition strategy with optional bypass detection."""
+    """Implement library-managed acquisition strategy."""
     start_time = time.time()
 
     if not config.library_config or not config.custom_function:
@@ -1005,12 +785,6 @@ def _acquire_library_managed(config: AcquisitionConfig) -> AcquisitionResult:
     )
     if cache_result:
         return cache_result
-
-    # Initialize bypass detection only when diagnostics are enabled
-    diagnostics = None
-    if library_config.enable_diagnostics:
-        diagnostics = TargetedBypassDetector(target_dir, library_config.library_name)
-        diagnostics.start_monitoring()
 
     # Setup environment
     original_env = _setup_library_environment(library_config)
@@ -1039,20 +813,11 @@ def _acquire_library_managed(config: AcquisitionConfig) -> AcquisitionResult:
             f"✅ Library function completed, {files_downloaded} files added to target directory"
         )
 
-        # Process bypass detection
-        bypass_detected = False
-        bypass_locations: list[Path] = []
-        bypass_report: dict[str, Any] = {}
-        if diagnostics is not None:
-            bypass_report = diagnostics.stop_monitoring()
-            bypass_detected, bypass_locations = _process_bypass_report(bypass_report)
-            if not bypass_detected:
-                print("✅ No bypass detected - library respected target directory")
-
-        # Validate if needed
-        if config.validation_config.required_files:
-            verify_model_dir(actual_model_dir, config.validation_config.required_files)
-            print(f"✅ Validation successful for {actual_model_dir}")
+        # Ensure the library actually wrote files to the target directory.
+        # Required-file validation is handled centrally by
+        # _perform_comprehensive_validation after this handler returns.
+        if not any(actual_model_dir.rglob("*")):
+            raise RuntimeError("library-managed download wrote no files")
 
         # Cache to R2 (use target_dir for prefix so _try_r2_restore can find it)
         upload_success = _cache_to_r2(
@@ -1069,13 +834,12 @@ def _acquire_library_managed(config: AcquisitionConfig) -> AcquisitionResult:
             actual_model_path=actual_model_dir,
             files_downloaded=files_downloaded,
             cache_hit=False,
-            bypass_detected=bypass_detected,
-            bypass_locations=bypass_locations,
+            bypass_detected=False,
+            bypass_locations=[],
             acquisition_time_seconds=time.time() - start_time,
             metadata={
                 "strategy": "library_managed",
                 "library_name": library_config.library_name,
-                "bypass_report": bypass_report,
                 "r2_upload_success": upload_success,
                 "initial_file_count": initial_file_count,
                 "final_file_count": final_file_count,
@@ -1083,18 +847,6 @@ def _acquire_library_managed(config: AcquisitionConfig) -> AcquisitionResult:
         )
 
     except Exception as e:
-        # Check for bypass even on failure
-        bypass_detected = False
-        bypass_locations = []
-        bypass_report = {}
-        if diagnostics is not None:
-            bypass_report = diagnostics.stop_monitoring()
-            bypass_detected, bypass_locations = _process_bypass_report(bypass_report)
-            if bypass_detected:
-                print(
-                    f"⚠️ BYPASS DETECTED during failed download! {bypass_report['total_bypass_files']} files found in unexpected locations"
-                )
-
         error_msg = f"Library-managed download failed: {str(e)}"
         print(f"❌ {error_msg}")
 
@@ -1102,13 +854,12 @@ def _acquire_library_managed(config: AcquisitionConfig) -> AcquisitionResult:
             success=False,
             target_dir=target_dir,
             error_message=error_msg,
-            bypass_detected=bypass_detected,
-            bypass_locations=bypass_locations,
+            bypass_detected=False,
+            bypass_locations=[],
             acquisition_time_seconds=time.time() - start_time,
             metadata={
                 "strategy": "library_managed",
                 "library_name": library_config.library_name,
-                "bypass_report": bypass_report,
             },
         )
 

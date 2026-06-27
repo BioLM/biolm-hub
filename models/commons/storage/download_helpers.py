@@ -42,14 +42,6 @@ Notes:
 """
 
 
-# Direct R2Utils method exposure for gradual migration
-upload_to_r2_atomic = R2Utils.upload_to_r2_atomic
-restore_from_r2_atomic = R2Utils.restore_from_r2_atomic
-download_from_r2_prefix = R2Utils.download_from_r2_prefix
-check_r2_cache_exists = R2Utils.check_r2_cache_exists
-get_r2_prefix_from_target_dir = R2Utils.get_r2_prefix_from_target_dir
-
-
 def standard_r2_download(
     base_model_slug: Optional[str] = None,
     params_version: Optional[str] = None,
@@ -253,7 +245,7 @@ def quick_r2_check(
         r2_prefix = str(model_dir).lstrip("/")
 
         # Check for completion marker using R2Utils
-        if check_r2_cache_exists(r2_prefix):
+        if R2Utils.check_r2_cache_exists(r2_prefix):
             return True
 
         # Fallback: check if any files exist for partial caches

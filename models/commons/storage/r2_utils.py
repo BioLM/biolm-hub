@@ -50,9 +50,6 @@ class R2Utils:
         """
         Calculate file checksum with chunked reading.
 
-        This consolidates the 4+ duplicated checksum calculation patterns found in:
-        - acquisition.py lines 468-475, 617-622
-
         Args:
             file_path: Path to file to checksum
             algorithm: Hash algorithm ('sha256', 'md5', etc.)
@@ -93,11 +90,6 @@ class R2Utils:
     ) -> int:
         """
         Download all files from R2 under a specific prefix using pagination.
-
-        This consolidates the 3+ duplicated R2 pagination patterns found in:
-        - acquisition.py lines 553-585, 1339-1371
-        - downloads.py lines 264-270
-        - cache.py lines 160-166, 200-201
 
         Args:
             r2_client: Initialized R2 client
@@ -177,9 +169,6 @@ class R2Utils:
         """
         Upload atomic completion marker to signal successful cache operation.
 
-        This consolidates completion marker patterns found in:
-        - acquisition.py lines 452, 497-507
-
         Args:
             r2_client: Initialized R2 client
             r2_prefix: R2 prefix (without trailing slash)
@@ -232,10 +221,6 @@ class R2Utils:
         """
         Check if completion marker exists and is valid.
 
-        This consolidates completion marker checking patterns found in:
-        - acquisition.py lines 649, 1323
-        - download_helpers.py lines 305-307
-
         Args:
             r2_client: Initialized R2 client
             r2_prefix: R2 prefix (without trailing slash)
@@ -285,9 +270,6 @@ class R2Utils:
         """
         Create manifest with file metadata and optional checksums.
 
-        This consolidates manifest creation patterns found in:
-        - acquisition.py lines 457-495
-
         Args:
             source_dir: Directory to create manifest for
             include_checksums: Whether to calculate SHA256 checksums
@@ -331,9 +313,6 @@ class R2Utils:
     ) -> bool:
         """
         Validate files against manifest metadata.
-
-        This consolidates manifest validation patterns found in:
-        - acquisition.py lines 588-633
 
         Args:
             target_dir: Directory containing files to validate
@@ -467,9 +446,6 @@ class R2Utils:
         """
         Atomically upload directory to R2 with completion marker.
 
-        This consolidates atomic upload patterns found in:
-        - acquisition.py lines 436-514
-
         Args:
             source_dir: Local directory to upload
             r2_prefix: R2 prefix (without trailing slash)
@@ -491,9 +467,8 @@ class R2Utils:
             print(f"❌ Source directory does not exist: {source_dir}")
             return False
 
-        r2_client = get_r2_client()
-
         try:
+            r2_client = get_r2_client()
             print(f"🔄 Starting atomic upload to R2: {r2_prefix}")
 
             # Pre-scan to count files and calculate total size
@@ -587,9 +562,6 @@ class R2Utils:
         """
         Atomically restore directory from R2 with validation.
 
-        This consolidates atomic restore patterns found in:
-        - acquisition.py lines 636-705
-
         Args:
             target_dir: Local directory to restore to
             r2_prefix: R2 prefix (without trailing slash)
@@ -607,9 +579,9 @@ class R2Utils:
             >>> if success:
             ...     print("Restore completed successfully")
         """
-        r2_client = get_r2_client()
-
         try:
+            r2_client = get_r2_client()
+
             # Check for completion marker first
             if not R2Utils.check_completion_marker(
                 r2_client, r2_prefix, bucket_name, timeout_hours
@@ -698,9 +670,6 @@ class R2Utils:
     ) -> bool:
         """
         Quick check if R2 cache exists by looking for completion marker.
-
-        This consolidates cache existence checking patterns found in:
-        - acquisition.py lines 1450-1460
 
         Args:
             r2_prefix: R2 prefix to check
