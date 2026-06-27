@@ -43,6 +43,8 @@ PROSTT5_VARIANT_RESOURCE_SPECS = {
 MODEL_FAMILY = ModelFamily(
     base_model_slug=ProstT5Params.base_model_slug,
     display_name=ProstT5Params.display_name,
+    # The @biolm_model_class container class in app.py (gateway routing, W8).
+    modal_class_name="ProstT5Model",
     tags=ModelTags(
         input_modality=[InputModality.SEQUENCE],
         input_molecule=[InputMolecule.PROTEIN],

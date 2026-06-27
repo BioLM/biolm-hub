@@ -38,6 +38,8 @@ PROGEN2_VARIANT_RESOURCE_SPECS = {
 MODEL_FAMILY = ModelFamily(
     base_model_slug=ProGen2Params.base_model_slug,
     display_name=ProGen2Params.display_name,
+    # The @biolm_model_class container class in app.py (gateway routing, W8).
+    modal_class_name="ProGen2Model",
     tags=ModelTags(
         input_modality=[InputModality.SEQUENCE],
         input_molecule=[InputMolecule.PROTEIN],

@@ -3,6 +3,7 @@ import os
 import modal
 
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.error import ValidationError400
 from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
@@ -197,7 +198,7 @@ class Evo2Model(ModelMixinSnap):
             else:
                 resolved = idx
             if resolved < 0 or resolved > self.max_block:
-                raise ValueError(
+                raise ValidationError400(
                     f"Requested layer index {idx} resolved to {resolved}, "
                     f"which is out of bounds (0..{self.max_block}) for model {self.model_variant}."
                 )

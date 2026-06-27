@@ -44,7 +44,7 @@ dont_use_when:
   - "You need structure-conditioned sequence design from a target backbone (use mpnn for comprehensive inverse folding or esm_if1 for lightweight inverse folding)"
   - "You need protein embeddings for downstream ML tasks (use esm2, which provides the most widely used protein embeddings on the platform)"
   - "You need masked infilling or bidirectional sequence design where specific regions are fixed (use dsm, which supports masked diffusion infilling)"
-  - "You need to score protein variants without generating new sequences (use esm2 predict_log_prob for pseudo-log-likelihood scoring)"
+  - "You need to score protein variants without generating new sequences (use esm2 log_prob for pseudo-log-likelihood scoring)"
   - "You are designing membrane proteins or fibrous proteins where ProGen2's training data is underrepresented"
   - "You need protein-protein interaction-aware generation (use dsm with the PPI variant trained on STRING interaction data)"
   - "You need multimodal protein design combining sequence, structure, and function constraints"

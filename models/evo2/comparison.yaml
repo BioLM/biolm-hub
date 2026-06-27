@@ -13,7 +13,7 @@ last_updated: "2026-03-17"
 
 strengths:
   - "Multi-domain training on 9 trillion nucleotides spanning prokaryotes, eukaryotes, and viruses — the broadest genomic training data of any DNA model on the platform"
-  - "Three-action API (encode + predict_log_prob + generate) provides embeddings, fitness scoring, and sequence generation in a single model deployment"
+  - "Three-action API (encode + log_prob + generate) provides embeddings, fitness scoring, and sequence generation in a single model deployment"
   - "Up to 1M-token context (7B variant) enables genome-scale analysis including whole gene loci, long-range enhancer-promoter interactions, and multi-gene regions"
   - "Published demonstration of zero-shot BRCA1 pathogenic variant prediction with over 90% accuracy, validating clinical-relevance for eukaryotic variant effect prediction"
   - "Layer-selectable embedding extraction enables users to choose representation depth — shallow layers for local patterns, deep layers for long-range dependencies"

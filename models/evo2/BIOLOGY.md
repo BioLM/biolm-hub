@@ -44,7 +44,7 @@ Performance considerations:
 
 **Why this matters**: Evaluating whether a DNA sequence is evolutionarily plausible or functionally constrained is fundamental to variant effect prediction, synthetic sequence evaluation, and gene essentiality analysis.
 
-**How Evo 2 addresses it**: The `predict_log_prob` action computes the total log-probability of a DNA sequence under the autoregressive distribution. Higher (less negative) scores indicate sequences more consistent with the training distribution.
+**How Evo 2 addresses it**: The `log_prob` action computes the total log-probability of a DNA sequence under the autoregressive distribution. Higher (less negative) scores indicate sequences more consistent with the training distribution.
 
 **Interpreting scores**:
 - More negative values = less likely sequences under the model

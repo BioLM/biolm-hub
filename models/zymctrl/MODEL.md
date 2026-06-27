@@ -206,8 +206,7 @@ Resource allocation: 2 CPU cores, 16 GB system RAM, T4 GPU, 10-minute timeout.
 
 ### Caching Behavior
 
-- **Redis (Modal Dict) caching**: Handled by BillingMixinSnap framework
-- **R2 caching**: Standard BioLM two-tier caching
+Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
 - **Cache key**: Based on full request payload (EC number, params, sequence)
 - **Generate action**: Caching is less useful due to stochastic outputs (same EC + different seed = different results)
 - **Encode action**: Caching is effective since outputs are deterministic

@@ -260,7 +260,7 @@ Encode outputs compared against golden embeddings with cosine distance threshold
 
 ## Implementation Notes
 
-- **Memory snapshots**: Uses `@modal.enter(snap=True)` with `BillingMixinSnap` and GPU snapshot.
+- **Memory snapshots**: Uses `@modal.enter(snap=True)` with `ModelMixinSnap` and GPU snapshot.
 - **Container image**: Based on `pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime`.
 - **Model loading**: `T5EncoderModel` for encode action; `AutoModelForSeq2SeqLM` for generate action.
 - **Half precision**: Skipped with memory snapshots for CPU compatibility.

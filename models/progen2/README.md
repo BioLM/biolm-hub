@@ -210,7 +210,7 @@ Baseline comparison (Option C): The BioLM implementation uses official pre-train
 - **Sequence truncation**: Generated sequences are truncated at the first occurrence of terminal tokens (`1` or `2`), and these tokens are stripped from the output.
 - **External code**: The `external/` directory contains model architecture code adapted from the Salesforce ProGen repository (GPT-J-based `ProGenForCausalLM`), tokenizer utilities, and sampling/likelihood functions.
 - **Weight loading**: Weights are downloaded from R2 via the declarative download system. Each variant's checkpoint is stored under `model-store/progen2/v1/checkpoints/progen2_{variant}/`, with a shared `tokenizer.json`.
-- **Caching**: Inherits standard Redis/R2 two-tier caching from `BillingMixinSnap`. Note that stochastic generation means cached results are returned for identical requests, which may not be desirable -- use different seeds for fresh samples.
+- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container. Note that stochastic generation means cached results are returned for identical requests, which may not be desirable -- use different seeds for fresh samples.
 
 ## License
 

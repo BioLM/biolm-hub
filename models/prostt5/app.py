@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 
@@ -370,9 +369,10 @@ class ProstT5Model(ModelMixinSnap):
         except RuntimeError as e:
             # rare cases trigger the following error (seemed to depend on generation config):
             # RuntimeError: probability tensor contains either `inf`, `nan` or element < 0
-            logging.info("RuntimeError during target generation")
-            logging.info(
-                "If this is triggered by OOM, try lowering num_return_sequences and/or max_batch"
+            logger.warning(
+                "RuntimeError during ProstT5 generation "
+                "(if OOM, lower num_return_sequences and/or max_batch)",
+                exc_info=True,
             )
             raise e
 

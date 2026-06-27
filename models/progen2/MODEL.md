@@ -244,7 +244,7 @@ The model produces reproducible outputs when the same seed is provided. Without 
 
 ### Caching Behavior
 
-ProGen2 inherits standard two-tier caching from `BillingMixinSnap`:
+Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
 - **Redis (Modal Dict)**: Fast lookup, TTL-based expiration
 - **R2**: Persistent storage for cached results
 - **Cache key**: Determined by the request payload (context, params, model variant)

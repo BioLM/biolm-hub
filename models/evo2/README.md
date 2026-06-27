@@ -91,7 +91,7 @@ Extracts per-layer embeddings from specified transformer blocks. Returns mean-po
 }
 ```
 
-### `predict_log_prob`
+### `log_prob`
 
 Computes the total log-probability of each DNA sequence under Evo 2's autoregressive distribution.
 
@@ -214,7 +214,7 @@ Numerical reproduction: integration tests compare model outputs against golden f
 | Action | Input | Tolerance | Status |
 |--------|-------|-----------|--------|
 | `encode` | "ACGTACGTAC", layer 22, mean+last | rel_tol=1e-4 | PASS |
-| `predict_log_prob` | "ACGTACGTAC" | rel_tol=1e-4 | PASS |
+| `log_prob` | "ACGTACGTAC" | rel_tol=1e-4 | PASS |
 | `generate` | Prompt "ACGT", 10 tokens | Valid DNA check | PASS |
 
 ### Verification Status
@@ -237,11 +237,11 @@ Numerical reproduction: integration tests compare model outputs against golden f
 ## Implementation Notes
 
 - **Memory snapshots**: Uses `@modal.enter(snap=True)` for CPU-phase setup, then `@modal.enter(snap=False)` to load and move model to GPU after snapshot restore.
-- **BillingMixinSnap**: Inherits from `BillingMixinSnap` for snapshot-compatible billing.
+- **Snapshot base class**: Inherits from `ModelMixinSnap` for snapshot-compatible health and lifecycle hooks.
 - **GPU snapshots**: Enabled via `experimental_options={"enable_gpu_snapshot": True}`.
 - **Container image**: Built from `pytorch/pytorch:2.4.1-cuda12.4-cudnn9-devel` with flash-attn and Evo2 installed from GitHub at pinned commit `67a079496b`.
 - **Download layer**: Model weights downloaded via unified `setup_download_layer` with R2 caching and HuggingFace fallback.
-- **Determinism**: `encode` and `predict_log_prob` are fully deterministic. `generate` requires explicit seed for reproducibility.
+- **Determinism**: `encode` and `log_prob` are fully deterministic. `generate` requires explicit seed for reproducibility.
 
 ## License
 

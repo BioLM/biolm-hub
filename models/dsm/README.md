@@ -209,7 +209,7 @@ make test MODEL=dsm
 - **DSM repository**: Cloned at pinned commit (`ca7b5c8c`) with submodules
 - **ESM backbone**: Dynamic import from `/root/DSM/models/modeling_dsm.py`
 - **PPI variant**: Uses `decode_dual_input` with `<eos>` separator for dual sequences
-- **Caching**: Standard Redis/R2 two-tier caching via `BillingMixinSnap`
+- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
 
 ## License
 

@@ -162,7 +162,7 @@ Request
 
 ### Caching Behavior
 
-DSM uses `BillingMixinSnap` with GPU memory snapshots. Standard Redis/R2 two-tier caching applies. Note: generation with time-based seed will not benefit from caching since inputs differ.
+Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container. Note: generation with time-based seed will not benefit from caching since inputs differ.
 
 ## Versions & Changelog
 

@@ -78,7 +78,7 @@ Key reported findings:
 | Action | Test Input | Tolerance | Status |
 |--------|-----------|-----------|--------|
 | `encode` | "ACGTACGTAC", layer 22 | rel_tol=1e-4 | PASS |
-| `predict_log_prob` | "ACGTACGTAC" | rel_tol=1e-4 | PASS |
+| `log_prob` | "ACGTACGTAC" | rel_tol=1e-4 | PASS |
 | `generate` | Prompt "ACGT", 10 tokens | Valid DNA output | PASS |
 
 ### Comparison to Alternatives
@@ -92,7 +92,7 @@ Key reported findings:
 
 ### Error Bars & Confidence
 
-- `encode` and `predict_log_prob` are deterministic for the same input and hardware
+- `encode` and `log_prob` are deterministic for the same input and hardware
 - `generate` is stochastic by default; provide explicit `seed` for reproducibility
 - Small floating-point differences (within 1e-4) may occur across different GPU architectures
 
@@ -136,7 +136,7 @@ Request
   |     |-- Compute mean/last pooling over non-padded tokens
   |     |-- Return per-layer embeddings
   |
-  |-- [predict_log_prob]
+  |-- [log_prob]
   |     |-- Tokenize sequences
   |     |-- model.score_sequences(reduce_method="sum")
   |     |-- Return total log-prob per sequence
@@ -159,7 +159,7 @@ Request
 | Action | Deterministic | Notes |
 |--------|---------------|-------|
 | `encode` | Yes | Pure forward pass, no randomness |
-| `predict_log_prob` | Yes | Uses score_sequences with sum reduction |
+| `log_prob` | Yes | Uses score_sequences with sum reduction |
 | `generate` | With seed | Time-based entropy when seed=None; reproducible with explicit seed |
 
 When a seed is provided for `generate`:
@@ -167,7 +167,7 @@ When a seed is provided for `generate`:
 
 ### Caching Behavior
 
-- Standard BioLM Redis + R2 two-tier caching via `BillingMixinSnap`
+Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
 - Cache key derived from full request payload including parameters
 - For `generate` with no seed, cache misses are expected on repeated calls
 
@@ -175,7 +175,7 @@ When a seed is provided for `generate`:
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v1 | -- | Initial implementation with encode, predict_log_prob, and generate actions; 1b-base and 7b-base variants |
+| v1 | -- | Initial implementation with encode, log_prob, and generate actions; 1b-base and 7b-base variants |
 
 ---
 

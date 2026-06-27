@@ -172,7 +172,7 @@ Request
 
 ### Caching Behavior
 
-Standard BioLM caching via `BillingMixinSnap`:
+Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
 - Redis (Modal Dict) caching for fast repeated lookups
 - R2 caching for persistence
 - Encode results are deterministic and benefit strongly from caching

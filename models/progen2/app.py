@@ -1,5 +1,3 @@
-import logging
-
 import modal
 
 from models.commons.core.decorator import modal_endpoint
@@ -186,7 +184,7 @@ class ProGen2Model(ModelMixinSnap):
                     tokenizer=self.tokenizer,
                 )
             except Exception as e:
-                logging.error(f"Model call failed with error [{e}]")
+                logger.error("Model call failed", exc_info=True)
                 raise e
 
             try:
@@ -200,7 +198,7 @@ class ProGen2Model(ModelMixinSnap):
                     for sequence in generated_sequences
                 ]
             except Exception as e:
-                logging.error(f"Likelihood computation failed with error [{e}]")
+                logger.error("Likelihood computation failed", exc_info=True)
                 raise e
 
             result = [

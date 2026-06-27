@@ -32,7 +32,7 @@ use_when:
 
 dont_use_when:
   - "You need accurate atomic-level 3D protein structure prediction — use Boltz, Chai-1, or ESMFold, which produce full coordinate sets rather than structural alphabet tokens"
-  - "You need variant effect prediction scores — use ESM1v, ESM2 predict_log_prob, SaProt score, or PoET score, which are purpose-built for quantitative mutation scoring"
+  - "You need variant effect prediction scores — use ESM1v, ESM2 log_prob, SaProt score, or PoET score, which are purpose-built for quantitative mutation scoring"
   - "You need general-purpose protein embeddings without structural considerations — use ESM2 or ESMC, which are simpler, faster, and produce high-quality sequence embeddings"
   - "You need MSA-aware analysis that leverages evolutionary covariation from multiple sequence alignments — use MSA Transformer or PoET"
   - "You are working primarily with intrinsically disordered proteins where structural token assignments are unreliable"
@@ -41,7 +41,7 @@ dont_use_when:
 
 alternatives:
   - model: esm2
-    when_better: "ESM2 provides high-quality sequence embeddings with five size variants, broader action repertoire (encode, predict, predict_log_prob, contacts), MIT license, and lower compute requirements — the simpler default for sequence-only tasks"
+    when_better: "ESM2 provides high-quality sequence embeddings with five size variants, broader action repertoire (encode, predict, log_prob, contacts), MIT license, and lower compute requirements — the simpler default for sequence-only tasks"
     when_worse: "ESM2 has no structural translation capability and no structure-aware embeddings; ProstT5's bilingual training captures fold-level information that sequence-only models cannot access"
 
   - model: saprot

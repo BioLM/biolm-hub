@@ -98,6 +98,14 @@ Caller-mistake paths raise a `UserError` subclass from `models.commons.core.erro
 system/inference failures propagate (the `modal_endpoint` decorator + gateway sanitize them); wrapping
 an inference failure in `ModelExecutionError` is allowed where it adds a clear code. The common
 `try/except Exception as e: logger.error(...); raise` pattern around the forward pass is acceptable.
+- **Bare `ValueError` on USER input → convert to `ValidationError400` (correctness, not style).** The
+  decorator's `ERROR_MAP` does NOT include plain `ValueError`, so a bare `ValueError` from a forward
+  pass falls through to **HTTP 500** ("Uncaught exception") — wrong for a caller mistake (should be 400).
+  Convert user-parameter validations (layer index out of bounds, unsupported option value, missing
+  required input combo) to `raise ValidationError400(...)` / `UnsupportedOptionError`. **Distinguish:**
+  internal/deployment invariants (no HF repo mapped, weights/snapshot path missing, env/direction
+  misconfig) are NOT user input — leave them raising `ValueError`/`RuntimeError` to propagate as 5xx.
+  Known committed sites to retro-fix: `esm2/app.py` repr_layers bounds, `evo2/app.py` embedding_layers.
 
 ### 3.6 Actions (Global Rules → Actions)
 Action verbs were migrated in W7 — **verify**, don't re-migrate. Canonical set:
@@ -189,8 +197,8 @@ After a batch is committed, tick its models in the `02` per-model checklist and 
 
 | Batch | Models | Status |
 |---|---|---|
-| A | esm2, esm1b, esm1v, esm_if1, msa_transformer, esmfold, esmstabp, esmc | pending |
-| B | dnabert2, omni_dna, e1, evo, dna_chisel | pending |
+| A | esm2, esm1b, esm1v, esm_if1, msa_transformer, esmfold, esmstabp, esmc | DONE (commit f57bf41) |
+| B | dnabert2, omni_dna, e1, evo, dna_chisel | DONE (commit fe5b084) |
 | C | ablang2, igbert, igt5, nanobert, sadie, antifold | pending |
 | D | abodybuilder3, immunebuilder, immunefold, propermab | pending |
 | E | boltz, chai1, rf3, rfd3, boltzgen | pending |
