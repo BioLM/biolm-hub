@@ -191,9 +191,9 @@ r2_test_data_dir   = "test-data"    # logical prefix, fine as-is
 the Modal secret `cloudflare-r2`.
 
 **Weight acquisition** (`models/commons/storage/acquisition.py`, `download_helpers.py`): strategies
-`R2_ONLY`, `HUGGINGFACE_HUB`, `LIBRARY_MANAGED`, `DIRECT_URLS` (+ a dead `CUSTOM`) — check R2 first,
+`R2_ONLY`, `HUGGINGFACE_HUB`, `LIBRARY_MANAGED`, `DIRECT_URLS`, `CUSTOM` — check R2 first,
 fall back to source, re-cache to R2. **This subsystem is ~4025 LOC and bloated** (~600 LOC of dead
-code: a `TargetedBypassDetector` that only prints, the unused `CUSTOM` strategy, duplicate
+code: a `TargetedBypassDetector` that only prints, duplicate
 validation, legacy re-export aliases). Flagged for a standalone simplification workstream — **W-acq**
 (see §11 and `03_WORKSTREAMS.md`).
 
@@ -297,10 +297,13 @@ These are "don't ship something over-engineered publicly" findings from the deep
 
 - **Weight-acquisition subsystem** (`storage/acquisition.py` ~1520 LOC + `r2_utils.py` ~725 +
   `downloads.py` ~726 + `download_helpers.py` ~644 + `r2.py` ~139 + `modal/downloader.py` ~271 ≈ 4025
-  LOC). Cut ~600 LOC of dead/duplicated code: `TargetedBypassDetector` (~190, only prints, flag never
-  read), the unused `CUSTOM` strategy + `CustomSourceConfig` (~200), duplicate validation passes,
-  legacy `R2Utils` re-export aliases, stale docstring line-refs. Standalone workstream **W-acq**;
-  land before the Stage-3 fan-out. Grep `models/*/download.py` for `bypass_detected`/`CUSTOM` before
+  LOC). Cut ~250 LOC of dead/duplicated code: `TargetedBypassDetector` (~190, only prints, flag never
+  read — but KEEP the `bypass_detected`/`bypass_locations` fields as no-op stubs; `evo`/`chai1`/
+  `ablang2` read them), duplicate validation passes, legacy `R2Utils` re-export aliases, stale
+  docstring line-refs, + an R2-optional crash fix (`get_r2_client()` inside the try). **CORRECTION
+  (2026-06-27): the `CUSTOM` strategy is NOT dead — `deepviscosity`/`temberture`/`clean`/`tempro` use
+  it for bespoke downloads; do NOT remove it.** Standalone workstream **W-acq**; land before the
+  Stage-3 fan-out. Grep `models/*/download.py` for `bypass_detected`/`CUSTOM` before
   deleting.
 
 - **Gateway class-discovery AST scan** — see §6 (replace with explicit `modal_class_name`; W8).

@@ -272,16 +272,18 @@ in `runner.py`; all test files use the explicit-assignment pattern.
 **Depends on:** W3a. **Overlaps/coordinate with** W5 (same test files).
 
 ## W-acq — Weight-acquisition simplification · Stage 2 *(serialized after W3a; land before W5)*
-**Goal:** Cut ~600 LOC of dead/duplicated weight-acquisition code so every model inherits a simpler
+**Goal:** Cut the genuinely-dead/duplicated weight-acquisition code so every model inherits a simpler
 download layer.
-**Tasks:** delete `TargetedBypassDetector` (~190 LOC, `acquisition.py:55-241`; replace with a one-line
-post-download assertion); delete `AcquisitionStrategy.CUSTOM` + `CustomSourceConfig` + helpers (~200
-LOC, unused by any shipped model); deduplicate validation (one `verify_model_dir` pass per
-acquisition); remove the legacy `R2Utils` re-export aliases from `download_helpers.py`; prune stale
-docstring line-refs in `r2_utils.py`. Optional (separate commit): discriminated-union
-`AcquisitionConfig`. **Before deleting:** grep `models/*/download.py` for `bypass_detected`/`CUSTOM`.
-**Acceptance:** all SHIP-model tests pass unchanged; `acquisition.py` ≤950 LOC; `r2_utils.py` ≤600
-LOC; `make style` passes.
+**Tasks:** delete `TargetedBypassDetector` (~190 LOC; replace with a one-line post-download `raise`,
+NOT `assert`) — but **KEEP `bypass_detected`/`bypass_locations` as no-op stubs** (`evo`/`chai1`/
+`ablang2` read them); deduplicate validation (one `verify_model_dir` pass per acquisition); remove the
+legacy `R2Utils` re-export aliases from `download_helpers.py` (fix the `quick_r2_check` consumer);
+prune stale docstring line-refs in `r2_utils.py`; **R2-optional crash fix** — move `get_r2_client()`
+inside the `try` in `upload_to_r2_atomic`/`restore_from_r2_atomic` so a no-R2 env falls back to
+HF/URL. **DO NOT remove `CUSTOM`** — `deepviscosity`/`temberture`/`clean`/`tempro` use it (the earlier
+"unused" claim was wrong). **Before deleting:** grep `models/*/download.py` for `bypass_detected`/`CUSTOM`.
+**Acceptance:** the 4 CUSTOM models + `evo`/`chai1`/`ablang2` + `dummy` still import; offline storage
+tests pass; only dead code removed (no hard LOC target).
 **Depends on:** W3a — **rebase on it; W-acq and W3a edit the SAME files** (`acquisition.py`/
 `download_helpers.py`/`downloads.py`), so they are **serialized, NOT parallel**. **Should land before W5.**
 
