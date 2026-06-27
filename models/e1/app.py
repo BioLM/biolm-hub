@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import modal
 
-from models.commons.billing.mixin import BillingMixin
+from models.commons.model.base import ModelMixin
 from models.commons.core.decorator import modal_endpoint
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
@@ -13,7 +13,6 @@ from models.commons.storage.downloads import build_hf_snapshot_path
 from models.commons.util.config import (
     cloudflare_r2_secret,
     common_requirements,
-    redis_url_secret,
 )
 from models.commons.util.device import get_torch_device
 from models.commons.util.environment import parse_variant
@@ -87,11 +86,11 @@ app = modal.App(app_name, image=image)
 
 @app.cls(
     image=image,
-    secrets=[cloudflare_r2_secret, redis_url_secret],
+    secrets=[cloudflare_r2_secret],
     **modal_resource_spec.to_modal_options(),
 )
 @biolm_model_class
-class E1Model(BillingMixin):
+class E1Model(ModelMixin):
     app_username: str = modal.parameter(default="default_user")
     model_size: E1ModelSizes = model_size
     model_id: str = get_model_id(model_size)

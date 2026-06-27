@@ -3,7 +3,7 @@ from pathlib import Path
 
 import modal
 
-from models.commons.billing.mixin import BillingMixinSnap
+from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
@@ -14,7 +14,6 @@ from models.commons.storage.downloads import (
 from models.commons.util.config import (
     cloudflare_r2_secret,
     common_requirements,
-    redis_url_secret,
 )
 from models.esm2.download import get_model_dir as get_esm2_model_dir
 from models.esm2.schema import ESM2ModelSizes, ESM2Params
@@ -87,13 +86,13 @@ app = modal.App(app_name, image=image)
 
 @app.cls(
     image=image,
-    secrets=[cloudflare_r2_secret, redis_url_secret],
+    secrets=[cloudflare_r2_secret],
     enable_memory_snapshot=True,
     experimental_options={"enable_gpu_snapshot": True},
     **modal_resource_spec.to_modal_options(),
 )
 @biolm_model_class
-class SpursModel(BillingMixinSnap):
+class SpursModel(ModelMixinSnap):
     app_username: str = modal.parameter(default="default_user")
 
     """

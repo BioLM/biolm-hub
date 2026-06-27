@@ -13,7 +13,7 @@ Provides helpers for models that produce large output directories and need:
 
 Typical usage (checkpointing only — results returned inline)::
 
-    class MyModel(BillingMixinSnap, OutputDeliveryMixin):
+    class MyModel(ModelMixinSnap, OutputDeliveryMixin):
         @modal.method()
         def generate(self, payload):
             job = self.create_output_job("mymodel")

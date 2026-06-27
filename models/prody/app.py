@@ -3,14 +3,13 @@ import logging
 import modal
 import numpy as np
 
-from models.commons.billing.mixin import BillingMixin
+from models.commons.model.base import ModelMixin
 from models.commons.core.decorator import modal_endpoint
 from models.commons.modal.source import setup_source_layer
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
     common_requirements,
-    redis_url_secret,
 )
 from models.prody.config import MODEL_FAMILY
 from models.prody.schema import (
@@ -61,12 +60,12 @@ app = modal.App(app_name, image=image)
 
 @app.cls(
     image=image,
-    secrets=[cloudflare_r2_secret, redis_url_secret],
+    secrets=[cloudflare_r2_secret],
     enable_memory_snapshot=False,  # Disabled: snapshots cached stale code
     **modal_resource_spec.to_modal_options(),
 )
 @biolm_model_class
-class ProDyModel(BillingMixin):
+class ProDyModel(ModelMixin):
     app_username: str = modal.parameter(default="default_user")
 
     @modal.enter()

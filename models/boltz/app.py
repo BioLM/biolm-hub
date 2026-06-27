@@ -37,7 +37,7 @@ from models.boltz.utils import (
     construct_yaml_data,
     parse_structure_from_cif,
 )
-from models.commons.billing.mixin import BillingMixinSnap
+from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
 from models.commons.core.error import UserError
 from models.commons.data.validator import validate_smiles_with_rdkit
@@ -48,7 +48,6 @@ from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
     common_requirements,
-    redis_url_secret,
 )
 from models.commons.util.device import get_torch_device
 from models.commons.util.environment import parse_variant
@@ -327,14 +326,14 @@ def _generate_msa_paired(
 
 @app.cls(
     image=image,
-    secrets=[cloudflare_r2_secret, redis_url_secret],
+    secrets=[cloudflare_r2_secret],
     volumes={"/boltz2-mols-vol": boltz2_mols_vol},
     enable_memory_snapshot=True,
     experimental_options={"enable_gpu_snapshot": True},
     **modal_resource_spec.to_modal_options(),
 )
 @biolm_model_class
-class BoltzModel(BillingMixinSnap):
+class BoltzModel(ModelMixinSnap):
     app_username: str = modal.parameter(default="default_user")
     model_version: str = model_version
 
@@ -364,7 +363,7 @@ class BoltzModel(BillingMixinSnap):
         device = get_torch_device()
         print(f"📍 Using device: {device}")
 
-        # Note: Billing is automatically started by BillingMixinSnap's billing_enter method
+        # Note: Billing is automatically started by ModelMixinSnap's billing_enter method
         print(f"✅ Boltz {model_version} model ready on GPU")
 
     def _setup_mols_directory(self):

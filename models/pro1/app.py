@@ -2,7 +2,7 @@ import re
 
 import modal
 
-from models.commons.billing.mixin import BillingMixin
+from models.commons.model.base import ModelMixin
 from models.commons.core.decorator import modal_endpoint
 from models.commons.core.error import UserError
 from models.commons.data.validator import aa_unambiguous
@@ -13,7 +13,6 @@ from models.commons.util.config import (
     cloudflare_r2_secret,
     common_requirements,
     huggingface_api_token_secret,
-    redis_url_secret,
 )
 from models.commons.util.environment import parse_variant
 from models.pro1.config import (
@@ -268,11 +267,11 @@ def _parse_mutations_from_reasoning(reasoning: str) -> list[dict]:
 
 @app.cls(
     image=image,
-    secrets=[cloudflare_r2_secret, redis_url_secret, huggingface_api_token_secret],
+    secrets=[cloudflare_r2_secret, huggingface_api_token_secret],
     **modal_resource_spec.to_modal_options(),
 )
 @biolm_model_class
-class Pro1Model(BillingMixin):
+class Pro1Model(ModelMixin):
     """Pro-1 protein reasoning model for stability engineering."""
 
     app_username: str = modal.parameter(default="default_user")

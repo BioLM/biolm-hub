@@ -3,7 +3,7 @@ from typing import Any
 import modal
 from modal import Cls
 
-from models.commons.billing.mixin import BillingMixin
+from models.commons.model.base import ModelMixin
 from models.commons.core.decorator import modal_endpoint
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
@@ -11,7 +11,6 @@ from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
     common_requirements,
-    redis_url_secret,
 )
 from models.esm2.schema import (
     ESM2EncodeIncludeOptions,
@@ -66,11 +65,11 @@ app = modal.App(app_name, image=image)
 
 @app.cls(
     image=image,
-    secrets=[cloudflare_r2_secret, redis_url_secret],
+    secrets=[cloudflare_r2_secret],
     **modal_resource_spec.to_modal_options(),
 )
 @biolm_model_class
-class ESMStabPModel(BillingMixin):
+class ESMStabPModel(ModelMixin):
     app_username: str = modal.parameter(default="default_user")
 
     """

@@ -5,7 +5,7 @@ import modal
 if TYPE_CHECKING:
     from torch import Tensor
 
-from models.commons.billing.mixin import BillingMixinSnap
+from models.commons.model.base import ModelMixinSnap
 from models.commons.core.decorator import modal_endpoint
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
@@ -13,7 +13,6 @@ from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
     common_requirements,
-    redis_url_secret,
 )
 from models.commons.util.device import get_torch_device
 from models.commons.util.environment import parse_variants
@@ -152,13 +151,13 @@ app = modal.App(app_name, image=image)
 
 @app.cls(
     image=image,
-    secrets=[cloudflare_r2_secret, redis_url_secret],
+    secrets=[cloudflare_r2_secret],
     enable_memory_snapshot=True,
     experimental_options={"enable_gpu_snapshot": True},
     **modal_resource_spec.to_modal_options(),
 )
 @biolm_model_class
-class DSMModel(BillingMixinSnap):
+class DSMModel(ModelMixinSnap):
     app_username: str = modal.parameter(default="default_user")
     model_size: DSMModelSizes = model_size
     variant: DSMVariants = variant
