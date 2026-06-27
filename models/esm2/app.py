@@ -1,6 +1,7 @@
 import modal
 
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.error import ValidationError400
 from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
@@ -235,7 +236,7 @@ class ESM2Model(ModelMixinSnap):
 
         n_max_layers = self.model.num_layers
         if not all(-(n_max_layers + 1) <= i <= n_max_layers for i in repr_layers):
-            raise ValueError(
+            raise ValidationError400(
                 f"Requested representation layers are out of bounds. Ensure the "
                 f"layer indices are between -{n_max_layers + 1} and {n_max_layers}."
             )
