@@ -1,0 +1,61 @@
+model_slug: thermompnn-d
+display_name: ThermoMPNN-D
+last_updated: "2026-03-17"
+
+strengths:
+  - "Uniquely supports double (paired) mutation ddG prediction with an explicit epistatic interaction mode, going beyond simple additive approximations to capture synergistic and antagonistic mutation combinations"
+  - "Three prediction modes in a single model: single-mutation ddG, additive double-mutation ddG, and epistatic double-mutation ddG -- enabling comparison between additive and non-additive effects"
+  - "Structure-based GNN architecture (ProteinMPNN backbone) directly models the 3D spatial context of mutation pairs, detecting interactions between spatially proximal residues"
+  - "Configurable CA-CA distance threshold (default 5.0 Angstroms) for double-mutation scanning focuses predictions on physically interacting residue pairs where epistasis is most likely"
+  - "MIT license with no commercial restrictions -- suitable for pharmaceutical protein engineering pipelines"
+  - "Builds on the well-validated ThermoMPNN framework with a dedicated double-mutation extension, maintaining consistency with single-mutation predictions"
+
+weaknesses:
+  - "Higher memory requirement than ThermoMPNN (12 GB vs 8 GB RAM) because it loads both single-mutation and epistatic model checkpoints simultaneously"
+  - "Published benchmarks show that current stability models, including ThermoMPNN-D, struggle to capture epistatic interactions -- additive models perform comparably except on stabilizing double mutations"
+  - "Requires a 3D structure (PDB format) as input -- cannot operate from sequence alone"
+  - "Limited to single-chain proteins up to 1024 residues -- no multi-chain complex support"
+  - "Double-mutation scanning scales quadratically O(N^2) with sequence length, making full scans computationally expensive for longer proteins"
+  - "Membrane proteins and intrinsically disordered proteins are not well-supported due to training data bias and the requirement for a folded reference structure"
+  - "No uncertainty quantification on individual predictions -- reported epistatic effects may be within noise margins"
+
+use_when:
+  - "You need to evaluate pairs of simultaneous mutations for synergistic stability effects in a combinatorial protein engineering campaign"
+  - "You are performing directed evolution and want to predict which two-mutation combinations to test experimentally, prioritizing pairs with positive epistasis"
+  - "You want to compare additive vs epistatic double-mutation predictions to identify residue pairs with significant non-additive interactions"
+  - "You have a 3D structure and need to understand how mutations at spatially proximal positions interact to affect overall stability"
+  - "You are engineering thermostable enzymes and need to combine multiple stabilizing mutations while checking for antagonistic epistatic effects"
+  - "You want single-mutation ddG predictions with the same model that also supports double-mutation analysis for a consistent prediction framework"
+
+dont_use_when:
+  - "You only need single-mutation ddG predictions -- use the simpler ThermoMPNN model, which has lower memory requirements and equivalent single-mutation accuracy"
+  - "You do not have a 3D structure available -- use TemBERTure or ESMStabP for sequence-only thermostability assessment"
+  - "You need to evaluate combinations of three or more simultaneous mutations -- ThermoMPNN-D is limited to pairs; consider SPURS for multi-mutation ddG"
+  - "You need global melting temperature (Tm) rather than per-mutation ddG -- use ESMStabP or TemBERTure"
+  - "You are working with very long proteins where quadratic double-mutation scanning is impractical -- consider prioritizing candidate pairs using single-mutation scans first"
+  - "You need evolution-based variant effect scores rather than structure-based stability predictions -- use GEMME"
+
+alternatives:
+  - model: thermompnn
+    when_better: "ThermoMPNN is simpler, uses less memory (8 GB vs 12 GB), and provides equivalent single-mutation ddG accuracy; preferred when double-mutation analysis is not needed"
+    when_worse: "No double-mutation or epistasis support -- strictly single-point mutations only"
+  - model: spurs
+    when_better: "SPURS handles arbitrary multi-mutation combinations (not just pairs) with ESM2+GNN architecture and generates full DMS matrices; may capture broader epistatic effects"
+    when_worse: "SPURS has higher resource requirements and the multi-mutation model architecture is different; ThermoMPNN-D's explicit epistatic mode is specifically designed and benchmarked for pairwise interactions"
+  - model: temberture
+    when_better: "TemBERTure requires only sequence input and provides global thermostability classification or Tm prediction without needing a structure"
+    when_worse: "No per-mutation ddG, no double-mutation support, no epistasis modeling -- fundamentally different (global vs per-mutation) prediction task"
+  - model: gemme
+    when_better: "GEMME captures evolutionary constraint patterns from MSAs that may reveal epistatic relationships not captured by structure-based methods; no structure required"
+    when_worse: "GEMME does not model explicit pairwise epistasis between specific mutation pairs; predicts relative fitness rather than thermodynamic ddG in kcal/mol"
+
+complements:
+  - model: thermompnn
+    workflow: "Use ThermoMPNN for fast single-mutation SSM scanning to identify the most promising stabilizing positions, then use ThermoMPNN-D to evaluate all pairwise combinations among the top candidates for epistatic synergies"
+    example_protocol: null
+  - model: boltz
+    workflow: "Predict 3D structure with Boltz when no experimental structure exists, then use ThermoMPNN-D to scan for synergistic double-mutation stability improvements on the predicted structure"
+    example_protocol: null
+  - model: esm2
+    workflow: "Use ESM2 pseudo-log-likelihoods for rapid sequence-based mutation screening, then validate top-scoring mutation pairs with ThermoMPNN-D's structure-based epistatic ddG predictions"
+    example_protocol: null

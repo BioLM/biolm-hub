@@ -1,0 +1,72 @@
+model_slug: msa-transformer
+display_name: "MSA Transformer"
+last_updated: "2026-03-17"
+
+strengths:
+  - "Explicitly captures evolutionary covariation — tied row attention and column attention jointly process MSA columns, detecting co-evolving residue pairs that single-sequence models (ESM2, ESMC) cannot directly access"
+  - "Unsupervised contact prediction from attention maps — symmetrized attention weights with APC correction produce contact maps without any supervised training on known structures, rivaling dedicated covariation methods"
+  - "MSA-aware embeddings encode both within-sequence context and between-sequence evolutionary context, providing richer representations for proteins with deep alignments than any single-sequence model"
+  - "Relatively compact (100M parameters) — runs efficiently on T4 GPU (16GB VRAM), lighter than most other protein language models in this group"
+  - "Published applications in 3D structure modeling (A-Prot), secondary structure prediction (S-Pred), and multi-feature structural prediction (MFTrans) demonstrate utility as a feature extractor for diverse structural tasks"
+  - "MIT license with no commercial restrictions, suitable for any deployment scenario"
+  - "Validated on 26 million MSAs during training, providing strong generalization across protein families"
+
+weaknesses:
+  - "Requires precomputed multiple sequence alignments (MSAs) as input — MSA construction via JackHMMER or HHblits takes minutes to hours per query, creating a major throughput bottleneck compared to single-sequence models"
+  - "Performance degrades severely for proteins with shallow MSAs (fewer than 16 effective sequences) — orphan proteins and recently evolved proteins with few homologs produce unreliable results"
+  - "Single action only (encode) — no dedicated variant scoring, masked prediction, or log-probability computation; variant analysis requires custom post-processing of embeddings or attention maps"
+  - "Contact prediction, while impressive for an unsupervised method, has been surpassed by dedicated structure prediction models (AlphaFold2, ESMFold, Boltz) that produce full atomic coordinates"
+  - "Fixed MSA depth handling — the model processes up to a fixed number of sequences, potentially discarding informative homologs from very deep alignments or underperforming on very sparse ones"
+  - "No structure awareness beyond what is implicitly captured by evolutionary covariation — cannot directly use 3D structural information as input unlike SaProt or ESM3"
+  - "Not designed for protein design or generation — purely analytical model that cannot propose novel sequences"
+
+use_when:
+  - "You have precomputed MSAs available and want embeddings that explicitly encode evolutionary covariation patterns for downstream ML tasks"
+  - "You need unsupervised contact predictions for quick structural assessment without running a full structure prediction pipeline"
+  - "You are working on protein family analysis where evolutionary relationships across homologs are central to the biological question"
+  - "You need MSA-derived features for a structural prediction pipeline (e.g., secondary structure, solvent accessibility, disorder prediction) and want a neural alternative to traditional PSSM/HMM profiles"
+  - "You want to validate MSA quality by checking whether predicted contacts match known or predicted structures"
+  - "You are studying evolutionary covariation and need attention-based co-evolutionary coupling scores that are faster than traditional DCA/PSICOV methods"
+
+dont_use_when:
+  - "You do not have precomputed MSAs or the computational resources to build them — use ESM2 or ESMC for instant single-sequence embedding and scoring"
+  - "You need variant effect prediction scores — use ESM1v, ESM2 predict_log_prob, SaProt score, or PoET score, which are purpose-built for variant scoring"
+  - "You need accurate 3D protein structure prediction — use Boltz, Chai-1, or ESMFold, which produce full atomic coordinates rather than just contact maps"
+  - "You are working with orphan proteins that have no detectable homologs — MSA Transformer provides no advantage over single-sequence models when no meaningful alignment can be built"
+  - "You need high-throughput processing of millions of sequences — the MSA construction bottleneck makes MSA Transformer impractical for proteome-scale analyses"
+  - "You need a generative model for protein design or sequence sampling — MSA Transformer is purely analytical"
+  - "You need structure-conditioned analysis — use SaProt or ProstT5, which can directly leverage 3D structural information"
+
+alternatives:
+  - model: esm2
+    when_better: "ESM2 requires no MSA computation, processes single sequences in milliseconds, offers five size variants, and provides a broader action repertoire (encode, predict, predict_log_prob, contacts) — orders of magnitude faster throughput"
+    when_worse: "ESM2 cannot access co-evolutionary coupling information from MSAs; MSA Transformer's explicit inter-sequence attention produces richer representations when deep alignments are available"
+
+  - model: esmc
+    when_better: "ESMC provides state-of-the-art single-sequence embeddings with no MSA dependency, broader actions, and longer context length — simpler, faster, and more practical for most use cases"
+    when_worse: "ESMC cannot leverage evolutionary covariation from alignments; when MSAs are available and co-evolutionary signal is important, MSA Transformer embeddings are more informative"
+
+  - model: poet
+    when_better: "PoET also uses MSA context but provides dedicated variant scoring (substitutions and indels) with published ProteinGym benchmarks, plus the ability to score variable-length variants"
+    when_worse: "PoET is focused on variant scoring only; MSA Transformer provides general-purpose MSA-aware embeddings and unsupervised contact prediction for broader structural analysis tasks"
+
+  - model: saprot
+    when_better: "SaProt provides structure-aware variant scoring and embeddings without requiring MSA construction — just sequence + structure input, with stronger published variant effect benchmarks"
+    when_worse: "SaProt requires structure input and focuses on individual protein analysis; MSA Transformer captures family-level evolutionary patterns across multiple sequences"
+
+  - model: esm1b
+    when_better: "ESM-1b provides single-sequence embeddings instantly with no MSA dependency and includes predict and predict_log_prob actions for variant analysis"
+    when_worse: "ESM-1b cannot capture co-evolutionary information; MSA Transformer's evolutionary covariation signal improves predictions for well-studied protein families with deep alignments"
+
+complements:
+  - model: esm2
+    workflow: "Use ESM2 for fast single-sequence embedding of large sequence databases, then apply MSA Transformer to a focused set of protein families where deep MSAs are available and co-evolutionary analysis adds value — combining throughput with depth"
+    example_protocol: null
+
+  - model: boltz
+    workflow: "Use MSA Transformer for quick unsupervised contact prediction to assess protein foldability, then run Boltz on promising candidates for full atomic-level structure prediction — MSA Transformer as a fast structural pre-screen"
+    example_protocol: null
+
+  - model: poet
+    workflow: "Use MSA Transformer encode for evolutionary-context-aware embeddings and contact prediction, then use PoET score on the same MSA for quantitative variant effect prediction — complementary MSA-based analyses from the same alignment"
+    example_protocol: null

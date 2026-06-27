@@ -1,0 +1,65 @@
+model_slug: e1
+display_name: E1
+last_updated: "2026-03-17"
+
+strengths:
+  - "Retrieval-augmented protein representations: accepts up to 50 context sequences (homologs) alongside the query, capturing MSA-like evolutionary information via block-causal attention without requiring formal sequence alignment"
+  - "Three size variants (150M, 300M, 600M) spanning T4 to L4 GPUs, providing fine-grained cost-performance tradeoff for different deployment scales and budget constraints"
+  - "Block-causal attention architecture allows the query to attend to all context sequences while context sequences only attend to themselves -- efficiently simulating MSA column reading without O(N^2) alignment cost"
+  - "Three complementary actions: encode (embeddings), predict (masked residue prediction), and predict_log_prob (sequence scoring) -- covering embedding, design, and fitness prediction use cases in a single model"
+  - "Zero-shot fitness prediction with context sequences improves variant effect scoring over single-sequence models, as the context provides explicit evolutionary conservation signals"
+  - "Apache-2.0 license with no usage restrictions -- suitable for commercial integration and clinical variant interpretation pipelines"
+  - "Extended amino acid alphabet support (20 standard + B, X, Z, U, O) handles ambiguous and non-standard residues commonly found in database entries without preprocessing"
+  - "Masked prediction at specific positions enables targeted residue design: mask catalytic residues in an enzyme and use homolog context to predict evolutionarily compatible substitutions"
+
+weaknesses:
+  - "No structure awareness -- trained purely on protein sequences without 3D structural supervision; models like SaProt incorporate structure tokens and outperform on structure-dependent tasks when structures are available"
+  - "Performance degrades significantly without context sequences -- when used as a single-sequence model (no homologs), E1 may not substantially outperform ESM2 on embedding tasks"
+  - "Recent model (2025) with limited published downstream benchmarks and community validation compared to the extensively benchmarked ESM2 ecosystem"
+  - "Encoder-only architecture -- cannot generate novel protein sequences or perform autoregressive sequence design; for generative tasks, use ProteinMPNN, ProGen2, or ZymCTRL"
+  - "No structure prediction capability -- produces embeddings, logits, and log-probabilities but not 3D coordinates; use ESMFold, Boltz, or AF2 for structure prediction"
+  - "Context sequence selection requires user knowledge of relevant homologs -- the model does not perform retrieval itself; users must provide appropriate context sequences from databases like UniRef"
+  - "Short peptides (< 15 residues) provide insufficient context for the transformer architecture, limiting utility for peptide-focused applications"
+  - "No explicit handling of post-translational modifications (phosphorylation, glycosylation) -- modified residues are not represented in the model vocabulary"
+
+use_when:
+  - "You have homologous sequences available and want to improve embedding quality, fitness predictions, or masked predictions beyond what single-sequence models (ESM2) can achieve"
+  - "You need zero-shot variant effect scoring with evolutionary context -- provide the query protein and its homologs to predict_log_prob for improved mutation impact assessment"
+  - "You are building downstream ML models (function prediction, localization, stability estimation) and want context-enriched embeddings as features"
+  - "You need masked residue prediction at specific positions (active sites, binding interfaces) and have related sequences that provide evolutionary constraints"
+  - "You want to analyze protein families by encoding all members with shared context sequences for consistent, evolutionarily informed representations"
+  - "You need a lightweight embedding model (T4/L4 GPU) that provides MSA-like evolutionary context without the computational cost of running JackHMMER or HHblits"
+
+dont_use_when:
+  - "You need 3D protein structure prediction -- E1 produces embeddings and sequence-level predictions, not structures; use ESMFold, Boltz, Chai-1, or AF2 NIM"
+  - "You need to design or generate novel protein sequences -- E1 is an encoder-only model; use ProteinMPNN for structure-conditioned design or BoltzGen for de novo binder design"
+  - "You have no homologous sequences available and want the best single-sequence embeddings -- ESM2 has broader validation and a larger ecosystem of downstream tools for single-sequence use"
+  - "You need structure-aware protein representations and have access to predicted or experimental structures -- use SaProt, which incorporates Foldseek structural tokens"
+  - "You are working with non-protein molecules (DNA, RNA, small molecules) -- E1 is protein-sequence-only"
+  - "You need embeddings for very short peptides (< 15 residues) where neither the query nor potential context sequences provide sufficient information"
+  - "You need the widest possible ecosystem compatibility and published benchmarks -- ESM2 remains the most broadly adopted protein language model with the most downstream integrations"
+
+alternatives:
+  - model: esm2
+    when_better: "ESM2 has the broadest published benchmarks, the largest ecosystem of downstream tools (ESMFold, ESMStabP), five size variants (8M-3B), and the most extensive community validation; 8M/35M variants run on CPU"
+    when_worse: "ESM2 processes sequences in isolation without leveraging evolutionary context; E1 with context sequences captures MSA-like signals in a single forward pass, improving fitness prediction and masked prediction accuracy"
+  - model: esmc
+    when_better: "ESMC provides a newer, more efficient architecture for single-sequence embeddings with competitive quality; may benefit from updated training procedures"
+    when_worse: "ESMC does not support retrieval-augmented inference with context sequences; E1's block-causal attention provides a qualitative capability that ESMC lacks"
+  - model: msa_transformer
+    when_better: "MSA Transformer jointly processes formal MSA columns, explicitly capturing co-evolutionary coupling with the highest fidelity when deep MSAs (>100 sequences) are available"
+    when_worse: "MSA Transformer requires precomputed MSAs (minutes to hours via JackHMMER/HHblits); E1 accepts raw context sequences without alignment, with much simpler preprocessing"
+  - model: saprot
+    when_better: "SaProt incorporates Foldseek 3Di structural tokens alongside sequence tokens, achieving state-of-the-art on structure-dependent tasks when structures are available"
+    when_worse: "SaProt requires structure information as input; E1 works from sequences alone (with optional context), making it applicable when structures are unavailable"
+
+complements:
+  - model: esmfold
+    workflow: "Use E1 predict_log_prob with context sequences to score variant effects and identify promising mutations, then use ESMFold for rapid structural assessment of top-ranked variants to verify they maintain the native fold"
+    example_protocol: null
+  - model: boltz
+    workflow: "Use E1 encode to generate context-enriched embeddings for sequence-level screening and clustering, then run Boltz on selected candidates for detailed 3D complex structure prediction and affinity estimation"
+    example_protocol: null
+  - model: esm2
+    workflow: "Use E1 with context sequences for high-quality fitness predictions on well-characterized protein families, and fall back to ESM2 for orphan proteins or large-scale screening where homologs are unavailable"
+    example_protocol: null

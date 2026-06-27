@@ -1,0 +1,68 @@
+model_slug: rf3
+display_name: RosettaFold3
+last_updated: "2026-03-17"
+
+strengths:
+  - "Newest-generation all-atom biomolecular structure prediction model from the Baker Lab (RosettaCommons), representing the cutting edge of diffusion-based structure prediction with state-of-the-art accuracy on multi-molecule benchmarks"
+  - "Handles the broadest range of molecular inputs: proteins, DNA, RNA, small-molecule ligands (SMILES or CCD codes), cyclic peptides, non-canonical amino acids, and covalent modifications -- all in a single unified model"
+  - "Template conditioning via template_selection allows users to incorporate partial experimental data (known domain structures, homolog structures, crystallographic fragments) to guide and improve predictions"
+  - "Diffusion-based sampling generates multiple diverse conformations per input, enabling exploration of alternative states and conformational heterogeneity -- critical for drug discovery and allosteric mechanism studies"
+  - "Comprehensive confidence metrics: pTM (global), ipTM (interface-specific), pLDDT (per-residue), PAE (pairwise aligned error), and composite ranking_score for automated quality triage"
+  - "BSD-3-Clause open-source license from RosettaCommons allows academic and commercial use with minimal restrictions"
+  - "Supports cyclic_chains parameter for cyclic peptide structure prediction, a specialized capability not available in most competing models"
+  - "Built on the foundry framework with the established three-track (1D/2D/3D) architecture, combining evolutionary (MSA), pairwise, and structural information tracks for robust predictions"
+
+weaknesses:
+  - "Requires A100 40GB GPU with 64GB system RAM -- expensive infrastructure that limits accessibility for routine use or large-scale screening"
+  - "No binding affinity prediction -- produces structures and confidence scores but cannot estimate binding energies; Boltz-2 adds this capability separately"
+  - "MSA preprocessing is recommended for best accuracy, adding minutes to hours of database search time before structure prediction can begin"
+  - "Newer model with less published community validation than AlphaFold2 -- fewer independent benchmarks and downstream application studies in the literature"
+  - "Membrane protein predictions remain weak due to training data bias toward soluble proteins and absence of lipid bilayer modeling"
+  - "Single-structure outputs from each diffusion trajectory -- while multiple samples provide diversity, the model does not explicitly model thermodynamic ensembles or Boltzmann-weighted populations"
+  - "Large multi-chain complexes may exceed GPU memory, requiring careful input size management or tiling strategies"
+  - "Small molecules alone (without biomolecular context) are not well-handled -- RF3 is designed for biomolecular complexes, not standalone molecular structure optimization"
+
+use_when:
+  - "You need the highest accuracy available for multi-molecule biomolecular structure prediction -- RF3 represents the current state of the art from the Baker Lab lineage"
+  - "You need template-guided structure prediction where partial experimental data (homolog structures, known domain folds) can be incorporated to improve prediction accuracy"
+  - "You are predicting protein-ligand complex structures for drug discovery, especially when the ligand can be specified via SMILES strings or CCD codes"
+  - "You need to predict structures of cyclic peptides or proteins with non-canonical amino acids, which require specialized handling beyond standard amino acid vocabularies"
+  - "You want to sample multiple diverse conformations via diffusion to explore alternative binding modes, allosteric states, or conformational heterogeneity"
+  - "You are working on multi-component biological systems (protein-DNA, protein-RNA, protein-ligand, protein-protein) and need a single model that handles all entity types"
+  - "You need interface-specific confidence scores (ipTM) to evaluate the quality of predicted inter-molecular contacts for complex validation"
+
+dont_use_when:
+  - "You need rapid single-chain protein structure screening -- ESMFold provides predictions in seconds without MSA, at a fraction of the cost"
+  - "You need binding affinity prediction alongside structure -- use Boltz-2, which integrates structure prediction with log10 IC50 affinity estimation"
+  - "You need de novo protein design or binder generation -- RF3 is a prediction model; use its companion RFdiffusion3 for generative design, or BoltzGen for end-to-end binder design"
+  - "GPU resources are limited and you only need protein structure prediction -- AF2 NIM on A100 80GB provides well-validated protein predictions; ESMFold on A10G provides fast screening"
+  - "You need conformational ensemble modeling for intrinsically disordered proteins -- RF3 produces individual conformations, not thermodynamically weighted ensembles"
+  - "You need the most extensively validated predictions for publication -- AlphaFold2 has the broadest published benchmark literature and may be preferred by reviewers"
+
+alternatives:
+  - model: boltz
+    when_better: "Boltz-2 adds binding affinity prediction (log10 IC50) and pocket-constrained docking; ipSAE interface metric corrects for chain length bias; MIT license is more permissive than BSD-3-Clause"
+    when_worse: "RF3 supports template conditioning, cyclic peptides, non-canonical amino acids via CCD codes, and has the newest architecture with potentially the highest multi-molecule accuracy"
+  - model: chai1
+    when_better: "Chai-1 has more published cross-docking benchmarks; ESM embedding integration provides a single-sequence quality boost; commercially supported by Chai Discovery"
+    when_worse: "RF3 supports template conditioning, cyclic peptides, and CCD codes; newer architecture potentially more accurate; BSD-3-Clause license; Baker Lab pedigree with decades of protein modeling expertise"
+  - model: af2_nim
+    when_better: "AlphaFold2 is the most validated protein structure predictor with the broadest published benchmark literature; well-established MSA pipeline via NVIDIA NIM"
+    when_worse: "AF2 is protein-only (no ligands, DNA, RNA); no diffusion-based sampling; no template conditioning beyond homolog detection; limited to 512 residues per chain"
+  - model: esmfold
+    when_better: "100-1000x faster single-sequence inference on A10G GPU; no MSA needed; ideal for high-throughput screening where speed outweighs accuracy"
+    when_worse: "Protein-only with substantially lower accuracy; no multi-molecule support; 768 residue limit; no template conditioning or diffusion sampling"
+
+complements:
+  - model: rfd3
+    workflow: "Use RFdiffusion3 to generate de novo protein structures and binder scaffolds, then validate designability with RF3 by predicting the structure of the designed sequence and computing self-consistency (scTM) -- the standard Baker Lab design-predict validation cycle"
+    example_protocol: null
+  - model: mpnn
+    workflow: "Use RF3-predicted structures as input to ProteinMPNN for inverse folding sequence design, then re-predict with RF3 to verify self-consistency -- the core computational protein design pipeline"
+    example_protocol: null
+  - model: esm2
+    workflow: "Use ESM2 embeddings for fast sequence-level screening and fitness prediction across large libraries, then run RF3 on top candidates for detailed multi-molecule structural characterization"
+    example_protocol: null
+  - model: esmfold
+    workflow: "Use ESMFold for rapid structural triage of protein candidates (seconds per prediction), then run RF3 on promising hits for high-accuracy multi-molecule complex prediction with template conditioning"
+    example_protocol: null

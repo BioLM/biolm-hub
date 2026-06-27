@@ -1,0 +1,67 @@
+model_slug: rfd3
+display_name: RFdiffusion3
+last_updated: "2026-03-17"
+
+strengths:
+  - "All-atom de novo biomolecular design: generates complete protein structures including backbone and sidechain coordinates, a significant advance over backbone-only predecessors (RFdiffusion v1) that required separate sidechain packing"
+  - "Multi-molecule design capability: designs proteins around fixed DNA, RNA, or small-molecule ligand targets -- enabling enzyme active site design around substrates and protein-nucleic acid interface engineering"
+  - "Experimentally validated binder design with 50-70% success rates for well-constrained tasks, dramatically outperforming traditional Rosetta fixed-backbone design (~15-30%) -- confirmed by cryo-EM structures for influenza HA and TcdB binders"
+  - "Motif scaffolding preserves critical functional residues (catalytic triads, epitopes, metal-binding sites) while generating entirely new surrounding protein scaffolds, enabling precise functional transplantation"
+  - "Built-in symmetric design modes (cyclic C_n, dihedral D_n) for creating self-assembling protein oligomers, nanocages, and nanoparticle vaccine scaffolds"
+  - "BSD-3-Clause license from RosettaCommons allows academic and commercial use -- the most widely adopted protein design diffusion model with extensive published experimental validation"
+  - "Supports partial diffusion (noising an existing structure and denoising) for scaffold refinement and optimization of existing designs, not just de novo generation"
+  - "Contig specification language provides fine-grained control over which residues are fixed, which are designable, and where chain breaks occur -- enabling complex multi-segment design tasks"
+
+weaknesses:
+  - "Design model, not prediction model: generates new structures that do not exist in nature, requiring downstream validation with RF3 or AlphaFold2 to confirm designability before experimental synthesis"
+  - "Requires separate sequence design step: RFD3 generates structures (coordinates), but amino acid sequences must be designed separately using ProteinMPNN or similar inverse folding tools"
+  - "Requires A100 40GB GPU with 64GB system RAM -- expensive infrastructure for iterative design campaigns that may require generating thousands of candidates"
+  - "Success rates of 50-70% mean that 30-50% of designs fail to fold as intended -- multiple designs must be generated and computationally filtered, and experimental validation remains essential"
+  - "Membrane protein design is poorly supported due to training data bias toward soluble proteins and absence of lipid bilayer modeling in the diffusion process"
+  - "The contig specification language is powerful but complex -- incorrect specifications silently produce meaningless designs; requires careful construction and validation"
+  - "Default 200 denoising steps creates a computation-time vs quality tradeoff; reducing steps speeds up generation but may reduce design quality"
+  - "Does not model catalytic mechanisms or substrate specificity for enzyme design -- generates geometrically appropriate active sites but catalytic activity must be validated experimentally"
+
+use_when:
+  - "You need to create entirely new protein structures (de novo design) with custom binding surfaces, functional sites, or specific fold topologies not found in nature"
+  - "You are designing protein binders against a specific target (protein, DNA, RNA, or small molecule) and need to generate diverse candidate scaffolds with complementary interfaces"
+  - "You need to scaffold a functional motif (catalytic residues, antigenic epitope, metal-binding site) within a new, stable protein framework while preserving precise residue geometry"
+  - "You are designing symmetric protein assemblies (ring oligomers, cages) for vaccine scaffolds, drug delivery, or biomaterial applications"
+  - "You need to design enzymes with active sites shaped around a specific substrate or cofactor geometry using ligand cofolding"
+  - "You want to refine an existing design through partial diffusion, re-noising and re-denoising the structure to explore nearby structural solutions"
+
+dont_use_when:
+  - "You need to predict the native structure of an existing protein sequence -- RFD3 is for design (creating new structures), not prediction; use RF3, Boltz, Chai-1, or AF2 NIM instead"
+  - "You need combined structure and sequence design in a single end-to-end pipeline -- use BoltzGen, which integrates diffusion design with inverse folding and affinity prediction"
+  - "You need binding affinity estimation for your designs -- RFD3 does not predict affinities; use Boltz-2 or BoltzGen's integrated affinity stage for quantitative binding predictions"
+  - "You are working with membrane protein targets and need designs that account for the lipid bilayer environment -- RFD3 is trained on soluble proteins"
+  - "You need to generate protein sequences directly -- RFD3 generates structures (coordinates), not sequences; use ProteinMPNN downstream for sequence design"
+  - "You need fast, single-pass structure generation for screening -- RFD3's 200-step diffusion process is computation-intensive; consider simpler approaches for initial exploration"
+
+alternatives:
+  - model: boltzgen
+    when_better: "BoltzGen provides an end-to-end pipeline (design + inverse folding + structure validation + affinity prediction) in a single model; 66% nanomolar binder success rate; supports nanobody CDR redesign and cyclic peptide design natively"
+    when_worse: "RFD3 offers more conditioning modes (symmetric design, partial diffusion, complex contig specifications, template-guided scaffolding); more extensively validated with published cryo-EM structures; Baker Lab pedigree"
+  - model: boltz
+    when_better: "Boltz is a prediction model, not a design model -- use Boltz for validating RFD3 designs rather than as an alternative; Boltz-2 adds affinity prediction for design evaluation"
+    when_worse: "Not directly comparable: Boltz predicts existing structures while RFD3 generates new ones; they serve complementary roles in the design-predict cycle"
+  - model: rf3
+    when_better: "RF3 is the prediction counterpart to RFD3 -- use RF3 to validate RFD3 designs by predicting the structure of designed sequences; they share the foundry framework architecture"
+    when_worse: "Not directly comparable: RF3 predicts structures while RFD3 designs them; both are needed in a complete design workflow"
+  - model: mpnn
+    when_better: "ProteinMPNN performs inverse folding (structure-to-sequence design) which is a different design modality -- it designs sequences for given backbones rather than generating new backbones"
+    when_worse: "ProteinMPNN requires an input backbone structure; RFD3 generates the backbone from scratch; they are complementary, not competing tools"
+
+complements:
+  - model: mpnn
+    workflow: "RFD3 generates novel protein backbone structures, then ProteinMPNN designs amino acid sequences predicted to fold into those structures -- the canonical two-step computational protein design pipeline"
+    example_protocol: null
+  - model: rf3
+    workflow: "After RFD3 generates a design and ProteinMPNN assigns a sequence, RF3 predicts the structure of the designed sequence; self-consistency (scTM between RFD3 design and RF3 prediction) filters viable designs from failures"
+    example_protocol: null
+  - model: boltz
+    workflow: "Use Boltz-2 to validate RFD3-designed complexes: predict the designed binder-target complex structure with Boltz and assess interface quality (ipSAE) and binding affinity (log10 IC50)"
+    example_protocol: null
+  - model: esm2
+    workflow: "Use ESM2 to analyze designed sequences for evolutionary plausibility: score designed sequences with predict_log_prob to verify they fall within the natural protein distribution; flag designs with very low log-probability as potentially unfoldable"
+    example_protocol: null

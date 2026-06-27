@@ -1,0 +1,85 @@
+model_slug: esm-if1
+display_name: ESM-IF1 Inverse Fold
+license:
+  type: MIT
+  url: https://github.com/facebookresearch/esm/blob/main/LICENSE
+  notes: ''
+molecule_types:
+- protein
+applicable_to:
+- protein
+- enzyme
+tasks:
+- inverse_folding
+primary_papers:
+- title: Learning inverse folding from millions of predicted structures
+  arxiv: '2208.01304'
+  doi: 10.1101/2022.04.10.487779
+  venue: ICML, 2022
+  year: 2022
+  authors:
+  - Chloe Hsu
+  - Robert Verkuil
+  - Jason Liu
+  - Zeming Lin
+  - Brian Hie
+  - Tom Sercu
+  - Adam Lerer
+  - Alexander Rives
+  pdf_r2: knowledge-base/models/esm_if1/primary/papers/hsu2022.pdf
+  md_r2: knowledge-base/models/esm_if1/primary/papers-md/hsu2022.md
+  figures_of_note: []
+source_repos:
+- type: github
+  url: https://github.com/facebookresearch/esm
+  commit: 2b369911bb5b4b0dda914521b9475cad1656b2ac
+  snapshot_r2: knowledge-base/models/esm_if1/primary/repos/esm-2b369911.tar.gz
+  readme_md_r2: knowledge-base/models/esm_if1/primary/pages/gh-esm-readme.md
+applied_literature:
+- title: 'AntiFold: improved structure-based antibody design using inverse folding'
+  doi: 10.1093/bioadv/vbae202
+  year: 2025
+  relevance: Fine-tunes ESM-IF1 on solved and predicted antibody structures to achieve state-of-the-art antibody sequence
+    recovery and refolding, demonstrating ESM-IF1 as a strong backbone for domain-specific inverse folding.
+  molecule_focus: antibody
+  task_focus: inverse_folding
+  pdf_r2: pending
+  md_r2: pending
+- title: Peptide binder design with inverse folding and protein structure prediction
+  doi: 10.1038/s42004-023-01029-7
+  year: 2023
+  relevance: Combines ESM-IF1 with Foldseek and AlphaFold2 for de novo peptide binder design, showing ESM-IF1 designs successful
+    binders for 6.5% of heteromeric interfaces versus 1.5% for ProteinMPNN.
+  molecule_focus: protein-peptide
+  task_focus: binder_design
+  pdf_r2: pending
+  md_r2: pending
+- title: 'ProteinBench: A Holistic Evaluation of Protein Foundation Models'
+  arxiv: '2409.06744'
+  year: 2024
+  relevance: Comprehensive benchmark evaluating multiple protein design models including ESM-IF1 and ProteinMPNN across inverse
+    folding and structure prediction tasks.
+  molecule_focus: protein
+  task_focus: benchmarking
+  pdf_r2: knowledge-base/models/esm_if1/applied/papers/unknown2024.pdf
+  md_r2: pending
+- title: Advancing protein evolution with inverse folding models integrating structural and evolutionary constraints
+  doi: 10.1016/j.cell.2025.06.014
+  year: 2025
+  relevance: Introduces AiCE, which samples mutations from inverse folding models (including ESM-IF1) with structural and
+    evolutionary constraints; AiCEsingle outperforms other AI methods by 36-90% across 60 deep mutational scanning datasets,
+    demonstrating ESM-IF1 as a practical backbone for guided protein evolution.
+  molecule_focus: protein
+  task_focus: protein_engineering
+  pdf_r2: pending
+  md_r2: pending
+- title: Benchmarking and Consensus Ranking of Inverse Folding Models for Protein-Ligand Interface Design
+  doi: 10.1145/3768322.3769031
+  year: 2025
+  relevance: Evaluates ESM-IF1 alongside ProteinMPNN, LigandMPNN, CARBonAra, and ProRefiner on 25,716 protein-ligand complexes;
+    consensus-ranked sequences using a LightGBM LambdaMART model outperform individual models in stability, binding affinity,
+    and structural fidelity.
+  molecule_focus: protein-ligand
+  task_focus: interface_design
+  pdf_r2: pending
+  md_r2: pending

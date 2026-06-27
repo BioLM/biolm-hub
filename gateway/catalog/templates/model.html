@@ -1,0 +1,52 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ model_info.display_name }} - BioLM API Catalog</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <a href="/catalog" class="back-link">&larr; Back to Catalog</a>
+            <h1>{{ model_info.display_name }}</h1>
+        </header>
+        <main>
+            {% for endpoint in model_info.endpoints %}
+                <div class="endpoint-card">
+                    <h2>{{ endpoint.name }}</h2>
+                    <p class="endpoint-path"><code>{{ endpoint.method }} {{ endpoint.path }}</code></p>
+                    {% if endpoint.description %}
+                        <p>{{ endpoint.description }}</p>
+                    {% endif %}
+
+                    <form class="api-form" data-endpoint="{{ endpoint.path }}" data-schema='{{ (endpoint.request_schema or {}) | tojson | escape }}'>
+
+                        <div id="params-container"></div>
+
+                        <div id="items-section" style="display: none;">
+                            <h3>Items</h3>
+                            <div id="items-container"></div>
+                            <div class="item-controls">
+                                <button type="button" id="add-item-btn">+ Add Item</button>
+                            </div>
+                        </div>
+
+                        <button type="submit">Submit</button>
+                    </form>
+
+                    <div class="response-area">
+                        <pre><code>Response will appear here...</code></pre>
+                    </div>
+                </div>
+            {% endfor %}
+        </main>
+    </div>
+    <script src="/static/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+# comparison.yaml — Model Comparison Metadata
+# Machine-readable guidance for model selection.
+# Generated as part of Phase 3.5 of the model-knowledge-base workflow.
+#
+# Requirements:
+#   - strengths, weaknesses, use_when, dont_use_when: 5+ entries each (min 3)
+#   - alternatives, complements: 1+ entries where applicable
+#   - All referenced model slugs must exist in models/
+
+model_slug: "zymctrl"
+display_name: "ZymCTRL"
+last_updated: "2026-03-17"
+
+strengths:
+  - "EC-number conditioned generation enables targeted enzyme design — the only model on the platform that directly accepts an enzymatic function specification (EC number) as a generation control tag"
+  - "Trained on 37M enzyme sequences from UniProt with EC annotations, providing dense coverage of the enzyme classification hierarchy across all seven major EC classes"
+  - "Experimentally validated: generated carbonic anhydrases (EC 4.2.1.1) showed catalytic activity, demonstrating the model produces functional enzymes, not just statistically plausible sequences"
+  - "Dual-action API (generate + encode) provides both enzyme generation and enzyme-function-aware embeddings in a single deployment"
+  - "Perplexity-based filtering (threshold <1.75) provides a practical quality metric for ranking generated candidates before experimental testing"
+  - "Fine-tuning capability demonstrated on lactate dehydrogenase (EC 1.1.1.27), enabling specialization for specific EC classes when deeper coverage is needed"
+  - "Generated sequences average ~53% identity to natural proteins — novel enough to explore new sequence space while maintaining fold-level similarity to natural enzymes"
+  - "Apache-2.0 license permits unrestricted commercial and academic use for enzyme engineering applications"
+
+weaknesses:
+  - "Enzyme-only model — cannot generate non-enzyme proteins; antibodies, structural proteins, binding proteins, and other non-catalytic proteins are outside its training distribution"
+  - "Single-chain generation only — cannot design multi-subunit enzyme complexes or model intersubunit interactions"
+  - "Maximum sequence length of ~1000 amino acids (1024 token limit includes EC number and control tokens) excludes very large enzymes"
+  - "No structure awareness — generates sequences without 3D geometric constraints; generated enzymes must be structurally validated with separate tools (Boltz, ESMFold)"
+  - "Performance varies by EC class representation in training data — rare or recently classified EC numbers may produce lower-quality sequences"
+  - "738M parameters on a T4 GPU is moderate cost; not as lightweight as CPU-only options for scoring tasks"
+  - "Cannot model enzymes requiring post-translational modifications (glycosylation, phosphorylation) or metal cofactors for activity"
+
+use_when:
+  - "You need to design novel enzymes with a specific catalytic function and know the target EC number"
+  - "You are exploring enzyme sequence space for a given EC class and need diverse candidates (~53% average identity to natural enzymes) for experimental screening"
+  - "You need function-aware enzyme embeddings that capture catalytic classification rather than just sequence similarity"
+  - "You are building an enzyme engineering pipeline where candidates must be ranked by perplexity-based fitness scores before experimental validation"
+  - "You are designing enzymes for industrial biocatalysis, pharmaceutical synthesis, environmental remediation, or carbon capture and need computationally generated starting points"
+  - "You need zero-shot enzyme generation for a specific EC class without fine-tuning — the model covers all seven major EC classes out of the box"
+  - "You are fine-tuning a generative model for a specific enzyme family and need a pre-trained enzyme-specialized starting point"
+
+dont_use_when:
+  - "You need to generate non-enzyme proteins such as antibodies, structural proteins, or binding proteins (use progen2 for general proteins or the OAS variant for antibodies)"
+  - "You need structure-conditioned sequence design from a target backbone (use mpnn for comprehensive inverse folding or esm_if1 for lightweight inverse folding)"
+  - "You need protein embeddings for general downstream ML tasks beyond enzyme function (use esm2, which provides broader protein representations)"
+  - "You need to design multi-subunit enzyme complexes with modeled intersubunit contacts"
+  - "You need to generate sequences longer than ~1000 amino acids"
+  - "You are designing proteins where the desired function is not well-described by an EC number (e.g., binding, transport, signaling) — use ProGen2 or DSM instead"
+  - "You need masked infilling to design specific enzyme regions while fixing the scaffold (use dsm, which supports masked diffusion)"
+  - "You need protein-protein interaction-aware enzyme design (use dsm with the PPI variant)"
+
+alternatives:
+  - model: "progen2"
+    when_better: "Four variants covering general proteins, antibodies (OAS), and metagenomic proteins (BFD90); broader protein type coverage beyond enzymes; bidirectional log-likelihood scoring"
+    when_worse: "No EC-number conditioning — cannot target specific catalytic functions; not enzyme-specialized; ZymCTRL's generated enzymes have been experimentally validated for catalytic activity"
+  - model: "dsm"
+    when_better: "Masked diffusion enables bidirectional generation and infilling; provides embeddings, scoring, and generation; PPI variant for interaction design; newer (2025) with diffusion-based approach"
+    when_worse: "Not enzyme-specialized and has no function conditioning mechanism; ZymCTRL's EC conditioning directly targets catalytic function, which DSM cannot replicate"
+  - model: "esm2"
+    when_better: "Best general-purpose protein embeddings and fitness scoring; five size variants; widest ecosystem compatibility"
+    when_worse: "Cannot generate new enzyme sequences; encoder-only; no function conditioning; ZymCTRL is purpose-built for enzyme design"
+  - model: "esm_if1"
+    when_better: "Structure-conditioned inverse folding ensures designed sequences are compatible with a target backbone geometry"
+    when_worse: "Requires input structure; no function conditioning; not enzyme-specialized; ZymCTRL generates enzymes from EC number alone without structural input"
+
+complements:
+  - model: "esm2"
+    workflow: "Generate enzyme candidates with ZymCTRL conditioned on a target EC number, then score them with ESM-2 pseudo-log-likelihood to filter for sequences that are both enzymatically plausible (low ZymCTRL perplexity) and evolutionarily plausible (high ESM-2 likelihood)"
+    example_protocol: null
+  - model: "boltz"
+    workflow: "Generate enzyme sequences with ZymCTRL, then predict their 3D structures with Boltz to validate proper folding, active site geometry, and overall structural quality before experimental synthesis"
+    example_protocol: null
+  - model: "progen2"
+    workflow: "Use ZymCTRL for EC-conditioned enzyme generation when the target catalytic function is known, and ProGen2 for broader exploratory protein generation when exploring diverse protein families beyond a specific EC class"
+    example_protocol: null
+  - model: "mpnn"
+    workflow: "Generate enzyme sequences with ZymCTRL, predict structures with Boltz, then use ProteinMPNN to optimize specific regions of the enzyme (e.g., surface residues for stability) while preserving the ZymCTRL-designed core and active site"
+    example_protocol: null

@@ -1,0 +1,57 @@
+model_slug: deepviscosity
+display_name: DeepViscosity
+last_updated: "2026-03-17"
+
+strengths:
+  - "Only open-source, sequence-only viscosity classifier specifically designed for monoclonal antibody high-concentration formulations (150 mg/mL threshold at 20 cP)"
+  - "Ensemble of 102 ANN models provides uncertainty estimates (probability_std) that flag borderline predictions for experimental follow-up, enabling confidence-based triage"
+  - "87.5% accuracy on the independent Lai_mAb_16 test set (14/16 correctly classified), demonstrating reliable binary viscosity classification"
+  - "CPU-only inference with minimal resources (1 CPU, 2 GB RAM) -- one of the lightest models on the platform, enabling rapid screening of large antibody panels"
+  - "Optional DeepSP spatial property output (30 features across 10 antibody domains) reveals which CDR or framework regions drive high viscosity, guiding targeted engineering"
+  - "Requires only VH and VL amino acid sequences -- no 3D structure, no experimental data, no expression needed for initial screening"
+  - "MIT license enables unrestricted commercial use in pharmaceutical antibody development pipelines"
+
+weaknesses:
+  - "Antibody-only model -- ANARCI alignment requires antibody variable domains; non-antibody proteins (enzymes, receptors) cannot be processed and will fail"
+  - "Single Fv pair input only -- cannot model bispecific antibodies, nanobodies (VHH), or IgG formats beyond the Fv region; Fc effects on viscosity are not captured"
+  - "Training data from AstraZeneca humanized/human IgGs -- performance may degrade on antibodies from non-human sources or unusual germlines"
+  - "Binary classification (low vs high viscosity at 20 cP threshold) -- does not predict continuous viscosity values for more nuanced formulation decisions"
+  - "Cannot suggest specific mutations to reduce viscosity -- serves as a scoring function only, not a design tool"
+  - "Formulation effects (excipients, buffer composition, ionic strength) are not modeled; predictions reflect sequence-intrinsic viscosity risk only"
+
+use_when:
+  - "You are screening a panel of therapeutic antibody candidates and need to identify which ones are likely to have high viscosity at subcutaneous injection concentrations (100-200 mg/mL)"
+  - "You are in early-stage antibody discovery and want to de-risk viscosity liability before any protein expression or experimental viscosity measurement"
+  - "You want to understand which antibody regions (CDR-H3, framework) are driving predicted viscosity through DeepSP spatial property analysis"
+  - "You need rapid, inexpensive viscosity pre-screening to prioritize which candidates warrant experimental cone-and-plate rheometry"
+  - "You are developing subcutaneous antibody formulations and need to flag candidates likely to exceed the 20 cP injectability threshold"
+
+dont_use_when:
+  - "Your molecule is not a monoclonal antibody with paired VH and VL chains -- DeepViscosity requires IMGT-numberable antibody variable domains"
+  - "You are working with nanobodies, single-domain antibodies, or bispecific formats -- these are not supported by the paired VH/VL input requirement"
+  - "You need to predict general protein solubility rather than antibody-specific viscosity -- use CamSol or SoluProt instead"
+  - "You need continuous viscosity values rather than binary low/high classification -- DeepViscosity does not output viscosity in centipoise"
+  - "You need to account for formulation conditions (pH, excipients, concentration) in your viscosity prediction -- the model predicts sequence-intrinsic risk only"
+  - "You need predictions for non-human antibody formats that may not align well with IMGT numbering"
+
+alternatives:
+  - model: camsol
+    when_better: "CamSol provides general protein solubility prediction with per-residue profiles, pH-dependent analysis, and applicability to any protein including antibody variable domains"
+    when_worse: "CamSol predicts intrinsic solubility/aggregation propensity, not high-concentration viscosity specifically; the 20 cP threshold for subcutaneous injectability is a distinct biophysical property"
+  - model: soluprot
+    when_better: "SoluProt predicts E. coli expression solubility for general proteins, applicable when the concern is whether a protein can be produced, not whether it will be viscous at high concentration"
+    when_worse: "SoluProt addresses a fundamentally different problem (expression solubility in E. coli) and does not predict antibody viscosity at therapeutic concentrations"
+  - model: esm2
+    when_better: "ESM2 provides general protein embeddings that can be fine-tuned for custom viscosity prediction models; broader applicability to any protein type"
+    when_worse: "ESM2 does not predict viscosity out of the box; DeepViscosity is purpose-built with 102-model ensemble specifically trained on antibody viscosity data"
+
+complements:
+  - model: camsol
+    workflow: "Use DeepViscosity for viscosity classification of antibody candidates, then apply CamSol per-residue solubility profiling to identify aggregation-prone regions in high-viscosity candidates for targeted engineering"
+    example_protocol: null
+  - model: boltz
+    workflow: "For antibodies predicted as high-viscosity by DeepViscosity, use Boltz to predict the Fv structure and then analyze self-association interfaces with physics-based methods to understand the structural basis of high viscosity"
+    example_protocol: null
+  - model: biolmtox2
+    workflow: "Screen antibody candidates with DeepViscosity for viscosity risk and BioLMTox2 for toxicity risk as part of a multi-property developability assessment before experimental characterization"
+    example_protocol: null

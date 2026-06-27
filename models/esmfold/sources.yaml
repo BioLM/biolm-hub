@@ -1,0 +1,92 @@
+model_slug: esmfold
+display_name: ESMFold
+license:
+  type: MIT
+  url: https://github.com/facebookresearch/esm/blob/main/LICENSE
+  notes: ''
+molecule_types:
+- protein
+- complex
+applicable_to:
+- protein
+- enzyme
+tasks:
+- structure_prediction
+primary_papers:
+- title: Evolutionary-scale prediction of atomic-level protein structure with a language model
+  arxiv: '2207.09423'
+  doi: 10.1126/science.ade2574
+  venue: Science, 2023
+  year: 2023
+  authors:
+  - Zeming Lin
+  - Halil Akin
+  - Roshan Rao
+  - Brian Hie
+  - Zhongkai Zhu
+  - Wenting Lu
+  - Nikita Smetanin
+  - Robert Verkuil
+  - Ori Kabeli
+  - Yaniv Shmueli
+  - Allan dos Santos Costa
+  - Maryam Fazel-Zarandi
+  - Tom Sercu
+  - Salvatore Candido
+  - Alexander Rives
+  pdf_r2: knowledge-base/models/esmfold/primary/papers/lin2023.pdf
+  md_r2: knowledge-base/models/esmfold/primary/papers-md/lin2023.md
+  figures_of_note: []
+source_repos:
+- type: github
+  url: https://github.com/facebookresearch/esm
+  commit: 2b369911bb5b4b0dda914521b9475cad1656b2ac
+  snapshot_r2: knowledge-base/models/esmfold/primary/repos/esm-2b369911.tar.gz
+  readme_md_r2: knowledge-base/models/esmfold/primary/pages/gh-esm-readme.md
+applied_literature:
+- title: Protein-Peptide Docking with ESMFold Language Model
+  doi: 10.1021/acs.jctc.4c01585
+  year: 2025
+  relevance: Evaluates ESMFold for protein-peptide docking without MSAs, achieving 20-28% acceptable-quality poses with efficient
+    polyglycine linker approach.
+  molecule_focus: protein-peptide
+  task_focus: docking
+  pdf_r2: pending
+  md_r2: pending
+- title: 'DeepProSite: structure-aware protein binding site prediction using ESMFold and pretrained language model'
+  doi: 10.1093/bioinformatics/btad718
+  year: 2023
+  relevance: First study using ESMFold-predicted structures for protein binding site prediction via a topology-aware Graph
+    Transformer.
+  molecule_focus: protein
+  task_focus: binding_site_prediction
+  pdf_r2: pending
+  md_r2: pending
+- title: Fast, accurate ranking of engineered proteins by target-binding propensity using structure modeling
+  doi: 10.1016/j.ymthe.2024.04.003
+  year: 2024
+  relevance: APPRAISE method uses ESMFold to model engineered protein variants for rapid ranking of target-binding propensity
+    across AAVs, nanobodies, and miniproteins.
+  molecule_focus: protein
+  task_focus: protein_engineering
+  pdf_r2: pending
+  md_r2: pending
+- title: An end-to-end framework for the prediction of protein structure and fitness from single sequence
+  doi: 10.1038/s41467-024-51776-x
+  year: 2024
+  relevance: Introduces SPIRED-Fitness, an end-to-end framework benchmarked against ESMFold for joint protein structure and
+    fitness prediction from single sequence, achieving 5-fold inference acceleration while maintaining comparable accuracy.
+  molecule_focus: protein
+  task_focus: structure_prediction
+  pdf_r2: pending
+  md_r2: pending
+- title: Predicting Antimicrobial Peptides Using ESMFold-Predicted Structures and ESM-2-Based Amino Acid Features with Graph
+    Deep Learning
+  doi: 10.1021/acs.jcim.3c02061
+  year: 2024
+  relevance: Uses ESMFold-predicted structures as graph representations for antimicrobial peptide classification, showing
+    that GAT models built on ESMFold structures outperform 20 state-of-the-art methods on a 67,058-peptide dataset.
+  molecule_focus: peptide
+  task_focus: property_prediction
+  pdf_r2: pending
+  md_r2: pending

@@ -1,0 +1,66 @@
+model_slug: "immunefold"
+display_name: "ImmuneFold"
+last_updated: "2026-03-17"
+
+strengths:
+  - "Highest CDR-H3 accuracy among single-sequence antibody structure prediction methods, leveraging ESM-2 3B protein language model representations trained on 250M protein sequences"
+  - "Supports antibody-antigen complex prediction when provided with antigen PDB structure, enabling structural analysis of paratope-epitope interactions without experimental co-crystal structures"
+  - "Comprehensive confidence scoring with both global pTM (0-1 structural confidence) and per-residue pLDDT scores, allowing users to identify well-predicted vs uncertain regions"
+  - "Covers both antibodies and TCRs with dedicated checkpoints, including full TCR-pMHC complex modeling with peptide and MHC context for immunotherapy applications"
+  - "Supports nanobody (VHH) structure prediction via H-chain-only input mode, extending coverage beyond the paired antibody use case"
+  - "PLM-enhanced architecture captures deep evolutionary patterns from ESM-2 pre-training that improve loop prediction beyond what purely structural methods achieve"
+  - "Apache-2.0 license with no commercial restrictions, suitable for therapeutic antibody and TCR development pipelines"
+
+weaknesses:
+  - "Requires T4 GPU (16 GB RAM) for inference, making it more expensive than CPU-only alternatives like ImmuneBuilder and AbodyBuilder3's pLDDT variant"
+  - "Very recent publication (December 2024) with limited independent benchmarking and no applied literature yet, making long-term accuracy assessment uncertain"
+  - "Single action (predict) with no embedding, scoring, or sequence generation capabilities -- purely a structure prediction tool"
+  - "Minimum sequence length requirements (VH >= 90 AA, VL >= 85 AA) may reject truncated or partial antibody sequences that other tools can still process"
+  - "TCR variant requires all four chains (beta, alpha, peptide, MHC) as input, which limits usability when partial TCR information is available"
+  - "Does not have a dedicated nanobody sub-model with VHH-specific training like ImmuneBuilder's NanoBodyBuilder2; nanobody prediction uses the general antibody checkpoint"
+  - "Reliance on ESM-2 3B as a feature extractor means any limitations of ESM-2 (single-chain, no PTMs, truncation at ~1022 residues) propagate into structural predictions"
+
+use_when:
+  - "You need the highest-accuracy single-sequence antibody Fv structure prediction available, particularly for CDR-H3 loop conformations critical for binding analysis"
+  - "You need to predict antibody-antigen complex structures when you have the antigen PDB structure available, to model the binding interface without experimental co-crystallization"
+  - "You need TCR-pMHC complex modeling for immunotherapy applications, with full four-chain structural prediction including peptide and MHC context"
+  - "You want per-residue confidence scores (pLDDT) and global structural confidence (pTM) to assess prediction reliability before using structures for downstream design"
+  - "You are generating input structures for ProperMAB feature extraction or AntiFold inverse folding and want the most accurate predicted structures available"
+  - "You need nanobody structure prediction and prefer PLM-enhanced accuracy over the dedicated but non-PLM NanoBodyBuilder2 in ImmuneBuilder"
+
+dont_use_when:
+  - "You need CPU-only inference for high-throughput screening of large antibody libraries -- use ImmuneBuilder (all CPU) or AbodyBuilder3 pLDDT variant"
+  - "You need to predict structures for hundreds or thousands of sequences and cost is a primary concern -- GPU inference cost accumulates; use ImmuneBuilder for bulk screening"
+  - "You need sequence-level analysis (embeddings, scoring, generation) rather than structure prediction -- use AbLang2, IgBERT, NanoBERT, or IgT5"
+  - "You have partial TCR sequences without all four chains (beta, alpha, peptide, MHC) -- use ImmuneBuilder's TCRBuilder2 which handles paired alpha/beta chains only"
+  - "You need general protein structure prediction for non-immune targets -- use ESMFold or Boltz"
+  - "You need a well-established model with extensive independent benchmarking and community validation -- use ImmuneBuilder or AbodyBuilder3, which have more published validation"
+  - "You need structure prediction for antibody sequences shorter than the minimum length requirements (VH < 90 AA or VL < 85 AA)"
+
+alternatives:
+  - model: "immunebuilder"
+    when_better: "ImmuneBuilder runs entirely on CPU with dedicated sub-models for antibodies, nanobodies, and TCRs; more cost-effective for high-throughput screening and has a specific NanoBodyBuilder2 variant"
+    when_worse: "ImmuneBuilder achieves lower CDR accuracy without PLM enhancement and does not support antibody-antigen complex prediction or provide pLDDT confidence scores"
+  - model: "abodybuilder3"
+    when_better: "AbodyBuilder3 offers a CPU-only pLDDT variant for fast screening and a language variant with ProtT5 embeddings; from a well-established ABodyBuilder lineage with more published benchmarks"
+    when_worse: "AbodyBuilder3 is antibody-only (no TCR or nanobody variants) and does not support antibody-antigen complex prediction; ImmuneFold's ESM-2 3B features may provide better CDR accuracy"
+  - model: "esm2"
+    when_better: "ESM-2 provides general protein embeddings and pseudo-log-likelihoods for sequence-level analysis without needing 3D structure prediction; broader protein coverage"
+    when_worse: "ESM-2 is a sequence model that cannot predict 3D protein structures; for immune protein structures, ImmuneFold provides directly usable PDB coordinates"
+  - model: "mpnn"
+    when_better: "ProteinMPNN handles inverse folding (structure-to-sequence design) for any protein backbone, a complementary task to ImmuneFold's sequence-to-structure prediction"
+    when_worse: "ProteinMPNN solves the inverse problem (designing sequences for structures); ImmuneFold solves the forward problem (predicting structures from sequences)"
+
+complements:
+  - model: "propermab"
+    workflow: "Predict antibody Fv structure with ImmuneFold's highest-accuracy predictions, then extract 34 biophysical developability features with ProperMAB using the predicted atomic coordinates"
+    example_protocol: null
+  - model: "antifold"
+    workflow: "Predict antibody or nanobody structure with ImmuneFold, then use AntiFold for structure-conditioned CDR sequence design and variant library generation on the predicted structures"
+    example_protocol: null
+  - model: "ablang2"
+    workflow: "Use AbLang2 to score antibody sequences for evolutionary plausibility and generate germline-debiased embeddings, then predict structures for top candidates with ImmuneFold for structural analysis"
+    example_protocol: null
+  - model: "esm2"
+    workflow: "ImmuneFold uses ESM-2 3B internally as a feature extractor; use ESM-2 independently to generate sequence embeddings for downstream ML tasks, complementing ImmuneFold's structural predictions with sequence-level fitness scores"
+    example_protocol: null

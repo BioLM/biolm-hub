@@ -1,0 +1,66 @@
+model_slug: "nanobert"
+display_name: "NanoBERT"
+last_updated: "2026-03-17"
+
+strengths:
+  - "Only nanobody-specialized language model on the platform, trained exclusively on VHH sequences to capture camelid heavy-chain-only antibody patterns including hallmark residue substitutions at positions 37, 44, 45, and 47"
+  - "Gene-agnostic design does not rely on germline gene assignments, learning sequence patterns directly from data and avoiding biases toward particular VHH germline families"
+  - "Three complementary actions (encode, generate, predict_log_prob) covering nanobody-specific embedding, sequence completion, and plausibility scoring in a single model"
+  - "Handles extended CDR3 loops characteristic of nanobodies (often 15-25+ residues), which are structurally and functionally distinct from conventional VH CDR3 loops"
+  - "CPU-only inference (2 GB RAM, no GPU) makes it the lightest antibody model on the platform, enabling cost-effective high-throughput screening of nanobody libraries"
+  - "Captures the unique biophysical constraints of single-domain antibodies, including adapted framework residues that compensate for the absence of a VL partner"
+  - "MIT license with no commercial restrictions, suitable for commercial nanobody drug development and diagnostics applications"
+
+weaknesses:
+  - "Cannot process paired antibody sequences (heavy + light chain); use AbLang2 or IgBERT for conventional paired antibodies"
+  - "Maximum sequence length of 154 residues, which may truncate unusually long nanobody sequences or sequences with extended N/C-terminal tags"
+  - "Training dataset is smaller than general antibody datasets (OAS, Exscientia), as nanobody sequences are less abundant in public databases, potentially limiting representation diversity"
+  - "Not validated on shark VNAR sequences despite structural similarity to VHH; applicability to non-camelid single-domain antibodies is uncertain"
+  - "Recent publication (2024) means limited independent benchmarking and applied literature compared to established models like AbLang2 and IgBERT"
+  - "No structure awareness: predictions are purely sequence-based and cannot account for the 3D conformation of extended CDR3 loops"
+  - "Single variant only with no size options, offering no speed/quality tradeoff for different use cases"
+
+use_when:
+  - "You are working specifically with camelid nanobody (VHH) sequences for engineering, design, or screening and need embeddings that capture nanobody-specific sequence constraints"
+  - "You need to restore missing residues in nanobody sequences from phage display selections or NGS data, using VHH-specific sequence context for CDR3 recovery"
+  - "You want to score engineered nanobody variants for plausibility using log-probability, ensuring designed sequences are consistent with natural VHH patterns"
+  - "You are performing in silico mutational scanning of nanobody positions to identify which substitutions are tolerated at each position for library design"
+  - "You need to cluster nanobody repertoires by functional similarity using embedding distances that reflect VHH-specific biophysical properties"
+  - "You want a lightweight, CPU-only model for rapid nanobody sequence evaluation without GPU infrastructure requirements"
+
+dont_use_when:
+  - "You are working with conventional paired antibodies (VH/VL) -- use AbLang2 for germline-debiased paired analysis or IgBERT for paired and unpaired analysis"
+  - "Your nanobody sequences exceed 154 residues -- use IgBERT (unpaired variant) which handles longer sequences, though it lacks nanobody-specific training"
+  - "You need 3D structure prediction of nanobodies -- use ImmuneBuilder (NanoBodyBuilder2 variant) or ImmuneFold for nanobody structure prediction"
+  - "You need structure-conditioned nanobody sequence design -- use AntiFold in VHH mode, which designs structurally compatible CDR sequences given a backbone structure"
+  - "You want to compare nanobody sequences with other protein types -- use ESM-2, which covers the full protein universe"
+  - "You need antibody repertoire annotation with numbering and germline assignment -- use SADIE as a preprocessing step before NanoBERT"
+  - "You need developability property predictions for therapeutic nanobodies -- NanoBERT provides general embeddings, not property-specific predictions"
+
+alternatives:
+  - model: "igbert"
+    when_better: "IgBERT (unpaired variant) handles longer antibody sequences without the 154-residue limit and supports sequence generation and log-probability scoring for any single-chain immunoglobulin"
+    when_worse: "IgBERT is not nanobody-specialized and does not capture VHH hallmark residue patterns, extended CDR3 diversity, or the unique framework adaptations of single-domain antibodies"
+  - model: "ablang2"
+    when_better: "AbLang2 provides germline-debiased paired antibody representations with four actions and a well-validated training procedure on the large OAS paired dataset"
+    when_worse: "AbLang2 requires paired heavy-light chain input and cannot process nanobodies at all; NanoBERT is the only option for VHH-specific analysis"
+  - model: "esm2"
+    when_better: "ESM-2 covers all proteins with 5 size variants and the broadest ecosystem; useful when comparing nanobodies to other protein families or when nanobody-specific features are not needed"
+    when_worse: "ESM-2 is not antibody-specialized and particularly not nanobody-specialized; it cannot capture VHH hallmark substitutions or the distinctive CDR3 length distribution of nanobodies"
+  - model: "igt5"
+    when_better: "IgT5 (unpaired variant) uses T5 architecture with relative position biases and is trained on a larger antibody dataset, potentially capturing broader sequence patterns"
+    when_worse: "IgT5 is not nanobody-specialized, is embedding-only (no generate or predict_log_prob), and lacks training on VHH-specific sequences"
+
+complements:
+  - model: "sadie"
+    workflow: "Use SADIE to number and annotate nanobody sequences (processed as H chains), extract CDR boundaries, then pass the annotated VHH sequences to NanoBERT for embedding, scoring, or sequence completion"
+    example_protocol: null
+  - model: "immunebuilder"
+    workflow: "Use NanoBERT to score and rank nanobody variants by sequence plausibility, then predict 3D structures for top candidates using ImmuneBuilder's NanoBodyBuilder2 variant for structural analysis"
+    example_protocol: null
+  - model: "antifold"
+    workflow: "Use NanoBERT predict_log_prob for sequence-level scoring of nanobody candidates, then use AntiFold in VHH mode on predicted structures for structure-conditioned CDR optimization"
+    example_protocol: null
+  - model: "esm2"
+    workflow: "Generate both NanoBERT VHH-specific embeddings and ESM-2 general protein embeddings for the same nanobody sequences, using both representation types as complementary features for downstream property prediction models"
+    example_protocol: null

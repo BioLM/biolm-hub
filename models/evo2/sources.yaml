@@ -1,0 +1,106 @@
+model_slug: evo2
+display_name: Evo2
+license:
+  type: Apache-2.0
+  url: https://github.com/ArcInstitute/evo2/blob/main/LICENSE
+  notes: ''
+molecule_types:
+- dna
+applicable_to:
+- dna
+- genomics
+- synthetic_biology
+tasks:
+- embedding
+- sequence_generation
+- property_prediction
+primary_papers:
+- title: Genome modeling and design across all domains of life with Evo 2
+  arxiv: '2503.11265'
+  doi: ''
+  venue: bioRxiv, 2025
+  year: 2025
+  authors:
+  - Garyk Brixi
+  - Matthew G. Durber
+  - Eric Nguyen
+  - Michael Poli
+  - Liam J. Bartie
+  - Brian L. Hie
+  - Christopher Re
+  - Patrick D. Hsu
+  pdf_r2: knowledge-base/models/evo2/primary/papers/brixi2025.pdf
+  md_r2: knowledge-base/models/evo2/primary/papers-md/brixi2025.md
+  figures_of_note: []
+source_repos:
+- type: github
+  url: https://github.com/ArcInstitute/evo2
+  commit: 67a079496b2a7e3630e519e23bcc007800479a15
+  snapshot_r2: knowledge-base/models/evo2/primary/repos/evo2-67a07949.tar.gz
+  readme_md_r2: knowledge-base/models/evo2/primary/pages/gh-evo2-readme.md
+- type: huggingface
+  url: https://huggingface.co/arcinstitute/evo2_1b_base
+  commit: fb7b4083b00804ee7a13fdb00631ca8e4ed1ca6d
+  snapshot_r2: pending
+  page_md_r2: knowledge-base/models/evo2/primary/pages/hf-evo2_1b_base.md
+applied_literature:
+- title: Genome modelling and design across all domains of life with Evo 2
+  doi: 10.1038/s41586-026-10176-5
+  year: 2025
+  relevance: Published Nature version of the Evo 2 paper demonstrating zero-shot prediction of BRCA1 variant pathogenicity
+    with over 90% accuracy, gene essentiality identification, and whole-genome design across all domains of life.
+  molecule_focus: dna
+  task_focus: variant_effect_prediction
+  pdf_r2: pending
+  md_r2: pending
+- title: Genomic language models could transform medicine but not yet
+  doi: 10.1038/s41746-025-01603-4
+  year: 2025
+  relevance: Perspective article examining Evo2 and genomic language models in the context of precision medicine, discussing
+    technical barriers, data privacy, and dual-use risks that shape clinical translation.
+  molecule_focus: dna
+  task_focus: genomics
+  pdf_r2: pending
+  md_r2: pending
+- title: 'Interpreting Evo 2: Arc Institute''s Next-Generation Genomic Foundation Model'
+  doi: 10.5281/zenodo.14895891
+  year: 2025
+  relevance: Applies sparse autoencoders to Evo 2 for mechanistic interpretability, revealing biologically meaningful features
+    including exon-intron boundaries, transcription factor binding sites, and protein structural elements learned from DNA
+    alone.
+  molecule_focus: dna
+  task_focus: interpretability
+  pdf_r2: pending
+  md_r2: pending
+- title: A Benchmark of Evo2 Genomic AI Models for Efficient and Practical Deployment
+  doi: 10.1101/2025.09.10.675279
+  year: 2025
+  relevance: Independent benchmark evaluating Evo2 7B and 40B models for practical deployment in cancer genomics. FP8 precision
+    on H800 GPUs enables 4x faster inference than A100 while maintaining AUC 0.88-0.95. The 7B model outperformed the 40B
+    variant which suffered accuracy drops (AUC as low as 0.48) on non-FP8 hardware. Validated on bladder urothelial carcinoma
+    and ovarian cancer datasets.
+  molecule_focus: dna
+  task_focus: variant_effect_prediction
+  pdf_r2: knowledge-base/models/evo2/applied/papers/unknown2025d.pdf
+  md_r2: pending
+- title: Evaluating DNA function understanding in genomic language models using evolutionarily implausible sequences
+  arxiv: '2506.10271'
+  year: 2025
+  relevance: Introduces the Nullsettes benchmark testing 12 genomic language models on synthetic expression cassettes with
+    no evolutionary precedent. Only Evo2-7B and GENERanno-0.5B deliver strong, consistent performance detecting loss-of-function
+    mutations, while most other gLMs fail. Demonstrates Evo2's superior functional generalization beyond evolutionary pattern-matching.
+  molecule_focus: dna
+  task_focus: benchmark
+  pdf_r2: knowledge-base/models/evo2/applied/papers/unknown2025e.pdf
+  md_r2: pending
+- title: 'Benchmarking DNA Foundation Models: Biological Blind Spots in Evo2 Variant-Effect Prediction'
+  doi: 10.64898/2026.03.10.710786
+  year: 2026
+  relevance: Develops controlled evaluation metrics based on well-characterized nuclear and mitochondrial sequence features
+    to identify systematic blind spots in Evo2, including weaknesses in short-range biological signals (codon usage bias)
+    and sensitivity to biologically neutral contextual features. Challenges zero-shot pathogenicity prediction claims and
+    provides framework for standardized evaluation.
+  molecule_focus: dna
+  task_focus: variant_effect_prediction
+  pdf_r2: pending
+  md_r2: pending

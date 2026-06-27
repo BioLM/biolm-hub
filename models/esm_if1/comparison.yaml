@@ -1,0 +1,77 @@
+# comparison.yaml — Model Comparison Metadata
+# Machine-readable guidance for model selection.
+# Generated as part of Phase 3.5 of the model-knowledge-base workflow.
+#
+# Requirements:
+#   - strengths, weaknesses, use_when, dont_use_when: 5+ entries each (min 3)
+#   - alternatives, complements: 1+ entries where applicable
+#   - All referenced model slugs must exist in models/
+
+model_slug: "esm_if1"
+display_name: "ESM-IF1 Inverse Fold"
+last_updated: "2026-03-17"
+
+strengths:
+  - "Trained on 12M AlphaFold2-predicted structures in addition to experimental PDB structures, giving it exposure to a much wider range of backbone geometries than models trained on experimental structures alone"
+  - "Lightweight inverse folding model on a single T4 GPU (16 GB RAM), making it significantly cheaper to run than larger structure-conditioned models"
+  - "Leverages ESM pretrained representations, combining structural geometry understanding with evolutionary sequence knowledge from the ESM protein language model family"
+  - "Published at ICML 2022 with extensive benchmarking on sequence recovery, demonstrating competitive performance against ProteinMPNN on standard inverse folding benchmarks"
+  - "Successfully fine-tuned for antibody-specific inverse folding (AntiFold), demonstrating its value as a backbone for domain-specific adaptation"
+  - "Temperature-controlled sampling enables generation of diverse sequence libraries from a single backbone, from conservative (low T) to exploratory (high T)"
+  - "MIT license permits unrestricted commercial and academic use"
+  - "Simple single-action API (generate from PDB) with straightforward input format for rapid integration into protein design pipelines"
+
+weaknesses:
+  - "Single-chain only — multichain backbone support is not implemented (raises NotImplementedError), limiting use for protein complex design"
+  - "Lower sequence recovery than ProteinMPNN on experimental structures in head-to-head benchmarks, particularly for buried core residues"
+  - "No ligand, cofactor, or metal ion awareness — designs sequences without considering bound small molecules that may be critical for enzyme active sites"
+  - "No membrane-aware variant — cannot account for the lipid bilayer environment when designing membrane protein sequences"
+  - "Requires PDB-format backbone structure as input — cannot generate sequences from sequence alone; users must have or predict a 3D structure first"
+  - "No explicit solubility optimization — unlike SolubleMPNN, does not bias designs toward improved solubility"
+  - "Performance degrades on intrinsically disordered regions that lack well-defined backbone geometry"
+
+use_when:
+  - "You need lightweight, fast inverse folding on a T4 GPU and the input is a single-chain protein structure"
+  - "You are screening many backbone structures and need cost-effective sequence design before investing in more comprehensive tools (MPNN) for top candidates"
+  - "You want to leverage ESM pretrained protein language model representations in your inverse folding pipeline"
+  - "You are building a domain-specific inverse folding model and need a strong pre-trained backbone to fine-tune (as demonstrated by AntiFold for antibodies)"
+  - "You need a quick sequence plausibility assessment for a structure-sequence pair via recovery rate, without requiring full multi-chain or ligand-aware analysis"
+  - "You are performing scaffold-based protein design on computationally generated backbones and benefit from ESM-IF1's training on 12M AlphaFold2-predicted structures"
+
+dont_use_when:
+  - "You need to design sequences for multi-chain protein complexes (use mpnn, which supports multi-chain inputs natively)"
+  - "You need ligand-aware, cofactor-aware, or metal-aware sequence design for enzyme active sites (use mpnn with the LigandMPNN variant)"
+  - "You need the highest possible sequence recovery and experimental success rate (use mpnn, which has more extensive experimental validation and slightly higher recovery on standard benchmarks)"
+  - "You need membrane-aware sequence design that accounts for the lipid bilayer environment (use mpnn with global-membrane or per-residue-membrane variants)"
+  - "You need antibody-specific inverse folding with CDR awareness and germline knowledge (use antifold, which is fine-tuned from ESM-IF1 for antibodies)"
+  - "You need to generate protein sequences without a backbone structure (use progen2, zymctrl, or dsm for sequence-based generation)"
+  - "You need protein embeddings or fitness scoring without structure input (use esm2 for sequence-based analysis)"
+  - "You need to redesign surface residues with explicit solubility optimization (use mpnn with the SolubleMPNN variant)"
+
+alternatives:
+  - model: "mpnn"
+    when_better: "Higher sequence recovery on experimental structures, six context-aware variants (ligand, membrane, soluble, side-chain), multi-chain support, and the most extensive experimental validation of any inverse folding model"
+    when_worse: "ESM-IF1 benefits from ESM pretrained representations and training on 12M AlphaFold2 structures; may perform better on computationally designed backbones that differ from experimental PDB structures"
+  - model: "antifold"
+    when_better: "Antibody-specialized inverse folding fine-tuned from ESM-IF1, with CDR-aware sequence design and germline preference modeling for antibody engineering"
+    when_worse: "Antibody-only; ESM-IF1 handles any single-chain protein, making it the general-purpose choice for non-antibody applications"
+  - model: "progen2"
+    when_better: "Sequence-based generation requires no structural input; four variants cover general proteins, antibodies, and metagenomic proteins"
+    when_worse: "No structure conditioning — cannot ensure designed sequences are compatible with a specific backbone geometry; ESM-IF1's structure-conditioned design guarantees backbone compatibility"
+  - model: "dsm"
+    when_better: "Masked diffusion enables bidirectional generation and infilling from sequence alone; PPI variant for interaction-aware design; provides embeddings and scoring"
+    when_worse: "Not structure-conditioned; DSM generates from sequence, not backbone geometry; ESM-IF1 directly optimizes for structural compatibility"
+
+complements:
+  - model: "esm2"
+    workflow: "Design sequences with ESM-IF1 from a target backbone, then score designed sequences with ESM-2 pseudo-log-likelihood to verify evolutionary plausibility and filter designs that deviate too far from natural protein distributions"
+    example_protocol: null
+  - model: "boltz"
+    workflow: "When no experimental structure is available, predict a backbone structure with Boltz from an existing sequence, then use ESM-IF1 to redesign the sequence for the predicted backbone — enabling structure-based design from sequence alone"
+    example_protocol: null
+  - model: "mpnn"
+    workflow: "Use ESM-IF1 for rapid initial screening of many backbone candidates, then apply MPNN (with ligand-aware or solubility variants as needed) for detailed sequence design on the most promising backbones"
+    example_protocol: null
+  - model: "esmfold"
+    workflow: "Self-consistency validation: design sequences with ESM-IF1, predict their structures with ESMFold, and retain only designs where the predicted structure matches the target backbone (scRMSD < 2 A)"
+    example_protocol: null

@@ -1,0 +1,78 @@
+# comparison.yaml — Model Comparison Metadata
+# Machine-readable guidance for model selection.
+# Generated as part of Phase 3.5 of the model-knowledge-base workflow.
+#
+# Requirements:
+#   - strengths, weaknesses, use_when, dont_use_when: 5+ entries each (min 3)
+#   - alternatives, complements: 1+ entries where applicable
+#   - All referenced model slugs must exist in models/
+
+model_slug: "evo2"
+display_name: "Evo2"
+last_updated: "2026-03-17"
+
+strengths:
+  - "Multi-domain training on 9 trillion nucleotides spanning prokaryotes, eukaryotes, and viruses — the broadest genomic training data of any DNA model on the platform"
+  - "Three-action API (encode + predict_log_prob + generate) provides embeddings, fitness scoring, and sequence generation in a single model deployment"
+  - "Up to 1M-token context (7B variant) enables genome-scale analysis including whole gene loci, long-range enhancer-promoter interactions, and multi-gene regions"
+  - "Published demonstration of zero-shot BRCA1 pathogenic variant prediction with over 90% accuracy, validating clinical-relevance for eukaryotic variant effect prediction"
+  - "Layer-selectable embedding extraction enables users to choose representation depth — shallow layers for local patterns, deep layers for long-range dependencies"
+  - "Single-nucleotide (byte-level) tokenization preserves full sequence resolution without tokenization artifacts, enabling precise variant effect analysis"
+  - "Multiple size variants (1B base, 7B base) provide a compute-quality tradeoff for different deployment scenarios"
+  - "Apache-2.0 license permits unrestricted commercial and academic use"
+
+weaknesses:
+  - "Higher compute requirements than embedding-only models — the 1B variant requires an L4 GPU, and the 7B variant requires even more resources for long-context inference"
+  - "Recent model (2025) with limited independent benchmarking beyond the original publication; less established than NT or DNABERT-2 for embedding tasks"
+  - "StripedHyena architecture is less widely adopted than standard transformers, potentially complicating integration with existing downstream pipelines"
+  - "Generated sequences require computational and experimental validation — the model provides statistical plausibility, not guaranteed function"
+  - "Byte-level tokenization produces very long token sequences, resulting in slower inference per nucleotide compared to BPE (DNABERT-2) or 6-mer (NT) approaches"
+  - "No built-in function conditioning for generation — cannot specify target gene function or regulatory activity during sequence design"
+  - "Mechanistic interpretability study (sparse autoencoders) revealed meaningful internal features but also highlighted that the model's decision-making is not yet fully understood"
+
+use_when:
+  - "You need to analyze or generate DNA sequences across all domains of life — prokaryotic, eukaryotic, and viral — with a single model"
+  - "You need long-range genomic context (>12 kbp) for tasks like enhancer-promoter interaction prediction, whole-locus variant effect scoring, or multi-gene region analysis"
+  - "You need DNA embeddings, log-probability scoring, and sequence generation from a single deployment for maximum pipeline flexibility"
+  - "You are predicting variant effects in eukaryotic genomes (especially human clinical variants) where Evo 1.x's prokaryotic training bias would be a limitation (Evo2 is trained across all domains of life)"
+  - "You need layer-selectable embeddings to experiment with different representation depths for your specific downstream task"
+  - "You are designing synthetic DNA sequences that must be plausible across multiple domains of life, not just prokaryotes"
+  - "You need genome-scale DNA generation for synthetic biology applications involving eukaryotic-style genomic organization"
+
+dont_use_when:
+  - "You need a lightweight, cost-effective model for high-throughput DNA embedding or scoring on T4 GPUs (use dnabert2 or nt, which are much smaller)"
+  - "You need only DNA embeddings and the model's independent validation track record is critical for your application (use nt, which has years of benchmark validation)"
+  - "You need codon optimization, restriction site checking, or deterministic DNA feature extraction (use dna_chisel)"
+  - "You are working exclusively with short regulatory elements (<1 kbp) where Evo2's long-context capability provides no advantage over cheaper models like DNABERT-2"
+  - "You need protein-level analysis from coding DNA (translate and use esm2 directly)"
+  - "You need function-conditioned DNA generation with specific functional labels (no built-in conditioning mechanism; consider custom fine-tuning or prompt engineering)"
+  - "You need RNA-specific analysis — Evo2 accepts only ACGT characters"
+  - "You need a model with extensive, multi-year real-world deployment experience (use nt or dnabert2)"
+
+alternatives:
+  - model: "evo"
+    when_better: "More mature publication (Science 2024) with experimental validation of generated sequences; simpler model for prokaryotic-focused tasks where eukaryotic coverage is unnecessary"
+    when_worse: "Prokaryotic-only training, no embedding endpoint, shorter context (8 kbp vs up to 1M), and single model size; Evo2 is strictly more capable for multi-domain analysis"
+  - model: "nt"
+    when_better: "Well-established multi-species embeddings with years of benchmark validation, lower compute requirements (T4 GPU), and two practical size variants"
+    when_worse: "No generation capability, shorter context (~12 kbp), encoder-only architecture, and non-commercial license; Evo2 provides generation plus broader genomic coverage"
+  - model: "dnabert2"
+    when_better: "Lightweight (117M on T4), BPE tokenization, Apache-2.0 license, and extensive GUE benchmark validation for regulatory element tasks"
+    when_worse: "Much shorter context (~4-8 kbp), no generation, smaller capacity, and masked LM architecture; Evo2 is superior for long-range and generative tasks"
+  - model: "omni_dna"
+    when_better: "BPE tokenization may better capture intermediate-scale motifs; recent autoregressive architecture designed for multi-task flexibility"
+    when_worse: "Smaller model (1B), no generation endpoint, limited validation, and no multi-domain training; Evo2 is more capable across all dimensions"
+
+complements:
+  - model: "nt"
+    workflow: "Use Evo2 for long-range DNA generation or whole-locus design, then use NT to provide focused gene-scale embedding analysis and variant effect scoring on regions of interest within the generated sequences"
+    example_protocol: null
+  - model: "dna_chisel"
+    workflow: "Generate coding DNA with Evo2, then use DNA-Chisel to optimize codon usage (CAI), verify synthesis feasibility (GC content, homopolymers, restriction sites), and prepare sequences for gene synthesis"
+    example_protocol: null
+  - model: "esm2"
+    workflow: "Use Evo2 to analyze or generate genomic DNA, translate coding regions, then use ESM-2 to characterize the encoded proteins — creating a DNA-to-protein analysis pipeline spanning both modalities"
+    example_protocol: null
+  - model: "dnabert2"
+    workflow: "Use Evo2 for long-context genomic analysis and DNABERT-2 for fine-grained BPE-resolution characterization of regulatory elements within specific regions of interest"
+    example_protocol: null

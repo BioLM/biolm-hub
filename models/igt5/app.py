@@ -1,0 +1,217 @@
+import modal
+
+from models.commons.billing.mixin import BillingMixinSnap
+from models.commons.core.decorator import modal_endpoint
+from models.commons.modal.downloader import setup_download_layer
+from models.commons.modal.source import setup_source_layer
+from models.commons.model.config import biolm_model_class
+from models.commons.util.config import (
+    cloudflare_r2_secret,
+    common_requirements,
+    redis_url_secret,
+)
+from models.commons.util.device import get_torch_device
+from models.commons.util.environment import parse_variant
+from models.igt5.config import MODEL_FAMILY, model_id_mapping
+from models.igt5.download import get_model_dir
+from models.igt5.schema import (
+    IgT5EncodeIncludeOptions,
+    IgT5EncodeRequest,
+    IgT5EncodeResponse,
+    IgT5EncodeResponseResult,
+    IgT5ModelTypes,
+    IgT5Params,
+)
+
+variant_config = parse_variant(
+    env_var_name="MODEL_TYPE",
+    allowed_values=IgT5ModelTypes,
+    default=IgT5ModelTypes.PAIRED,
+)
+model_type = variant_config["MODEL_TYPE"]
+
+
+# Build Modal container image
+image = modal.Image.from_registry("pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime")
+# Setup download layer with model weights
+image = setup_download_layer(
+    image,
+    base_model_slug=IgT5Params.base_model_slug,
+    params_version=IgT5Params.params_version,
+    variant_config=variant_config,
+)
+# Add dependencies and packages
+image = (
+    image.apt_install("procps")  # Critical for computing container uptime
+    .uv_pip_install(common_requirements)
+    .uv_pip_install(
+        "transformers==4.48.1",
+        "sentencepiece==0.2.0",
+        "safetensors==0.5.3",
+    )
+)
+# Finally, add all model files
+image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
+
+
+# Define the app using unified config
+app_name, modal_resource_spec = MODEL_FAMILY.get_app_config(**variant_config)
+print(f"App name: {app_name}")
+app = modal.App(app_name, image=image)
+
+
+@app.cls(
+    image=image,
+    secrets=[cloudflare_r2_secret, redis_url_secret],
+    enable_memory_snapshot=True,
+    experimental_options={"enable_gpu_snapshot": True},
+    **modal_resource_spec.to_modal_options(),
+)
+@biolm_model_class
+class IgT5Model(BillingMixinSnap):
+    app_username: str = modal.parameter(default="default_user")
+    model_type: str = model_type
+
+    @modal.enter(snap=True)
+    def setup_model(self):
+        """Load model directly on GPU for GPU memory snapshot with deterministic behavior."""
+        import torch
+        from transformers import T5EncoderModel, T5Tokenizer
+
+        print("🚀 Loading IgT5 model directly on GPU for GPU memory snapshot...")
+
+        # Set deterministic behavior for consistent results
+        torch.manual_seed(42)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(42)
+
+        self.torch = torch
+        self.device = get_torch_device()
+        self.model_dir = get_model_dir(model_type)
+        self.model_id = model_id_mapping[self.model_type]
+
+        print(
+            f"⏳ Loading IgT5 model '{self.model_id}' directly on {self.device} from: {self.model_dir}"
+        )
+
+        # Load tokenizer and model directly on GPU
+        self.tokenizer = T5Tokenizer.from_pretrained(
+            self.model_dir, do_lower_case=False
+        )
+        self.model = T5EncoderModel.from_pretrained(self.model_dir)
+        self.model.eval()
+
+        # Move model to GPU
+        self.model.to(device=self.device, non_blocking=False)
+
+        print(
+            f"✅ IgT5 model '{self.model_id}' loaded directly on {self.device} for GPU memory snapshot!"
+        )
+
+    @modal.method()
+    @modal_endpoint(app_name=app_name)
+    def encode(self, payload: IgT5EncodeRequest) -> IgT5EncodeResponse:
+        """
+        Performs encoding using the IgT5 model.
+
+        Parameters:
+        - payload (IgT5EncodeRequest): The request object containing sequences and parameters.
+
+        Returns:
+        - IgT5EncodeResponse: The response containing encoding results.
+        """
+        request_kind = payload.items[0]._kind  # Only check the first one
+
+        if any(item._kind != self.model_type for item in payload.items) or (
+            (
+                request_kind == IgT5ModelTypes.PAIRED
+                and self.model_type != IgT5ModelTypes.PAIRED
+            )
+            or (
+                request_kind == IgT5ModelTypes.UNPAIRED
+                and self.model_type != IgT5ModelTypes.UNPAIRED
+            )
+        ):
+            raise ValueError(
+                f"Mismatch detected: expected '{self.model_type}' but got '{request_kind}' in request."
+            )
+
+        if self.model_type == IgT5ModelTypes.PAIRED:
+            input_sequences = [
+                f"{' '.join(item.heavy)} </s> {' '.join(item.light)}"
+                for item in payload.items
+            ]
+        else:
+            input_sequences = [" ".join(item.sequence) for item in payload.items]
+
+        # Run encoding process
+        try:
+            results = self._encode_forward(
+                input_sequences=input_sequences, include=payload.params.include
+            )
+        except Exception as e:
+            print(f"Model call failed with error [{e}]")
+            raise e
+
+        return results
+
+    def _encode_forward(
+        self, input_sequences: list[str], include: list[IgT5EncodeIncludeOptions]
+    ) -> IgT5EncodeResponse:
+        import torch
+
+        tokens = self.tokenizer.batch_encode_plus(
+            input_sequences,
+            add_special_tokens=True,
+            padding="longest",
+            return_tensors="pt",
+            return_special_tokens_mask=True,
+        ).to(self.device)
+
+        with torch.no_grad():
+            output = self.model(
+                input_ids=tokens["input_ids"], attention_mask=tokens["attention_mask"]
+            )
+
+        residue_embeddings = output.last_hidden_state
+
+        residue_embeddings[tokens["special_tokens_mask"] == 1] = 0
+        sequence_embeddings_sum = residue_embeddings.sum(1)
+
+        # average embedding by dividing sum by sequence lengths
+        sequence_lengths = torch.sum(tokens["special_tokens_mask"] == 0, dim=1)
+        sequence_embeddings = sequence_embeddings_sum / sequence_lengths.unsqueeze(1)
+
+        sequence_embeddings = sequence_embeddings.detach().cpu()
+        residue_embeddings = residue_embeddings.detach().cpu()
+
+        results_list = []
+        for idx, _seqs in enumerate(input_sequences):
+            result = {}
+
+            if IgT5EncodeIncludeOptions.MEAN in include:
+                result["embeddings"] = sequence_embeddings[idx].cpu().tolist()
+
+            if IgT5EncodeIncludeOptions.RESIDUE in include:
+                result["residue_embeddings"] = residue_embeddings[idx].cpu().tolist()
+
+            results_list.append(IgT5EncodeResponseResult.model_validate(result))
+
+        return IgT5EncodeResponse(results=results_list)
+
+
+if __name__ == "__main__":
+    """
+    Usage:
+        MODEL_TYPE="paired" python models/igt5/app.py
+
+        # Force deploy to "qa" or "main" environment:
+        MODEL_TYPE="paired" python models/igt5/app.py --force-deploy
+    """
+    from models.commons.modal.deployment import run_or_deploy_modal_app
+
+    run_or_deploy_modal_app(
+        app,
+        IgT5Model,
+        description=f"Run and optionally deploy the {IgT5Params.display_name} {model_type} Modal app.",
+    )

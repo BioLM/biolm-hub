@@ -1,0 +1,103 @@
+model_slug: mpnn
+display_name: MPNN
+license:
+  type: MIT
+  url: https://github.com/dauparas/LigandMPNN/blob/main/LICENSE
+  notes: ''
+molecule_types:
+- protein
+- complex
+applicable_to:
+- protein
+- antibody
+- nanobody
+- enzyme
+- peptide
+tasks:
+- inverse_folding
+primary_papers:
+- title: Robust deep learning-based protein sequence design using ProteinMPNN
+  arxiv: ''
+  doi: 10.1126/science.add2187
+  venue: Science, 2022
+  year: 2022
+  authors:
+  - Justas Dauparas
+  - Ivan Anishchenko
+  - Nathaniel Bennett
+  - Hua Bai
+  - David Baker et al.
+  pdf_r2: pending
+  md_r2: pending
+  figures_of_note: []
+- title: Atomically accurate de novo design of single-domain antibodies
+  arxiv: ''
+  doi: 10.1101/2024.03.14.585103
+  venue: bioRxiv preprint, 2024
+  year: 2024
+  authors:
+  - Justas Dauparas
+  - David Baker et al.
+  pdf_r2: knowledge-base/models/mpnn/primary/papers/dauparas2024.pdf
+  md_r2: knowledge-base/models/mpnn/primary/papers-md/dauparas2024.md
+  figures_of_note: []
+  notes: LigandMPNN paper describing ligand-aware and membrane-aware variants
+source_repos:
+- type: github
+  url: https://github.com/dauparas/LigandMPNN
+  commit: 091ab1ff5fb4d13854cf6a7c41ec531e1d9d3e67
+  snapshot_r2: knowledge-base/models/mpnn/primary/repos/ligandmpnn-091ab1ff.tar.gz
+  readme_md_r2: knowledge-base/models/mpnn/primary/pages/gh-ligandmpnn-readme.md
+applied_literature:
+- title: Improving Protein Expression, Stability, and Function with ProteinMPNN
+  doi: 10.1021/jacs.3c10941
+  year: 2024
+  relevance: Applies ProteinMPNN to redesign myoglobin and TEV protease, achieving improved expression, Tm, and catalytic
+    activity
+  molecule_focus: enzyme
+  task_focus: protein stability and function
+  pdf_r2: pending
+  md_r2: pending
+- title: Computational Stabilization of a Non-Heme Iron Enzyme Enables Efficient Evolution of New Function
+  doi: 10.1002/anie.202414705
+  year: 2025
+  relevance: Uses ProteinMPNN to stabilize Fe(II)/aKG enzymes for directed evolution, yielding 80-fold activity increase
+  molecule_focus: enzyme
+  task_focus: enzyme stabilization and directed evolution
+  pdf_r2: pending
+  md_r2: pending
+- title: 'ProteinGuide: On-the-fly property guidance for protein sequence generative models'
+  arxiv: '2505.04823'
+  year: 2025
+  relevance: Guides ProteinMPNN generation conditioned on stability, enzyme class, and fold properties without retraining
+  molecule_focus: protein
+  task_focus: conditional protein design
+  pdf_r2: knowledge-base/models/mpnn/applied/papers/unknown2025b.pdf
+  md_r2: pending
+- title: Tuning ProteinMPNN to reduce protein visibility via MHC Class I through direct preference optimization
+  doi: 10.1093/protein/gzaf003
+  year: 2025
+  relevance: Uses DPO to fine-tune ProteinMPNN for deimmunization, reducing MHC-I presentation of designed sequences for therapeutic
+    protein applications
+  molecule_focus: protein
+  task_focus: therapeutic protein deimmunization
+  pdf_r2: pending
+  md_r2: pending
+- title: 'GRACE: Generative Redesign in Artificial Computational Enzymology'
+  doi: 10.1021/acssynbio.4c00624
+  year: 2024
+  relevance: Integrates RFdiffusion + ProteinMPNN pipeline to design de novo carbonic anhydrases, selecting 2 functional enzymes
+    (400 WAU/mL activity) from 10,000 candidates
+  molecule_focus: enzyme
+  task_focus: de novo enzyme design pipeline
+  pdf_r2: pending
+  md_r2: pending
+- title: Adapting ProteinMPNN for antibody design without retraining
+  doi: 10.1101/2025.05.09.653228
+  year: 2025
+  relevance: Identifies ProteinMPNN CDR design failures and rescues via AbLang ensembling; 36/96 trastuzumab HER2 binders
+    vs 3/96 with ProteinMPNN alone
+  molecule_focus: antibody
+  task_focus: antibody CDR design
+  pdf_r2: knowledge-base/models/mpnn/applied/papers/unknown2025d.pdf
+  md_r2: pending

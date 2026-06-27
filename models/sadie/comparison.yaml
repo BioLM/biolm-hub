@@ -1,0 +1,67 @@
+model_slug: "sadie"
+display_name: "SADIE"
+last_updated: "2026-03-17"
+
+strengths:
+  - "Combined numbering, region annotation, germline assignment, and species detection in a single API call -- no need to run separate tools for each annotation task"
+  - "Supports all major antibody numbering schemes (IMGT, Kabat, Chothia) and CDR definitions (IMGT, Kabat, Chothia, AbM, Contact, SCDR) in a single configurable parameter"
+  - "Broadest chain type coverage: antibody heavy chains (H), kappa (K) and lambda (L) light chains, and all four TCR chain types (alpha, beta, gamma, delta)"
+  - "scFv domain parsing (scfv=True parameter) automatically identifies and annotates both VH and VL domains within a single-chain construct, essential for CAR-T and bispecific antibody analysis"
+  - "Extremely lightweight: CPU-only inference with minimal resources (0.125 CPU, 1 GB RAM), making it the most cost-effective model on the platform for preprocessing"
+  - "Germline V-gene and J-gene assignment with identity percentages enables somatic hypermutation burden assessment and humanization analysis"
+  - "HMM-based species detection identifies the organism of origin, useful for classifying sequences from multi-species antibody discovery campaigns"
+
+weaknesses:
+  - "Annotation-only tool with no embedding, scoring, or generation capabilities -- produces structured annotations, not numerical representations for ML models"
+  - "May not distinguish VHH-specific hallmark positions when processing nanobody sequences as H chains, potentially misannotating camelid-specific framework features"
+  - "Germline gene databases may not be updated to include the latest IMGT reference sets, potentially affecting accuracy for rare or newly discovered germline genes"
+  - "Software tool without a peer-reviewed publication, which may limit citation in academic contexts and makes independent validation harder to assess"
+  - "No batch optimization for very large datasets (NGS scale, millions of sequences); each sequence requires a separate API call"
+  - "Single action (predict) with no customization of output format or selective annotation -- always returns the full annotation set"
+  - "TCR gamma/delta annotation is supported but less extensively validated than alpha/beta annotation"
+
+use_when:
+  - "You need standardized numbering and region annotation as a preprocessing step before feeding antibody sequences to language models (AbLang2, IgBERT, NanoBERT, IgT5)"
+  - "You need to extract CDR sequences from antibody variable domains for clustering, diversity analysis, or CDR-focused model training"
+  - "You need germline V-gene and J-gene assignment with identity percentages for assessing somatic hypermutation levels or guiding humanization strategies"
+  - "You are processing a mixed repertoire dataset and need to identify chain types, species of origin, and light chain isotype (kappa vs lambda) for each sequence"
+  - "You need to parse scFv constructs to identify VH and VL domain boundaries for downstream analysis with paired-chain models"
+  - "You need consistent positional numbering across antibodies from different sources to enable accurate position-by-position comparison"
+  - "You are building an automated antibody engineering pipeline and need a reliable annotation step that feeds into structure prediction, embedding, or design tools"
+
+dont_use_when:
+  - "You need numerical embeddings or representations of antibody sequences for ML tasks -- use AbLang2, IgBERT, NanoBERT, or IgT5 for language model embeddings"
+  - "You need to predict 3D antibody structures -- use AbodyBuilder3, ImmuneBuilder, or ImmuneFold for structure prediction"
+  - "You need sequence generation, restoration, or scoring -- use AbLang2 or IgBERT, which provide generate and predict_log_prob actions"
+  - "You need to design antibody sequences conditioned on structure -- use AntiFold for structure-based inverse folding"
+  - "You need developability property predictions -- use AbLEF or ProperMAB for biophysical property assessment"
+  - "You need gold-standard IMGT numbering for regulatory submissions -- consider IMGT/DomainGapAlign for official IMGT validation"
+  - "You need to process millions of sequences at NGS scale with minimal latency -- consider local tools like ANARCI or IgBLAST for high-throughput batch processing"
+
+alternatives:
+  - model: "ablang2"
+    when_better: "AbLang2 provides germline-debiased embeddings, sequence restoration, and likelihood scoring for paired antibodies -- addressing downstream analysis tasks that SADIE's annotations enable but cannot perform"
+    when_worse: "AbLang2 does not provide numbering, region annotation, germline assignment, or species detection; SADIE is the annotation preprocessor that feeds into AbLang2"
+  - model: "igbert"
+    when_better: "IgBERT provides embeddings, sequence generation, and log-probability scoring for both paired and unpaired antibody sequences"
+    when_worse: "IgBERT does not annotate sequences with numbering, region boundaries, or germline assignments; these are different tasks that SADIE addresses"
+  - model: "esm2"
+    when_better: "ESM-2 provides general protein embeddings and pseudo-log-likelihoods covering all proteins, not just immune proteins"
+    when_worse: "ESM-2 has no concept of antibody numbering, CDR boundaries, germline genes, or species detection; these are immunoinformatics-specific annotations that only SADIE provides"
+  - model: "nanobert"
+    when_better: "NanoBERT provides nanobody-specific embeddings and scoring; more appropriate for VHH-specific downstream analysis"
+    when_worse: "NanoBERT does not provide numbering or annotation; SADIE processes nanobody sequences as H chains to provide numbering and region identification before NanoBERT analysis"
+
+complements:
+  - model: "ablang2"
+    workflow: "Use SADIE to number and annotate antibody variable domains, extract CDR boundaries and verify sequence quality, then pass validated paired chains to AbLang2 for embedding, scoring, and sequence restoration"
+    example_protocol: null
+  - model: "igbert"
+    workflow: "Use SADIE to annotate sequences and identify chain types and germline origins, then use IgBERT for embedding generation and sequence scoring with appropriate paired or unpaired variant selection"
+    example_protocol: null
+  - model: "nanobert"
+    workflow: "Use SADIE to identify VHH domains in nanobody sequences, extract CDR boundaries for quality filtering, then pass annotated nanobody sequences to NanoBERT for VHH-specific embedding and scoring"
+    example_protocol: null
+  - model: "abodybuilder3"
+    workflow: "Use SADIE to validate and annotate paired antibody sequences, confirm both heavy and light chains are present with expected germline assignments, then predict structures with AbodyBuilder3"
+    example_protocol: null

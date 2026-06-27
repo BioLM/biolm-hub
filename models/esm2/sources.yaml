@@ -1,0 +1,107 @@
+model_slug: esm2
+display_name: ESM2
+license:
+  type: MIT
+  url: https://github.com/facebookresearch/esm/blob/main/LICENSE
+  notes: ''
+molecule_types:
+- protein
+applicable_to:
+- protein
+- antibody
+- enzyme
+- peptide
+tasks:
+- embedding
+- sequence_completion
+- property_prediction
+primary_papers:
+- title: Evolutionary-scale prediction of atomic-level protein structure with a language model
+  arxiv: 10.1101/2022.07.20.500902
+  doi: 10.1126/science.ade2574
+  venue: Science, 2023
+  year: 2023
+  authors:
+  - Zeming Lin
+  - Halil Akin
+  - Tom Sercu
+  - Alexander Rives et al.
+  pdf_r2: knowledge-base/models/esm2/primary/papers/lin2023.pdf
+  md_r2: knowledge-base/models/esm2/primary/papers-md/lin2023.md
+  figures_of_note: []
+- title: Language models of protein sequences at the scale of evolution enable accurate structure prediction
+  arxiv: 10.1101/2022.07.20.500902v1
+  doi: 10.1101/2022.07.20.500902
+  venue: bioRxiv preprint, 2022
+  year: 2022
+  authors:
+  - Zeming Lin
+  - Halil Akin
+  - Tom Sercu
+  - Alexander Rives et al.
+  pdf_r2: knowledge-base/models/esm2/primary/papers/lin2022.pdf
+  md_r2: knowledge-base/models/esm2/primary/papers-md/lin2022.md
+  figures_of_note: []
+source_repos:
+- type: github
+  url: https://github.com/facebookresearch/esm
+  commit: 2b369911bb5b4b0dda914521b9475cad1656b2ac
+  snapshot_r2: knowledge-base/models/esm2/primary/repos/esm-2b369911.tar.gz
+  readme_md_r2: knowledge-base/models/esm2/primary/pages/gh-esm-readme.md
+- type: huggingface
+  url: https://huggingface.co/facebook/esm2_t33_650M_UR50D
+  notes: 'Multiple sizes: 8M, 35M, 150M, 650M, 3B'
+  page_md_r2: knowledge-base/models/esm2/primary/pages/hf-esm2_t33_650m_ur50d.md
+applied_literature:
+- title: 'DeepRank-GNN-esm: a graph neural network for scoring protein-protein models using protein language model'
+  doi: 10.1093/bioadv/vbad191
+  year: 2024
+  relevance: Uses ESM-2 embeddings to replace PSSM features for protein-protein interaction scoring with equal or better performance
+  molecule_focus: protein
+  task_focus: protein-protein interaction scoring
+  pdf_r2: pending
+  md_r2: pending
+- title: Medium-sized protein language models perform well at transfer learning on realistic datasets
+  doi: 10.1038/s41598-025-05674-x
+  year: 2025
+  relevance: Benchmarks ESM-2 650M transfer learning across protein classification tasks, showing medium-sized models match
+    larger ones
+  molecule_focus: protein
+  task_focus: transfer learning benchmark
+  pdf_r2: pending
+  md_r2: pending
+- title: Improving Protein Expression, Stability, and Function with ProteinMPNN
+  doi: 10.1021/jacs.3c10941
+  year: 2024
+  relevance: Uses ESM-2 embeddings as part of protein evaluation pipeline for designed protein variants
+  molecule_focus: protein
+  task_focus: protein expression and stability
+  pdf_r2: pending
+  md_r2: pending
+- title: Expert-guided protein language models enable accurate and blazingly fast fitness prediction
+  doi: 10.1093/bioinformatics/btae621
+  year: 2024
+  relevance: VespaG uses ESM-2 3B embeddings as sole input to predict mutational fitness across 217 ProteinGym assays (Spearman
+    0.48), achieving proteome-scale prediction in under 30 minutes
+  molecule_focus: protein
+  task_focus: fitness prediction
+  pdf_r2: pending
+  md_r2: pending
+- title: Fine-tuning protein language models boosts predictions across diverse tasks
+  doi: 10.1038/s41467-024-51844-2
+  year: 2024
+  relevance: Systematically benchmarks ESM-2 fine-tuning across 8 tasks including fitness, localization, and structure, showing
+    parameter-efficient fine-tuning achieves 4.5x speedup with comparable accuracy
+  molecule_focus: protein
+  task_focus: fine-tuning benchmark
+  pdf_r2: pending
+  md_r2: pending
+- title: Benchmarking protein language models for protein crystallization
+  doi: 10.1038/s41598-025-86519-5
+  year: 2025
+  relevance: ESM-2 3B embeddings with LightGBM outperform state-of-the-art crystallization predictors (CLPred, DeepCrystal)
+    by 3-5% across F1, accuracy, MCC, and precision on independent test sets
+  molecule_focus: protein
+  task_focus: crystallization prediction
+  pdf_r2: pending
+  md_r2: pending

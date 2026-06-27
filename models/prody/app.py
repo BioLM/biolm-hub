@@ -1,0 +1,137 @@
+import logging
+
+import modal
+import numpy as np
+
+from models.commons.billing.mixin import BillingMixin
+from models.commons.core.decorator import modal_endpoint
+from models.commons.modal.source import setup_source_layer
+from models.commons.model.config import biolm_model_class
+from models.commons.util.config import (
+    cloudflare_r2_secret,
+    common_requirements,
+    redis_url_secret,
+)
+from models.prody.config import MODEL_FAMILY
+from models.prody.schema import (
+    ProDyEncodeRequest,
+    ProDyEncodeResponse,
+    ProDyParams,
+    ProDyPredictRequest,
+    ProDyPredictResponse,
+)
+from models.prody.utils import compute_rmsd, process_structure_for_insty
+
+logger = logging.getLogger(__name__)
+
+# Define the Docker image with necessary dependencies
+image = (
+    modal.Image.debian_slim(python_version="3.12")
+    .apt_install(
+        "libopenblas-dev",
+        "git",
+        "wget",
+        "gcc",
+        "g++",
+        "libffi-dev",
+        "procps",
+        "openbabel",
+    )
+    .uv_pip_install(common_requirements)
+    .uv_pip_install(
+        "prody==2.6.1",
+        "numpy==1.26.4",
+        "pandas==2.2.3",
+        "openbabel-wheel==3.1.1.22",  # Python bindings for OpenBabel
+    )
+    .run_commands(
+        "pip install git+https://github.com/openmm/pdbfixer.git@v1.8.1",
+    )
+)
+
+# Add model source files
+image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
+
+# Get app configuration from MODEL_FAMILY
+app_name, modal_resource_spec = MODEL_FAMILY.get_app_config()
+
+# Define the Modal app
+app = modal.App(app_name, image=image)
+
+
+@app.cls(
+    image=image,
+    secrets=[cloudflare_r2_secret, redis_url_secret],
+    enable_memory_snapshot=False,  # Disabled: snapshots cached stale code
+    **modal_resource_spec.to_modal_options(),
+)
+@biolm_model_class
+class ProDyModel(BillingMixin):
+    app_username: str = modal.parameter(default="default_user")
+
+    @modal.enter()
+    def load_model(self):
+        """Load ProDy and set seeds for determinism."""
+        import os
+        import random
+
+        import prody  # noqa: F401  # Pre-import for faster first request
+
+        seed = 42
+        random.seed(seed)
+        np.random.seed(seed)
+        os.environ["PYTHONHASHSEED"] = str(seed)
+
+        logger.info("ProDy model loaded successfully")
+
+    @modal.method()
+    @modal_endpoint(app_name=app_name)
+    def encode(self, payload: ProDyEncodeRequest) -> ProDyEncodeResponse:
+        """Compute interactions and bonds using ProDy InSty."""
+        num_items = len(payload.items)
+
+        if num_items == 0:
+            return ProDyEncodeResponse(results=[])
+
+        # Process items sequentially (ProDy C extensions are not thread-safe)
+        logger.info(f"Processing {num_items} items sequentially")
+
+        results = []
+        for idx, item in enumerate(payload.items):
+            try:
+                result_obj = process_structure_for_insty(item, payload.params)
+                results.append(result_obj)
+            except Exception as e:
+                logger.error(f"Error processing item {idx}: {e}", exc_info=True)
+                raise
+
+        return ProDyEncodeResponse(results=results)
+
+    @modal.method()
+    @modal_endpoint(app_name=app_name)
+    def predict(self, payload: ProDyPredictRequest) -> ProDyPredictResponse:
+        """Compute RMSD between two structures using ProDy."""
+        results = []
+
+        for item in payload.items:
+            result = compute_rmsd(item, payload.params)
+            results.append(result)
+
+        return ProDyPredictResponse(results=results)
+
+
+if __name__ == "__main__":
+    """
+    Usage:
+        python models/prody/app.py
+
+        # Force deploy to "qa" or "main" environment:
+        python models/prody/app.py --force-deploy
+    """
+    from models.commons.modal.deployment import run_or_deploy_modal_app
+
+    run_or_deploy_modal_app(
+        app,
+        ProDyModel,
+        description=f"Run and optionally deploy the {ProDyParams.display_name} Modal app.",
+    )

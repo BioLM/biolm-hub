@@ -1,0 +1,106 @@
+model_slug: evo
+display_name: Evo
+license:
+  type: Apache-2.0
+  url: https://github.com/evo-design/evo/blob/main/LICENSE
+  notes: ''
+molecule_types:
+- dna
+applicable_to:
+- dna
+- genomics
+- synthetic_biology
+tasks:
+- sequence_generation
+- property_prediction
+primary_papers:
+- title: Sequence modeling and design from molecular to genome scale with Evo
+  arxiv: 10.1101/2024.02.27.582234
+  doi: 10.1126/science.ado9336
+  venue: Science, 2024
+  year: 2024
+  authors:
+  - Eric Nguyen
+  - Michael Poli
+  - Matthew G. Durrant
+  - Brian Kang
+  - Dhruva Katrekar
+  - David B. Li
+  - Liam J. Bartie
+  - Armin W. Thomas
+  - Samuel H. King
+  - Garyk Brixi
+  - Jeremy Sullivan
+  - Madelena Y. Ng
+  - Ashley Lewis
+  - Aaron Lou
+  - Stefano Ermon
+  - Stephen A. Baccus
+  - Tina Hernandez-Boussard
+  - Christopher Re
+  - Patrick D. Hsu
+  - Brian L. Hie
+  pdf_r2: knowledge-base/models/evo/primary/papers/nguyen2024.pdf
+  md_r2: knowledge-base/models/evo/primary/papers-md/nguyen2024.md
+  figures_of_note: []
+source_repos:
+- type: github
+  url: https://github.com/evo-design/evo
+  commit: ''
+  snapshot_r2: pending
+  readme_md_r2: knowledge-base/models/evo/primary/pages/gh-evo-readme.md
+- type: github
+  url: https://github.com/togethercomputer/stripedhyena
+  commit: ''
+  snapshot_r2: pending
+  readme_md_r2: knowledge-base/models/evo/primary/pages/gh-stripedhyena-readme.md
+applied_literature:
+- title: Semantic design of functional de novo genes from a genomic language model
+  doi: 10.1038/s41586-025-09749-7
+  year: 2025
+  relevance: Evo 1.5 enables function-guided gene design via genomic autocomplete, generating experimentally validated anti-CRISPR
+    proteins and the SynGenome database of 120B+ bp.
+  molecule_focus: dna
+  task_focus: gene_design
+  pdf_r2: pending
+  md_r2: pending
+- title: Genome modelling and design across all domains of life with Evo 2
+  doi: 10.1038/s41586-026-10176-5
+  year: 2025
+  relevance: Successor model trained on 9T nucleotides with 1M-token context, predicting pathogenic variant effects zero-shot
+    and generating eukaryotic genomes.
+  molecule_focus: dna
+  task_focus: genome_generation
+  pdf_r2: pending
+  md_r2: pending
+- title: Benchmarking DNA foundation models for genomic and genetic tasks
+  doi: 10.1038/s41467-025-65823-8
+  year: 2025
+  relevance: Systematic evaluation of DNA foundation models including genomic language models on variant effect and sequence
+    classification tasks relevant to Evo's capabilities.
+  molecule_focus: dna
+  task_focus: benchmark
+  pdf_r2: pending
+  md_r2: pending
+- title: Evaluating DNA function understanding in genomic language models using evolutionarily implausible sequences
+  arxiv: '2506.10271'
+  year: 2025
+  relevance: Introduces the Nullsettes benchmark to evaluate whether genomic language models understand DNA function or rely
+    on evolutionary pattern-matching. Tests 12 gLMs on synthetic expression cassettes with no evolutionary precedent. Only
+    Evo2-7B and GENERanno-0.5B deliver strong consistent performance, demonstrating Evo architecture's superior functional
+    generalization beyond natural sequences.
+  molecule_focus: dna
+  task_focus: benchmark
+  pdf_r2: knowledge-base/models/evo/applied/papers/unknown2025d.pdf
+  md_r2: pending
+- title: 'From Likelihood to Fitness: Improving Variant Effect Prediction in Protein and Genome Language Models'
+  doi: 10.1101/2025.05.20.655154
+  year: 2025
+  relevance: Introduces Likelihood-Fitness Bridging (LFB), a general strategy that improves variant effect prediction by averaging
+    model scores across sequences under similar selective pressures. Evaluated on the Evo 2 family of genome language models
+    alongside ESM-2 and ProGen2 on large-scale deep mutational scans and clinical benchmarks, consistently improving predictive
+    performance without retraining.
+  molecule_focus: dna
+  task_focus: variant_effect_prediction
+  pdf_r2: knowledge-base/models/evo/applied/papers/unknown2025e.pdf
+  md_r2: pending

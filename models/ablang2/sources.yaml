@@ -1,0 +1,101 @@
+model_slug: ablang2
+display_name: AbLang2
+license:
+  type: BSD-3-Clause
+  url: https://github.com/oxpig/AbLang2/blob/main/LICENSE
+  notes: ''
+molecule_types:
+- antibody
+applicable_to:
+- immunotherapy
+- drug development
+- antibody engineering
+- antibody humanization
+- sequence restoration
+tasks:
+- embedding
+- sequence_completion
+- property_prediction
+primary_papers:
+- title: 'AbLang: An antibody language model for completing antibody sequences'
+  arxiv: ''
+  doi: 10.1093/bioadv/vbac046
+  venue: Bioinformatics Advances, 2022
+  year: 2022
+  authors:
+  - Olsen TH
+  - Moal IH
+  - Deane CM
+  pdf_r2: pending
+  md_r2: pending
+  figures_of_note: []
+- title: 'AbLang2: Addressing the Antibody Germline Bias and Its Effect on Language Models for Improved Antibody Design'
+  arxiv: ''
+  doi: 10.1101/2024.02.02.578678
+  venue: bioRxiv preprint, 2024
+  year: 2024
+  authors:
+  - Olsen TH
+  - Moal IH
+  - Deane CM
+  pdf_r2: knowledge-base/models/ablang2/primary/papers/th2024.pdf
+  md_r2: knowledge-base/models/ablang2/primary/papers-md/th2024.md
+  figures_of_note: []
+source_repos:
+- type: github
+  url: https://github.com/oxpig/AbLang2
+  commit: ''
+  snapshot_r2: pending
+  readme_md_r2: knowledge-base/models/ablang2/primary/pages/gh-ablang2-readme.md
+- type: pypi
+  url: https://pypi.org/project/ablang2/
+  commit: ''
+  snapshot_r2: pending
+applied_literature:
+- title: 'AI-accelerated therapeutic antibody development: practical insights'
+  doi: 10.3389/fddsv.2024.1447867
+  year: 2024
+  relevance: Reviews AbLang2 as a key antibody language model for therapeutic development, highlighting its focal-loss training
+    to reduce germline bias and its utility for paratope prediction, humanization, and sequence completion.
+  molecule_focus: antibody
+  task_focus: antibody_engineering
+  pdf_r2: pending
+  md_r2: pending
+- title: A curriculum learning approach to training antibody language models
+  doi: 10.1371/journal.pcbi.1013473
+  year: 2025
+  relevance: Benchmarks AbLang2 against a novel curriculum-learning antibody model (CurrAb) across paired sequence recovery,
+    binding prediction, and pair classification, establishing AbLang2 as a competitive baseline.
+  molecule_focus: antibody
+  task_focus: sequence_completion
+  pdf_r2: pending
+  md_r2: pending
+- title: CDR-aware masked language models for paired antibodies enable state-of-the-art binding prediction
+  doi: 10.1101/2025.10.31.685149
+  year: 2025
+  relevance: Compares CDR-focused fine-tuning strategies against AbLang2 and other antibody language models, demonstrating
+    that region-aware pretraining on paired sequences can surpass AbLang2 on binding affinity prediction.
+  molecule_focus: antibody
+  task_focus: binding_prediction
+  pdf_r2: knowledge-base/models/ablang2/applied/papers/unknown2025b.pdf
+  md_r2: pending
+- title: 'ALLM-Ab: Active Learning-Driven Antibody Optimization Using Fine-Tuned Protein Language Models'
+  doi: 10.1021/acs.jcim.5c01577
+  year: 2025
+  relevance: Uses AbLang2 perplexity scores as a key developability constraint in an active-learning antibody optimization
+    framework. AbLang2 naturalness scoring guides multiobjective optimization alongside binding affinity, hydropathicity,
+    and stability metrics, with quantitative results on deep mutational scanning datasets.
+  molecule_focus: antibody
+  task_focus: antibody_optimization
+  pdf_r2: pending
+  md_r2: pending
+- title: 'AbBiBench: A Benchmark for Antibody Binding Affinity Maturation and Design'
+  arxiv: '2506.04235'
+  year: 2025
+  relevance: Benchmarks AbLang2 (via its fine-tuned derivative CurrAb) alongside 14 other protein models on 184,500+ experimental
+    antibody-antigen binding measurements across 14 antibodies and 9 antigens. CurrAb improved Spearman correlation by +0.074
+    over ESM-2 baseline, establishing the value of antibody-specific language model fine-tuning for affinity prediction.
+  molecule_focus: antibody
+  task_focus: binding_prediction
+  pdf_r2: knowledge-base/models/ablang2/applied/papers/unknown2025d.pdf
+  md_r2: pending

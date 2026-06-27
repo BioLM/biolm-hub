@@ -1,0 +1,81 @@
+# comparison.yaml — Model Comparison Metadata
+# Machine-readable guidance for model selection.
+# Generated as part of Phase 3.5 of the model-knowledge-base workflow.
+#
+# Requirements:
+#   - strengths, weaknesses, use_when, dont_use_when: 5+ entries each (min 3)
+#   - alternatives, complements: 1+ entries where applicable
+#   - All referenced model slugs must exist in models/
+
+model_slug: "progen2"
+display_name: "ProGen2"
+last_updated: "2026-03-17"
+
+strengths:
+  - "Four specialized variants (OAS, medium, large, BFD90) cover distinct protein domains — antibodies (OAS), general proteins (medium/large), and metagenomic proteins (BFD90) — enabling targeted generation for different use cases"
+  - "Bidirectional log-likelihood scoring (forward + reverse average) reduces positional bias inherent in left-to-right autoregressive models, providing more robust fitness prediction"
+  - "Published in Cell Systems (2023) with extensive protein generation benchmarks, including scaling law analysis showing predictable quality improvement with model size"
+  - "Context-conditioned generation enables directed sequence extension from a seed, mimicking natural sequence diversification for directed evolution applications"
+  - "Temperature and top-p sampling controls allow fine-grained diversity tuning — from conservative (low temperature, close to natural) to exploratory (high temperature, novel sequences)"
+  - "OAS variant trained on ~1.5B antibody sequences provides the most comprehensive antibody generation model available on the platform"
+  - "BSD-3-Clause license permits commercial use with minimal restrictions"
+  - "Benchmarked in Nature Biotechnology (2024) enzyme design evaluation, demonstrating practical relevance for computational enzyme engineering workflows"
+
+weaknesses:
+  - "No explicit function conditioning — cannot specify target enzymatic activity (EC number), binding target, or other functional constraints during generation; only context-conditioned via seed sequence"
+  - "Generation quality varies significantly by protein type — membrane proteins, fibrous proteins, and intrinsically disordered proteins are poorly modeled due to training data biases"
+  - "No embedding extraction endpoint — cannot produce dense vector representations for downstream ML tasks; use ESM-2 for protein embeddings"
+  - "OAS variant is antibody-only and produces poor results on non-antibody proteins; users must select the correct variant for their protein type"
+  - "Maximum useful context is limited by the model's attention window; very long proteins may lose N-terminal context during generation"
+  - "Generated sequences have no guarantee of function — statistical plausibility does not ensure folding, stability, or catalytic activity without computational and experimental validation"
+  - "No structure awareness — generates sequences without knowledge of 3D geometry, unlike inverse folding models (MPNN, ESM-IF1) that condition on backbone structure"
+
+use_when:
+  - "You need general-purpose autoregressive protein sequence generation from a context seed, with controllable diversity through temperature and top-p sampling"
+  - "You are designing antibody variable region sequences and need a model trained on the largest available antibody sequence database (OAS variant with ~1.5B sequences)"
+  - "You need to generate diverse protein sequence libraries for experimental screening, ranking candidates by bidirectional log-likelihood scores"
+  - "You are exploring protein sequence space around a known protein family by extending seed sequences from conserved regions"
+  - "You need protein fitness scoring via log-likelihood to rank mutant libraries or guide directed evolution campaigns without task-specific training data"
+  - "You want to generate candidate enzymes for experimental testing and plan to validate with structure prediction (Boltz) and stability analysis (ESMStabP) downstream"
+  - "You need a commercially licensed autoregressive protein generator for production pipelines"
+
+dont_use_when:
+  - "You need enzyme generation conditioned on a specific EC number (use zymctrl, which is specifically trained for EC-conditioned enzyme design)"
+  - "You need structure-conditioned sequence design from a target backbone (use mpnn for comprehensive inverse folding or esm_if1 for lightweight inverse folding)"
+  - "You need protein embeddings for downstream ML tasks (use esm2, which provides the most widely used protein embeddings on the platform)"
+  - "You need masked infilling or bidirectional sequence design where specific regions are fixed (use dsm, which supports masked diffusion infilling)"
+  - "You need to score protein variants without generating new sequences (use esm2 predict_log_prob for pseudo-log-likelihood scoring)"
+  - "You are designing membrane proteins or fibrous proteins where ProGen2's training data is underrepresented"
+  - "You need protein-protein interaction-aware generation (use dsm with the PPI variant trained on STRING interaction data)"
+  - "You need multimodal protein design combining sequence, structure, and function constraints"
+
+alternatives:
+  - model: "zymctrl"
+    when_better: "EC-number conditioned enzyme generation produces enzymes targeted to specific catalytic functions; trained on 37M enzyme sequences with experimental validation of generated carbonic anhydrases"
+    when_worse: "Enzyme-only — cannot generate non-enzyme proteins, antibodies, or general proteins; ProGen2's four variants cover a much broader protein space"
+  - model: "dsm"
+    when_better: "Masked diffusion enables bidirectional generation and masked infilling (fix scaffold, design loop); provides embeddings, scoring, and generation in a single model; PPI variant for interaction-aware design"
+    when_worse: "More recent with less independent validation; ProGen2 has a stronger publication record and explicit antibody variant (OAS)"
+  - model: "esm_if1"
+    when_better: "Structure-conditioned inverse folding designs sequences compatible with a target 3D backbone; trained on 12M structures including AlphaFold2 predictions"
+    when_worse: "Requires an input PDB structure; cannot generate sequences from scratch without structural input; ProGen2 generates from sequence context alone"
+  - model: "mpnn"
+    when_better: "Highest experimental success rate for inverse folding; six context-aware variants including ligand-aware and membrane-aware; multi-chain support"
+    when_worse: "Requires backbone structure input; ProGen2 generates proteins from sequence alone, which is essential when no target structure exists"
+  - model: "esm2"
+    when_better: "Best single-sequence protein embeddings and fitness scoring; five size variants; widest ecosystem of downstream tools"
+    when_worse: "Cannot generate novel sequences; encoder-only architecture is limited to scoring and embedding, not design"
+
+complements:
+  - model: "esm2"
+    workflow: "Generate candidate protein sequences with ProGen2, then score them with ESM-2 pseudo-log-likelihood for an orthogonal fitness assessment — sequences that score well under both models are more likely to be functional"
+    example_protocol: null
+  - model: "boltz"
+    workflow: "Generate protein sequences with ProGen2, then predict their 3D structures with Boltz to verify that generated sequences adopt stable, well-defined folds before experimental testing"
+    example_protocol: null
+  - model: "mpnn"
+    workflow: "Use ProGen2 to explore sequence space from a seed, predict structures of top candidates with Boltz, then use ProteinMPNN to further optimize sequences for the predicted backbones — combining sequence-based and structure-based design"
+    example_protocol: null
+  - model: "zymctrl"
+    workflow: "Use ZymCTRL for EC-conditioned enzyme generation when the target function is known, and ProGen2 for broader exploratory generation when the protein family is defined but not a specific EC class"
+    example_protocol: null

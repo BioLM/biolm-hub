@@ -1,0 +1,71 @@
+model_slug: boltzgen
+display_name: BoltzGen
+last_updated: "2026-03-17"
+
+strengths:
+  - "End-to-end binder design pipeline: integrates diffusion-based backbone generation, inverse folding (BoltzIF), structure validation (Boltz-2 folding), and binding affinity prediction (Boltz-2 affinity) in a single unified workflow -- no separate tools needed"
+  - "Experimentally validated with 66% nanomolar binder success rate across 9 novel protein targets, including targets with low similarity to known bound structures -- competitive with the best published binder design results"
+  - "Supports diverse design modalities: de novo protein binders, nanobody CDR redesign, cyclic peptides (with head-to-tail cyclization and disulfide bonds), and small-molecule pocket design in a single model"
+  - "Geometry-based 14-atom amino acid representation generates physically plausible all-atom structures in continuous 3D coordinate space, avoiding discrete tokenization artifacts"
+  - "Integrated affinity ranking via Boltz-2: each design is scored for predicted binding affinity, enabling computational filtering before expensive experimental validation"
+  - "Successfully designs binders against traditionally difficult targets: intrinsically disordered protein regions, antimicrobial peptides, and proteins with no known binders in the structural database"
+  - "Diversity-aware filtering selects structurally diverse top candidates, improving the probability that at least one candidate succeeds experimentally"
+  - "MIT license with no usage restrictions -- fully open-source design pipeline suitable for academic research and commercial drug discovery"
+
+weaknesses:
+  - "Requires A100 40GB GPU with 64GB system RAM and up to 24 hours for large design campaigns (default 10,000 candidates filtered to 100) -- expensive infrastructure for iterative optimization"
+  - "Affinity predictions inherit Boltz-2's stochastic variance (80%+ between runs), requiring ensemble averaging for reliable ranking -- not a deterministic affinity oracle"
+  - "Nanobody CDR redesign requires precise CDR residue index specification matching PDB numbering -- incorrect indices silently produce meaningless designs"
+  - "Not a structure prediction model: cannot predict the native fold of an existing protein sequence; use Boltz, RF3, or AF2 NIM for prediction tasks"
+  - "Membrane protein targets are poorly supported due to training data bias toward soluble complexes and absence of lipid bilayer modeling"
+  - "Full IgG antibody design is not supported -- the model targets nanobody/VHH fragments and small-to-medium protein binders (80-200 residues)"
+  - "Designed sequences are novel and may have unforeseen aggregation, immunogenicity, or manufacturability issues that the model does not predict"
+  - "Very short peptide designs (< 8 residues) lack sufficient structural context for reliable backbone generation within the diffusion framework"
+
+use_when:
+  - "You need an end-to-end protein binder design pipeline that handles backbone generation, sequence design, structure validation, and affinity prediction without switching between separate tools"
+  - "You are designing nanobody (VHH) binders against protein targets and need to redesign CDR loops while preserving the stable immunoglobulin framework"
+  - "You are designing cyclic peptides as therapeutic candidates targeting protein-protein interactions, with support for head-to-tail cyclization and disulfide bond constraints"
+  - "You need to design protein pockets around specific small-molecule ligands (drug substrates, cofactors) for enzyme or biosensor engineering"
+  - "You want diversity-aware candidate selection that maximizes structural coverage across your design library, improving experimental success probability"
+  - "You need to computationally rank designs by predicted binding affinity before committing to experimental synthesis and testing"
+
+dont_use_when:
+  - "You need to predict the native structure of an existing protein or complex -- BoltzGen is for design, not prediction; use Boltz, RF3, Chai-1, or AF2 NIM"
+  - "You need to design full-length IgG antibodies -- BoltzGen targets nanobodies and smaller protein binders; use antibody-specific design tools for full IgG engineering"
+  - "You need precise catalytic activity design for enzymes -- BoltzGen designs binding pockets but does not model catalytic mechanisms, transition states, or enzyme kinetics"
+  - "Your target is a membrane protein and the binding site is within the lipid bilayer -- BoltzGen is trained on soluble complexes"
+  - "You need deterministic affinity predictions -- BoltzGen's Boltz-2 affinity stage has high stochastic variance requiring multiple samples for reliable ranking"
+  - "You need symmetric protein assembly design (cages, rings, nanocages) -- use RFdiffusion3, which has explicit symmetric design modes"
+  - "You need fast single-pass structure generation for rapid prototyping -- BoltzGen's full pipeline (10,000 candidates + filtering) is computationally intensive"
+
+alternatives:
+  - model: rfd3
+    when_better: "RFdiffusion3 offers more conditioning modes (symmetric design, partial diffusion, complex contig specifications, template-guided scaffolding); more extensively validated with published cryo-EM structures; Baker Lab pedigree with decades of experimental validation"
+    when_worse: "RFD3 requires separate ProteinMPNN for sequence design and separate RF3/AF2 for validation -- no integrated affinity prediction; BoltzGen's end-to-end pipeline is simpler to use"
+  - model: boltz
+    when_better: "Boltz is a prediction model that can validate BoltzGen designs -- Boltz-2 provides structure prediction and affinity estimation as standalone capabilities"
+    when_worse: "Boltz cannot generate novel designs; it predicts structures of existing sequences; BoltzGen and Boltz serve different purposes (design vs prediction)"
+  - model: chai1
+    when_better: "Chai-1 excels at multi-molecule structure prediction (protein + DNA + RNA + ligand) with more published docking benchmarks; useful for validating BoltzGen designs"
+    when_worse: "Chai-1 is prediction-only -- cannot generate novel binder designs; no design capability; serves a different purpose"
+  - model: rf3
+    when_better: "RF3 is the newest-generation structure prediction model with template conditioning and the highest multi-molecule accuracy; useful for validating BoltzGen designs against independent predictions"
+    when_worse: "RF3 is prediction-only -- cannot generate novel designs; no inverse folding or affinity prediction pipeline; serves a complementary validation role"
+  - model: mpnn
+    when_better: "ProteinMPNN is the gold-standard inverse folding model for designing sequences given backbone structures; can be applied to any backbone regardless of how it was generated"
+    when_worse: "ProteinMPNN requires an existing backbone structure as input and only designs sequences -- does not generate backbones, validate structures, or predict affinities; BoltzGen integrates all steps"
+
+complements:
+  - model: esm2
+    workflow: "After BoltzGen generates designed binder sequences, use ESM2 predict_log_prob to score each design for evolutionary plausibility -- low log-probability designs are likely to be difficult to express or may misfold"
+    example_protocol: null
+  - model: rf3
+    workflow: "Use RF3 as an independent structure prediction oracle to cross-validate BoltzGen designs: predict the structure of the designed sequence with RF3 and compare to the BoltzGen-generated structure for consistency"
+    example_protocol: null
+  - model: esmfold
+    workflow: "Use ESMFold for rapid structural screening of BoltzGen-designed sequences (seconds per prediction) to quickly identify designs that are likely to fold correctly before running the full Boltz-2 validation pipeline"
+    example_protocol: null
+  - model: esmstabp
+    workflow: "After BoltzGen generates designed binders, predict their thermal stability with ESMStabP to prioritize candidates with favorable melting temperatures for experimental characterization"
+    example_protocol: null

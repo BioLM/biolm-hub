@@ -1,0 +1,69 @@
+model_slug: pro1
+display_name: Pro-1
+last_updated: "2026-03-28"
+
+strengths:
+  - "Generates interpretable chain-of-thought reasoning traces that explain the biochemical rationale for each proposed mutation (salt bridges, hydrophobic packing, helix capping), making outputs reviewable by protein engineers"
+  - "Accepts prior mutagenesis results as structured input via known_mutations, enabling genuine iterative design loops where experimental feedback improves subsequent mutation proposals"
+  - "Requires only a protein sequence and free-text biological context -- no experimental structure needed, unlike structure-conditioned inverse folding tools"
+  - "Can propose insertions and deletions in addition to point mutations (creativity reward variant), enabling structural modifications that directed evolution cycles would rarely discover"
+  - "Wet-lab validated: K116E on FGF-1 achieved +24°C melting temperature improvement while maintaining FGFR-1 binding affinity (Adaptyv Bio, 2025) -- competitive with literature-optimized multi-mutation variants"
+  - "47% benchmark success rate on 40-enzyme test set, matching ProteinMPNN and EvoProtGrad without requiring a structure input"
+  - "Fully open-source (Apache-2.0) with weights on HuggingFace, no commercial restrictions"
+  - "Flexible freeform text context field allows incorporating literature knowledge, known structural features, and experimental constraints directly in natural language"
+
+weaknesses:
+  - "Reasoning traces frequently hallucinate literature citations -- paper references in outputs must never be trusted without independent verification"
+  - "Trained primarily on enzymes from BRENDA database; performance degrades on non-enzyme proteins and further on very short (<20 AA) or long (>500 AA) sequences"
+  - "Metalloproteins are poorly supported because Rosetta REF2015 training reward does not model metal coordination"
+  - "May 'hack' the REF2015 energy function -- proposals that score well in silico are not guaranteed to be experimentally stable; independent validation is essential"
+  - "Stochastic LLM outputs -- different runs may propose completely different mutations even with the same input (set seed for reproducibility)"
+  - "No structure output -- generates text only; must be paired with structure prediction tools (ESMFold, Boltz) for structural validation"
+  - "Author explicitly warns the model is 'often quite dumb' -- treat as a proposal generator for human review, not a reliable oracle"
+  - "Output parsing is heuristic -- the model may propose a mutation in the reasoning but fail to apply it correctly to the output sequence; always verify the modified sequence"
+  - "Membrane proteins poorly supported (ESMFold, used in training loop, struggles with transmembrane helices)"
+
+use_when:
+  - "You want to propose stability-improving mutations for a globular protein and want human-readable rationale for each suggestion to evaluate biological plausibility"
+  - "You are running iterative protein engineering campaigns and want to incorporate previous experimental results (positive and negative) to guide the next round of proposals"
+  - "You lack an experimental 3D structure and need mutations without requiring structure prediction as a prerequisite"
+  - "You are engineering industrial enzymes or thermostable proteins where Tm improvement is the primary goal"
+  - "You want to explore larger structural modifications (insertions, deletions) beyond single-point mutations in a single model call"
+  - "You need an interpretable proposal generator that researchers can review and discuss rather than a black-box ranking"
+
+dont_use_when:
+  - "You need structure prediction rather than sequence-level mutation proposals -- use Boltz, ESMFold, or RoseTTAFold"
+  - "You are working with metalloproteins where metal coordination is critical to stability -- Rosetta REF2015 reward does not capture this"
+  - "You need binding affinity optimization rather than thermostability -- Pro-1 v1 has no affinity signal in its reward"
+  - "You need deterministic, reproducible outputs for regulatory or production workflows -- outputs are stochastic even with seed"
+  - "You are working with membrane proteins or intrinsically disordered regions"
+  - "You need high-throughput saturating mutagenesis scans across all positions -- per-residue DeltaDeltaG tools like ThermoMPNN are more appropriate for systematic screening"
+  - "Citation-accurate scientific reasoning is required -- the model hallucinating paper references is a known limitation that cannot be mitigated"
+
+alternatives:
+  - model: thermompnn
+    when_better: "ThermoMPNN provides per-position ddG predictions (kcal/mol) for systematic single-mutation scanning across all residues; deterministic, structure-conditioned, and does not hallucinate"
+    when_worse: "Requires a 3D structure; generates numeric scores with no biochemical reasoning; cannot incorporate prior experimental feedback; no insertions/deletions"
+  - model: thermompnn_d
+    when_better: "ThermoMPNN-D explicitly models epistatic interactions between pairs of simultaneous mutations; physics-grounded ddG values; no citation hallucination"
+    when_worse: "Requires structure; no reasoning traces; no experimental feedback loop; limited to pairwise mutations"
+  - model: esm2
+    when_better: "ESM2 pseudo-log-likelihoods provide fast, sequence-only variant effect scores across all single mutations with no LLM overhead or hallucination risk"
+    when_worse: "No reasoning traces; no iterative feedback mechanism; scores rather than proposes; cannot suggest insertions or deletions"
+  - model: mpnn
+    when_better: "ProteinMPNN (slug: mpnn) is state-of-the-art for structure-conditioned inverse folding; generates full redesigned sequences optimizing for the given backbone"
+    when_worse: "Requires a 3D structure as input; produces sequences with no biochemical rationale; cannot incorporate experimental feedback from prior rounds"
+
+complements:
+  - model: boltz
+    workflow: "Use Pro-1 to propose stability-improving mutations with reasoning traces, then use Boltz to predict the 3D structure of proposed variants to verify structural plausibility before synthesis"
+    example_protocol: null
+  - model: esm2
+    workflow: "Use Pro-1 to generate focused mutation proposals with rationale, then cross-validate top candidates with ESM2 pseudo-log-likelihoods for an orthogonal sequence-based stability score before committing to synthesis"
+    example_protocol: null
+  - model: thermompnn
+    workflow: "Use ThermoMPNN for rapid single-mutation ddG scanning to identify stability-critical positions, then use Pro-1 to propose targeted multi-step modifications at those positions with biochemical reasoning and iterative feedback"
+    example_protocol: null
+  - model: esmfold
+    workflow: "After Pro-1 proposes mutations, use ESMFold to predict structure of the modified sequence and score with Rosetta REF2015 (the same metric used in Pro-1 training) for in-silico pre-screening before wet-lab validation"
+    example_protocol: null

@@ -1,0 +1,55 @@
+model_slug: biotite
+display_name: Biotite
+last_updated: "2026-03-17"
+
+strengths:
+  - "Provides two essential structural analysis utilities (RMSD computation and chain extraction) as API-accessible endpoints, enabling fully automated structure comparison pipelines without local software installation"
+  - "C-alpha RMSD computation with optimal Kabsch superimposition is the gold-standard metric for quantifying structural similarity between predicted and experimental protein structures"
+  - "Multi-chain complex support for both chain extraction and paired-chain RMSD, enabling analysis of protein-protein complexes from structure prediction tools (Boltz, Chai-1)"
+  - "Used in 6 workflow protocols on the BioLM platform, making it one of the most-integrated utility tools for structure prediction evaluation and downstream analysis"
+  - "CPU-only operation with moderate resources (2 CPUs, 8 GB RAM) -- no GPU required for structural analysis, keeping costs low"
+  - "Chain extraction returns both amino acid sequence and PDB coordinate data, enabling seamless handoff to sequence-based models (ESM2) and structure-based models (ThermoMPNN)"
+  - "BSD-3-Clause license permits unrestricted use in academic and commercial settings"
+
+weaknesses:
+  - "Limited to C-alpha RMSD -- does not compute all-atom RMSD, side-chain RMSD, or GDT-TS scores that may be needed for comprehensive structure evaluation"
+  - "No visualization capabilities -- returns numerical RMSD values and PDB text, but cannot generate molecular graphics or structure overlays"
+  - "Protein-specific -- nucleic acid sequences are not extracted (only amino acid mapping), and small molecule ligands are ignored in RMSD calculations"
+  - "No structural alignment score (TM-score) which is more robust than RMSD for comparing proteins of different sizes or with partial structural similarity"
+  - "Chain extraction requires knowing chain IDs a priori -- no automatic chain identification or classification functionality"
+  - "Limited structural analysis scope -- only RMSD and chain extraction; no contact analysis, surface area computation, or secondary structure assignment"
+
+use_when:
+  - "You need to evaluate predicted protein structures against experimental references by computing C-alpha RMSD after optimal superimposition"
+  - "You are benchmarking multiple structure prediction methods (Boltz, Chai-1, ESMFold, AF2 NIM) on the same target and need standardized RMSD comparisons"
+  - "You need to extract individual chains from multi-chain complex predictions for downstream analysis with sequence or structure-based models"
+  - "You are building an automated structure prediction evaluation pipeline that runs without manual intervention"
+  - "You need to compare conformational changes between different states of the same protein (apo vs holo, wild-type vs mutant)"
+  - "You want to extract chain sequences and coordinates from complex PDB files without manual PDB parsing"
+
+dont_use_when:
+  - "You need comprehensive structural analysis including contact maps, surface area, secondary structure, or B-factor analysis -- use ProDy or local structural analysis tools"
+  - "You need protein-protein interaction analysis with hydrogen bonds, salt bridges, and hydrophobic contacts -- use ProDy's encode action for interaction characterization"
+  - "You need TM-score or GDT-TS rather than RMSD for structure comparison -- Biotite does not compute these metrics"
+  - "You need visualization or molecular graphics -- use PyMOL or ChimeraX locally"
+  - "You need to analyze molecular dynamics trajectories -- use MDAnalysis for trajectory-specific analyses"
+  - "You need to analyze nucleic acid or small molecule components of a complex -- Biotite focuses on protein chains"
+
+alternatives:
+  - model: prody
+    when_better: "ProDy provides comprehensive interaction analysis (6 interaction types: H-bonds, salt bridges, hydrophobic contacts, pi-stacking, cation-pi, disulfide) plus RMSD computation with both structural and sequence-based alignment options"
+    when_worse: "ProDy is more complex and resource-intensive (4 CPUs, 16 GB RAM); Biotite is simpler and lighter for cases where only RMSD and chain extraction are needed"
+
+complements:
+  - model: boltz
+    workflow: "Predict multi-chain complex structure with Boltz, then use Biotite generate to extract individual chains and Biotite predict to compute RMSD against experimental reference structures for validation"
+    example_protocol: null
+  - model: esm2
+    workflow: "Use Biotite generate to extract chain sequences and PDB coordinates from complex structures, then analyze the extracted sequences with ESM2 encode for per-residue embeddings and variant effect scoring"
+    example_protocol: null
+  - model: thermompnn
+    workflow: "Use Biotite generate to extract individual chains from predicted complexes, then feed each chain's PDB to ThermoMPNN for per-mutation stability analysis"
+    example_protocol: null
+  - model: prody
+    workflow: "Use Biotite for quick RMSD computation between structures, and ProDy for detailed interaction characterization of the same structures -- combining quantitative structural comparison with chemical interaction analysis"
+    example_protocol: null

@@ -1,0 +1,72 @@
+model_slug: dsm
+display_name: DSM
+license:
+  type: Apache-2.0
+  url: https://github.com/GleghornLab/DSM/blob/main/LICENSE
+  notes: ''
+molecule_types:
+- protein
+applicable_to:
+- protein
+- enzyme
+tasks:
+- sequence_generation
+- embedding
+- property_prediction
+- sequence_optimization
+primary_papers:
+- title: Diffusion Sequence Models for Enhanced Protein Representation and Generation
+  arxiv: '2506.08293'
+  doi: ''
+  venue: arXiv preprint, 2025
+  year: 2025
+  authors:
+  - Logan Hallee
+  - Nikolaos Rafailidis
+  - David B. Bichara
+  - Jason P. Gleghorn
+  pdf_r2: knowledge-base/models/dsm/primary/papers/hallee2025.pdf
+  md_r2: knowledge-base/models/dsm/primary/papers-md/hallee2025.md
+  figures_of_note: []
+source_repos:
+- type: github
+  url: https://github.com/GleghornLab/DSM
+  commit: ''
+  snapshot_r2: pending
+- type: huggingface
+  url: https://huggingface.co/GleghornLab/DSM_650
+  page_md_r2: knowledge-base/models/dsm/primary/pages/hf-dsm_650.md
+  notes: 'Multiple variants: GleghornLab/DSM_150, GleghornLab/DSM_650, Synthyra/DSM_ppi_full'
+applied_literature:
+- title: 'Crowdsourced Protein Design: Lessons From the Adaptyv EGFR Binder Competition'
+  doi: 10.1101/2025.04.17.648362
+  url: https://www.biorxiv.org/content/10.1101/2025.04.17.648362v2
+  venue: bioRxiv preprint, 2025
+  year: 2025
+  authors:
+  - Tudor-Stefan Cotet
+  - Igor Krawczuk
+  - Filippo Stocco
+  - Noelia Ferruz
+  - Anthony Gitter
+  - et al.
+  relevance: 'Community paper from the Adaptyv Protein Design Competition that established the BenchBB benchmark. DSM and
+    DSM-ppi binders were experimentally validated on EGFR and PD-L1 targets through this competition, with 12 of 13 expressed
+    DSM designs binding EGFR (top design KD ~861 pM).
+
+    '
+  pdf_r2: knowledge-base/models/dsm/applied/papers/cotet2025.pdf
+- title: Diffusion on Language Model Encodings for Protein Sequence Generation
+  arxiv: '2403.03726'
+  url: https://icml.cc/virtual/2025/poster/43588
+  venue: ICML 2025
+  year: 2025
+  authors:
+  - Viacheslav Meshchaninov
+  - et al.
+  relevance: 'DiMA framework for continuous diffusion on protein language model encodings. Explores the same masked diffusion
+    paradigm for protein sequence generation as DSM, benchmarking across ESM-2 and other pLM representations. Provides comparative
+    context for DSM''s discrete diffusion approach.
+
+    '
+  pdf_r2: knowledge-base/models/dsm/applied/papers/meshchaninov2025.pdf

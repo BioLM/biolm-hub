@@ -1,0 +1,270 @@
+import sys
+from pathlib import Path
+from typing import Optional
+
+import modal
+
+from models.commons.util.config import (
+    cloudflare_r2_secret,
+    huggingface_api_token_secret,
+)
+
+"""
+Modal Download Layer
+====================
+
+Purpose:
+Isolate model weight downloads during Modal image builds to maximize Docker layer
+caching. Parameters are passed via kwargs to keep the layer stable.
+
+Role in Flow:
+This layer adds a minimal subset of commons and the model's `download.py`, then
+executes `download_model_assets(...)` with explicit kwargs.
+
+Why this exists:
+- We want weights cached independently from frequent code changes in app.py.
+- Copying only minimal files preserves build cache and avoids cache busting.
+
+Primary APIs:
+- setup_download_layer(): add minimal files, install deps, run download with kwargs
+- _run_download_with_params(): executes with `base_model_slug`, `params_version`,
+  optional `variant_config` and `sub_path`.
+"""
+
+
+def setup_download_layer(
+    image: modal.Image,
+    base_model_slug: str,
+    params_version: str,
+    variant_config: Optional[dict] = None,
+    sub_path: Optional[str] = None,
+    extra_pip_packages: Optional[list[str]] = None,
+) -> modal.Image:
+    """Add model download layer to Modal image using direct parameter passing.
+
+    Args:
+        image: Base Modal image to build upon
+        base_model_slug: Model identifier (e.g., "esm2", "ablang2")
+        params_version: Version of model parameters to download
+        variant_config: Dictionary containing all variant configuration
+        sub_path: Optional subdirectory for model storage
+        extra_pip_packages: Additional pip packages needed for download
+
+    Returns:
+        Modal image with download layer configured
+    """
+    model_folder_name = base_model_slug.replace("-", "_")
+
+    # Step 1: Add minimal commons dependencies needed for download
+    image = _add_minimal_commons(image, model_folder_name)
+
+    # Step 2: Add model's download module
+    import os
+
+    downloader_file = Path(__file__).resolve()
+    repo_root = downloader_file.parent.parent.parent.parent
+    download_module = repo_root / "models" / model_folder_name / "download.py"
+
+    if not download_module.exists():
+        raise FileNotFoundError(
+            f"Download module not found: {download_module}\n"
+            f"Current working directory: {os.getcwd()}\n"
+            f"Expected location: {download_module}"
+        )
+    image = image.add_local_file(download_module, "/root/download.py", copy=True)
+
+    # Step 3: Install download dependencies
+    base_packages = [
+        "boto3==1.35.78",
+        "pydantic>=2.0,<3.0",
+        "requests>=2.28.0,<3.0",  # Updated to support urllib3>=2.0 for chai-lab compatibility
+    ]
+
+    all_packages = base_packages + (extra_pip_packages or [])
+
+    image = image.uv_pip_install(*all_packages)
+
+    # Step 4: Add unique identifiers to prevent Modal cache collisions
+    # These ensure each model gets its own download layer cached separately
+    envs_to_add = {
+        "_BIOLM_BASE_MODEL_SLUG": base_model_slug,
+        "_BIOLM_PARAMS_VERSION": params_version,
+    }
+
+    # Add variant config if present (for both runtime and cache distinction)
+    if variant_config:
+        envs_to_add.update(variant_config)
+
+    image = image.env(envs_to_add)
+
+    # Step 5: Compute source hash to bust run_function cache when download
+    # logic changes. Modal's run_function only hashes the function body and
+    # kwargs — it does NOT detect changes to files the function imports at
+    # runtime (e.g., download.py, acquisition.py). By including a content
+    # hash of all mounted source files in the kwargs, we ensure the download
+    # layer rebuilds whenever any download-related code changes.
+    source_hash = _compute_download_source_hash(
+        repo_root, model_folder_name, download_module
+    )
+
+    # Step 6: Execute download function
+    image = image.run_function(
+        _run_download_with_params,
+        secrets=[cloudflare_r2_secret, huggingface_api_token_secret],
+        kwargs={
+            "base_model_slug": base_model_slug,
+            "params_version": params_version,
+            "variant_config": variant_config,
+            "sub_path": sub_path,
+            "_source_hash": source_hash,
+        },
+    )
+
+    return image
+
+
+def _compute_download_source_hash(
+    repo_root: Path, model_folder_name: str, download_module: Path
+) -> str:
+    """Compute a content hash of all source files used during download.
+
+    Modal's run_function caches based on function source code and kwargs only.
+    It does NOT detect changes to files imported at runtime inside the container.
+    This hash ensures the download layer rebuilds when any download-related
+    source file changes (commons storage modules, model download.py, schema, etc.).
+    """
+    import hashlib
+
+    h = hashlib.sha256()
+
+    # Hash the model's download.py
+    if download_module.exists():
+        h.update(download_module.read_bytes())
+
+    # Hash essential commons files that are mounted into the download container
+    commons_files = [
+        "models/commons/storage/downloads.py",
+        "models/commons/storage/acquisition.py",
+        "models/commons/storage/download_helpers.py",
+        "models/commons/storage/r2.py",
+        "models/commons/storage/r2_utils.py",
+        "models/commons/util/config.py",
+        f"models/{model_folder_name}/schema.py",
+        f"models/{model_folder_name}/config.py",
+    ]
+
+    for rel_path in sorted(commons_files):
+        full_path = repo_root / rel_path
+        if full_path.exists():
+            h.update(full_path.read_bytes())
+
+    return h.hexdigest()[:16]
+
+
+def _add_minimal_commons(image: modal.Image, model_folder_name: str) -> modal.Image:
+    """Add minimal commons files required for download operations.
+
+    Only includes essential modules to minimize image layer size.
+    Optimized to use a single add_local_dir operation for better layer caching.
+
+    Args:
+        image: Modal image to add files to
+        model_folder_name: Model folder name (e.g., "esm2", "ablang2")
+    """
+    # Find repo root relative to this file
+    downloader_file = Path(__file__).resolve()
+    repo_root = downloader_file.parent.parent.parent.parent
+
+    essential_files = [
+        # Package structure
+        "models/__init__.py",
+        "models/commons/__init__.py",
+        # Storage modules
+        "models/commons/storage/__init__.py",
+        "models/commons/storage/downloads.py",
+        "models/commons/storage/r2.py",
+        "models/commons/storage/acquisition.py",
+        "models/commons/storage/download_helpers.py",
+        "models/commons/storage/r2_utils.py",
+        # Configuration utilities
+        "models/commons/util/__init__.py",
+        "models/commons/util/config.py",
+        "models/commons/util/environment.py",
+        # Model-related modules
+        "models/commons/model/__init__.py",
+        "models/commons/model/pydantic.py",
+        "models/commons/model/schema.py",
+    ]
+
+    # Add model-specific files that may be imported during download
+    model_specific_files = [
+        f"models/{model_folder_name}/__init__.py",
+        f"models/{model_folder_name}/schema.py",
+        f"models/{model_folder_name}/config.py",
+    ]
+
+    all_files = essential_files + model_specific_files
+
+    # Optimized approach: collect all files and use a temporary directory
+    # This results in a single layer operation instead of multiple individual file adds
+    import atexit
+    import shutil
+    import tempfile
+
+    # Create temp directory manually without context manager to control lifecycle
+    tmpdir = tempfile.mkdtemp(prefix="modal_build_")
+    tmp_path = Path(tmpdir)
+
+    # Register cleanup for process exit (as a safety net)
+    # This ensures the directory is cleaned up when the process exits
+    def cleanup_tmpdir():
+        try:
+            shutil.rmtree(tmpdir, ignore_errors=True)
+        except Exception:
+            pass
+
+    # The atexit handler will clean up temp files when the process exits
+    atexit.register(cleanup_tmpdir)
+
+    # Copy all required files to temp directory, preserving structure
+    for file_path in all_files:
+        local_file = repo_root / file_path
+        if local_file.exists():
+            # Create the destination path in temp directory
+            dest_path = tmp_path / file_path
+            dest_path.parent.mkdir(parents=True, exist_ok=True)
+            # Copy the file preserving metadata
+            shutil.copy2(local_file, dest_path)
+
+    # Single add_local_dir call - most efficient for Modal layer caching
+    # This creates a single layer with all files instead of multiple layers
+    image = image.add_local_dir(
+        tmp_path, "/root", copy=True  # Include in image layer for proper caching
+    )
+
+    return image
+
+
+def _run_download_with_params(
+    base_model_slug: str,
+    params_version: str,
+    sub_path: Optional[str] = None,
+    variant_config: Optional[dict] = None,
+    _source_hash: Optional[str] = None,
+):
+    """Execute download function with explicit parameters.
+
+    The _source_hash kwarg is not used at runtime — it exists solely to bust
+    Modal's run_function cache when download-related source files change.
+    """
+    sys.path.insert(0, "/root")
+
+    from download import download_model_assets
+
+    # Call with explicit parameters
+    download_model_assets(
+        base_model_slug=base_model_slug,
+        params_version=params_version,
+        variant_config=variant_config,
+        sub_path=sub_path,
+    )

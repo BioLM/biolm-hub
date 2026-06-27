@@ -1,0 +1,82 @@
+model_slug: igt5
+display_name: IgT5
+license:
+  type: CC-BY-4.0
+  url: https://zenodo.org/doi/10.5281/zenodo.10876908
+  notes: "Zenodo deposit (authoritative release linked from arXiv paper) is CC-BY-4.0.\
+    \ HuggingFace metadata says MIT but Zenodo is the canonical source. No Exscientia\
+    \ GitHub repo exists to cross-check."
+molecule_types:
+- antibody
+applicable_to:
+- immunotherapy
+- drug development
+- antibody engineering
+- antibody repertoire analysis
+tasks:
+- embedding
+primary_papers:
+- title: Large scale paired antibody language models
+  arxiv: '2403.17889'
+  doi: ''
+  venue: arXiv preprint, 2024
+  year: 2024
+  authors:
+  - Kenlay H
+  - Dreyer FA
+  - Sherborne B
+  - Deane CM
+  pdf_r2: knowledge-base/models/igt5/primary/papers/h2023.pdf
+  md_r2: knowledge-base/models/igt5/primary/papers-md/h2023.md
+  figures_of_note: []
+source_repos:
+- type: huggingface
+  url: https://huggingface.co/Exscientia/IgT5
+  page_md_r2: knowledge-base/models/igt5/primary/pages/hf-igt5.md
+  notes: Paired and unpaired variants available (IgT5 and IgT5_unpaired)
+applied_literature:
+- title: 'AI-accelerated therapeutic antibody development: practical insights'
+  doi: 10.3389/fddsv.2024.1447867
+  year: 2024
+  relevance: Reviews IgT5 as a leading antibody-specific embedding model for therapeutic development, highlighting its state-of-the-art
+    performance on sequence recovery, expression, and binding affinity prediction tasks.
+  molecule_focus: antibody
+  task_focus: antibody_engineering
+  pdf_r2: pending
+  md_r2: pending
+- title: A curriculum learning approach to training antibody language models
+  doi: 10.1371/journal.pcbi.1013473
+  year: 2025
+  relevance: Benchmarks IgT5 against curriculum-learning antibody models, with IgT5 Paired achieving 91.63% VH accuracy and
+    serving as a competitive baseline for paired antibody sequence recovery.
+  molecule_focus: antibody
+  task_focus: sequence_completion
+  pdf_r2: pending
+  md_r2: pending
+- title: CDR-aware masked language models for paired antibodies enable state-of-the-art binding prediction
+  doi: 10.1101/2025.10.31.685149
+  year: 2025
+  relevance: Directly compares CDR-focused fine-tuning against IgT5 Paired on binding affinity tasks, with compact CDR-aware
+    models surpassing the 3B-parameter IgT5 by 16-25% on R-squared using 5x fewer parameters.
+  molecule_focus: antibody
+  task_focus: binding_prediction
+  pdf_r2: knowledge-base/models/igt5/applied/papers/unknown2025b.pdf
+  md_r2: pending
+- title: 'S2ALM: Sequence-Structure Pre-trained Large Language Model for Comprehensive Antibody Representation Learning'
+  doi: 10.34133/research.0721
+  year: 2025
+  relevance: Benchmarks against IgT5 across binding affinity, B cell maturation, and antibody design tasks; S2ALM sets new
+    SOTA by combining sequence and structure pre-training on 75M sequences and 11.7M structures
+  molecule_focus: antibody
+  task_focus: antibody representation learning
+  pdf_r2: pending
+  md_r2: pending
+- title: A comprehensive overview of recent advances in generative models for antibodies
+  doi: 10.1016/j.csbj.2024.06.016
+  year: 2024
+  relevance: Reviews IgT5 among antibody language models for generative design, comparing sequence recovery and binding prediction
+    performance across model architectures
+  molecule_focus: antibody
+  task_focus: antibody generative design
+  pdf_r2: pending
+  md_r2: pending

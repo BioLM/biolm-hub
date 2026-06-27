@@ -1,0 +1,95 @@
+model_slug: temberture
+display_name: TemBERTure
+license:
+  type: MIT
+  url: https://github.com/ibmm-unibe-ch/TemBERTure
+  notes: ''
+molecule_types:
+- protein
+applicable_to:
+- protein
+- enzyme
+tasks:
+- embedding
+- sequence_classification
+- property_prediction
+primary_papers:
+- title: 'TemBERTure: advancing protein thermostability prediction with deep learning and attention mechanisms'
+  arxiv: ''
+  doi: 10.1093/bioinformatics/btae157
+  venue: Bioinformatics, 2024
+  year: 2024
+  authors:
+  - Chiara Rodella
+  - Florian Lazaro
+  - Thomas Lemmin
+  pdf_r2: pending
+  md_r2: pending
+  figures_of_note: []
+source_repos:
+- type: github
+  url: https://github.com/ibmm-unibe-ch/TemBERTure
+  commit: 3c17a7a2d2a8365b187f5dec4eb1ed5db6d37f41
+  snapshot_r2: knowledge-base/models/temberture/primary/repos/temberture-3c17a7a2.tar.gz
+  readme_md_r2: knowledge-base/models/temberture/primary/pages/gh-temberture-readme.md
+- type: huggingface
+  url: https://huggingface.co/Rostlab/prot_bert_bfd
+  commit: 6c5c8a55a52ff08a664dfd584aa1773f125a0487
+  snapshot_r2: pending
+  page_md_r2: knowledge-base/models/temberture/primary/pages/hf-prot_bert_bfd.md
+applied_literature:
+- title: 'TemStaPro: protein thermostability prediction using sequence representations from protein language models'
+  doi: 10.1093/bioinformatics/btae157
+  year: 2024
+  relevance: Concurrent thermostability prediction method using protein language model embeddings; TemBERTure achieves 83%
+    accuracy on the TemStaPro benchmark dataset, providing a direct performance comparison.
+  molecule_focus: protein
+  task_focus: thermostability_prediction
+  pdf_r2: pending
+  md_r2: pending
+- title: Computation of Protein Thermostability and Epistasis
+  doi: 10.1002/wcms.70045
+  year: 2025
+  relevance: Comprehensive review covering computational strategies for protein stability prediction including TemBERTure
+    and other deep learning approaches, contextualizing their strengths and limitations for protein engineering.
+  molecule_focus: protein
+  task_focus: thermostability_prediction
+  pdf_r2: pending
+  md_r2: pending
+- title: Tailoring industrial enzymes for thermostability and activity evolution by the machine learning-based iCASE strategy
+  doi: 10.1038/s41467-025-55944-5
+  year: 2025
+  relevance: Applies machine learning-based strategies for industrial enzyme thermostability engineering, representing the
+    practical downstream application domain that TemBERTure predictions support.
+  molecule_focus: enzyme
+  task_focus: protein_engineering
+  pdf_r2: pending
+  md_r2: pending
+- title: 'ESMStabP: A Regression Model for Protein Thermostability Prediction'
+  doi: 10.1101/2025.02.18.638450
+  venue: bioRxiv preprint, 2025
+  year: 2025
+  authors:
+  - Marcus Ramos
+  - Robert L. Jernigan
+  - Mesih Kilinc
+  relevance: Incorporates TemBERTure thermophilic classifications as an input feature alongside ESM2 embeddings for melting
+    temperature regression (R2 = 0.95, PCC = 0.97); directly validates TemBERTure's classification outputs as informative
+    features for quantitative Tm prediction
+  molecule_focus: protein
+  task_focus: thermostability_prediction
+  pdf_r2: knowledge-base/models/temberture/applied/papers/ramos2025.pdf
+  md_r2: pending
+- title: 'Click, Compute, Create: A Review of Web-based Tools for Enzyme Engineering'
+  doi: 10.1002/cbic.202400092
+  venue: ChemBioChem, 2024
+  year: 2024
+  authors:
+  - Adrian J. Tripp
+  - others
+  relevance: Comprehensive review of web-based enzyme engineering tools including TemBERTure, cataloguing it as a key thermostability
+    prediction resource for computational enzyme design workflows
+  molecule_focus: enzyme
+  task_focus: protein_engineering
+  pdf_r2: pending
+  md_r2: pending

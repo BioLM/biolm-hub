@@ -1,0 +1,93 @@
+model_slug: prody
+display_name: ProDy
+license:
+  type: MIT
+  url: https://github.com/prody/ProDy/blob/main/LICENSE.rst
+  notes: ''
+molecule_types:
+- protein
+- complex
+applicable_to:
+- protein
+- enzyme
+- antibody
+- complex
+tasks:
+- feature_extraction
+- utility
+primary_papers:
+- title: 'ProDy: Protein Dynamics Inferred from Theory and Experiments'
+  arxiv: ''
+  doi: 10.1093/bioinformatics/btr168
+  venue: Bioinformatics, 2011
+  year: 2011
+  authors:
+  - Ahmet Bakan
+  - Lidio M. Meireles
+  - Ivet Bahar
+  pdf_r2: knowledge-base/models/prody/primary/papers/bakan2011.pdf
+  md_r2: pending
+  figures_of_note: []
+source_repos:
+- type: github
+  url: https://github.com/prody/ProDy
+  commit: ''
+  snapshot_r2: pending
+  readme_md_r2: knowledge-base/models/prody/primary/pages/gh-prody-readme.md
+- type: pypi
+  url: https://pypi.org/project/ProDy/
+  notes: Protein dynamics and structure analysis library
+applied_literature:
+- title: 'ProDy 2.0: increased scale and scope after 10 years of protein dynamics modelling with Python'
+  doi: 10.1093/bioinformatics/btab187
+  year: 2021
+  relevance: Major update introducing SignDy for signature dynamics, CryoDy for cryo-EM, and essential site scanning analysis
+  molecule_focus: protein
+  task_focus: protein dynamics analysis
+  pdf_r2: pending
+  md_r2: pending
+- title: 'Protein dynamics developments for the large scale and cryoEM: case study of ProDy 2.0'
+  doi: 10.1107/S2059798322001966
+  year: 2022
+  relevance: Applies ProDy CryoDy pipeline to mammalian chaperonin TRiC/CCT for normal mode analysis and allosteric signal
+    flow from cryo-EM maps
+  molecule_focus: protein
+  task_focus: cryo-EM dynamics analysis
+  pdf_r2: pending
+  md_r2: pending
+- title: 'A Fresh Look at the Normal Mode Analysis of Proteins: Introducing Allosteric Co-Vibrational Modes'
+  doi: 10.1021/jacsau.4c00109
+  year: 2024
+  relevance: Uses ProDy normal mode analysis to introduce allosteric co-vibrational modes, demonstrated on JAK2 V617F mutation
+    mechanism
+  molecule_focus: protein
+  task_focus: allosteric mechanism analysis
+  pdf_r2: pending
+  md_r2: pending
+- title: 'WatFinder: a ProDy tool for protein-water interactions'
+  doi: 10.1093/bioinformatics/btae516
+  year: 2024
+  relevance: New ProDy module for identifying water bridges, water-mediated associations, and water channels critical to protein
+    stability and dynamics from MD simulations
+  molecule_focus: protein
+  task_focus: protein-water interaction analysis
+  pdf_r2: pending
+  md_r2: pending
+- title: 'InSty: A ProDy Module for Evaluating Protein Interactions and Stability'
+  doi: 10.1016/j.jmb.2025.169009
+  year: 2025
+  relevance: ProDy module quantifying hydrogen bonds, salt bridges, pi-stacking, and hydrophobic interactions across conformational
+    ensembles from MD and cryo-EM data
+  molecule_focus: protein
+  task_focus: protein interaction and stability analysis
+  pdf_r2: pending
+  md_r2: pending
+- title: 'Exploration of Cryptic Pockets Using Enhanced Sampling Along Normal Modes: A Case Study of KRAS G12D'
+  doi: 10.1021/acs.jcim.4c01435
+  year: 2024
+  relevance: Uses ProDy ANM normal modes as progress coordinates for weighted ensemble MD simulations to discover cryptic
+    drug pockets in KRAS G12D (>400 us simulations)
+  molecule_focus: protein
+  task_focus: cryptic pocket discovery for drug design
+  pdf_r2: pending
+  md_r2: pending

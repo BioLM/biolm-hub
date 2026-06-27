@@ -1,0 +1,54 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BioLM API Catalog</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>BioLM API Catalog</h1>
+            <p class="catalog-subtitle">Explore our collection of biological language models</p>
+        </header>
+        <main>
+            <div class="model-groups">
+                {% for base_slug, group in grouped_catalog.items() %}
+                    <div class="model-group">
+                        <h2 class="group-title">{{ group.display_name }}</h2>
+                        <div class="model-variants">
+                            {% if group.variants|length == 1 %}
+                                <!-- Single model - show as primary button -->
+                                {% set variant = group.variants[0] %}
+                                <a href="/catalog/{{ variant.slug }}" class="model-button primary">
+                                    <div class="button-content">
+                                        <span class="model-name">{{ variant.display_name }}</span>
+                                        <span class="endpoint-count">{{ variant.endpoints|length }} endpoint{{ 's' if variant.endpoints|length != 1 else '' }}</span>
+                                    </div>
+                                    <div class="button-arrow">→</div>
+                                </a>
+                            {% else %}
+                                <!-- Multiple variants - show as button group -->
+                                {% for variant in group.variants %}
+                                    <a href="/catalog/{{ variant.slug }}" class="model-button variant">
+                                        <div class="button-content">
+                                            <span class="model-name">{{ variant.display_name }}</span>
+                                            <span class="variant-info">{{ variant.slug.split('-')[-1] }}</span>
+                                        </div>
+                                        <div class="button-arrow">→</div>
+                                    </a>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </main>
+    </div>
+</body>
+</html>

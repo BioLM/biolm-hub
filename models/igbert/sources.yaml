@@ -1,0 +1,87 @@
+model_slug: igbert
+display_name: IgBert
+license:
+  type: CC-BY-4.0
+  url: https://zenodo.org/doi/10.5281/zenodo.10876908
+  notes: "Zenodo deposit (authoritative release linked from arXiv paper) is CC-BY-4.0.\
+    \ HuggingFace metadata says MIT but Zenodo is the canonical source. No Exscientia\
+    \ GitHub repo exists to cross-check."
+molecule_types:
+- antibody
+applicable_to:
+- immunotherapy
+- drug development
+- antibody engineering
+- antibody repertoire analysis
+- sequence generation
+tasks:
+- embedding
+- sequence_completion
+primary_papers:
+- title: Large scale paired antibody language models
+  arxiv: '2403.17889'
+  doi: ''
+  venue: arXiv preprint, 2024
+  year: 2024
+  authors:
+  - Kenlay H
+  - Dreyer FA
+  - Sherborne B
+  - Deane CM
+  pdf_r2: knowledge-base/models/igbert/primary/papers/h2023.pdf
+  md_r2: knowledge-base/models/igbert/primary/papers-md/h2023.md
+  figures_of_note: []
+source_repos:
+- type: huggingface
+  url: https://huggingface.co/Exscientia/IgBert
+  page_md_r2: knowledge-base/models/igbert/primary/pages/hf-igbert.md
+  notes: Paired and unpaired variants available (IgBert and IgBert_unpaired)
+applied_literature:
+- title: 'AI-accelerated therapeutic antibody development: practical insights'
+  doi: 10.3389/fddsv.2024.1447867
+  year: 2024
+  relevance: Reviews IgBERT as a state-of-the-art paired antibody language model for therapeutic development, noting its superior
+    CDR sequence recovery and binding affinity prediction over general protein language models.
+  molecule_focus: antibody
+  task_focus: antibody_engineering
+  pdf_r2: pending
+  md_r2: pending
+- title: A curriculum learning approach to training antibody language models
+  doi: 10.1371/journal.pcbi.1013473
+  year: 2025
+  relevance: Benchmarks IgBERT against curriculum-learning antibody models on paired sequence recovery, expression prediction,
+    and pair classification tasks, validating its competitiveness as an antibody-specific baseline.
+  molecule_focus: antibody
+  task_focus: sequence_completion
+  pdf_r2: pending
+  md_r2: pending
+- title: CDR-aware masked language models for paired antibodies enable state-of-the-art binding prediction
+  doi: 10.1101/2025.10.31.685149
+  year: 2025
+  relevance: Directly compares CDR-focused fine-tuning of foundation models against IgBERT paired, showing that compact CDR-aware
+    models can match IgBERT on whole-chain recovery while surpassing it on binding affinity tasks.
+  molecule_focus: antibody
+  task_focus: binding_prediction
+  pdf_r2: knowledge-base/models/igbert/applied/papers/unknown2025b.pdf
+  md_r2: pending
+- title: Sequence-Only Prediction of Antibody Fab Thermostability Using Protein Language Model Embeddings
+  doi: 10.64898/2025.12.30.697053
+  year: 2026
+  relevance: Uses IgBERT embeddings as the sole featurization for a Random Forest model predicting antibody Fab melting temperatures.
+    Achieves Pearson correlation of 0.77 on an internal test set (133 antibodies) and 0.28 on the Jain clinical-stage therapeutic
+    benchmark, outperforming sequence-similarity baselines and demonstrating IgBERT captures thermostability-relevant information.
+  molecule_focus: antibody
+  task_focus: thermostability_prediction
+  pdf_r2: pending
+  md_r2: pending
+- title: 'AbBiBench: A Benchmark for Antibody Binding Affinity Maturation and Design'
+  arxiv: '2506.04235'
+  year: 2025
+  relevance: Comprehensive benchmark evaluating 15 protein models including antibody-specific masked language models on 184,500+
+    experimental antibody-antigen binding measurements across 14 antibodies and 9 antigens. Establishes that antibody-specific
+    fine-tuning of masked language models (the IgBERT model class) can improve affinity prediction over general protein LMs,
+    with quantitative Spearman correlation and precision@10 metrics reported.
+  molecule_focus: antibody
+  task_focus: binding_prediction
+  pdf_r2: knowledge-base/models/igbert/applied/papers/unknown2025c.pdf
+  md_r2: pending

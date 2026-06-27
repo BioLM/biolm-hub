@@ -1,0 +1,38 @@
+model_slug: omni-dna
+display_name: Omni-DNA
+license:
+  type: Apache-2.0
+  url: https://huggingface.co/zehui127/Omni-DNA-1B
+  notes: ''
+molecule_types:
+- dna
+applicable_to:
+- dna
+- genomics
+tasks:
+- embedding
+- property_prediction
+primary_papers:
+- title: 'Omni-DNA: A Unified Genomic Foundation Model for Cross-Modal and Multi-Task Learning'
+  arxiv: '2502.03499'
+  doi: ''
+  venue: arXiv preprint, 2025
+  year: 2025
+  authors:
+  - Zehui Li
+  - Vallijah Subasri
+  - Yifei Shen
+  - Dongsheng Li
+  - Yiren Zhao
+  - Guy-Bart Stan
+  - Caihua Shan
+  pdf_r2: knowledge-base/models/omni_dna/primary/papers/li2025.pdf
+  md_r2: knowledge-base/models/omni_dna/primary/papers-md/li2025.md
+  figures_of_note: []
+source_repos:
+- type: huggingface
+  url: https://huggingface.co/zehui127/Omni-DNA-1B
+  commit: ca1be6d00203880e66210b991eea5ff7fd1e6bcb
+  snapshot_r2: pending
+  page_md_r2: knowledge-base/models/omni_dna/primary/pages/hf-omni-dna-1b.md
+applied_literature: []

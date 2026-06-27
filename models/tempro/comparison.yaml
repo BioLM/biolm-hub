@@ -1,0 +1,56 @@
+model_slug: tempro
+display_name: TEMPRO
+last_updated: "2026-03-17"
+
+strengths:
+  - "Purpose-built for nanobody (VHH) melting temperature prediction, trained specifically on nanobody thermal stability data with sequence length constraints (100-160 residues) matched to the nanobody length range"
+  - "Two ESM2 backbone variants available (650M, 3B) allowing users to choose between speed and representation quality for their nanobody Tm predictions"
+  - "CPU-only inference after ESM2 embedding extraction (Keras head) -- lightweight deployment with 4 GB RAM and no GPU requirement for the TEMPRO model itself"
+  - "Enables rapid computational screening of large nanobody libraries from phage/yeast display campaigns before experimental Tm measurement"
+  - "Directly addresses a critical developability property for nanobody therapeutics, where Tm above 60-70 degrees C is the standard threshold for therapeutic suitability"
+  - "MIT license enables unrestricted commercial use in nanobody drug development pipelines"
+
+weaknesses:
+  - "Strictly limited to nanobody sequences in the 100-160 residue range -- rejects all other protein types, including conventional antibodies, enzymes, and general proteins"
+  - "Depends on ESM2 as a prerequisite service for embedding generation, adding deployment complexity and latency compared to self-contained models"
+  - "Very recent model (published August 2024) with limited external validation -- no independent benchmarking studies or applied literature citations yet"
+  - "No per-residue analysis or mutation-specific predictions -- returns only a global Tm estimate without identifying which residues or regions influence stability"
+  - "Training data limited to camelid VHH antibodies; shark VNAR single-domain antibodies may have different stability profiles not captured by the model"
+  - "No uncertainty estimates on Tm predictions -- single point estimate without confidence intervals"
+
+use_when:
+  - "You are developing therapeutic nanobodies and need to assess thermal stability (Tm) of candidates from sequence alone, before expression and purification"
+  - "You are screening a large nanobody library from phage or yeast display and want to prioritize thermostable candidates for downstream development"
+  - "You need to evaluate the stability impact of CDR grafting or framework mutations on nanobody Tm during engineering campaigns"
+  - "You want nanobody-specific Tm prediction rather than a general protein stability tool that may not capture nanobody-specific features"
+  - "Your sequences are in the 100-160 residue nanobody range and you want predictions from a model specifically trained on this protein class"
+
+dont_use_when:
+  - "Your protein is not a nanobody (VHH) -- the model will reject sequences outside the 100-160 residue range and is not trained on other protein types"
+  - "You need Tm prediction for conventional antibodies, Fab fragments, or full IgG molecules -- use TemBERTure or ESMStabP for general protein thermostability"
+  - "You need per-mutation stability predictions (ddG) rather than global Tm -- use ThermoMPNN for structure-based per-mutation stability assessment"
+  - "You need to predict stability for general proteins (enzymes, receptors, globular proteins) -- use TemBERTure or ESMStabP"
+  - "You need variant effect prediction across all possible mutations -- TEMPRO predicts a single Tm per sequence, not a mutational landscape"
+  - "You are working with shark VNAR or other non-camelid single-domain antibodies that may differ from the training distribution"
+
+alternatives:
+  - model: temberture
+    when_better: "TemBERTure handles any protein sequence (not just nanobodies), provides both classification and regression modes, and generates thermostability-aware embeddings for downstream use"
+    when_worse: "TemBERTure is not specialized for nanobodies; TEMPRO's nanobody-specific training may capture VHH-specific stability determinants (hallmark residues, CDR3 characteristics) more accurately"
+  - model: esmstabp
+    when_better: "ESMStabP predicts Tm for any protein from sequence alone using ESM2 embeddings, with optional organism growth temperature context for improved accuracy (R-squared 0.94)"
+    when_worse: "ESMStabP is a general protein model; TEMPRO is specifically trained on nanobody data and may provide more accurate Tm estimates for nanobodies specifically"
+  - model: thermompnn
+    when_better: "ThermoMPNN provides per-mutation ddG predictions from 3D structure, enabling identification of specific stabilizing mutations rather than just global Tm"
+    when_worse: "ThermoMPNN requires a 3D structure and predicts ddG (per-mutation stability change) rather than absolute Tm; fundamentally different output that does not directly answer 'what is this nanobody's melting temperature?'"
+
+complements:
+  - model: esm2
+    workflow: "ESM2 provides the embedding backbone that TEMPRO uses for prediction; ESM2 must be deployed as a prerequisite service. Additionally, ESM2 embeddings can be used for broader nanobody characterization beyond just Tm"
+    example_protocol: null
+  - model: temberture
+    workflow: "Use TEMPRO for nanobody-specific Tm prediction during nanobody campaigns, and TemBERTure for general protein thermostability prediction when working with non-nanobody proteins in the same pipeline"
+    example_protocol: null
+  - model: boltz
+    workflow: "Predict nanobody 3D structure with Boltz, then use ThermoMPNN on the predicted structure for per-mutation ddG analysis while using TEMPRO for global Tm estimation -- combining mutation-level and global stability assessment"
+    example_protocol: null

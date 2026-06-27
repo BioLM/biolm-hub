@@ -1,0 +1,111 @@
+model_slug: boltz
+display_name: Boltz
+license:
+  type: MIT
+  url: https://github.com/jwohlwend/boltz/blob/main/LICENSE
+  notes: ''
+molecule_types:
+- protein
+- dna
+- rna
+- ligand
+- complex
+applicable_to:
+- protein
+- antibody
+- enzyme
+- peptide
+- dna
+- rna
+- ligand
+tasks:
+- structure_prediction
+- property_prediction
+primary_papers:
+- title: 'Boltz-1: Democratizing Biomolecular Interaction Modeling'
+  arxiv: 2024.11.19.624167
+  doi: 10.1101/2024.11.19.624167
+  venue: bioRxiv preprint, 2024
+  year: 2024
+  authors:
+  - Jeremy Wohlwend
+  - Gabriele Corso
+  - Saro Passaro
+  - Regina Barzilay
+  - Tommi Jaakkola et al.
+  pdf_r2: knowledge-base/models/boltz/primary/papers/wohlwend2024.pdf
+  md_r2: knowledge-base/models/boltz/primary/papers-md/wohlwend2024.md
+  figures_of_note: []
+- title: 'Boltz-2: Towards Accurate and Efficient Binding Affinity Prediction'
+  arxiv: 2025.06.14.659707
+  doi: 10.1101/2025.06.14.659707
+  venue: bioRxiv preprint, 2025
+  year: 2025
+  authors:
+  - Saro Passaro
+  - Gabriele Corso
+  - Jeremy Wohlwend
+  - Regina Barzilay
+  - Tommi Jaakkola et al.
+  pdf_r2: knowledge-base/models/boltz/primary/papers/passaro2025.pdf
+  md_r2: knowledge-base/models/boltz/primary/papers-md/passaro2025.md
+  figures_of_note: []
+source_repos:
+- type: github
+  url: https://github.com/jwohlwend/boltz
+  commit: ''
+  snapshot_r2: pending
+  readme_md_r2: knowledge-base/models/boltz/primary/pages/gh-boltz-readme.md
+applied_literature:
+- title: 'BoltzDesign1: Inverting All-Atom Structure Prediction Model for Generalized Biomolecular Binder Design'
+  doi: 10.1101/2025.04.06.647261
+  year: 2025
+  relevance: Inverts Boltz-1 for de novo binder design targeting metal ions, nucleic acids, and post-translationally modified
+    proteins
+  molecule_focus: protein
+  task_focus: binder design
+  pdf_r2: knowledge-base/models/boltz/applied/papers/unknown2025.pdf
+  md_r2: pending
+- title: AI-guided competitive docking for virtual screening and compound efficacy prediction
+  doi: 10.1101/2025.10.28.685112
+  year: 2025
+  relevance: Applies Boltz-1/2 co-folding for competitive docking across 17 protein-ligand benchmark systems for drug discovery
+  molecule_focus: protein-ligand complex
+  task_focus: virtual screening and drug discovery
+  pdf_r2: knowledge-base/models/boltz/applied/papers/unknown2025b.pdf
+  md_r2: pending
+- title: Why do some predicted protein structures fold poorly? Benchmarking AlphaFold, ESMFold, and Boltz in maize
+  doi: 10.1101/2025.07.05.663230
+  year: 2025
+  relevance: Benchmarks Boltz-1 and Boltz-2 alongside AlphaFold2/3 on 417 maize proteins for structure prediction quality
+  molecule_focus: protein
+  task_focus: structure prediction benchmark
+  pdf_r2: knowledge-base/models/boltz/applied/papers/unknown2025c.pdf
+  md_r2: pending
+- title: 'On the Reliability of AI Methods in Drug Discovery: Evaluation of Boltz-2 for Structure and Binding Affinity Prediction'
+  arxiv: '2603.05532'
+  year: 2026
+  relevance: Evaluates Boltz-2 on 16,780 3CLPro and 21,702 TNKS2 compounds; finds fast initial screening but weak-to-moderate
+    affinity correlation vs physics-based ESMACS
+  molecule_focus: protein-ligand complex
+  task_focus: binding affinity prediction evaluation
+  pdf_r2: knowledge-base/models/boltz/applied/papers/unknown2026.pdf
+  md_r2: pending
+- title: On fine-tuning Boltz-2 for protein-protein affinity prediction
+  arxiv: '2512.06592'
+  year: 2025
+  relevance: Fine-tunes Boltz-2 for protein-protein affinity on TCR3d and PPB-affinity datasets; finds structure-based model
+    underperforms sequence baselines but provides complementary signal
+  molecule_focus: protein-protein complex
+  task_focus: protein-protein affinity prediction
+  pdf_r2: knowledge-base/models/boltz/applied/papers/unknown2025d.pdf
+  md_r2: pending
+- title: 'Boltzina: Efficient and Accurate Virtual Screening via Docking-Guided Binding Prediction with Boltz-2'
+  arxiv: '2508.17555'
+  year: 2025
+  relevance: Combines AutoDock Vina poses with Boltz-2 affinity head for 11.8x faster virtual screening; outperforms Vina
+    and GNINA on 8 MF-PCBA assays
+  molecule_focus: protein-ligand complex
+  task_focus: virtual screening
+  pdf_r2: knowledge-base/models/boltz/applied/papers/unknown2025e.pdf
+  md_r2: pending

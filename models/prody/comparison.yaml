@@ -1,0 +1,57 @@
+model_slug: prody
+display_name: ProDy
+last_updated: "2026-03-17"
+
+strengths:
+  - "Comprehensive non-covalent interaction analysis detects 6 interaction types: hydrogen bonds, salt bridges, hydrophobic contacts, pi-stacking, cation-pi, and disulfide bonds -- the most complete interaction toolkit on the platform"
+  - "Both intra-chain and inter-chain interaction analysis, enabling characterization of protein-protein interfaces (antibody-antigen, enzyme-substrate, homo/hetero-oligomer contacts)"
+  - "Energy estimation for each interaction provides quantitative assessment of interaction strength, enabling identification of energetically significant contacts"
+  - "Frequent interactor analysis identifies 'hotspot' residues that make many contacts -- these are prime targets for mutagenesis and correlate with binding affinity contributions"
+  - "Interaction matrix and energy matrix output options provide a global view of the interaction network for systems-level structural analysis"
+  - "RMSD computation with both structural alignment (default) and sequence-based alignment for comparing homologous proteins with different sequences"
+  - "Established tool with extensive literature validation (2,500+ citations since 2011), plus ProDy 2.0 updates (2021) adding SignDy and CryoDy capabilities"
+  - "CPU-only operation (4 CPUs, 16 GB RAM) -- no GPU required for structural analysis"
+
+weaknesses:
+  - "Protein-only interaction analysis -- DNA/RNA chains and small molecule ligands are not included in interaction calculations"
+  - "Sequential processing of chain pairs (C extensions not thread-safe) -- large complexes with many chain pairs may be slow"
+  - "Higher resource requirements than Biotite (16 GB RAM vs 8 GB) due to the comprehensive interaction computation"
+  - "No visualization capabilities -- returns structured data (interaction lists, matrices) but cannot generate molecular graphics"
+  - "No TM-score computation for size-independent structure comparison"
+  - "Limited to static structure analysis -- no molecular dynamics trajectory support despite ProDy's full local capabilities"
+  - "Interaction distance cutoffs use fixed defaults that may not be optimal for all protein types (e.g., membrane proteins with different interaction characteristics)"
+
+use_when:
+  - "You need to characterize protein-protein interfaces in detail, identifying all non-covalent interactions at residue-level resolution with energy estimates"
+  - "You are analyzing antibody-antigen complexes and want to identify critical interface contacts for antibody engineering or epitope mapping"
+  - "You need to understand the intramolecular interaction network within a protein to identify residues critical for structural stability"
+  - "You want to compare wild-type and mutant structures via RMSD and then analyze how mutations alter the interaction network"
+  - "You need energetic characterization of protein interactions for rational mutagenesis -- identifying which contacts contribute most to binding or stability"
+  - "You are building an automated structural analysis pipeline that combines structure prediction with detailed interaction characterization"
+
+dont_use_when:
+  - "You only need simple RMSD comparison and chain extraction -- use Biotite which is lighter and simpler for these basic tasks"
+  - "You need to analyze protein-ligand or protein-nucleic acid interactions -- ProDy's InSty module is protein-only"
+  - "You need molecular dynamics simulation or trajectory analysis -- ProDy on BioLM provides static structure analysis only"
+  - "You need visualization of interactions -- use PyMOL or ChimeraX locally for molecular graphics"
+  - "You need sequence-based analysis without structure -- ProDy requires 3D structure (PDB/CIF) input"
+  - "You need fast analysis of many structures in parallel -- sequential chain pair processing may be a bottleneck for high-throughput workflows"
+
+alternatives:
+  - model: biotite
+    when_better: "Biotite is lighter-weight (8 GB vs 16 GB RAM) and simpler for basic tasks (RMSD computation, chain extraction) where detailed interaction analysis is not needed"
+    when_worse: "Biotite provides only RMSD and chain extraction -- no interaction analysis, no hydrogen bond/salt bridge detection, no energy estimates"
+
+complements:
+  - model: boltz
+    workflow: "Predict multi-chain complex structures with Boltz, then use ProDy encode to characterize all inter-chain interactions at the predicted interface -- connecting structural prediction with detailed interaction analysis"
+    example_protocol: null
+  - model: spurs
+    workflow: "Use SPURS for stability prediction of mutations, then use ProDy to analyze how those mutations alter the interaction network within the protein structure -- combining energetic stability assessment with structural interaction characterization"
+    example_protocol: null
+  - model: thermompnn
+    workflow: "Use ThermoMPNN to identify stability-critical positions via SSM scanning, then use ProDy to analyze the interaction network at those positions to understand the structural basis of stability sensitivity"
+    example_protocol: null
+  - model: biotite
+    workflow: "Use Biotite for quick RMSD comparison and chain extraction as a first step, then use ProDy for detailed interaction analysis on structures that pass the RMSD quality threshold"
+    example_protocol: null

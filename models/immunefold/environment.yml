@@ -1,0 +1,36 @@
+name: immunefold
+channels:
+  - conda-forge
+  - bioconda
+  - pytorch
+dependencies:
+  - conda-forge::python=3.10
+  - conda-forge::setuptools=59.5.0
+  - conda-forge::pip<24.1
+  # openmm and pdbfixer removed — not imported by inference pipeline
+  - conda-forge::cudatoolkit==11.3.*
+  - conda-forge::einops
+  - conda-forge::fairscale
+  - conda-forge::omegaconf
+  - conda-forge::hydra-core
+  - conda-forge::pandas
+  - conda-forge::pytest
+  - bioconda::hmmer==3.3.2
+  - bioconda::hhsuite==3.3.0
+  - bioconda::kalign2==2.04
+  - pytorch::pytorch=1.12.*
+  - bioconda::anarci
+  - pip:
+      - biopython==1.79
+      - dm-tree==0.1.6
+      - numpy==1.21.2
+      - PyYAML==6.0.1
+      - requests==2.26.0
+      - scipy==1.7.3
+      - tqdm==4.62.2
+      - typing-extensions==4.7.1
+      - pytorch_lightning==1.6.0
+      - ml-collections==0.1.1
+      - einops==0.4.1
+      - omegaconf
+      - hydra-core>1.1

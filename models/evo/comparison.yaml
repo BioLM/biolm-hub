@@ -1,0 +1,77 @@
+# comparison.yaml — Model Comparison Metadata
+# Machine-readable guidance for model selection.
+# Generated as part of Phase 3.5 of the model-knowledge-base workflow.
+#
+# Requirements:
+#   - strengths, weaknesses, use_when, dont_use_when: 5+ entries each (min 3)
+#   - alternatives, complements: 1+ entries where applicable
+#   - All referenced model slugs must exist in models/
+
+model_slug: "evo"
+display_name: "Evo"
+last_updated: "2026-03-17"
+
+strengths:
+  - "Autoregressive generation capability enables de novo DNA sequence design — the only model on the platform (alongside Evo2) that can generate novel DNA sequences from a seed prompt"
+  - "Published in Science (2024) with experimental validation of generated sequences, including functional CRISPR-Cas system designs and synthetic genome generation with plausible gene structures"
+  - "7B-parameter StripedHyena architecture provides single-nucleotide (byte-level) resolution without tokenization artifacts, preserving full sequence fidelity for variant effect analysis"
+  - "8 kbp context window covers most prokaryotic genes, operons, and regulatory regions in a single inference pass"
+  - "True autoregressive log-probability scoring captures directional sequence dependencies that masked models (DNABERT-2, NT) cannot represent"
+  - "Specialized fine-tuned variants exist for CRISPR and transposon design (not yet enabled on BioLM), demonstrating domain-specific adaptation potential"
+  - "Apache-2.0 license permits unrestricted commercial and academic use"
+  - "Strong coverage of prokaryotic genomic diversity from training on the OpenGenome dataset of bacterial, archaeal, and phage genomes"
+
+weaknesses:
+  - "Prokaryotic training bias — the OpenGenome dataset consists primarily of bacterial, archaeal, and phage sequences; eukaryotic features (complex splicing, distal enhancers, large introns) are poorly modeled"
+  - "No embedding extraction endpoint — cannot produce dense vector representations for downstream ML tasks; use NT, DNABERT-2, or Evo2 instead for embeddings"
+  - "8 kbp context is insufficient for eukaryotic gene loci, long-range regulatory interactions, or genome-scale analysis (Evo2 extends this to 1M tokens)"
+  - "7B parameters require an L4 GPU, making it substantially more expensive than DNABERT-2 (T4) or NT (T4) for scoring-only tasks"
+  - "Generated sequences require extensive computational and experimental validation — the model provides no guarantee of function, only statistical plausibility"
+  - "No built-in conditioning mechanism for specific functions (e.g., EC numbers, gene categories); generation is prompt-conditioned only"
+  - "Superseded by Evo2 in terms of training data breadth (multi-domain vs prokaryotic-only) and context length (1M vs 8K tokens)"
+
+use_when:
+  - "You need to generate novel prokaryotic DNA sequences — genes, operons, regulatory elements, or synthetic genome fragments — from a seed prompt"
+  - "You need autoregressive log-probability scoring for prokaryotic DNA variant effect prediction where directional context matters"
+  - "You are designing synthetic microbial genomes and need a generative model trained on diverse prokaryotic genomic data"
+  - "You are working with bacteriophage sequences and need a model with strong phage genomic coverage"
+  - "You need DNA sequence generation at the gene-to-operon scale (up to 8 kbp) for synthetic biology applications in prokaryotic hosts"
+  - "You want a well-published, experimentally validated generative DNA model with a strong publication track record (Science 2024)"
+
+dont_use_when:
+  - "You need to analyze eukaryotic genomic features such as complex splicing signals, distal enhancer-promoter interactions, or large introns (use evo2, which includes eukaryotic training data)"
+  - "You need DNA embeddings for downstream ML tasks (use nt, dnabert2, or evo2 — Evo has no embedding endpoint)"
+  - "You need genome-scale context windows exceeding 8 kbp (use evo2, which supports up to 1M tokens)"
+  - "You need a lightweight model for high-throughput DNA scoring on T4 GPUs (use dnabert2 or nt, which are smaller and cheaper)"
+  - "You need codon optimization or deterministic sequence analysis features (use dna_chisel)"
+  - "You need protein-level sequence analysis (translate coding regions and use esm2)"
+  - "You need multi-domain DNA modeling covering both prokaryotes and eukaryotes (use evo2 instead)"
+  - "You need function-conditioned generation (e.g., specifying enzyme class or gene function) rather than prompt-conditioned generation"
+
+alternatives:
+  - model: "evo2"
+    when_better: "Multi-domain training (prokaryotes + eukaryotes + viruses), up to 1M-token context, embedding extraction endpoint, and multiple size variants (1B, 7B)"
+    when_worse: "Evo has a stronger publication record (Science 2024) and is a more mature model; Evo2 is newer and less independently validated"
+  - model: "nt"
+    when_better: "Established multi-species DNA embeddings with extensive benchmarking, two size variants, and lower compute requirements (T4 GPU)"
+    when_worse: "No generation capability and shorter effective context for scoring; NT is encoder-only and cannot produce novel DNA sequences"
+  - model: "dnabert2"
+    when_better: "Lightweight (117M on T4), BPE tokenization for fine-grained regulatory element classification, and well-validated on the GUE benchmark"
+    when_worse: "No generation capability, shorter context (~4-8 kbp), and masked LM architecture provides only pseudo-log-likelihood rather than true autoregressive scoring"
+  - model: "omni_dna"
+    when_better: "BPE-tokenized with embedding extraction, 1B-parameter autoregressive architecture for scoring and embedding tasks"
+    when_worse: "No generation capability; Evo is the established choice for DNA sequence design with experimental validation"
+
+complements:
+  - model: "nt"
+    workflow: "Use Evo to generate candidate DNA sequences, then use NT embeddings and pseudo-log-likelihood scoring to evaluate and rank generated candidates for functional plausibility at the gene scale"
+    example_protocol: null
+  - model: "dnabert2"
+    workflow: "Use Evo for sequence generation, then use DNABERT-2's BPE-resolution embeddings to characterize fine-grained regulatory features within the generated sequences"
+    example_protocol: null
+  - model: "dna_chisel"
+    workflow: "Generate coding DNA sequences with Evo, then use DNA-Chisel to verify and optimize codon usage (CAI), check for restriction sites, and assess synthesis feasibility before ordering synthetic DNA"
+    example_protocol: null
+  - model: "esm2"
+    workflow: "Generate DNA with Evo, translate coding regions in silico, then use ESM-2 to characterize the encoded proteins — assessing evolutionary plausibility, predicting contacts, and scoring fitness of the generated protein sequences"
+    example_protocol: null

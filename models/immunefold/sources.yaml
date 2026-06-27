@@ -1,0 +1,37 @@
+model_slug: immunefold
+display_name: ImmuneFold
+license:
+  type: Apache-2.0
+  url: https://github.com/CarbonMatrixLab/immunefold/blob/main/LICENSE
+  notes: ''
+molecule_types:
+- antibody
+- tcr
+applicable_to:
+- immunotherapy
+- drug development
+- antibody engineering
+- TCR engineering
+- structural immunology
+- antibody-antigen interaction
+tasks:
+- structure_prediction
+primary_papers:
+- title: 'ImmuneFold: Improved antibody and TCR structure prediction with a pre-trained protein language model'
+  arxiv: ''
+  doi: 10.1101/2024.12.23.630212
+  venue: bioRxiv preprint, 2024
+  year: 2024
+  authors:
+  - Wu J
+  - Liu C
+  - Zhang G
+  pdf_r2: pending  # bioRxiv blocks programmatic PDF downloads; requires browser-based download
+  md_r2: pending
+  figures_of_note: []
+source_repos:
+- type: github
+  url: https://github.com/CarbonMatrixLab/immunefold
+  commit: b6d916fc223db2d5e11ea3962894f1b38b07e7b7
+  snapshot_r2: knowledge-base/models/immunefold/primary/repos/immunefold-b6d916fc.tar.gz
+applied_literature: []

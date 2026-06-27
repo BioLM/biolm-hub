@@ -1,0 +1,42 @@
+model_slug: sadie
+display_name: SADIE
+license:
+  type: MIT
+  url: https://github.com/jwillis0720/sadie/blob/main/LICENSE
+  notes: ''
+molecule_types:
+- antibody
+- tcr
+applicable_to:
+- immunotherapy
+- drug development
+- antibody engineering
+- antibody repertoire analysis
+- immunogenetics
+- germline analysis
+tasks:
+- annotation
+primary_papers:
+- title: 'SADIE: Sequencing Analysis and Data library for Immunoinformatics Exploration'
+  arxiv: ''
+  doi: ''
+  venue: "Software tool \u2014 no peer-reviewed paper published. Available via GitHub and PyPI."
+  year: 2022
+  authors:
+  - Jordan R. Willis
+  - Troy M. Sincomb
+  - Caleb K. Kibet
+  pdf_r2: pending
+  md_r2: pending
+  figures_of_note: []
+source_repos:
+- type: github
+  url: https://github.com/jwillis0720/sadie
+  commit: ''
+  snapshot_r2: pending
+  readme_md_r2: knowledge-base/models/sadie/primary/pages/gh-sadie-readme.md
+- type: pypi
+  url: https://pypi.org/project/sadie-antibody/
+  commit: ''
+  snapshot_r2: pending
+applied_literature: []
