@@ -1,0 +1,134 @@
+[project]
+name = "biolm-models"
+version = "0.1.0"
+description = "A standardized, agent-first catalog of open biological ML models that deploy on Modal in a couple of commands."
+authors = [{ name = "BioLM" }]
+readme = "README.md"
+requires-python = ">=3.12,<4.0"
+license = "Apache-2.0"
+keywords = ["bioinformatics", "machine-learning", "protein", "modal", "esm", "agents"]
+
+# NOTE: the runtime dependency set is finalized during extraction/decoupling (W2/W3a).
+# This is the core infrastructure every model shares.
+dependencies = [
+    "modal==1.3.5",
+    "boto3>=1.35.60,<2.0.0",
+    "biopython>=1.84,<2.0.0",
+    "orjson>=3.10.11,<4.0.0",
+    "pydantic==2.11.7",
+    "rich>=13.9.4,<14.0.0",
+    "typer>=0.13.1,<1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=24.10.0,<25.0.0",
+    "mypy==1.5.1",
+    "pytest>=7.4.4,<8.0.0",
+    "pytest-cov>=4.1.0,<5.0.0",
+    "pytest-xdist>=3.8.0,<4.0.0",
+    "pytest-asyncio>=0.23.6",
+    "pre-commit>=3.8.0,<4.0.0",
+    "ruff>=0.6.9,<0.7.0",
+    "requests>=2.32.4,<3.0.0",
+    "mkdocs-material>=9.5.0,<10.0.0",
+]
+
+mypy-types = [
+    "types-pyyaml>=6.0.12.11,<7.0.0",
+    "types-requests>=2.32.0.0,<3.0.0",
+]
+
+[project.scripts]
+bm = "cli.main:app"
+
+[project.urls]
+Homepage = "https://github.com/BioLM/biolm-models"
+Documentation = "https://github.com/BioLM/biolm-models"
+Repository = "https://github.com/BioLM/biolm-models"
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["cli*", "models*", "gateway*"]
+exclude = ["tests*", "*.tests*", "external*", "*.external*"]
+
+[tool.black]
+target-version = ["py312"]
+line-length = 88
+quiet = true
+extend-exclude = '''
+/(
+    \.direnv
+  | \.venv
+  | build
+  | dist
+  | __pycache__
+  | external
+)/
+'''
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+pretty = true
+show_error_context = true
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+exclude = '(/external/|/\.venv/|/build/|/dist/)'
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+markers = [
+    "integration: full local app run against Modal (slower; needs a Modal env + R2)",
+    "deployment: runs against a live deployed endpoint",
+    "slow: full end-to-end correctness (minutes; run before releases)",
+    "e2e: end-to-end system validation",
+    "live_modal: invokes a live Modal app runner",
+    "no_parallel: cannot run in parallel (timing-sensitive or shared state)",
+]
+filterwarnings = [
+    "ignore:Pydantic V1 style `@validator`.*:pydantic.PydanticDeprecatedSince20",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["models", "gateway", "cli"]
+omit = ["*tests*", ".venv/*", "*/external/*"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 85
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+fix = true
+extend-exclude = ["external", "build", "dist"]
+
+[tool.ruff.lint]
+select = [
+    "B",   # flake8-bugbear
+    "C",   # flake8-comprehensions
+    "C90", # mccabe complexity
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort
+    "T20", # flake8-print — ban print() in runtime code (house rule)
+    "UP",  # pyupgrade
+    "W",   # pycodestyle warnings
+]
+ignore = [
+    "E501",  # line length is handled by black
+    "UP007", # keep Optional/Union spelling stable across the codebase
+]
+
+[tool.ruff.lint.per-file-ignores]
+# print() is allowed in the CLI, one-off scripts, and tests — banned everywhere else.
+"cli/**" = ["T20"]
+"**/scripts/**" = ["T20"]
+"**/test*.py" = ["T20"]
+"**/conftest.py" = ["T20"]

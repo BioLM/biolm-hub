@@ -1,0 +1,39 @@
+site_name: biolm-models
+site_description: A standardized, agent-first catalog of open biological ML models that deploy on Modal.
+repo_url: https://github.com/BioLM/biolm-models
+repo_name: BioLM/biolm-models
+edit_uri: ""
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - search.highlight
+  palette:
+    - scheme: default
+      primary: teal
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      primary: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+nav:
+  - Home: index.md
+  # Quickstart, Philosophy, Contributing, and per-model API pages are wired up in W14.
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.details
+  - toc:
+      permalink: true
+
+# `docs/philosophy.md` and `docs/contributing.md` are thin includes of the root
+# PHILOSOPHY.md / CONTRIBUTING.md, wired up in W14.

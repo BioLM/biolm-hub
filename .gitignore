@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Virtual environments / tooling caches
+.venv/
+.direnv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Test / coverage artifacts
+.coverage
+coverage.xml
+htmlcov/
+
+# Local model weights / downloaded assets (pulled from R2 at runtime)
+model-store/
+model-cache/
+
+# Secrets / local env
+.env
+.env.*
+*.local
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# mkdocs build output
+site/
+
+# NOTE: .planning/ is intentionally NOT ignored — it is tracked in the private repo
+# during development and removed (with git history) before the repo goes public.
