@@ -151,7 +151,7 @@ single reviewed commons-reconciliation pass (W3b).
 - [ ] **Discovery:** `modal_class_name` set in `config.py` (matches the `@biolm_model_class` class in `app.py`; CI-guarded — field defined in Stage 2, routing swap in W8).
 - [ ] **Deps** pinned to exact versions; image builds cleanly from the new repo.
 - [ ] **Deploy** to a clean Modal account from the new repo; weights pulled from public R2 (`biolm-public`).
-- [ ] **Tests:** fixtures generated (reference `test-data/shared/` assets where standard — W12); integration + deployment tests green **and pytest-collectable (W17)**; coverage ≥85%.
+- [ ] **Tests:** fixtures generated (reference `test-data/shared/` assets where standard — W12); **fixtures lazy-load — no module-scope R2 read / heavy import**, so `pytest models/<m>/test.py --collect-only` works without Modal/R2 (W17 follow-up); integration + deployment tests green; coverage ≥85%.
 - [ ] **Knowledge graph** (`README.md`, `MODEL.md`, `BIOLOGY.md`, `comparison.yaml`, `sources.yaml`) accurate & complete.
 - [ ] **No internal coupling** (billing/auth/Moesif/secret names/internal domains) anywhere in the model.
 - [ ] **Reviewer agent** (Opus, fresh context) signed off on the batch diff.
