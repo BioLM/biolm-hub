@@ -13,7 +13,14 @@ from models.commons.core.caching import (
     non_cacheable_actions,
     process_with_cache,
 )
-from models.commons.core.error import ErrorResponse, UserError
+from models.commons.core.error import (
+    ErrorResponse,
+    ModelExecutionError,
+    ResourceNotFoundError,
+    UnsupportedOptionError,
+    UserError,
+    ValidationError400,
+)
 from models.commons.core.logging import DebugLogger, truncate_for_debug
 from models.commons.data.serializer import serialize_model
 from models.commons.util.config import cache_enabled
@@ -402,13 +409,24 @@ def _validate_payload(
         return request_model_type(**payload_dict)
 
 
+# Maps an exception type -> (http_status_code, detail_template). The string
+# `code` on the structured ErrorResponse is read from the exception's own
+# `.code` attribute (BioLMError subclasses), not from this map. Order matters:
+# `isinstance` is checked in insertion order, so the specific BioLM user-error
+# subclasses MUST precede their `UserError` base.
 ERROR_MAP = {
     modal.exception.FunctionTimeoutError: (504, "Modal function timed out"),
     modal.exception.ConnectionError: (503, "Failed to connect to Modal servers"),
     modal.exception.RemoteError: (500, "Remote server error: {exc}"),
     modal.exception.NotFoundError: (404, "Requested resource not found in Modal"),
     ValidationError: (422, "Validation failed for payload"),
+    # BioLM user-error hierarchy (specific subclasses before the UserError base).
+    ValidationError400: (400, "{exc}"),
+    UnsupportedOptionError: (400, "{exc}"),
+    ResourceNotFoundError: (404, "{exc}"),
     UserError: (400, "{exc}"),
+    # BioLM system-error hierarchy.
+    ModelExecutionError: (500, "{exc}"),
 }
 
 
@@ -416,12 +434,14 @@ def _handle_errors(exc, *, debug_logger):
     """
     Concise error handler for the biolm_modal_function decorator.
     """
-    for etype, (code, tmpl) in ERROR_MAP.items():
+    for etype, (status_code, tmpl) in ERROR_MAP.items():
         if isinstance(exc, etype):
             # Build base kwargs
             kwargs = {
                 "detail_msg": tmpl.format(exc=str(exc)),
-                "status_code": code,
+                "status_code": status_code,
+                # Machine-readable code from BioLMError.code (None otherwise).
+                "code": getattr(exc, "code", None),
                 "debug_logger": debug_logger,
             }
 
@@ -435,6 +455,7 @@ def _handle_errors(exc, *, debug_logger):
     return _error_response(
         detail_msg=f"Uncaught exception: {exc}",
         status_code=500,
+        code=getattr(exc, "code", None),
         debug_logger=debug_logger,
         traceback_info=True,
         print_exc=True,
@@ -445,6 +466,7 @@ def _error_response(
     detail_msg: str,
     status_code: int,
     debug_logger: DebugLogger,
+    code: Optional[str] = None,
     errors: Optional[Any] = None,
     traceback_info: bool = False,
     print_exc: bool = False,
@@ -456,6 +478,8 @@ def _error_response(
         detail_msg (str): A top-level detail message describing the error.
         status_code (int): An HTTP-like status code (e.g., 400, 500).
         debug_logger (DebugLogCollector): A logger for capturing debug messages.
+        code (Optional[str]): Stable machine-readable error code from the raised
+            BioLMError (``None`` for non-BioLM exceptions).
         errors (Optional[Any]): Additional error details, e.g. Pydantic .errors().
         traceback_info (bool): If True, captures traceback.format_exc().
         print_exc (bool): If True and `traceback_info` is True, prints the traceback to logs.
@@ -493,6 +517,7 @@ def _error_response(
         detail=str(detail_msg),
         errors=collected_errors,
         status_code=status_code,
+        code=code,
     )
 
     return serialize_model(error_response)

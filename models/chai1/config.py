@@ -24,7 +24,7 @@ Chai1ResourceSpec = ModalResourceSpec(
 
 # Chai1 configuration:
 # - Axes: None (single variant)
-# - Actions: predict
+# - Actions: fold
 MODEL_FAMILY = ModelFamily(
     base_model_slug=Chai1Params.base_model_slug,
     display_name=Chai1Params.display_name,
@@ -45,10 +45,10 @@ MODEL_FAMILY = ModelFamily(
         output_modality=[OutputModality.STRUCTURE],
         architecture=[Architecture.DIFFUSION, Architecture.TRANSFORMER],
     ),
-    # Single action: predict
+    # Single action: fold
     action_schemas=[
         ActionSchemaMap(
-            name=ModelActions.PREDICT,
+            name=ModelActions.FOLD,
             request_schema=Chai1PredictRequest,
             response_schema=Chai1PredictResponse,
         )

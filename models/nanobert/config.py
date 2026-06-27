@@ -25,7 +25,7 @@ NanoBERTResourceSpec = ModalResourceSpec(cpu=2.0, memory=2 * 1024, gpu=None)  # 
 
 # NanoBERT configuration:
 # - Axes: None (single variant)
-# - Actions: encode, generate, predict_log_prob
+# - Actions: encode, generate, log_prob
 MODEL_FAMILY = ModelFamily(
     base_model_slug=NanoBERTParams.base_model_slug,
     display_name=NanoBERTParams.display_name,
@@ -40,7 +40,7 @@ MODEL_FAMILY = ModelFamily(
         ],
         architecture=[Architecture.TRANSFORMER, Architecture.BERT],
     ),
-    # Three actions: encode, generate, predict_log_prob
+    # Three actions: encode, generate, log_prob
     action_schemas=[
         ActionSchemaMap(
             name=ModelActions.ENCODE,
@@ -53,7 +53,7 @@ MODEL_FAMILY = ModelFamily(
             response_schema=NanoBERTGenerateResponse,
         ),
         ActionSchemaMap(
-            name=ModelActions.PREDICT_LOG_PROB,
+            name=ModelActions.LOG_PROB,
             request_schema=NanoBERTLogProbRequest,
             response_schema=NanoBERTLogProbResponse,
         ),

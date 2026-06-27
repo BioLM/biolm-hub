@@ -113,7 +113,7 @@ def propermab_feature_validator(
 
 # ProperMAB test suite
 # - Single variant (no variant axes)
-# - Single action (extract_features)
+# - Single action (predict)
 # - Two comprehensive test cases covering default and varied parameters
 test_suite = TestSuite(
     model_family=MODEL_FAMILY,
@@ -131,7 +131,7 @@ test_suite = TestSuite(
                 # - Validates all 34 features (7 sequence + 27 structure)
                 # - Uses Pembrolizumab (Keytruda) VH/VL sequences
                 ActionTestCase(
-                    action_name=ModelActions.EXTRACT_FEATURES,
+                    action_name=ModelActions.PREDICT,
                     input_fixture=EXTRACT_FEATURES_DEFAULT_INPUT,
                     expected_output_fixture=EXTRACT_FEATURES_DEFAULT_OUTPUT,
                     validator=propermab_feature_validator,
@@ -144,7 +144,7 @@ test_suite = TestSuite(
                 # - Validates integer feature handling (mode for aromatic_cdr, etc.)
                 # - Ensures charge features change appropriately with isotype/LC type
                 ActionTestCase(
-                    action_name=ModelActions.EXTRACT_FEATURES,
+                    action_name=ModelActions.PREDICT,
                     input_fixture=EXTRACT_FEATURES_MULTIRUN_INPUT,
                     expected_output_fixture=EXTRACT_FEATURES_MULTIRUN_OUTPUT,
                     validator=propermab_feature_validator,

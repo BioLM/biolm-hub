@@ -19,7 +19,7 @@ test_suite = TestSuite(
             variant_config={},  # Empty dict means applies to ALL variants
             test_cases=[
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT_LOG_PROB,
+                    action_name=ModelActions.LOG_PROB,
                     input_fixture=LOGPROB_INPUT,
                     expected_output_fixture=LOGPROB_OUTPUT,
                     tolerances={"rel_tol": 1e-4},

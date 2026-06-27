@@ -51,7 +51,7 @@ model_config_mapping = {
 
 # ImmuneFold configuration:
 # - Axes: MODEL_TYPE (antibody, tcr)
-# - Actions: predict
+# - Actions: fold
 MODEL_FAMILY = ModelFamily(
     base_model_slug=ImmuneFoldParams.base_model_slug,
     display_name=ImmuneFoldParams.display_name,
@@ -66,10 +66,10 @@ MODEL_FAMILY = ModelFamily(
         output_modality=[OutputModality.STRUCTURE, OutputModality.SCALAR],
         architecture=[Architecture.TRANSFORMER, Architecture.GNN],
     ),
-    # Single action: predict
+    # Single action: fold
     action_schemas=[
         ActionSchemaMap(
-            name=ModelActions.PREDICT,
+            name=ModelActions.FOLD,
             request_schema=ImmuneFoldPredictRequest,
             response_schema=ImmuneFoldPredictResponse,
         )

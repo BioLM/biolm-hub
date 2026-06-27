@@ -158,7 +158,7 @@ class Chai1Model(ModelMixinSnap):
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def predict(  # noqa: C901
+    def fold(  # noqa: C901
         # FIXME(noqa: C901): Refactor to reduce complexity below the linter's threshold.
         self,
         payload: Chai1PredictRequest,

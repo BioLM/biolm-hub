@@ -23,19 +23,19 @@ test_suite = TestSuite(
             variant_config={"MODEL_TYPE": "antibody"},
             test_cases=[
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT,
+                    action_name=ModelActions.FOLD,
                     input_fixture=ANTIGEN_PREDICT_INPUT,
                     expected_output_fixture=ANTIGEN_PREDICT_OUTPUT,
                     tolerances={"rel_tol": 1e-4, "pdb_rmsd_threshold": 1e-4},
                 ),
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT,
+                    action_name=ModelActions.FOLD,
                     input_fixture=ANTIBODY_PREDICT_INPUT,
                     expected_output_fixture=ANTIBODY_PREDICT_OUTPUT,
                     tolerances={"rel_tol": 1e-4, "pdb_rmsd_threshold": 1e-4},
                 ),
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT,
+                    action_name=ModelActions.FOLD,
                     input_fixture=NANOBODY_PREDICT_INPUT,
                     expected_output_fixture=NANOBODY_PREDICT_OUTPUT,
                     tolerances={"rel_tol": 1e-4, "pdb_rmsd_threshold": 1e-4},
@@ -47,7 +47,7 @@ test_suite = TestSuite(
             variant_config={"MODEL_TYPE": "tcr"},
             test_cases=[
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT,
+                    action_name=ModelActions.FOLD,
                     input_fixture=TCR_PREDICT_INPUT,
                     expected_output_fixture=TCR_PREDICT_OUTPUT,
                     tolerances={"rel_tol": 1e-4, "pdb_rmsd_threshold": 1e-4},

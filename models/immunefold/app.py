@@ -256,7 +256,7 @@ class ImmuneFoldModel(ModelMixinSnap):
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def predict(self, payload: ImmuneFoldPredictRequest) -> ImmuneFoldPredictResponse:
+    def fold(self, payload: ImmuneFoldPredictRequest) -> ImmuneFoldPredictResponse:
         """
         Predicts using the ImmuneFold model.
 

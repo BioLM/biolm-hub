@@ -53,7 +53,7 @@ test_suite = TestSuite(
                 # Predict log prob action with programmatic input (no file generation needed)
                 # Single sequence mode
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT_LOG_PROB,
+                    action_name=ModelActions.LOG_PROB,
                     # Programmatic input - create data on the fly
                     input_fixture=E1PredictLogProbRequest(
                         items=[
@@ -67,7 +67,7 @@ test_suite = TestSuite(
                 ),
                 # Predict log prob with context sequences (retrieval-augmented mode)
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT_LOG_PROB,
+                    action_name=ModelActions.LOG_PROB,
                     input_fixture=E1PredictLogProbRequest(
                         items=[
                             E1PredictLogProbRequestItem(

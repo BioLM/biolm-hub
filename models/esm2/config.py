@@ -50,7 +50,7 @@ model_id_mapping = {
 
 # ESM2 configuration:
 # - Axes: MODEL_SIZE (8m, 35m, 150m, 650m, 3b)
-# - Actions: encode, predict, predict_log_prob
+# - Actions: encode, predict, log_prob
 MODEL_FAMILY = ModelFamily(
     base_model_slug=ESM2Params.base_model_slug,
     display_name=ESM2Params.display_name,
@@ -65,7 +65,7 @@ MODEL_FAMILY = ModelFamily(
         ],
         architecture=[Architecture.TRANSFORMER],
     ),
-    # Three actions: encode, predict, predict_log_prob
+    # Three actions: encode, predict, log_prob
     action_schemas=[
         ActionSchemaMap(
             name=ModelActions.ENCODE,
@@ -78,7 +78,7 @@ MODEL_FAMILY = ModelFamily(
             response_schema=ESM2PredictResponse,
         ),
         ActionSchemaMap(
-            name=ModelActions.PREDICT_LOG_PROB,
+            name=ModelActions.LOG_PROB,
             request_schema=ESM2LogProbRequest,
             response_schema=ESM2LogProbResponse,
         ),

@@ -136,7 +136,7 @@ fixture_generation_suite = TestSuite(
             variant_config={},  # Empty dict means single variant
             test_cases=[
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT,
+                    action_name=ModelActions.FOLD,
                     input_fixture=INPUT4_MSA,
                     input_filename_template="rf3-predict-input4-msa.json",
                     expected_output_fixture="rf3-predict-input4-msa-expected_output.json",

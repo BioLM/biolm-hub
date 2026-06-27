@@ -32,7 +32,7 @@ DNABERT2ResourceSpec = ModalResourceSpec(
 
 # DNABERT2 configuration:
 # - Axes: None (single variant)
-# - Actions: encode, predict_log_prob
+# - Actions: encode, log_prob
 MODEL_FAMILY = ModelFamily(
     base_model_slug=DNABERT2Params.base_model_slug,
     display_name=DNABERT2Params.display_name,
@@ -43,7 +43,7 @@ MODEL_FAMILY = ModelFamily(
         output_modality=[OutputModality.EMBEDDING, OutputModality.LOG_PROBABILITIES],
         architecture=[Architecture.TRANSFORMER, Architecture.BERT],
     ),
-    # Two actions: encode and predict_log_prob
+    # Two actions: encode and log_prob
     action_schemas=[
         ActionSchemaMap(
             name=ModelActions.ENCODE,
@@ -51,7 +51,7 @@ MODEL_FAMILY = ModelFamily(
             response_schema=DNABERT2EncodeResponse,
         ),
         ActionSchemaMap(
-            name=ModelActions.PREDICT_LOG_PROB,
+            name=ModelActions.LOG_PROB,
             request_schema=DNABERT2PredictLogProbRequest,
             response_schema=DNABERT2PredictLogProbResponse,
         ),

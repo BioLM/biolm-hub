@@ -49,9 +49,9 @@ test_suite = TestSuite(
                     expected_output_fixture=GENERATE_OUTPUT,
                     tolerances={"rel_tol": 1e-4},
                 ),
-                # predict_log_prob (programmatic)
+                # log_prob (programmatic)
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT_LOG_PROB,
+                    action_name=ModelActions.LOG_PROB,
                     input_fixture=AbLang2LogProbRequest(
                         items=[
                             {

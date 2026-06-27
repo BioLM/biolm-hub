@@ -158,7 +158,7 @@ def generate():
 
             # Create test case for the current model version
             test_case = ActionTestCase(
-                action_name=ModelActions.PREDICT,
+                action_name=ModelActions.FOLD,
                 input_fixture=RequestClass(**input_data),  # Convert to Pydantic model
                 input_filename_template=input_file,
                 expected_output_fixture=output_file,
@@ -226,7 +226,7 @@ def generate():
 
     test_cases_for_model.append(
         ActionTestCase(
-            action_name=ModelActions.PREDICT,
+            action_name=ModelActions.FOLD,
             input_fixture=RequestClass(**embeddings_input),  # Convert to Pydantic model
             input_filename_template=embeddings_input_file,
             expected_output_fixture=embeddings_output_file,

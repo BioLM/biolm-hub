@@ -83,7 +83,7 @@ class EvoModel(ModelMixinSnap):
     Loads the selected Evo model variant and implements:
       - encode()
       - predict() => per-position logits
-      - predict_log_prob() => total log-prob
+      - log_prob() => total log-prob
       - generate() => sequence sampling
     """
 
@@ -98,7 +98,7 @@ class EvoModel(ModelMixinSnap):
         from evo.generation import generate
         from evo.scoring import score_sequences
 
-        self.score_sequences = score_sequences  # for predict_log_prob
+        self.score_sequences = score_sequences  # for log_prob
         self.generate_fn = generate  # for generate
 
         model_name = EVO_VARIANT_TO_MODEL_NAME[EvoModelVariants(model_variant)]
@@ -120,7 +120,7 @@ class EvoModel(ModelMixinSnap):
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def predict_log_prob(
+    def log_prob(
         self, payload: EvoPredictLogProbRequest
     ) -> EvoPredictLogProbResponse:
         """

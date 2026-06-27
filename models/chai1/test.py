@@ -33,7 +33,7 @@ integration_test_suite = TestSuite(
             variant_config={},  # Single variant model - applies to all
             test_cases=[
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT,
+                    action_name=ModelActions.FOLD,
                     input_fixture=INPUT_FILE,  # "input.json"
                     expected_output_fixture=EXPECTED_OUTPUT_FILE,  # "expected_output.json"
                     tolerances={
@@ -42,7 +42,7 @@ integration_test_suite = TestSuite(
                     },
                 ),
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT,
+                    action_name=ModelActions.FOLD,
                     input_fixture=MSA_INPUT_FILE,  # "msa_input.json"
                     expected_output_fixture=MSA_EXPECTED_OUTPUT_FILE,  # "msa_expected_output.json"
                     tolerances={
@@ -64,7 +64,7 @@ deployment_test_suite = TestSuite(
             variant_config={},  # Single variant model - applies to all
             test_cases=[
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT,
+                    action_name=ModelActions.FOLD,
                     input_fixture=Chai1PredictRequest(
                         params=Chai1PredictRequestParams(
                             num_trunk_recycles=1,

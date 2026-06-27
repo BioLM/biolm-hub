@@ -168,7 +168,7 @@ class RF3Model(ModelMixinSnap):
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def predict(self, payload: RF3PredictRequest) -> RF3PredictResponse:  # noqa: C901
+    def fold(self, payload: RF3PredictRequest) -> RF3PredictResponse:  # noqa: C901
         """
         Performs structure prediction using RosettaFold3.
 

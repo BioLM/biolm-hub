@@ -96,7 +96,7 @@ def get_build_gpu(variant: str) -> str:
 
 # Evo2 configuration:
 # - Axes: MODEL_VARIANT (1b-base) [only actively tested variant]
-# - Actions: encode, predict_log_prob, generate
+# - Actions: encode, log_prob, generate
 MODEL_FAMILY = ModelFamily(
     base_model_slug=Evo2Params.base_model_slug,
     display_name=Evo2Params.display_name,
@@ -111,7 +111,7 @@ MODEL_FAMILY = ModelFamily(
         ],
         architecture=[Architecture.TRANSFORMER, Architecture.AUTOREGRESSIVE],
     ),
-    # Three actions: encode, predict_log_prob, and generate
+    # Three actions: encode, log_prob, and generate
     action_schemas=[
         ActionSchemaMap(
             name=ModelActions.ENCODE,
@@ -119,7 +119,7 @@ MODEL_FAMILY = ModelFamily(
             response_schema=Evo2EncodeResponse,
         ),
         ActionSchemaMap(
-            name=ModelActions.PREDICT_LOG_PROB,
+            name=ModelActions.LOG_PROB,
             request_schema=Evo2PredictLogProbRequest,
             response_schema=Evo2PredictLogProbResponse,
         ),

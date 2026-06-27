@@ -24,7 +24,7 @@ fixture_generation_suite = TestSuite(
             variant_config={},  # Empty dict for single-variant model
             test_cases=[
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT_LOG_PROB,
+                    action_name=ModelActions.LOG_PROB,
                     input_filename_template=LOGPROB_INPUT,
                     # Programmatic input - will be written as logprob_input.json
                     input_fixture=EvoPredictLogProbRequest(

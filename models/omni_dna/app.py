@@ -87,7 +87,7 @@ class OmniDNAModel(ModelMixinSnap):
     The OmniDNAModel loads the chosen Omni-DNA variant from HuggingFace.
     Provides:
       - encode() => returns embedding (mean or last) for each DNA sequence
-      - predict_log_prob() => computes the total log-prob of each DNA sequence
+      - log_prob() => computes the total log-prob of each DNA sequence
     """
 
     app_username: str = modal.parameter(default="default_user")
@@ -215,7 +215,7 @@ class OmniDNAModel(ModelMixinSnap):
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def predict_log_prob(
+    def log_prob(
         self, payload: OmniDNAPredictLogProbRequest
     ) -> OmniDNAPredictLogProbResponse:
         """

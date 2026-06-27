@@ -64,7 +64,7 @@ EVO_VARIANT_TO_MODEL_NAME = {
 
 # Evo configuration:
 # - Axes: MODEL_VARIANT (currently only one variant enabled)
-# - Actions: predict_log_prob, generate
+# - Actions: log_prob, generate
 MODEL_FAMILY = ModelFamily(
     base_model_slug=EvoParams.base_model_slug,
     display_name=EvoParams.display_name,
@@ -75,10 +75,10 @@ MODEL_FAMILY = ModelFamily(
         output_modality=[OutputModality.SEQUENCE, OutputModality.LOG_PROBABILITIES],
         architecture=[Architecture.TRANSFORMER, Architecture.AUTOREGRESSIVE],
     ),
-    # Two actions: predict_log_prob and generate
+    # Two actions: log_prob and generate
     action_schemas=[
         ActionSchemaMap(
-            name=ModelActions.PREDICT_LOG_PROB,
+            name=ModelActions.LOG_PROB,
             request_schema=EvoPredictLogProbRequest,
             response_schema=EvoPredictLogProbResponse,
         ),

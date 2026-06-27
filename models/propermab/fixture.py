@@ -41,7 +41,7 @@ fixture_generation_suite = TestSuite(
                 # - Fv-only sequences (is_fv=True)
                 # - Tests all 34 features (7 sequence + 27 structure)
                 ActionTestCase(
-                    action_name=ModelActions.EXTRACT_FEATURES,
+                    action_name=ModelActions.PREDICT,
                     input_fixture=ProperMABExtractFeaturesRequest(
                         items=[
                             ProperMABExtractFeaturesRequestItem(
@@ -71,7 +71,7 @@ fixture_generation_suite = TestSuite(
                 # - Lambda light chain (tests LC type variation)
                 # - Validates integer feature handling (mode/rounding for aromatic_cdr, etc.)
                 ActionTestCase(
-                    action_name=ModelActions.EXTRACT_FEATURES,
+                    action_name=ModelActions.PREDICT,
                     input_fixture=ProperMABExtractFeaturesRequest(
                         items=[
                             ProperMABExtractFeaturesRequestItem(
@@ -104,7 +104,7 @@ def generate():
 
     This function:
     1. Uploads programmatic input JSON files to R2 storage
-    2. Runs the extract_features method via Modal locally
+    2. Runs the predict method via Modal locally
     3. Saves the actual outputs to R2 as expected output files
 
     The generated fixtures are then used by test.py to verify model behavior

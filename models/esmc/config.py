@@ -50,7 +50,7 @@ ESMC_VARIANT_RESOURCE_SPECS = {
 
 # ESM-C configuration:
 # - Axes: MODEL_SIZE (300m, 600m)
-# - Actions: encode, predict, predict_log_prob
+# - Actions: encode, predict, log_prob
 MODEL_FAMILY = ModelFamily(
     base_model_slug=ESMCParams.base_model_slug,
     display_name=ESMCParams.display_name,
@@ -65,7 +65,7 @@ MODEL_FAMILY = ModelFamily(
         ],
         architecture=[Architecture.TRANSFORMER],
     ),
-    # Three actions: encode, predict, predict_log_prob
+    # Three actions: encode, predict, log_prob
     action_schemas=[
         ActionSchemaMap(
             name=ModelActions.ENCODE,
@@ -78,7 +78,7 @@ MODEL_FAMILY = ModelFamily(
             response_schema=ESMCPredictResponse,
         ),
         ActionSchemaMap(
-            name=ModelActions.PREDICT_LOG_PROB,
+            name=ModelActions.LOG_PROB,
             request_schema=ESMCPredictLogProbRequest,
             response_schema=ESMCPredictLogProbResponse,
         ),

@@ -40,7 +40,7 @@ ProperMABResourceSpec = ModalResourceSpec(
 
 # ProperMAB configuration:
 # - Axes: None (single variant)
-# - Actions: extract_features
+# - Actions: predict
 # - Model: Feature engineering framework (not a prediction model)
 # - Output: 34 biophysical features (7 sequence + 27 structure)
 MODEL_FAMILY = ModelFamily(
@@ -56,10 +56,10 @@ MODEL_FAMILY = ModelFamily(
             Architecture.ALGORITHMIC,  # Feature extraction algorithms
         ],
     ),
-    # Single action: extract_features
+    # Single action: predict
     action_schemas=[
         ActionSchemaMap(
-            name=ModelActions.EXTRACT_FEATURES,
+            name=ModelActions.PREDICT,
             request_schema=ProperMABExtractFeaturesRequest,
             response_schema=ProperMABExtractFeaturesResponse,
         )

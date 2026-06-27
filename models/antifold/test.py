@@ -59,7 +59,7 @@ test_suite = TestSuite(
                     tolerances={"rel_tol": 3e-4, "cosine_distance_threshold": 0.02},
                 ),
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT_LOG_PROB,
+                    action_name=ModelActions.LOG_PROB,
                     input_fixture=LOGPROB_3HFM_INPUT,
                     expected_output_fixture=LOGPROB_3HFM_OUTPUT,
                     tolerances={"rel_tol": 1e-4},

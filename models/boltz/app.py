@@ -421,7 +421,7 @@ class BoltzModel(ModelMixinSnap):
 
     @modal.method()
     @modal_endpoint(app_name=app_name, debug=True)
-    def predict(self, payload: BoltzPredictRequestType) -> BoltzPredictResponse:
+    def fold(self, payload: BoltzPredictRequestType) -> BoltzPredictResponse:
         """Run Boltz structure prediction."""
         # Clear subprocess diagnostics from any previous request so that
         # _process_results never inspects stale output.

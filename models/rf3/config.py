@@ -31,7 +31,7 @@ RF3ResourceSpec = ModalResourceSpec(
 
 # RF3 configuration:
 # - Axes: None (single variant, though multiple checkpoints exist)
-# - Actions: predict
+# - Actions: fold
 MODEL_FAMILY = ModelFamily(
     base_model_slug=RF3Params.base_model_slug,
     display_name=RF3Params.display_name,
@@ -55,10 +55,10 @@ MODEL_FAMILY = ModelFamily(
         output_modality=[OutputModality.STRUCTURE],
         architecture=[Architecture.TRANSFORMER, Architecture.DIFFUSION],
     ),
-    # Single action: predict
+    # Single action: fold
     action_schemas=[
         ActionSchemaMap(
-            name=ModelActions.PREDICT,
+            name=ModelActions.FOLD,
             request_schema=RF3PredictRequest,
             response_schema=RF3PredictResponse,
         )

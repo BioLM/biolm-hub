@@ -123,7 +123,7 @@ Stdlib only — **no structlog**.
 Raise a `UserError` subclass (from `models.commons.core.error`) for caller mistakes — surfaced
 verbatim with a stable machine-readable `code`. Hierarchy:
 `BioLMError → UserError(+ValidationError400, UnsupportedOptionError, ResourceNotFoundError) /
-SystemError(+ModelExecutionError)`. Let system errors propagate (sanitized to 5xx by the gateway).
+ServerError(+ModelExecutionError)`. Let system errors propagate (sanitized to 5xx by the gateway).
 **Never** raise bare `Exception`/`ValueError` for user input; never `print`+swallow.
 
 ### Shared test assets

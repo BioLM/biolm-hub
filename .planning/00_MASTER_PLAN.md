@@ -215,7 +215,7 @@ once in `commons`, so per-model work in Stage 3 is pure application. The rules a
   `heavy_chain` + `NANOBODY` tag; the molecule distinction lives in tags, not field names), TCR
   `tcr_*`/`peptide`/`mhc`, cross-family `sequence`/`pdb`/`cif`/`smiles`, outputs
   `embeddings`/`logits`/`log_prob`/`score`/`plddt`. (W7)
-- **Errors:** ship the `BioLMError → UserError/SystemError` hierarchy with a machine-readable `code`
+- **Errors:** ship the `BioLMError → UserError/ServerError` hierarchy with a machine-readable `code`
   field. (W7)
 - **Logging:** `get_logger(__name__)` + `configure_logging()` in commons; ruff `T20` bans `print`
   in runtime code. (W6)
@@ -358,7 +358,7 @@ its keep.
 | R2 credentials | From env vars, injected via Modal secret in-container | Matches existing pattern (creds via Modal secrets, not local env) | Low |
 | Actions | Add `FOLD`; **rename `predict_log_prob`→`log_prob`**; **drop `extract_features`** (propermab→`predict`); keep `predict/encode/generate/score`. Don't split `generate`/`design` | `fold` is the obvious agent verb (7 fold models overload `predict`); `log_prob` drops a misleading prefix; `extract_features` was a 1-model outlier; enum is barely load-bearing (string dispatch) so cheap | Low |
 | Schema naming | `heavy_chain`/`light_chain` everywhere; **VHH/nanobody = lone `heavy_chain` + `NANOBODY` tag** (molecule type lives in tags, not field names); TCR `tcr_*`/`peptide`/`mhc`; PDB-chain selectors `*_id`; cross-family `sequence`/`pdb`/`cif`/`smiles`; outputs `embeddings`/`logits`/`log_prob`/`score`/`plddt`; pydantic aliases for back-compat | Agent-legibility; eliminates the 5-way heavy/light drift; the antibody/VHH/nanobody distinction is real but belongs to tags | Low–High (entity-collection naming for boltz/rf3 is High → optional/defer) |
-| Errors | `BioLMError → UserError(+ValidationError400, UnsupportedOptionError, ResourceNotFoundError) / SystemError(+ModelExecutionError)`, plus a machine-readable string `code` on exceptions + `ErrorResponse` | Uniform, agent-legible errors; extends today's `UserError`/`ERROR_MAP` rather than rebuilding | Low–Med |
+| Errors | `BioLMError → UserError(+ValidationError400, UnsupportedOptionError, ResourceNotFoundError) / ServerError(+ModelExecutionError)`, plus a machine-readable string `code` on exceptions + `ErrorResponse` | Uniform, agent-legible errors; extends today's `UserError`/`ERROR_MAP` rather than rebuilding | Low–Med |
 | Logging | stdlib `get_logger(__name__)` + `configure_logging()`; **no structlog**; ruff `T20` bans `print` in runtime code (allowed in scripts/CLI/tests) | Modernization + uniformity without a new dependency | Low |
 | `EnhancedEnum` | Collapse to `class EnhancedStringEnum(_CastableEnumMixin, StrEnum)` on 3.12; delete the dead metaclass/`__iter__`/redundant `__str__`; keep only the pydantic-strict casting mixin | Don't ship an over-engineered enum publicly; nothing breaks (~83 subclasses keep the name) | Low |
 | Gateway discovery | Replace AST-parsing of `app.py` with explicit `modal_class_name: str` on `ModelFamily` (the config the gateway already imports); add a CI guard | Kills a brittle, redundant, silent-failure source-parse | Low |

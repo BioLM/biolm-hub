@@ -120,14 +120,14 @@ integration_test_suite = TestSuite(
             test_cases=[
                 # 1. Protein test — core single-protein folding
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT,
+                    action_name=ModelActions.FOLD,
                     input_fixture=BOLTZ1_PROTEIN_INPUT,
                     expected_output_fixture=BOLTZ1_PROTEIN_OUTPUT,
                     tolerances=HIGH_TOLERANCES,
                 ),
                 # 2. Ligand test (without affinity) — boltz1-only feature
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT,
+                    action_name=ModelActions.FOLD,
                     input_fixture=BOLTZ1_LIGAND_INPUT,
                     expected_output_fixture=BOLTZ1_LIGAND_OUTPUT,
                     tolerances=PROTEIN_INTERFACE_TOLERANCES,
@@ -145,35 +145,35 @@ integration_test_suite = TestSuite(
             test_cases=[
                 # 1. Protein test — core folding (validates v2 vs v1 differences)
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT,
+                    action_name=ModelActions.FOLD,
                     input_fixture=BOLTZ2_PROTEIN_INPUT,
                     expected_output_fixture=BOLTZ2_PROTEIN_OUTPUT,
                     tolerances=MULTIENTITY_TOLERANCES,
                 ),
                 # 2. Cyclic protein test — cyclic peptide handling
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT,
+                    action_name=ModelActions.FOLD,
                     input_fixture=BOLTZ2_CYCLIC_PROTEIN_INPUT,
                     expected_output_fixture=BOLTZ2_CYCLIC_PROTEIN_OUTPUT,
                     tolerances=HIGH_TOLERANCES,
                 ),
                 # 3. Multimer test — multi-chain complex
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT,
+                    action_name=ModelActions.FOLD,
                     input_fixture=BOLTZ2_MULTIMER_INPUT,
                     expected_output_fixture=BOLTZ2_MULTIMER_OUTPUT,
                     tolerances=PROTEIN_INTERFACE_TOLERANCES,
                 ),
                 # 4. Template test — boltz2-only feature
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT,
+                    action_name=ModelActions.FOLD,
                     input_fixture=BOLTZ2_TEMPLATE_INPUT,
                     expected_output_fixture=BOLTZ2_TEMPLATE_OUTPUT,
                     tolerances=TEMPLATE_TOLERANCES,
                 ),
                 # 5. Ligand+affinity test — boltz2-only feature
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT,
+                    action_name=ModelActions.FOLD,
                     input_fixture=BOLTZ2_LIGAND_AFFINITY_INPUT,
                     expected_output_fixture=BOLTZ2_LIGAND_AFFINITY_OUTPUT,
                     tolerances=PROTEIN_INTERFACE_TOLERANCES,
@@ -182,7 +182,7 @@ integration_test_suite = TestSuite(
                 # Pocket affinity scores are highly stochastic (sign flips across runs)
                 # so add abs_tol to handle near-zero values; structural RMSD still validated.
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT,
+                    action_name=ModelActions.FOLD,
                     input_fixture=BOLTZ2_POCKET_INPUT,
                     expected_output_fixture=BOLTZ2_POCKET_OUTPUT,
                     tolerances={
@@ -209,7 +209,7 @@ deployment_test_suite = TestSuite(
             test_cases=[
                 # Minimal protein structure prediction test
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT,
+                    action_name=ModelActions.FOLD,
                     input_fixture=Boltz1PredictRequest(
                         params=Boltz1PredictParams(
                             recycling_steps=1,  # Minimal for speed
@@ -235,7 +235,7 @@ deployment_test_suite = TestSuite(
                 ),
                 # Protein-ligand complex test
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT,
+                    action_name=ModelActions.FOLD,
                     input_fixture=Boltz1PredictRequest(
                         params=Boltz1PredictParams(
                             recycling_steps=1,
@@ -265,7 +265,7 @@ deployment_test_suite = TestSuite(
                 ),
                 # Protein multimer test with ipSAE calculation (PAE enabled)
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT,
+                    action_name=ModelActions.FOLD,
                     input_fixture=Boltz1PredictRequest(
                         params=Boltz1PredictParams(
                             recycling_steps=1,
@@ -303,7 +303,7 @@ deployment_test_suite = TestSuite(
             test_cases=[
                 # Minimal protein structure prediction test
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT,
+                    action_name=ModelActions.FOLD,
                     input_fixture=Boltz2PredictRequest(
                         params=Boltz2PredictParams(
                             recycling_steps=1,  # Minimal for speed
@@ -329,7 +329,7 @@ deployment_test_suite = TestSuite(
                 ),
                 # Protein-ligand complex test
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT,
+                    action_name=ModelActions.FOLD,
                     input_fixture=Boltz2PredictRequest(
                         params=Boltz2PredictParams(
                             recycling_steps=1,
@@ -359,7 +359,7 @@ deployment_test_suite = TestSuite(
                 ),
                 # Protein multimer test with ipSAE calculation (PAE enabled)
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT,
+                    action_name=ModelActions.FOLD,
                     input_fixture=Boltz2PredictRequest(
                         params=Boltz2PredictParams(
                             recycling_steps=1,

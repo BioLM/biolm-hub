@@ -126,7 +126,7 @@ def generate():
         )
     )
 
-    # Note: predict_log_prob tests use validator-based approach in test.py
+    # Note: log_prob tests use validator-based approach in test.py
     # (no golden output fixtures needed - just validates log_prob is a float)
 
     generator.generate()

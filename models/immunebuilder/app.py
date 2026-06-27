@@ -282,7 +282,7 @@ class ImmuneBuilderModel(ModelMixinSnap):
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def predict(
+    def fold(
         self, payload: ImmuneBuilderPredictRequest
     ) -> ImmuneBuilderPredictResponse:
         """

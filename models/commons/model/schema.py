@@ -10,11 +10,11 @@ from models.commons.util.config import default_scaledown_window
 
 class ModelActions(EnhancedStringEnum):
     PREDICT = "predict"
+    FOLD = "fold"
     ENCODE = "encode"
     GENERATE = "generate"
-    PREDICT_LOG_PROB = "predict_log_prob"
-    SCORE = "score"  # TODO: in the future, clean up model actions list
-    EXTRACT_FEATURES = "extract_features"
+    LOG_PROB = "log_prob"
+    SCORE = "score"
 
 
 class ModalGPU(EnhancedStringEnum):

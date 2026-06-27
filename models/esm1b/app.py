@@ -165,7 +165,7 @@ class ESM1bModel(ModelMixinSnap):
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def predict_log_prob(self, payload: ESM1bLogProbRequest) -> ESM1bLogProbResponse:
+    def log_prob(self, payload: ESM1bLogProbRequest) -> ESM1bLogProbResponse:
         """
         Computes the total log-probability of an unmasked sequence under ESM-1b.
 

@@ -103,7 +103,7 @@ class Evo2Model(ModelMixinSnap):
     """
     Evo2Model class offers these endpoints:
       - encode() => computes embeddings (mean, last, etc.)
-      - predict_log_prob() => total log-prob of a DNA sequence
+      - log_prob() => total log-prob of a DNA sequence
       - generate() => sequence generation from a prompt
     """
 
@@ -245,7 +245,7 @@ class Evo2Model(ModelMixinSnap):
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def predict_log_prob(
+    def log_prob(
         self, payload: Evo2PredictLogProbRequest
     ) -> Evo2PredictLogProbResponse:
         """

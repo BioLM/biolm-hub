@@ -40,7 +40,7 @@ IgBert_VARIANT_RESOURCE_SPECS = {
 
 # IgBert configuration:
 # - Axes: MODEL_TYPE (paired, unpaired)
-# - Actions: encode, generate, predict_log_prob
+# - Actions: encode, generate, log_prob
 MODEL_FAMILY = ModelFamily(
     base_model_slug=IgBertParams.base_model_slug,
     display_name=IgBertParams.display_name,
@@ -55,7 +55,7 @@ MODEL_FAMILY = ModelFamily(
         ],
         architecture=[Architecture.TRANSFORMER, Architecture.BERT],
     ),
-    # Three actions: encode, generate, and predict_log_prob
+    # Three actions: encode, generate, and log_prob
     action_schemas=[
         ActionSchemaMap(
             name=ModelActions.ENCODE,
@@ -68,7 +68,7 @@ MODEL_FAMILY = ModelFamily(
             response_schema=IgBertGenerateResponse,
         ),
         ActionSchemaMap(
-            name=ModelActions.PREDICT_LOG_PROB,
+            name=ModelActions.LOG_PROB,
             request_schema=IgBertLogProbRequest,
             response_schema=IgBertLogProbResponse,
         ),

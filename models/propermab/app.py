@@ -463,7 +463,7 @@ class ProperMABModel(ModelMixinSnap):
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def extract_features(  # noqa: C901
+    def predict(  # noqa: C901
         self, payload: ProperMABExtractFeaturesRequest
     ) -> ProperMABExtractFeaturesResponse:
         """Extract 34 biophysical features from antibody sequences.

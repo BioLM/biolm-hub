@@ -65,7 +65,7 @@ test_suite = TestSuite(
                     tolerances={"rel_tol": 1e-4},
                 ),
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT_LOG_PROB,
+                    action_name=ModelActions.LOG_PROB,
                     input_fixture=_create_paired_logprob_input(),
                     validator=_validate_log_prob,
                 ),
@@ -88,7 +88,7 @@ test_suite = TestSuite(
                     tolerances={"rel_tol": 1e-4},
                 ),
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT_LOG_PROB,
+                    action_name=ModelActions.LOG_PROB,
                     input_fixture=_create_unpaired_logprob_input(),
                     validator=_validate_log_prob,
                 ),

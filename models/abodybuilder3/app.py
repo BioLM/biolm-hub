@@ -167,7 +167,7 @@ class AbodyBuilder3Model(ModelMixinSnap):
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def predict(
+    def fold(
         self, payload: AbodyBuilder3PredictRequest
     ) -> AbodyBuilder3PredictResponse:
         """

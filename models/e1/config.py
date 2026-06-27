@@ -59,7 +59,7 @@ E1_VARIANT_RESOURCE_SPECS = {
 
 # E1 configuration:
 # - Axes: MODEL_SIZE (150m, 300m, 600m)
-# - Actions: encode, predict, predict_log_prob
+# - Actions: encode, predict, log_prob
 MODEL_FAMILY = ModelFamily(
     base_model_slug=E1Params.base_model_slug,
     display_name=E1Params.display_name,
@@ -74,7 +74,7 @@ MODEL_FAMILY = ModelFamily(
         ],
         architecture=[Architecture.TRANSFORMER],
     ),
-    # Three actions: encode, predict, predict_log_prob
+    # Three actions: encode, predict, log_prob
     action_schemas=[
         ActionSchemaMap(
             name=ModelActions.ENCODE,
@@ -87,7 +87,7 @@ MODEL_FAMILY = ModelFamily(
             response_schema=E1PredictResponse,
         ),
         ActionSchemaMap(
-            name=ModelActions.PREDICT_LOG_PROB,
+            name=ModelActions.LOG_PROB,
             request_schema=E1PredictLogProbRequest,
             response_schema=E1PredictLogProbResponse,
         ),

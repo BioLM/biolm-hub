@@ -43,7 +43,7 @@ test_suite = TestSuite(
                 ),
                 # Predict log prob action with programmatic input
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT_LOG_PROB,
+                    action_name=ModelActions.LOG_PROB,
                     # Programmatic input - create data on the fly
                     input_fixture={
                         "items": [

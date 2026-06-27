@@ -34,7 +34,7 @@ IMMUNE_BUILDER_VARIANT_RESOURCE_SPECS = {
 
 # ImmuneBuilder configuration:
 # - Axes: MODEL_TYPE (tcrbuilder2, tcrbuilder2plus, abodybuilder2, nanobodybuilder2)
-# - Actions: predict
+# - Actions: fold
 MODEL_FAMILY = ModelFamily(
     base_model_slug=ImmuneBuilderParams.base_model_slug,
     display_name=ImmuneBuilderParams.display_name,
@@ -49,10 +49,10 @@ MODEL_FAMILY = ModelFamily(
         output_modality=[OutputModality.STRUCTURE],
         architecture=[Architecture.GNN],
     ),
-    # Single action: predict
+    # Single action: fold
     action_schemas=[
         ActionSchemaMap(
-            name=ModelActions.PREDICT,
+            name=ModelActions.FOLD,
             request_schema=ImmuneBuilderPredictRequest,
             response_schema=ImmuneBuilderPredictResponse,
         )

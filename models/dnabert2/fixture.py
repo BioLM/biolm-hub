@@ -49,10 +49,10 @@ def generate():
         )
     )
 
-    # Test Case 2: predict_log_prob()
+    # Test Case 2: log_prob()
     generator.add_test_case(
         ActionTestCase(
-            action_name=ModelActions.PREDICT_LOG_PROB,
+            action_name=ModelActions.LOG_PROB,
             input_fixture=DNABERT2PredictLogProbRequest(
                 items=[
                     DNABERT2PredictLogProbRequestItem(sequence="ACGT"),

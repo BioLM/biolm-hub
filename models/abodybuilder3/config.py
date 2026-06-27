@@ -38,7 +38,7 @@ ABODYBUILDER3_VARIANT_RESOURCE_SPECS = {
 
 # AbodyBuilder3 configuration:
 # - Axes: MODEL_TYPE (language, plddt)
-# - Actions: predict
+# - Actions: fold
 MODEL_FAMILY = ModelFamily(
     base_model_slug=AbodyBuilder3Params.base_model_slug,
     display_name=AbodyBuilder3Params.display_name,
@@ -49,10 +49,10 @@ MODEL_FAMILY = ModelFamily(
         output_modality=[OutputModality.STRUCTURE, OutputModality.SCALAR],
         architecture=[Architecture.GNN],
     ),
-    # Single action: predict
+    # Single action: fold
     action_schemas=[
         ActionSchemaMap(
-            name=ModelActions.PREDICT,
+            name=ModelActions.FOLD,
             request_schema=AbodyBuilder3PredictRequest,
             response_schema=AbodyBuilder3PredictResponse,
         )

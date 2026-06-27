@@ -26,7 +26,7 @@ test_suite = TestSuite(
             variant_config={},  # Applies to all (only) variants
             test_cases=[
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT,
+                    action_name=ModelActions.FOLD,
                     input_fixture=MULTICHAIN_INPUT,
                     expected_output_fixture=MULTICHAIN_OUTPUT,
                     tolerances={
@@ -35,7 +35,7 @@ test_suite = TestSuite(
                     },
                 ),
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT,
+                    action_name=ModelActions.FOLD,
                     input_fixture=SINGLECHAIN_INPUT,
                     expected_output_fixture=SINGLECHAIN_OUTPUT,
                     tolerances={

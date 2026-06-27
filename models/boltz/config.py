@@ -32,7 +32,7 @@ BOLTZ_VARIANT_RESOURCE_SPECS = {
 
 # Boltz configuration:
 # - Axes: MODEL_VERSION (boltz1, boltz2)
-# - Actions: predict
+# - Actions: fold
 MODEL_FAMILY = ModelFamily(
     base_model_slug=BoltzModelParams.base_model_slug,
     display_name=BoltzModelParams.display_name,
@@ -53,10 +53,10 @@ MODEL_FAMILY = ModelFamily(
         output_modality=[OutputModality.STRUCTURE],
         architecture=[Architecture.DIFFUSION, Architecture.TRANSFORMER],
     ),
-    # Single action: predict
+    # Single action: fold
     action_schemas=[
         ActionSchemaMap(
-            name=ModelActions.PREDICT,
+            name=ModelActions.FOLD,
             request_schema=BoltzPredictRequest,
             response_schema=BoltzPredictResponse,
         )

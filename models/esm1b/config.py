@@ -37,7 +37,7 @@ ESM1b_RESOURCE_SPEC = ModalResourceSpec(
 
 # ESM-1b configuration:
 # - Axes: None (single variant - 650M parameters)
-# - Actions: encode, predict, predict_log_prob
+# - Actions: encode, predict, log_prob
 MODEL_FAMILY = ModelFamily(
     base_model_slug=ESM1bParams.base_model_slug,
     display_name=ESM1bParams.display_name,
@@ -52,7 +52,7 @@ MODEL_FAMILY = ModelFamily(
         ],
         architecture=[Architecture.TRANSFORMER],
     ),
-    # Three actions: encode, predict, predict_log_prob
+    # Three actions: encode, predict, log_prob
     action_schemas=[
         ActionSchemaMap(
             name=ModelActions.ENCODE,
@@ -65,7 +65,7 @@ MODEL_FAMILY = ModelFamily(
             response_schema=ESM1bPredictResponse,
         ),
         ActionSchemaMap(
-            name=ModelActions.PREDICT_LOG_PROB,
+            name=ModelActions.LOG_PROB,
             request_schema=ESM1bLogProbRequest,
             response_schema=ESM1bLogProbResponse,
         ),

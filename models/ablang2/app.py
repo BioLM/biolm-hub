@@ -288,7 +288,7 @@ class AbLang2Model(ModelMixinSnap):
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def predict_log_prob(
+    def log_prob(
         self, payload: AbLang2LogProbRequest
     ) -> AbLang2LogProbResponse:
         # 1. Format the input sequences (using the same convention as elsewhere)

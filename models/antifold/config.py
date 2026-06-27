@@ -32,7 +32,7 @@ AntiFoldResourceSpec = ModalResourceSpec(cpu=1.0, memory=2 * 1024, gpu=None)  # 
 
 # AntiFold configuration:
 # - Axes: None (single variant)
-# - Actions: encode, generate, score, predict_log_prob
+# - Actions: encode, generate, score, log_prob
 MODEL_FAMILY = ModelFamily(
     base_model_slug=AntiFoldParams.base_model_slug,
     display_name=AntiFoldParams.display_name,
@@ -60,12 +60,12 @@ MODEL_FAMILY = ModelFamily(
             response_schema=AntiFoldGenerateResponse,
         ),
         ActionSchemaMap(
-            name="score",
+            name=ModelActions.SCORE,
             request_schema=AntiFoldPredictRequest,
             response_schema=AntiFoldScoreResponse,
         ),
         ActionSchemaMap(
-            name=ModelActions.PREDICT_LOG_PROB,
+            name=ModelActions.LOG_PROB,
             request_schema=AntiFoldPredictRequest,
             response_schema=AntiFoldLogProbResponse,
         ),

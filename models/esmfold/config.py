@@ -24,7 +24,7 @@ ESMFoldResourceSpec = ModalResourceSpec(
 
 # ESMFold configuration:
 # - Axes: None (single variant)
-# - Actions: predict
+# - Actions: fold
 MODEL_FAMILY = ModelFamily(
     base_model_slug=ESMFoldParams.base_model_slug,
     display_name=ESMFoldParams.display_name,
@@ -35,10 +35,10 @@ MODEL_FAMILY = ModelFamily(
         output_modality=[OutputModality.STRUCTURE, OutputModality.SCALAR],
         architecture=[Architecture.TRANSFORMER, Architecture.GNN],
     ),
-    # Single action: predict
+    # Single action: fold
     action_schemas=[
         ActionSchemaMap(
-            name=ModelActions.PREDICT,
+            name=ModelActions.FOLD,
             request_schema=ESMFoldPredictRequest,
             response_schema=ESMFoldPredictResponse,
         )

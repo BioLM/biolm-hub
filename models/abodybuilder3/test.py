@@ -12,7 +12,7 @@ test_suite = TestSuite(
             variant_config={},  # Applies to all variants
             test_cases=[
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT,
+                    action_name=ModelActions.FOLD,
                     input_fixture=PREDICT_INPUT,
                     expected_output_fixture=PREDICT_OUTPUT_TPL,
                     tolerances={

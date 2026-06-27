@@ -34,7 +34,7 @@ AbLang2ResourceSpec = ModalResourceSpec(
 
 # AbLang2 configuration:
 # - Axes: None (single variant)
-# - Actions: encode, predict, generate, predict_log_prob
+# - Actions: encode, predict, generate, log_prob
 MODEL_FAMILY = ModelFamily(
     base_model_slug=AbLang2Params.base_model_slug,
     display_name=AbLang2Params.display_name,
@@ -67,7 +67,7 @@ MODEL_FAMILY = ModelFamily(
             response_schema=AbLang2GenerateResponse,
         ),
         ActionSchemaMap(
-            name=ModelActions.PREDICT_LOG_PROB,
+            name=ModelActions.LOG_PROB,
             request_schema=AbLang2LogProbRequest,
             response_schema=AbLang2LogProbResponse,
         ),

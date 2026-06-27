@@ -91,7 +91,7 @@ class ESMCModel(ModelMixinSnap):
     ESMCModel class offers these methods:
      - encode() => computes embeddings
      - predict() => per-token logits for masked tokens
-     - predict_log_prob() => total log-prob of an unmasked sequence
+     - log_prob() => total log-prob of an unmasked sequence
     """
 
     @modal.enter(snap=True)
@@ -278,7 +278,7 @@ class ESMCModel(ModelMixinSnap):
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def predict_log_prob(
+    def log_prob(
         self, payload: ESMCPredictLogProbRequest
     ) -> ESMCPredictLogProbResponse:
         """

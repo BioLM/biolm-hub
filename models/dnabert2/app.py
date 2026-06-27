@@ -184,7 +184,7 @@ class DNABERT2Model(ModelMixinSnap):
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def predict_log_prob(
+    def log_prob(
         self, payload: DNABERT2PredictLogProbRequest
     ) -> DNABERT2PredictLogProbResponse:
         """

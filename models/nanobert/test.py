@@ -31,9 +31,9 @@ test_suite = TestSuite(
                     expected_output_fixture=GENERATE_OUTPUT,
                     tolerances={"rel_tol": 1e-4},
                 ),
-                # Programmatic input for predict_log_prob
+                # Programmatic input for log_prob
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT_LOG_PROB,
+                    action_name=ModelActions.LOG_PROB,
                     input_fixture=NanoBERTLogProbRequest(
                         items=[
                             NanoBERTEncodeRequestItem(

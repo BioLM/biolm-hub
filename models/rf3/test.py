@@ -135,7 +135,7 @@ test_suite = TestSuite(
             variant_config={},  # Single variant
             test_cases=[
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT,
+                    action_name=ModelActions.FOLD,
                     input_fixture=INPUT1,
                     expected_output_fixture="rf3-predict-input1-expected_output.json",
                     tolerances={
@@ -145,7 +145,7 @@ test_suite = TestSuite(
                     },
                 ),
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT,
+                    action_name=ModelActions.FOLD,
                     input_fixture=INPUT2,
                     expected_output_fixture="rf3-predict-input2-expected_output.json",
                     tolerances={
@@ -155,7 +155,7 @@ test_suite = TestSuite(
                     },
                 ),
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT,
+                    action_name=ModelActions.FOLD,
                     input_fixture=INPUT3,
                     expected_output_fixture="rf3-predict-input3-expected_output.json",
                     tolerances={
@@ -165,7 +165,7 @@ test_suite = TestSuite(
                     },
                 ),
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT,
+                    action_name=ModelActions.FOLD,
                     input_fixture=INPUT4_MSA,
                     expected_output_fixture="rf3-predict-input4-msa-expected_output.json",
                     tolerances={

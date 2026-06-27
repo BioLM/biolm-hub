@@ -145,7 +145,7 @@ Modal stdout capture.
   `score`/`plddt`; pydantic `Field(alias=…)` for back-compat; boltz/boltzgen/rf3 entity-collection
   renaming optional/defer.) **W7 itself does actions + errors (below); schema field application = W5.**
 - **Errors:** ship `BioLMError → UserError(+ValidationError400, UnsupportedOptionError,
-  ResourceNotFoundError) / SystemError(+ModelExecutionError)` in `commons/core/error.py`; add a
+  ResourceNotFoundError) / ServerError(+ModelExecutionError)` in `commons/core/error.py`; add a
   machine-readable string `code` to exceptions + `ErrorResponse`; extend `ERROR_MAP`. (Whether the
   **gateway** promotes body `status_code`→HTTP status is a **W8/gateway** decision — moved out of W7's
   blocking path so W7 can fully lock; default = keep current behavior.)

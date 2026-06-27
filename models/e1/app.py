@@ -99,7 +99,7 @@ class E1Model(ModelMixin):
     E1Model class offers these methods:
      - encode() => computes embeddings (with optional context sequences)
      - predict() => per-token logits for masked tokens
-     - predict_log_prob() => total log-prob of an unmasked sequence
+     - log_prob() => total log-prob of an unmasked sequence
     """
 
     @modal.enter()
@@ -438,7 +438,7 @@ class E1Model(ModelMixin):
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def predict_log_prob(
+    def log_prob(
         self, payload: E1PredictLogProbRequest
     ) -> E1PredictLogProbResponse:
         """

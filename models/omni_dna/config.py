@@ -80,7 +80,7 @@ OMNI_DNA_VARIANT_RESOURCE_SPECS = {
 
 # Omni-DNA configuration:
 # - Axes: MODEL_SIZE (20m, 60m, 116m, 300m, 700m, 1b)
-# - Actions: encode, predict_log_prob
+# - Actions: encode, log_prob
 MODEL_FAMILY = ModelFamily(
     base_model_slug=OmniDNAParams.base_model_slug,
     display_name=OmniDNAParams.display_name,
@@ -91,7 +91,7 @@ MODEL_FAMILY = ModelFamily(
         output_modality=[OutputModality.EMBEDDING, OutputModality.LOG_PROBABILITIES],
         architecture=[Architecture.TRANSFORMER],
     ),
-    # Two actions: encode and predict_log_prob
+    # Two actions: encode and log_prob
     action_schemas=[
         ActionSchemaMap(
             name=ModelActions.ENCODE,
@@ -99,7 +99,7 @@ MODEL_FAMILY = ModelFamily(
             response_schema=OmniDNAEncodeResponse,
         ),
         ActionSchemaMap(
-            name=ModelActions.PREDICT_LOG_PROB,
+            name=ModelActions.LOG_PROB,
             request_schema=OmniDNAPredictLogProbRequest,
             response_schema=OmniDNAPredictLogProbResponse,
         ),

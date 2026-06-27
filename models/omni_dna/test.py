@@ -26,7 +26,7 @@ test_suite = TestSuite(
                     tolerances={"rel_tol": 1e-4},
                 ),
                 ActionTestCase(
-                    action_name=ModelActions.PREDICT_LOG_PROB,
+                    action_name=ModelActions.LOG_PROB,
                     input_fixture=LOGPROB_INPUT,
                     # Template: will be formatted with variant.name (e.g., "1b_logprob_expected_output.json")
                     expected_output_fixture=LOGPROB_OUTPUT_TPL,

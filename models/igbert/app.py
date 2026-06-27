@@ -345,7 +345,7 @@ class IgBertModel(ModelMixinSnap):
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def predict_log_prob(self, payload: IgBertLogProbRequest) -> IgBertLogProbResponse:
+    def log_prob(self, payload: IgBertLogProbRequest) -> IgBertLogProbResponse:
         """
         Compute the log probability of each input sequence by:
           1. Converting the input to either "heavy + [SEP] + light" (paired) or "sequence" (unpaired).

@@ -412,7 +412,7 @@ class ESM2Model(ModelMixinSnap):
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def predict_log_prob(self, payload: ESM2LogProbRequest) -> ESM2LogProbResponse:
+    def log_prob(self, payload: ESM2LogProbRequest) -> ESM2LogProbResponse:
         """
         Computes the total log-probability of an unmasked sequence under ESM2,
         using the existing _encode_forward_pass() to extract per-token logits.
