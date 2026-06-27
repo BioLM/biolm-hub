@@ -136,12 +136,14 @@ Modal stdout capture.
 - **Actions:** add `FOLD` to `ModelActions`; **rename `PREDICT_LOG_PROB`→`LOG_PROB`**; **drop
   `EXTRACT_FEATURES`** (propermab→`predict`); migrate the 7 ★fold models `predict`→`fold`; normalize
   antifold's freeform `"score"`. Update gateway/catalog/tests + `non_cacheable_actions`.
-- **Schemas (canonical field names):** `heavy_chain`/`light_chain` (nanobody/VHH = lone `heavy_chain`
-  + `NANOBODY` tag — molecule type lives in the `InputMolecule` tag, **no `vhh`/`nanobody` field**);
-  TCR `tcr_*`/`peptide`/`mhc`; PDB-chain selectors `*_id`; cross-family `sequence`/`sequences`/`msa`,
-  `pdb`/`cif`, `smiles`+`ccd`, `name`, `params`+`items`; outputs `embeddings`/`logits`/`log_prob`/
-  `score`/`plddt`. Use pydantic `populate_by_name` + `Field(alias=…)` for back-compat. (Entity-
-  collection renaming for boltz/boltzgen/rf3 is High-complexity → optional/defer.)
+- **Schemas (canonical field names):** the conventions are **locked in `02` Global Rules** here, but
+  the per-model field renaming is **APPLIED in W5** (per-model hardening) — the renames are per-family
+  and need reviewed, per-model care that can't be deploy-validated until a Modal milestone, so a global
+  sweep is too risky. (Convention recap: `heavy_chain`/`light_chain`; nanobody/VHH = lone
+  `heavy_chain` + `NANOBODY` tag, no `vhh`/`nanobody` field; TCR `tcr_*`/`peptide`/`mhc`; PDB selectors
+  `*_id`; cross-family `sequence`/`msa`/`pdb`/`cif`/`smiles`; outputs `embeddings`/`logits`/`log_prob`/
+  `score`/`plddt`; pydantic `Field(alias=…)` for back-compat; boltz/boltzgen/rf3 entity-collection
+  renaming optional/defer.) **W7 itself does actions + errors (below); schema field application = W5.**
 - **Errors:** ship `BioLMError → UserError(+ValidationError400, UnsupportedOptionError,
   ResourceNotFoundError) / SystemError(+ModelExecutionError)` in `commons/core/error.py`; add a
   machine-readable string `code` to exceptions + `ErrorResponse`; extend `ERROR_MAP`. (Whether the
