@@ -1,0 +1,184 @@
+# Maintainer-gated deploy + integration/deployment tests.
+#
+# Opening or updating a PR NEVER runs this with secrets. It runs only after a
+# maintainer applies the `deploy-approved` label, and any new push to the PR
+# auto-removes that label — so a maintainer always re-reviews the exact commit
+# that gets deployed. Safe lint/type/unit checks live in ci.yml (every PR).
+#
+# ─────────────────────────  SECURITY MODEL (read first)  ─────────────────────────
+#  • `pull_request_target` runs the workflow definition from the BASE branch
+#    (this file), so a fork PR cannot modify the gating logic itself.
+#  • Repository secrets are referenced ONLY in `deploy-and-test`, which runs ONLY
+#    on the `labeled` event for the `deploy-approved` label.
+#  • Deploying a PR's model necessarily runs that PR's code (config.py / app.py)
+#    on Modal with the maintainer's Modal token in scope. The label IS the trust
+#    boundary: a maintainer MUST review the PR's code before approving.
+#  • `revoke-on-push` removes the label on every new commit, binding the approval
+#    to the exact reviewed commit (no sneaking code in after review).
+#  • `detect` checks out PR code but is secret-free (read-only token, no secrets),
+#    so running the PR's detector can at most influence WHICH of the PR's models
+#    deploy — all still gated + reviewed.
+#
+# Maintainer setup (one-time):
+#   1. Create a `deploy-approved` label.
+#   2. Configure a `modal-dev` GitHub Environment with REQUIRED REVIEWERS, and
+#      store the secrets below as ENVIRONMENT secrets on it (not repo-wide). The
+#      approval prompt then shows the exact commit SHA being deployed (closing
+#      the pre-label window below), and the secrets resolve ONLY in this job.
+#   3. Before applying the label, confirm the PR's HEAD is the commit you
+#      reviewed: the `labeled` event deploys whatever HEAD is at click time, so a
+#      push landing between your review and the click is what would deploy.
+#
+# Note: one approval can fan out to MANY models — a change under `models/commons/`
+# (or a PR that edits the detector) can mark every model affected. The matrix is
+# bounded only by your review, so review the full diff before labeling.
+#
+# Required secrets (store on the `modal-dev` Environment):
+#   MODAL_TOKEN_ID / MODAL_TOKEN_SECRET  — Modal auth (deploys to biolm-models-dev)
+#   R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY / R2_REGION / R2_ENDPOINT
+#       — Cloudflare R2 read creds, so the local test process can load golden
+#         fixtures (mapped to the AWS_* env vars the storage client reads).
+
+name: Gated Deploy & Test
+
+on:
+  pull_request_target:
+    types: [labeled, synchronize]
+
+# Read-only by default; individual jobs widen only what they need.
+permissions:
+  contents: read
+
+concurrency:
+  group: gated-deploy-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  # The `detect` job's `if:` hardcodes this label name (the `env` context isn't
+  # available in a job-level `if:`) — keep the two in sync if it ever changes.
+  APPROVAL_LABEL: deploy-approved
+  MODAL_ENVIRONMENT: biolm-models-dev
+
+jobs:
+  # Commit-binding: any push to the PR revokes approval, forcing re-review of
+  # the new code before it can be deployed.
+  revoke-on-push:
+    if: github.event.action == 'synchronize'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Remove the deploy-approved label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                name: process.env.APPROVAL_LABEL,
+              });
+              core.info('Approval revoked: removed the deploy-approved label after a new push.');
+            } catch (e) {
+              if (e.status === 404) {
+                core.info('No deploy-approved label present; nothing to revoke.');
+              } else {
+                throw e;
+              }
+            }
+
+  # Secret-free change detection. Runs only when a maintainer approves.
+  detect:
+    if: github.event.action == 'labeled' && github.event.label.name == 'deploy-approved'
+    runs-on: ubuntu-latest
+    outputs:
+      models_changed: ${{ steps.detect.outputs.models_changed }}
+      has_models: ${{ steps.detect.outputs.has_models }}
+      models_with_code_changes: ${{ steps.detect.outputs.models_with_code_changes }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The exact reviewed commit. fetch-depth: 0 so detect_models.py can diff.
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Detect changed models
+        id: detect
+        # detect_models.py is stdlib-only — no project deps needed. BASE_REF is
+        # passed via env and quoted so a PR-controlled value can't inject shell.
+        # Two-dot diff (base tip vs HEAD) may over-detect if base advanced; that
+        # only costs extra (gated) deploys, never correctness.
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          git fetch origin "$BASE_REF" --depth=1
+          python .github/scripts/detect_models.py "origin/$BASE_REF" --smart
+
+  # The ONLY job with secrets. One model per matrix leg.
+  deploy-and-test:
+    needs: detect
+    if: needs.detect.outputs.has_models == 'true'
+    runs-on: ubuntu-latest
+    # Scopes secrets to a GitHub Environment that can require manual approval.
+    environment: modal-dev
+    strategy:
+      fail-fast: false
+      matrix:
+        model: ${{ fromJson(needs.detect.outputs.models_changed) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          # This job runs untrusted PR code and needs no git creds afterward.
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: uv sync --all-extras
+
+      # matrix.model originates from PR-controlled directory names. It is
+      # validated to ^[A-Za-z0-9_-]+$ by detect_models.py, and passed via a
+      # quoted env var here as defense-in-depth against shell injection.
+      - name: Deploy ${{ matrix.model }} to ${{ env.MODAL_ENVIRONMENT }}
+        env:
+          MODEL: ${{ matrix.model }}
+          MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+          MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+        run: uv run bm deploy "$MODEL" --force
+
+      - name: Integration tests — ${{ matrix.model }}
+        env:
+          MODEL: ${{ matrix.model }}
+          MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+          MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+          # Storage client reads these env var names (Cloudflare R2 via S3 API).
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.R2_REGION }}
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+        run: uv run pytest "models/$MODEL/test.py" -m integration --no-cov -v
+
+      - name: Deployment tests — ${{ matrix.model }}
+        # Only for models with DIRECT code changes (commons-triggered models are
+        # deployed + integration-tested above, but don't need endpoint tests).
+        if: contains(fromJson(needs.detect.outputs.models_with_code_changes), matrix.model)
+        env:
+          MODEL: ${{ matrix.model }}
+          MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+          MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.R2_REGION }}
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+        run: uv run pytest "models/$MODEL/test.py" -m deployment --no-cov -v

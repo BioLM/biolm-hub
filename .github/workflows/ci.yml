@@ -37,6 +37,9 @@ jobs:
       - name: Type check (mypy)
         run: uv run mypy .
 
+      - name: CI script tests (change detection)
+        run: uv run pytest .github/scripts/ -p no:cacheprovider --no-cov -v
+
       - name: Unit tests
         run: uv run pytest -m "not integration and not deployment and not slow and not e2e and not live_modal" --no-cov -v
 

@@ -114,6 +114,29 @@ Tests are the coherence mechanism. There are four tiers (full detail in the test
 
 - One coherent change per PR; keep `make check` green.
 - Fix failures locally before pushing — don't push just to re-trigger CI.
-- Model deploy + integration/deployment jobs are **maintainer-gated**, so opening a PR won't trigger
-  expensive jobs; a maintainer runs them when the change is ready.
 - Be kind and assume good faith — see [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
+
+### How CI works
+
+Two workflows, split by trust:
+
+- **Every PR — safe checks** (`.github/workflows/ci.yml`): style + mypy + unit tests + the
+  CI change-detection script tests + a docs build. No Modal, no R2, no secrets — so it runs on PRs
+  from forks too. This is exactly what `make check` runs locally; keep it green before you push.
+- **Maintainer-gated — deploy + integration/deployment** (`.github/workflows/deploy.yml`): the
+  expensive Modal jobs. Opening or updating a PR does **not** trigger these. A maintainer reviews the
+  change, then applies the **`deploy-approved`** label, which deploys the affected models to the dev
+  Modal environment and runs their integration + deployment tests. The set of "affected models" is
+  computed by `.github/scripts/detect_models.py` (a change under `models/commons/` fans out to every
+  model that imports it).
+
+**Pushing new commits revokes approval.** Any push to an approved PR automatically removes the
+`deploy-approved` label, so the deploy always runs the exact commit a maintainer reviewed. Just ping a
+maintainer to re-approve once your change is ready.
+
+> **Maintainers:** approving runs the PR's *code* (`config.py`/`app.py`) on Modal with secrets in
+> scope — **review the full diff before labeling**, and confirm the PR's HEAD is the commit you
+> reviewed (the label deploys whatever HEAD is at click time). One approval can fan out to *every*
+> model if `models/commons/` changed. One-time setup: create the `deploy-approved` label and configure
+> a `modal-dev` GitHub Environment with **required reviewers**, holding the `MODAL_TOKEN_*` and `R2_*`
+> secrets as **environment** secrets. Full details are in the header of `.github/workflows/deploy.yml`.

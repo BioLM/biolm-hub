@@ -157,7 +157,22 @@ Per-model LICENSE files frequently carry **inferred** copyright holders/years (f
   still need creds). This is a W4/W3b-adjacent commons change + a representative deploy to validate —
   **Modal-spend-gated → fold into the interim-validation pattern or Milestone B.** `bm setup` already
   frames R2 as optional in anticipation of this.
-- **W11 CI/CD** — maintainer-gated (`pull_request_target` hardened); port `detect_models.py`; lint+mypy+unit on every PR.
+- **W11 CI/CD — ✅ DONE (Modal-free; T0 + 60 script-tests + fresh-Opus SECURITY review → "core isolation
+  holds, no 🔴").** Safe tier (`ci.yml`, already on every PR: style+mypy+unit+docs, `contents: read`, no
+  secrets, fork-safe) + new CI-script test step. **New `.github/workflows/deploy.yml`** — maintainer-gated
+  `pull_request_target`: `revoke-on-push` (removes the `deploy-approved` label on every push → binds approval
+  to the reviewed SHA) + secret-free `detect` (label-gated) + `deploy-and-test` matrix (ONLY job with secrets,
+  scoped to a `modal-dev` GitHub Environment; `bm deploy`→`-m integration`→`-m deployment`, env
+  `biolm-models-dev`, R2_* secrets→AWS_* env). **Ported `.github/scripts/`** detect_models.py + ci_utils.py +
+  analyze_commons_dependencies.py (`--smart` dependency-narrowing) + tests, de-internalized (billing paths
+  dropped). Review hardening applied: model-name validator `^[A-Za-z0-9_-]+$` + quoted env vars (shell-injection
+  defense-in-depth), `persist-credentials: false` on the untrusted-code checkout, `actions/setup-python` in
+  detect. `make test-github-scripts` wired into `check`+CI. CONTRIBUTING documents the gate. **FOLLOW-UPS
+  (not blockers):** (a) `deploy.yml` is authored + statically validated only — **first LIVE run = a real gated
+  PR / Milestone B**; (b) **user must configure** the `deploy-approved` label, the `modal-dev` Environment +
+  required reviewers, and `MODAL_TOKEN_*`/`R2_*` as **environment** secrets (see the deploy.yml header);
+  (c) `--smart` uses a two-dot diff (`git fetch --depth=1`) → may over-detect if base advanced (cost only);
+  (d) the `cli/test_kb.py TestValidateCmd` 12 fails (typer.Exit vs click.exceptions.Exit) still open (W17).
 - **W12 Shared test-asset library** — `test-data/shared/`; naming convention locked in `02`; populate incrementally.
 - **W13 Skills** — port `.claude/skills/`; resolve the README-standard conflict; teach the final Global Rules.
 - **W14 Docs site + DX** — mkdocs in CI; per-model FastAPI schema docs; render the knowledge graph; **author the

@@ -1,4 +1,4 @@
-.PHONY: install style lint format mypy check test test-unit test-integration test-deployment docs clean
+.PHONY: install style lint format mypy check test test-unit test-integration test-deployment test-github-scripts docs clean
 
 # Helper to scope tests to one or more models:
 #   make test MODEL=esm2
@@ -34,8 +34,8 @@ format:
 mypy:
 	uv run mypy .
 
-# Everything CI runs on every PR: style + types + unit tests (no Modal/R2 needed).
-check: style mypy test-unit
+# Everything CI runs on every PR: style + types + unit + CI-script tests (no Modal/R2 needed).
+check: style mypy test-github-scripts test-unit
 
 # All non-deployment tests (scope with MODEL=/MODELS=).
 test:
@@ -53,6 +53,10 @@ test-integration:
 # Deployment tests — run against a live deployed endpoint.
 test-deployment:
 	uv run pytest -m "deployment" -n auto --no-cov -v $(call get_test_paths)
+
+# Unit tests for the CI change-detection scripts (.github/scripts). Modal-free.
+test-github-scripts:
+	uv run pytest .github/scripts/ -p no:cacheprovider --no-cov -v
 
 docs:
 	uv run mkdocs build --strict
