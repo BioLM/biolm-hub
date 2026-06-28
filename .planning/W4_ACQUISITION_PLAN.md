@@ -92,6 +92,27 @@ custom but use `R2Utils.get_r2_prefix_from_target_dir` (not a hardcoded prefix);
 signatures; add `get_logger` to antifold/download.py; consolidate hand-rolled variant-filter closures onto
 `build_variant_filter`/`build_model_type_filter`.
 
+## PHASE 2 STATUS (2026-06-28) — migrations done; deploy-validation = Milestone B
+**MIGRATED + committed (self-populating):** esm2 `b5349dd` (r2_then_library/fair-esm, deploy-PROVEN
+Milestone A); esm_if1+esmfold `4ba1f6a` (r2_then_library, download-only primitives — full loaders import
+torch_geometric/openfold unavailable in the download layer); prostt5+igbert+igt5+esm1v `83ef04d`
+(r2_then_hf + flat→snapshot get_model_dir fix; esm1v 5-member loop); antifold+mpnn `142003b`
+(r2_then_urls); boltz+immunefold+abodybuilder3 `dfdfa11` (r2_then_urls / custom; sources confirmed
+online: boltz-community HF, Zenodo 14580322/11354577, Rostlab/prot_t5_xl_uniref50). **= 12 of 14.**
+Build-order rule learned: library-fallback models need the library in `setup_download_layer(...,
+extra_pip_packages=[...])` (fair-esm; huggingface_hub for abodybuilder3) — else `ModuleNotFound` at build.
+**3 FOLLOW-UPS (open):**
+- **progen2** — NO clean self-populating source (Salesforce GCS `.tar.gz` 404s; hugohrban HF mirrors have
+  null config fields that crash the bundled loader → would need a reviewed `trust_remote_code` move). Left
+  R2_ONLY → can't deploy on empty R2. Needs: find a live Salesforce mirror (r2_then_urls/archive) OR the
+  trust_remote_code swap OR a one-time manual R2 pre-population.
+- **evo** — non-blocking (works via HF re-download); `cache_to_r2=False` + `/tmp` dummy. CAN self-populate
+  (Apache) via r2_then_library + HF-cache redirect at build+runtime (e1/evo2 pattern) — DEFERRED (deploy-
+  validated migration; do with Milestone B).
+- **pro1** — LEAVE not-caching base: base = Meta Llama-3.1-8B (Community License); caching to public R2 =
+  redistributing Llama. Re-fetch from HF per deploy. (Comment fixed; was mislabeled "too large".)
+- **esmstabp** — intended exception (self-trained RF, no public source; clear `_train.py` error on R2 miss).
+
 ## PHASE 3 — Validation
 esm2 deploy to `biolm-models-dev` (set `MODAL_ENVIRONMENT`) → confirm cache-miss→fair-esm fetch→R2 write→reload
 → finishes **Milestone A**. The other models self-populate on their first deploy at **Milestone B** (batched).

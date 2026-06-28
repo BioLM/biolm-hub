@@ -96,7 +96,12 @@ def download_model_assets(
         target_dir=target_dir,
         init_fn=init_fn,
         monitor_directories=["~/.cache/huggingface"],
-        cache_to_r2=False,  # Weights too large for R2 caching
+        # Base = Meta Llama-3.1-8B-Instruct (Llama Community License): intentionally
+        # NOT cached to the public biolm-public bucket (would redistribute Llama
+        # weights). Re-fetched from HF per deploy — the deployer accepts Meta's terms
+        # via their HF token. Only the Apache-2.0 LoRA adapter (mhla/pro-1) could be
+        # cached; left HF-managed for simplicity. See sources.yaml / LICENSE.
+        cache_to_r2=False,
     )
 
     if not result.success:
