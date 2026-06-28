@@ -5,6 +5,7 @@ import tempfile
 import modal
 
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.error import ValidationError400
 from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
@@ -289,7 +290,8 @@ class ImmuneBuilderModel(ModelMixinSnap):
 
             # Create error message that handles missing _kind2
             kind2_str = f" and '{item._kind2}'" if hasattr(item, "_kind2") else ""
-            raise ValueError(
+            # Caller routed the wrong chain type to this variant -> 400, not 500.
+            raise ValidationError400(
                 f"Mismatch detected: expected '{self.model_type}' but got '{item._kind}'{kind2_str} in request"
             )
 
@@ -322,8 +324,20 @@ class ImmuneBuilderModel(ModelMixinSnap):
                 ) as tmp_file:
                     output_file = tmp_file.name
 
+                # ImmuneBuilder's library API expects single-letter chain keys
+                # (H/L for antibody+nanobody, A/B for TCR). Map the canonical
+                # field names back to those keys, dropping any unset chains.
+                chain_inputs = {
+                    "H": input.heavy_chain,
+                    "L": input.light_chain,
+                    "A": input.tcr_alpha,
+                    "B": input.tcr_beta,
+                }
+                chain_inputs = {
+                    key: seq for key, seq in chain_inputs.items() if seq is not None
+                }
                 try:
-                    result_obj = self.model.predict(input.model_dump(exclude_none=True))
+                    result_obj = self.model.predict(chain_inputs)
                     result_obj.save(output_file)
                     with open(output_file) as f:
                         pdb_str = f.read()

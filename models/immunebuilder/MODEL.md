@@ -37,12 +37,12 @@ Each EGNN sub-model is trained to minimize the distance between predicted and ex
 ### Tokenization / Input Processing
 
 - **Input format**: Amino acid sequences provided as single-letter codes
-- **Chain specification**: `H` (heavy), `L` (light) for antibodies; `A` (alpha), `B` (beta) for TCRs; `H` only for nanobodies
+- **Chain specification**: `heavy_chain`, `light_chain` for antibodies; `tcr_alpha`, `tcr_beta` for TCRs; `heavy_chain` only for nanobodies (legacy single-letter aliases `H`/`L`/`A`/`B` are still accepted)
 - **Validation**: Extended amino acid alphabet (including ambiguous residues)
 - **Type inference**: The model type is automatically inferred from the chain combination:
-  - H + L => ABodyBuilder2
-  - H only => NanoBodyBuilder2
-  - A + B => TCRBuilder2 and TCRBuilder2Plus
+  - `heavy_chain` + `light_chain` => ABodyBuilder2
+  - `heavy_chain` only => NanoBodyBuilder2
+  - `tcr_alpha` + `tcr_beta` => TCRBuilder2 and TCRBuilder2Plus
 - **Numbering**: ANARCI assigns IMGT numbering before structure prediction
 - **Post-processing**: OpenMM relaxation produces physically realistic bond geometries
 
@@ -78,10 +78,10 @@ Abanades et al., *Communications Biology* (2023). Table values are approximate f
 
 | Variant | Action | Tolerance | Status |
 |---------|--------|-----------|--------|
-| abodybuilder2 | predict | rel_tol 1e-4, PDB RMSD < 1A | PASS |
-| nanobodybuilder2 | predict | rel_tol 1e-4, PDB RMSD < 1A | PASS |
-| tcrbuilder2 | predict | rel_tol 1e-4, PDB RMSD < 1A | PASS |
-| tcrbuilder2plus | predict | rel_tol 1e-4, PDB RMSD < 1A | PASS |
+| abodybuilder2 | fold | rel_tol 1e-4, PDB RMSD < 1A | PASS |
+| nanobodybuilder2 | fold | rel_tol 1e-4, PDB RMSD < 1A | PASS |
+| tcrbuilder2 | fold | rel_tol 1e-4, PDB RMSD < 1A | PASS |
+| tcrbuilder2plus | fold | rel_tol 1e-4, PDB RMSD < 1A | PASS |
 
 ### Comparison to Alternatives
 
@@ -157,7 +157,7 @@ Request
 
 ### Caching Behavior
 
-Standard BioLM caching via `BillingMixinSnap`:
+Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
 - Redis (Modal Dict) caching for fast repeated lookups
 - R2 caching for persistence
 - Cache keys determined by full request payload

@@ -16,7 +16,7 @@ weaknesses:
   - "Lower CDR accuracy compared to newer PLM-enhanced methods (AbodyBuilder3 language variant, ImmuneFold) that incorporate protein language model embeddings"
   - "Does not predict antibody-antigen complex structures; only models unbound immune receptor structures -- use ImmuneFold for complex prediction"
   - "No per-residue confidence scores (pLDDT) for quality assessment -- unlike AbodyBuilder3 and ImmuneFold, users cannot identify which regions are predicted with high or low confidence"
-  - "Single action (predict) with no embedding, scoring, or sequence generation capabilities -- purely a structure prediction tool"
+  - "Single action (fold) with no embedding, scoring, or sequence generation capabilities -- purely a structure prediction tool"
   - "ABodyBuilder2 sub-model has been superseded by AbodyBuilder3 for conventional antibody structure prediction, making the antibody variant no longer state-of-the-art"
   - "Does not support gamma/delta TCRs; trained primarily on alpha/beta TCR structures"
   - "Four separate deployments required for full coverage, increasing infrastructure overhead compared to a single unified model"

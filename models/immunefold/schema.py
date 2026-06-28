@@ -1,7 +1,9 @@
 from typing import Annotated, Optional
 
 from pydantic import (
+    AliasChoices,
     BeforeValidator,
+    ConfigDict,
     Field,
     PrivateAttr,
     model_validator,
@@ -53,50 +55,78 @@ ANTIBODY_MIN_LIGHT_LEN = 85  # VL minimum for IMGT numbering success
 
 
 class ImmuneFoldPredictRequestItem(RequestModel):
-    H: Optional[
-        Annotated[
-            str,
-            BeforeValidator(validate_aa_extended),
-            Field(None, min_length=1, max_length=ImmuneFoldParams.max_sequence_len),
-        ]
-    ] = None
+    # Canonical antibody/TCR field names; old single-letter chain keys
+    # (`H`/`L`/`A`/`B`/`P`/`M`) are accepted via input alias for back-compat.
+    model_config = ConfigDict(populate_by_name=True)
 
-    L: Optional[
+    heavy_chain: Optional[
         Annotated[
             str,
             BeforeValidator(validate_aa_extended),
-            Field(None, min_length=1, max_length=ImmuneFoldParams.max_sequence_len),
         ]
-    ] = None
+    ] = Field(
+        default=None,
+        min_length=1,
+        max_length=ImmuneFoldParams.max_sequence_len,
+        validation_alias=AliasChoices("heavy_chain", "H"),
+    )
 
-    B: Optional[
+    light_chain: Optional[
         Annotated[
             str,
             BeforeValidator(validate_aa_extended),
-            Field(None, min_length=1, max_length=ImmuneFoldParams.max_sequence_len),
         ]
-    ] = None
-    A: Optional[
+    ] = Field(
+        default=None,
+        min_length=1,
+        max_length=ImmuneFoldParams.max_sequence_len,
+        validation_alias=AliasChoices("light_chain", "L"),
+    )
+
+    tcr_beta: Optional[
         Annotated[
             str,
             BeforeValidator(validate_aa_extended),
-            Field(None, min_length=1, max_length=ImmuneFoldParams.max_sequence_len),
         ]
-    ] = None
-    P: Optional[
+    ] = Field(
+        default=None,
+        min_length=1,
+        max_length=ImmuneFoldParams.max_sequence_len,
+        validation_alias=AliasChoices("tcr_beta", "B"),
+    )
+    tcr_alpha: Optional[
         Annotated[
             str,
             BeforeValidator(validate_aa_extended),
-            Field(None, min_length=1, max_length=ImmuneFoldParams.max_sequence_len),
         ]
-    ] = None
-    M: Optional[
+    ] = Field(
+        default=None,
+        min_length=1,
+        max_length=ImmuneFoldParams.max_sequence_len,
+        validation_alias=AliasChoices("tcr_alpha", "A"),
+    )
+    peptide: Optional[
         Annotated[
             str,
             BeforeValidator(validate_aa_extended),
-            Field(None, min_length=1, max_length=ImmuneFoldParams.max_sequence_len),
         ]
-    ] = None
+    ] = Field(
+        default=None,
+        min_length=1,
+        max_length=ImmuneFoldParams.max_sequence_len,
+        validation_alias=AliasChoices("peptide", "P"),
+    )
+    mhc: Optional[
+        Annotated[
+            str,
+            BeforeValidator(validate_aa_extended),
+        ]
+    ] = Field(
+        default=None,
+        min_length=1,
+        max_length=ImmuneFoldParams.max_sequence_len,
+        validation_alias=AliasChoices("mhc", "M"),
+    )
 
     pdb: Optional[
         Annotated[
@@ -113,43 +143,52 @@ class ImmuneFoldPredictRequestItem(RequestModel):
     def validate_and_infer_type(cls, instance):
         """
         Infer request type and ensure valid field combos:
-          - If `H` and `L` => "antibody"
-          - If `B' 'A', 'P' 'M'` => "tcr"
+          - If `heavy_chain` (and optionally `light_chain`) => "antibody"
+          - If `tcr_beta`, `tcr_alpha`, `peptide`, `mhc` => "tcr"
           - Otherwise => error.
         """
         H, L, A, B, M, P, pdb = (
-            instance.H,
-            instance.L,
-            instance.A,
-            instance.B,
-            instance.M,
-            instance.P,
+            instance.heavy_chain,
+            instance.light_chain,
+            instance.tcr_alpha,
+            instance.tcr_beta,
+            instance.mhc,
+            instance.peptide,
             instance.pdb,
         )
         if pdb and any([A, B, P, M]):
             raise ValueError(
-                "Cannot provide both `antigen pdb' with TCR inputs (`B`, `A`, 'P', 'M'). Pick one."
+                "Cannot provide both an antigen `pdb` and TCR inputs "
+                "(`tcr_beta`, `tcr_alpha`, `peptide`, `mhc`). Pick one."
             )
         if pdb and not (H or L):
             raise ValueError(
-                "Cannot provide `antigen pdb' without antibody inputs (`H' and 'L') . Pick one."
+                "Cannot provide an antigen `pdb` without antibody inputs "
+                "(`heavy_chain` and `light_chain`)."
             )
         if L and not H:
             raise ValueError(
-                "Cannot provide both 'L' without 'H' for single domain VHH antibodies use just 'H'."
+                "Cannot provide `light_chain` without `heavy_chain`; "
+                "for single-domain VHH antibodies use just `heavy_chain`."
             )
         if H:
             instance._kind = ImmuneFoldModelTypes.ANTIBODY
             # Validate antibody chain lengths (inline - no separate method needed)
             issues: list[str] = []
-            if instance.H and len(instance.H) < ANTIBODY_MIN_HEAVY_LEN:
+            if (
+                instance.heavy_chain
+                and len(instance.heavy_chain) < ANTIBODY_MIN_HEAVY_LEN
+            ):
                 issues.append(
-                    f"H chain length {len(instance.H)} is below the minimum "
+                    f"heavy_chain length {len(instance.heavy_chain)} is below the minimum "
                     f"{ANTIBODY_MIN_HEAVY_LEN} residues required for antibody variable domains."
                 )
-            if instance.L and len(instance.L) < ANTIBODY_MIN_LIGHT_LEN:
+            if (
+                instance.light_chain
+                and len(instance.light_chain) < ANTIBODY_MIN_LIGHT_LEN
+            ):
                 issues.append(
-                    f"L chain length {len(instance.L)} is below the minimum "
+                    f"light_chain length {len(instance.light_chain)} is below the minimum "
                     f"{ANTIBODY_MIN_LIGHT_LEN} residues required for antibody variable domains."
                 )
             if issues:
@@ -161,7 +200,8 @@ class ImmuneFoldPredictRequestItem(RequestModel):
             instance._kind = ImmuneFoldModelTypes.TCR
         else:
             raise ValueError(
-                "Must provide either (`H` or `L`) OR (`B`, `A`, 'P' and 'M'), but not both."
+                "Must provide either `heavy_chain` (with optional `light_chain`) OR "
+                "all of (`tcr_beta`, `tcr_alpha`, `peptide`, `mhc`), but not both."
             )
 
         return instance

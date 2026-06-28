@@ -42,7 +42,7 @@ AbodyBuilder3 is an antibody structure prediction model developed by Exscientia 
 
 ## Actions / Endpoints
 
-### `predict`
+### `fold`
 
 Predict 3D structure of an antibody Fv region from paired sequences.
 
@@ -52,9 +52,9 @@ Predict 3D structure of an antibody Fv region from paired sequences.
 |-----------|------|---------|-------|-------------|
 | `params.plddt` | bool | false | true/false | Whether to include per-residue pLDDT scores |
 | `params.seed` | int | 42 | Any int or null | Random seed for reproducibility |
-| `items` | list[AbodyBuilder3PredictRequestItem] | (required) | 1--4 items | List of paired H/L sequences |
-| `items[].H` | str | (required) | 1--2048 chars | Heavy chain amino acid sequence |
-| `items[].L` | str | (required) | 1--2048 chars | Light chain amino acid sequence |
+| `items` | list[AbodyBuilder3PredictRequestItem] | (required) | 1--4 items | List of paired heavy/light chain sequences |
+| `items[].heavy_chain` | str | (required) | 1--2048 chars | Heavy chain amino acid sequence (legacy alias: `H`) |
+| `items[].light_chain` | str | (required) | 1--2048 chars | Light chain amino acid sequence (legacy alias: `L`) |
 
 **Response:**
 
@@ -87,8 +87,8 @@ request = AbodyBuilder3PredictRequest(
     params=AbodyBuilder3PredictRequestParams(plddt=False, seed=42),
     items=[
         AbodyBuilder3PredictRequestItem(
-            H="EVQLVESGGGLVQPGGSLRLSCAASGFTFSSYAMSWVRQAPGKGLEWVSAISGSGGSTYYADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAVYYCAR",
-            L="DIQMTQSPSSLSASVGDRVTITCRASQSISSYLNWYQQKPGKAPKLLIYAASSLQSGVPSRFSGSGSGTDFTLTISSLQPEDFATYYCQQSYSTPLT",
+            heavy_chain="EVQLVESGGGLVQPGGSLRLSCAASGFTFSSYAMSWVRQAPGKGLEWVSAISGSGGSTYYADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAVYYCAR",
+            light_chain="DIQMTQSPSSLSASVGDRVTITCRASQSISSYLNWYQQKPGKAPKLLIYAASSLQSGVPSRFSGSGSGTDFTLTISSLQPEDFATYYCQQSYSTPLT",
         )
     ],
 )
@@ -107,8 +107,8 @@ request = AbodyBuilder3PredictRequest(
     params=AbodyBuilder3PredictRequestParams(plddt=True, seed=42),
     items=[
         AbodyBuilder3PredictRequestItem(
-            H="QVQLQQSGPGLVKPSQTLSLTCAISGDSVSSNSAAWNWIRQSPSRGLEWLGRTYYRSKWYNDYAVSVKSRITINPDTSKNQFSLQLNSVTPEDTAVYYCAR",
-            L="EIVLTQSPGTLSLSPGERATLSCRASQSVSSSYLAWYQQKPGQAPRLLIYGASSRATGIPDRFSGSGSGTDFTLTISRLEPEDFAVYYCQQYGSSPRT",
+            heavy_chain="QVQLQQSGPGLVKPSQTLSLTCAISGDSVSSNSAAWNWIRQSPSRGLEWLGRTYYRSKWYNDYAVSVKSRITINPDTSKNQFSLQLNSVTPEDTAVYYCAR",
+            light_chain="EIVLTQSPGTLSLSPGERATLSCRASQSVSSSYLAWYQQKPGQAPRLLIYGASSRATGIPDRFSGSGSGTDFTLTISRLEPEDFAVYYCQQYGSSPRT",
         )
     ],
 )
@@ -138,7 +138,7 @@ Option A -- Numerical Reproduction: outputs from the BioLM implementation are co
 
 | Input | Action | Tolerance | Status |
 |-------|--------|-----------|--------|
-| Standard antibody pair | predict | rel_tol 1e-3, cosine_distance < 0.02, PDB RMSD < 0.05 A | PASS |
+| Standard antibody pair | fold | rel_tol 1e-3, cosine_distance < 0.02, PDB RMSD < 0.05 A | PASS |
 
 ### Verification Status
 

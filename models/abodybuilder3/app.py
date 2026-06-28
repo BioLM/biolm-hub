@@ -200,8 +200,8 @@ class AbodyBuilder3Model(ModelMixinSnap):
         try:
             for input in payload.items:
 
-                heavy = input.H
-                light = input.L
+                heavy = input.heavy_chain
+                light = input.light_chain
                 ab_input = string_to_input(heavy=heavy, light=light)
                 if model_type == AbodyBuilder3ModelTypes.LANGUAGE:
                     embedding = self.plm.get_embeddings(

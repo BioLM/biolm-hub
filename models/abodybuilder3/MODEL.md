@@ -15,7 +15,7 @@ AbodyBuilder3 uses a graph neural network (GNN) architecture that processes anti
 | Architecture | Graph Neural Network (GNN) |
 | Language variant | GNN + ProtT5 language model embeddings |
 | pLDDT variant | GNN with confidence estimation (no language model) |
-| Input | Paired heavy (H) and light (L) chain amino acid sequences |
+| Input | Paired `heavy_chain` and `light_chain` amino acid sequences |
 | Output | PDB structure string, optional per-residue pLDDT scores |
 | Framework | PyTorch Lightning (LitABB3 module) |
 
@@ -33,7 +33,7 @@ AbodyBuilder3 uses a structure prediction loss that optimizes predicted atom pos
 
 ### Tokenization / Input Processing
 
-- **Input format**: Paired heavy (H) and light (L) chain amino acid sequences (strings)
+- **Input format**: Paired `heavy_chain` and `light_chain` amino acid sequences (strings)
 - **Validation**: Extended amino acid alphabet
 - **Maximum length**: 2048 residues per chain
 - **Language variant**: Sequences are additionally processed through ProtT5 to obtain per-residue language model embeddings, which are concatenated with the GNN input features
@@ -58,7 +58,7 @@ From Kenlay et al., *Bioinformatics* (2024):
 
 | Test Case | Action | Tolerance | Status |
 |-----------|--------|-----------|--------|
-| Standard antibody pair | predict | rel_tol 1e-3, cosine_distance < 0.02, pdb_rmsd < 0.05 A | PASS |
+| Standard antibody pair | fold | rel_tol 1e-3, cosine_distance < 0.02, pdb_rmsd < 0.05 A | PASS |
 
 ### Comparison to Alternatives
 
@@ -135,7 +135,7 @@ Request
 
 ### Caching Behavior
 
-Standard BioLM caching via `BillingMixinSnap`:
+Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
 - Redis (Modal Dict) caching for fast repeated lookups
 - R2 caching for persistence
 - Cache keys determined by full request payload (sequences + parameters)

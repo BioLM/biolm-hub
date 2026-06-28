@@ -41,14 +41,15 @@ ImmuneFold is trained with a combination of:
 
 ### Tokenization / Input Processing
 
-- **Antibody input**: `H` (heavy chain), `L` (light chain, optional for nanobodies)
-- **TCR input**: `B` (beta), `A` (alpha), `P` (peptide), `M` (MHC)
-- **Antigen PDB**: Optional PDB string for antibody-antigen complex prediction
+- **Antibody input**: `heavy_chain`, `light_chain` (optional for nanobodies)
+- **TCR input**: `tcr_beta`, `tcr_alpha`, `peptide`, `mhc`
+- **Antigen PDB**: Optional `pdb` string for antibody-antigen complex prediction
+- **Legacy aliases**: the old single-letter keys (`H`/`L`/`B`/`A`/`P`/`M`) are still accepted on input
 - **Sequence validation**: Extended amino acid alphabet; min lengths enforced (VH >= 90, VL >= 85 AA) to ensure IMGT numbering success
 - **Type inference**: Automatically inferred from chain combination:
-  - H + L => antibody (paired)
-  - H only => nanobody
-  - B + A + P + M => TCR
+  - `heavy_chain` + `light_chain` => antibody (paired)
+  - `heavy_chain` only => nanobody
+  - `tcr_beta` + `tcr_alpha` + `peptide` + `mhc` => TCR
 - **Internal processing**: FASTA-format intermediate files; Hydra-based config system
 
 ## Performance & Benchmarks
@@ -152,7 +153,7 @@ Request
 
 ### Caching Behavior
 
-Standard BioLM caching via `BillingMixinSnap`:
+Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
 - Redis (Modal Dict) caching for fast repeated lookups
 - R2 caching for persistence
 

@@ -46,7 +46,7 @@ All variants run on CPU only (no GPU required).
 
 ## Actions / Endpoints
 
-### `predict`
+### `fold`
 
 Predict 3D structure from immune protein sequences.
 
@@ -54,17 +54,17 @@ Predict 3D structure from immune protein sequences.
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
-| `items[].H` | str | None | 1--2048 AA | Heavy chain sequence (antibodies, nanobodies) |
-| `items[].L` | str | None | 1--2048 AA | Light chain sequence (antibodies) |
-| `items[].A` | str | None | 1--2048 AA | Alpha chain sequence (TCRs) |
-| `items[].B` | str | None | 1--2048 AA | Beta chain sequence (TCRs) |
+| `items[].heavy_chain` | str | None | 1--2048 AA | Heavy chain sequence (antibodies, nanobodies); legacy alias `H` |
+| `items[].light_chain` | str | None | 1--2048 AA | Light chain sequence (antibodies); legacy alias `L` |
+| `items[].tcr_alpha` | str | None | 1--2048 AA | Alpha chain sequence (TCRs); legacy alias `A` |
+| `items[].tcr_beta` | str | None | 1--2048 AA | Beta chain sequence (TCRs); legacy alias `B` |
 | `params.seed` | int | 42 | >= 0 | Random seed for reproducibility |
 
 **Chain combination rules:**
-- `H` + `L` => ABodyBuilder2 (antibody)
-- `H` only => NanoBodyBuilder2 (nanobody)
-- `A` + `B` => TCRBuilder2 / TCRBuilder2Plus (TCR)
-- Cannot mix antibody chains (H/L) with TCR chains (A/B)
+- `heavy_chain` + `light_chain` => ABodyBuilder2 (antibody)
+- `heavy_chain` only => NanoBodyBuilder2 (nanobody)
+- `tcr_alpha` + `tcr_beta` => TCRBuilder2 / TCRBuilder2Plus (TCR)
+- Cannot mix antibody chains (`heavy_chain`/`light_chain`) with TCR chains (`tcr_alpha`/`tcr_beta`)
 
 **Request Schema:** `ImmuneBuilderPredictRequest`
 
@@ -96,8 +96,8 @@ from models.immunebuilder.schema import (
 request = ImmuneBuilderPredictRequest(
     items=[
         ImmuneBuilderPredictRequestItem(
-            H="EVQLVESGGGLVQPGGSLRLSCAASGFTFSDYAMSWVRQAPGKGLEWVSGISGSGGSTYYADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAVYYCAKDRLSITIRPRYYGLDVWGQGTTVTVSS",
-            L="DIQMTQSPSSLSASVGDRVTITCRASQSISSYLNWYQQKPGKAPKLLIYAASSLQSGVPSRFSGSGSGTDFTLTISSLQPEDFATYYCQQSYSTPLTFGGGTKVEIK",
+            heavy_chain="EVQLVESGGGLVQPGGSLRLSCAASGFTFSDYAMSWVRQAPGKGLEWVSGISGSGGSTYYADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAVYYCAKDRLSITIRPRYYGLDVWGQGTTVTVSS",
+            light_chain="DIQMTQSPSSLSASVGDRVTITCRASQSISSYLNWYQQKPGKAPKLLIYAASSLQSGVPSRFSGSGSGTDFTLTISSLQPEDFATYYCQQSYSTPLTFGGGTKVEIK",
         )
     ],
     params=ImmuneBuilderPredictParams(seed=42),
@@ -110,7 +110,7 @@ request = ImmuneBuilderPredictRequest(
 request = ImmuneBuilderPredictRequest(
     items=[
         ImmuneBuilderPredictRequestItem(
-            H="QVQLQESGGGLVQPGGSLRLSCAASGRTFSSYAMGWFRQAPGKEREFVAAISWSGGSTYYADSVKGRFTISRDNAKNTVYLQMNSLKPEDTAVYYCAADSTIYASYYECGHGLSTGGYGYDSWGQGTQVTVSS",
+            heavy_chain="QVQLQESGGGLVQPGGSLRLSCAASGRTFSSYAMGWFRQAPGKEREFVAAISWSGGSTYYADSVKGRFTISRDNAKNTVYLQMNSLKPEDTAVYYCAADSTIYASYYECGHGLSTGGYGYDSWGQGTQVTVSS",
         )
     ],
 )
@@ -122,8 +122,8 @@ request = ImmuneBuilderPredictRequest(
 request = ImmuneBuilderPredictRequest(
     items=[
         ImmuneBuilderPredictRequestItem(
-            A="AQEVTQIPAALSVPEGENLVLNCSFTDSAIYNLQWFRQDPGKGLTSLLLIQSSQREQTSGRLNASLDKSSGRSTLYIAASQPGDSATYLCAVRPTSGGSYIPTFGRGTSLIVHPY",
-            B="DAGVTQTPRNHVTISEGDKITVRCEKSTVSNFLYELFWYRQDPGLGLRLIYFSYDVKMKEKGDIPDGYSVSRNKKPNFYEALISKLNVSDSALYFCASSQETQYFGPGTRLTVL",
+            tcr_alpha="AQEVTQIPAALSVPEGENLVLNCSFTDSAIYNLQWFRQDPGKGLTSLLLIQSSQREQTSGRLNASLDKSSGRSTLYIAASQPGDSATYLCAVRPTSGGSYIPTFGRGTSLIVHPY",
+            tcr_beta="DAGVTQTPRNHVTISEGDKITVRCEKSTVSNFLYELFWYRQDPGLGLRLIYFSYDVKMKEKGDIPDGYSVSRNKKPNFYEALISKLNVSDSALYFCASSQETQYFGPGTRLTVL",
         )
     ],
 )
@@ -154,10 +154,10 @@ Numerical reproduction: BioLM outputs compared against golden outputs on identic
 
 | Variant | Action | Tolerance | Status |
 |---------|--------|-----------|--------|
-| abodybuilder2 | predict | rel_tol 1e-4, PDB RMSD < 1A | PASS |
-| nanobodybuilder2 | predict | rel_tol 1e-4, PDB RMSD < 1A | PASS |
-| tcrbuilder2 | predict | rel_tol 1e-4, PDB RMSD < 1A | PASS |
-| tcrbuilder2plus | predict | rel_tol 1e-4, PDB RMSD < 1A | PASS |
+| abodybuilder2 | fold | rel_tol 1e-4, PDB RMSD < 1A | PASS |
+| nanobodybuilder2 | fold | rel_tol 1e-4, PDB RMSD < 1A | PASS |
+| tcrbuilder2 | fold | rel_tol 1e-4, PDB RMSD < 1A | PASS |
+| tcrbuilder2plus | fold | rel_tol 1e-4, PDB RMSD < 1A | PASS |
 
 ### Verification Status
 
@@ -176,7 +176,7 @@ Numerical reproduction: BioLM outputs compared against golden outputs on identic
 
 ## Implementation Notes
 
-- **Memory snapshots**: Uses `@modal.enter(snap=True)` with `BillingMixinSnap` for fast cold starts.
+- **Memory snapshots**: Uses `@modal.enter(snap=True)` with `ModelMixinSnap` for fast cold starts.
 - **Container image**: Based on micromamba with Python 3.12, includes OpenMM, pdbfixer, HMMER 3.3.2, ANARCI, and BioPython via conda-forge.
 - **Model weights**: Downloaded from R2 storage with Zenodo fallback. Each variant has 4 ensemble weight files.
 - **Dependencies**: `ImmuneBuilder==1.2`, `anarci==2026.2.13.2`, OpenMM (conda-forge), HMMER 3.3.2 (bioconda).

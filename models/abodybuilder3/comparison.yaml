@@ -19,7 +19,7 @@ weaknesses:
   - "Cannot predict TCR structures; antibody-only model -- use ImmuneBuilder or ImmuneFold for TCR structure prediction"
   - "Language variant requires L40S GPU (48 GB VRAM), making it one of the more expensive models to deploy on the platform"
   - "CDR-H3 prediction remains challenging despite improvements; pLDDT scores in this region are typically lower and predictions should be interpreted with caution for long CDR-H3 loops"
-  - "Single action (predict) with no embedding or sequence scoring capabilities -- purely a structure prediction tool"
+  - "Single action (fold) with no embedding or sequence scoring capabilities -- purely a structure prediction tool"
 
 use_when:
   - "You need rapid Fv structure prediction for paired antibody sequences to support structure-based CDR design, paratope identification, or epitope mapping"

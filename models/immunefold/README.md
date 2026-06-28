@@ -41,7 +41,7 @@ ImmuneFold is a structure prediction model developed by Wu et al. (2024) at Carb
 
 ## Actions / Endpoints
 
-### `predict`
+### `fold`
 
 Predict 3D structure from immune protein sequences with confidence scores.
 
@@ -49,21 +49,21 @@ Predict 3D structure from immune protein sequences with confidence scores.
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
-| `items[].H` | str | None | 90--256 AA | Heavy chain sequence (antibodies, nanobodies) |
-| `items[].L` | str | None | 85--256 AA | Light chain sequence (paired antibodies) |
-| `items[].B` | str | None | 1--256 AA | Beta chain sequence (TCRs) |
-| `items[].A` | str | None | 1--256 AA | Alpha chain sequence (TCRs) |
-| `items[].P` | str | None | 1--256 AA | Peptide sequence (TCRs) |
-| `items[].M` | str | None | 1--256 AA | MHC sequence (TCRs) |
+| `items[].heavy_chain` | str | None | 90--256 AA | Heavy chain sequence (antibodies, nanobodies); legacy alias `H` |
+| `items[].light_chain` | str | None | 85--256 AA | Light chain sequence (paired antibodies); legacy alias `L` |
+| `items[].tcr_beta` | str | None | 1--256 AA | Beta chain sequence (TCRs); legacy alias `B` |
+| `items[].tcr_alpha` | str | None | 1--256 AA | Alpha chain sequence (TCRs); legacy alias `A` |
+| `items[].peptide` | str | None | 1--256 AA | Peptide sequence (TCRs); legacy alias `P` |
+| `items[].mhc` | str | None | 1--256 AA | MHC sequence (TCRs); legacy alias `M` |
 | `items[].pdb` | str | None | Valid PDB | Antigen PDB structure (antibody-antigen mode) |
 | `params.contact_idx` | int | None | -- | Contact index for antibody-antigen prediction |
 
 **Chain combination rules:**
-- `H` + `L` => paired antibody
-- `H` only => nanobody
-- `H` + `L` + `pdb` => antibody-antigen complex
-- `B` + `A` + `P` + `M` => TCR (all four required)
-- Cannot mix antibody chains (H/L) with TCR chains (B/A/P/M)
+- `heavy_chain` + `light_chain` => paired antibody
+- `heavy_chain` only => nanobody
+- `heavy_chain` + `light_chain` + `pdb` => antibody-antigen complex
+- `tcr_beta` + `tcr_alpha` + `peptide` + `mhc` => TCR (all four required)
+- Cannot mix antibody chains (`heavy_chain`/`light_chain`) with TCR chains (`tcr_beta`/`tcr_alpha`/`peptide`/`mhc`)
 
 **Request Schema:** `ImmuneFoldPredictRequest`
 
@@ -97,8 +97,8 @@ from models.immunefold.schema import (
 request = ImmuneFoldPredictRequest(
     items=[
         ImmuneFoldPredictRequestItem(
-            H="EVQLVESGGGLVQPGGSLRLSCAASGFTFSDYAMSWVRQAPGKGLEWVSGISGSGGSTYYADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAVYYCAKDRLSITIRPRYYGLDVWGQGTTVTVSS",
-            L="DIQMTQSPSSLSASVGDRVTITCRASQSISSYLNWYQQKPGKAPKLLIYAASSLQSGVPSRFSGSGSGTDFTLTISSLQPEDFATYYCQQSYSTPLTFGGGTKVEIK",
+            heavy_chain="EVQLVESGGGLVQPGGSLRLSCAASGFTFSDYAMSWVRQAPGKGLEWVSGISGSGGSTYYADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAVYYCAKDRLSITIRPRYYGLDVWGQGTTVTVSS",
+            light_chain="DIQMTQSPSSLSASVGDRVTITCRASQSISSYLNWYQQKPGKAPKLLIYAASSLQSGVPSRFSGSGSGTDFTLTISSLQPEDFATYYCQQSYSTPLTFGGGTKVEIK",
         )
     ],
 )
@@ -110,7 +110,7 @@ request = ImmuneFoldPredictRequest(
 request = ImmuneFoldPredictRequest(
     items=[
         ImmuneFoldPredictRequestItem(
-            H="QVQLQESGGGLVQPGGSLRLSCAASGRTFSSYAMGWFRQAPGKEREFVAAISWSGGSTYYADSVKGRFTISRDNAKNTVYLQMNSLKPEDTAVYYCAADSTIYASYYECGHGLSTGGYGYDSWGQGTQVTVSS",
+            heavy_chain="QVQLQESGGGLVQPGGSLRLSCAASGRTFSSYAMGWFRQAPGKEREFVAAISWSGGSTYYADSVKGRFTISRDNAKNTVYLQMNSLKPEDTAVYYCAADSTIYASYYECGHGLSTGGYGYDSWGQGTQVTVSS",
         )
     ],
 )
@@ -122,10 +122,10 @@ request = ImmuneFoldPredictRequest(
 request = ImmuneFoldPredictRequest(
     items=[
         ImmuneFoldPredictRequestItem(
-            B="DAGVTQTPRNHVTISEGDKITVRCEKSTVSNFLYELFWYRQDPGLGLRLIYFSYDVKMKEKGDIPDGYSVSRNKKPNFYEALISKLNVSDSALYFCASSQETQYFGPGTRLTVL",
-            A="AQEVTQIPAALSVPEGENLVLNCSFTDSAIYNLQWFRQDPGKGLTSLLLIQSSQREQTSGRLNASLDKSSGRSTLYIAASQPGDSATYLCAVRPTSGGSYIPTFGRGTSLIVHPY",
-            P="GILGFVFTL",
-            M="GSHSMRYFFTSVSRPGRGEPRFIAVGYVDDTQFVRFDSDAASQRMEPRAPWIEQEGPEYWDGETRKVKAHSQTHRVDLGTLRGYYNQSEAGSHTVQRMYGCDVGSDWRFLRGYHQYAYDGKDY",
+            tcr_beta="DAGVTQTPRNHVTISEGDKITVRCEKSTVSNFLYELFWYRQDPGLGLRLIYFSYDVKMKEKGDIPDGYSVSRNKKPNFYEALISKLNVSDSALYFCASSQETQYFGPGTRLTVL",
+            tcr_alpha="AQEVTQIPAALSVPEGENLVLNCSFTDSAIYNLQWFRQDPGKGLTSLLLIQSSQREQTSGRLNASLDKSSGRSTLYIAASQPGDSATYLCAVRPTSGGSYIPTFGRGTSLIVHPY",
+            peptide="GILGFVFTL",
+            mhc="GSHSMRYFFTSVSRPGRGEPRFIAVGYVDDTQFVRFDSDAASQRMEPRAPWIEQEGPEYWDGETRKVKAHSQTHRVDLGTLRGYYNQSEAGSHTVQRMYGCDVGSDWRFLRGYHQYAYDGKDY",
         )
     ],
 )
@@ -179,7 +179,7 @@ Numerical reproduction: BioLM outputs compared against golden outputs with tight
 
 ## Implementation Notes
 
-- **Memory snapshots**: Uses `@modal.enter(snap=True)` with `BillingMixinSnap` and GPU snapshot for fast cold starts.
+- **Memory snapshots**: Uses `@modal.enter(snap=True)` with `ModelMixinSnap` and GPU snapshot for fast cold starts.
 - **Container image**: Based on micromamba; clones ImmuneFold from GitHub at commit `b6d916f`.
 - **External dependencies**: ESM-2 3B model (`fair-esm` package), Hydra config system, OmegaConf.
 - **External modifications**: `models/immunefold/external/inference.py` replaces the original inference script for API compatibility.

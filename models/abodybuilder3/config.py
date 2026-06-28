@@ -42,6 +42,8 @@ ABODYBUILDER3_VARIANT_RESOURCE_SPECS = {
 MODEL_FAMILY = ModelFamily(
     base_model_slug=AbodyBuilder3Params.base_model_slug,
     display_name=AbodyBuilder3Params.display_name,
+    # The @biolm_model_class container class in app.py (gateway routing, W8).
+    modal_class_name="AbodyBuilder3Model",
     tags=ModelTags(
         input_modality=[InputModality.SEQUENCE],
         input_molecule=[InputMolecule.ANTIBODY],

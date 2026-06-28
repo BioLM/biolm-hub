@@ -4,6 +4,7 @@ from pathlib import Path
 import modal
 
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.error import ValidationError400
 from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
@@ -217,7 +218,8 @@ class ImmuneFoldModel(ModelMixinSnap):
                 and self.model_type != ImmuneFoldModelTypes.TCR
             )
         ):
-            raise ValueError(
+            # Caller routed the wrong molecule type to this variant -> 400, not 500.
+            raise ValidationError400(
                 f"Mismatch detected: expected '{self.model_type}' but got '{request_kind}' in request."
             )
 
@@ -244,21 +246,23 @@ class ImmuneFoldModel(ModelMixinSnap):
             # Not a domain numbering error - re-raise as-is
             raise error
 
-        # Domain numbering error - provide specific guidance based on model type
+        # Domain numbering error - provide specific guidance based on model type.
+        # These are driven by the caller's input sequences (cannot be numbered),
+        # so they are user-input validation failures -> 400, not 500.
         if request_kind == ImmuneFoldModelTypes.ANTIBODY:
-            raise ValueError(
+            raise ValidationError400(
                 "Antibody domain detection failed for the provided chains. "
                 "ImmuneFold expects full VH/VL variable domains; please supply longer canonical antibody sequences or remove unexpected characters."
             ) from error
         elif request_kind == ImmuneFoldModelTypes.TCR:
-            raise ValueError(
+            raise ValidationError400(
                 "TCR domain detection failed for input sequences. "
                 "This can happen when the input sequences cannot be identified as TCR domains. "
                 "Please check your input sequences and contact Support if the issue persists."
             ) from error
         else:
             # Defensive: should not reach here given current model types
-            raise ValueError(
+            raise ValidationError400(
                 "Domain detection failed for input sequences. "
                 "Please check your input sequences and contact Support if the issue persists."
             ) from error
@@ -300,16 +304,18 @@ class ImmuneFoldModel(ModelMixinSnap):
 
             if request_kind == ImmuneFoldModelTypes.ANTIBODY:
                 fasta_header = "nanobody_H"  # fasta header seems to control pdb output chain labels and presence
-                fasta_seq = item.H
+                fasta_seq = item.heavy_chain
                 type = "nb"
-                if item.L:
+                if item.light_chain:
                     fasta_header = "antibody_H_L"
-                    fasta_seq = item.H + f":{item.L}"
+                    fasta_seq = item.heavy_chain + f":{item.light_chain}"
                     type = "ab"
 
             else:
                 fasta_header = "TCR_B_A_P_M"
-                fasta_seq = f"{item.B}:{item.A}:{item.P}:{item.M}"
+                fasta_seq = (
+                    f"{item.tcr_beta}:{item.tcr_alpha}:{item.peptide}:{item.mhc}"
+                )
                 type = "tcr"
             overrides["type"] = type
 

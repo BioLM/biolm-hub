@@ -1,7 +1,9 @@
 from typing import Annotated, Optional
 
 from pydantic import (
+    AliasChoices,
     BeforeValidator,
+    ConfigDict,
     Field,
     PrivateAttr,
     model_validator,
@@ -42,38 +44,58 @@ class ImmuneBuilderPredictParams(RequestModel):
 
 
 class ImmuneBuilderPredictRequestItem(RequestModel):
-    H: Optional[
+    # Canonical antibody/TCR field names; old single-letter chain keys
+    # (`H`/`L`/`A`/`B`) are accepted via input alias for back-compat.
+    model_config = ConfigDict(populate_by_name=True)
+
+    heavy_chain: Optional[
         Annotated[
             str,
             BeforeValidator(
                 validate_aa_extended
             ),  # TODO: check if extended or unambiguous should be validated
-            Field(None, min_length=1, max_length=ImmuneBuilderParams.max_sequence_len),
         ]
-    ] = None
+    ] = Field(
+        default=None,
+        min_length=1,
+        max_length=ImmuneBuilderParams.max_sequence_len,
+        validation_alias=AliasChoices("heavy_chain", "H"),
+    )
 
-    L: Optional[
+    light_chain: Optional[
         Annotated[
             str,
             BeforeValidator(validate_aa_extended),
-            Field(None, min_length=1, max_length=ImmuneBuilderParams.max_sequence_len),
         ]
-    ] = None
-    A: Optional[
+    ] = Field(
+        default=None,
+        min_length=1,
+        max_length=ImmuneBuilderParams.max_sequence_len,
+        validation_alias=AliasChoices("light_chain", "L"),
+    )
+    tcr_alpha: Optional[
         Annotated[
             str,
             BeforeValidator(validate_aa_extended),
-            Field(None, min_length=1, max_length=ImmuneBuilderParams.max_sequence_len),
         ]
-    ] = None
+    ] = Field(
+        default=None,
+        min_length=1,
+        max_length=ImmuneBuilderParams.max_sequence_len,
+        validation_alias=AliasChoices("tcr_alpha", "A"),
+    )
 
-    B: Optional[
+    tcr_beta: Optional[
         Annotated[
             str,
             BeforeValidator(validate_aa_extended),
-            Field(None, min_length=1, max_length=ImmuneBuilderParams.max_sequence_len),
         ]
-    ] = None
+    ] = Field(
+        default=None,
+        min_length=1,
+        max_length=ImmuneBuilderParams.max_sequence_len,
+        validation_alias=AliasChoices("tcr_beta", "B"),
+    )
 
     # Private attribute to store the inferred "kind"
     _kind: Optional[str] = PrivateAttr()
@@ -83,15 +105,23 @@ class ImmuneBuilderPredictRequestItem(RequestModel):
     def validate_and_infer_type(cls, instance):
         """
         Infer request type and ensure valid field combos:
-          - If `H` and `L` => "abody"
-          - If `H` => "nanobody"
-          - If 'A' and 'B' = TCR
+          - If `heavy_chain` and `light_chain` => "abody"
+          - If `heavy_chain` only => "nanobody"
+          - If `tcr_alpha` and `tcr_beta` => TCR
           - Otherwise => error.
         """
-        H, L, A, B = instance.H, instance.L, instance.A, instance.B
+        H, L, A, B = (
+            instance.heavy_chain,
+            instance.light_chain,
+            instance.tcr_alpha,
+            instance.tcr_beta,
+        )
 
         if (A or B) and (H or L):
-            raise ValueError("Cannot provide both ('A', 'B') and (`H`, `L`). Pick one.")
+            raise ValueError(
+                "Cannot provide both ('tcr_alpha', 'tcr_beta') and "
+                "('heavy_chain', 'light_chain'). Pick one."
+            )
 
         if H and L:
             instance._kind = ImmuneBuilderModelTypes.ABODYBUILDER2
@@ -101,7 +131,10 @@ class ImmuneBuilderPredictRequestItem(RequestModel):
             instance._kind = ImmuneBuilderModelTypes.TCRBUILDER2
             instance._kind2 = ImmuneBuilderModelTypes.TCRBUILDER2PLUS
         else:
-            raise ValueError("Must provide either (`H`, `L`) OR ('H') OR `(A, B)`.")
+            raise ValueError(
+                "Must provide either ('heavy_chain', 'light_chain') OR "
+                "('heavy_chain' only) OR ('tcr_alpha', 'tcr_beta')."
+            )
 
         return instance
 

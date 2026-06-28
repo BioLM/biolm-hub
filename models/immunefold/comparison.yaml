@@ -14,7 +14,7 @@ strengths:
 weaknesses:
   - "Requires T4 GPU (16 GB RAM) for inference, making it more expensive than CPU-only alternatives like ImmuneBuilder and AbodyBuilder3's pLDDT variant"
   - "Very recent publication (December 2024) with limited independent benchmarking and no applied literature yet, making long-term accuracy assessment uncertain"
-  - "Single action (predict) with no embedding, scoring, or sequence generation capabilities -- purely a structure prediction tool"
+  - "Single action (fold) with no embedding, scoring, or sequence generation capabilities -- purely a structure prediction tool"
   - "Minimum sequence length requirements (VH >= 90 AA, VL >= 85 AA) may reject truncated or partial antibody sequences that other tools can still process"
   - "TCR variant requires all four chains (beta, alpha, peptide, MHC) as input, which limits usability when partial TCR information is available"
   - "Does not have a dedicated nanobody sub-model with VHH-specific training like ImmuneBuilder's NanoBodyBuilder2; nanobody prediction uses the general antibody checkpoint"

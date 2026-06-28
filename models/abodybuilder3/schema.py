@@ -1,7 +1,9 @@
 from typing import Annotated, Optional
 
 from pydantic import (
+    AliasChoices,
     BeforeValidator,
+    ConfigDict,
     Field,
 )
 
@@ -55,18 +57,31 @@ class AbodyBuilder3PredictRequestParams(RequestModel):
 
 
 class AbodyBuilder3PredictRequestItem(RequestModel):
-    H: Annotated[
+    # Canonical antibody field names; old `H`/`L` accepted via input alias.
+    model_config = ConfigDict(populate_by_name=True)
+
+    heavy_chain: Annotated[
         str,
         BeforeValidator(
             validate_aa_extended
         ),  # TODO: check if extended or unambiguous should be validated
-        Field(None, min_length=1, max_length=AbodyBuilder3Params.max_sequence_len),
+        Field(
+            None,
+            min_length=1,
+            max_length=AbodyBuilder3Params.max_sequence_len,
+            validation_alias=AliasChoices("heavy_chain", "H"),
+        ),
     ]
 
-    L: Annotated[
+    light_chain: Annotated[
         str,
         BeforeValidator(validate_aa_extended),
-        Field(None, min_length=1, max_length=AbodyBuilder3Params.max_sequence_len),
+        Field(
+            None,
+            min_length=1,
+            max_length=AbodyBuilder3Params.max_sequence_len,
+            validation_alias=AliasChoices("light_chain", "L"),
+        ),
     ]
 
 
