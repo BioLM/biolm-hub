@@ -3,30 +3,50 @@ from typing import Optional
 
 from models.commons.core.logging import get_logger
 from models.commons.storage.download_helpers import (
-    acquire_library_managed_model,
     extract_model_variant,
+    r2_then_library,
 )
+from models.commons.storage.downloads import get_model_dir_util, setup_hf_cache_env
 from models.evo.config import EVO_VARIANT_TO_MODEL_NAME
+from models.evo.schema import EvoModelVariants, EvoParams
 
 logger = get_logger(__name__)
 
 
-def _init_evo_weights(target_dir: Path, model_name: str) -> Path:
-    """Initialize Evo weights download using library-managed approach.
+def get_model_dir(model_variant: str) -> Path:
+    """Local/R2 directory for an Evo variant.
 
-    Evo manages its own cache paths via HuggingFace Hub, so target_dir
-    is not used directly by the library.
+    The Evo library downloads via HuggingFace Hub; we redirect its cache here (at
+    both build and runtime) so the weights live under this dir, get cached to R2,
+    and are found on the next deploy.
     """
-    logger.info("Downloading Evo model %s", model_name)
+    return get_model_dir_util(
+        base_model_slug=EvoParams.base_model_slug,
+        params_version=EvoParams.params_version,
+        model_variant=model_variant,
+    )
 
-    import torch
-    from evo import Evo
 
-    device = torch.device("cpu")
-    _ = Evo(model_name, device=device)
+def _init_evo_weights(model_name: str):
+    """Build an init_fn that downloads ``model_name`` via the Evo library.
 
-    logger.info("Evo download complete for %s", model_name)
-    return target_dir
+    Redirects the HF cache to ``target_dir`` first, so the Evo library's internal
+    HuggingFace download lands under target_dir (which r2_then_library caches to R2).
+    """
+
+    def _init(target_dir: Path) -> Path:
+        import torch
+
+        setup_hf_cache_env(target_dir)
+
+        from evo import Evo
+
+        logger.info("Downloading Evo model %s to %s ...", model_name, target_dir)
+        _ = Evo(model_name, device=torch.device("cpu"))
+        logger.info("Evo download complete for %s", model_name)
+        return target_dir
+
+    return _init
 
 
 def download_model_assets(
@@ -35,39 +55,22 @@ def download_model_assets(
     variant_config: Optional[dict] = None,
     sub_path: Optional[str] = None,
 ) -> Path:
-    """Download Evo model assets.
-
-    Evo manages its own HuggingFace cache paths. R2 caching is not yet
-    supported — enabling it requires redirecting HF cache to our target_dir
-    at both build and runtime.
-    """
+    """Acquire Evo weights: R2 cache first, else Evo/HF download, cached back to R2."""
     model_variant = extract_model_variant(variant_config, "MODEL_VARIANT")
-    model_name = EVO_VARIANT_TO_MODEL_NAME[model_variant]
+    model_name = EVO_VARIANT_TO_MODEL_NAME[EvoModelVariants(model_variant)]
 
-    # Evo downloads to HF's default cache, not our target directory.
-    # A dummy target is used until R2 caching support is added.
-    dummy_target = Path("/tmp/evo-download-placeholder")
-
-    def init_fn(target_dir: Path) -> Path:
-        return _init_evo_weights(target_dir, model_name)
-
-    result = acquire_library_managed_model(
+    result = r2_then_library(
+        base_model_slug=base_model_slug,
+        params_version=params_version,
+        model_variant=model_variant,
+        sub_path=sub_path,
         library_name="evo",
-        target_dir=dummy_target,
-        init_fn=init_fn,
+        init_fn=_init_evo_weights(model_name),
         monitor_directories=["~/.cache/huggingface", "~/.cache/torch"],
-        cache_to_r2=False,
     )
 
     if not result.success:
         raise RuntimeError(f"Failed to acquire Evo model: {result.error_message}")
 
-    if result.bypass_detected:
-        logger.info("Evo bypass detected as expected")
-        logger.info(
-            "Model cached to library-managed locations: %s", result.bypass_locations
-        )
-        logger.info("This is expected behavior - Evo library manages its own cache")
-
-    logger.info("Download complete for %s", model_name)
-    return dummy_target
+    logger.info("Evo %s ready (%s files)", model_variant, result.files_downloaded)
+    return result.actual_model_path or result.target_dir

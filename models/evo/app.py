@@ -101,10 +101,16 @@ class EvoModel(ModelMixinSnap):
         from evo.generation import generate
         from evo.scoring import score_sequences
 
+        from models.commons.storage.downloads import setup_hf_cache_env
+        from models.evo.download import get_model_dir
+
         self.score_sequences = score_sequences  # for log_prob
         self.generate_fn = generate  # for generate
 
         model_name = EVO_VARIANT_TO_MODEL_NAME[EvoModelVariants(model_variant)]
+        # Point the HF cache at the R2-restored weights so Evo loads them locally
+        # instead of re-downloading from HuggingFace on every cold start.
+        setup_hf_cache_env(get_model_dir(model_variant))
         logger.info("[Evo] Loading Evo model '%s' ...", model_name)
         self.device = get_torch_device()
         evo_obj = Evo(model_name, device=self.device)
