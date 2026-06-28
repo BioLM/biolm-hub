@@ -22,6 +22,14 @@ from models.prostt5.schema import (
     ProstT5Types,
 )
 
+### Static configuration values
+
+# HuggingFace source for ProstT5 (all variants share the same weights).
+# Revision pinned to a specific commit hash for reproducibility.
+PROSTT5_HF_REPO_ID = "Rostlab/ProstT5"
+PROSTT5_HF_REVISION = "d7d097d5bf9a993ab8f68488b4681d6ca70db9e5"
+
+
 ### ProstT5 Modal Resource Specs
 
 PROSTT5_VARIANT_RESOURCE_SPECS = {

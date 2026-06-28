@@ -25,6 +25,17 @@ model_id_mapping = {
     IgBertModelTypes.PAIRED: "IgBert",
 }
 
+# HuggingFace source per variant, keyed by the resolved model_id.
+# Revisions pinned to specific commit hashes for reproducibility.
+IGBERT_HF_REPO_MAP = {
+    "IgBert": "Exscientia/IgBert",
+    "IgBert_unpaired": "Exscientia/IgBert_unpaired",
+}
+IGBERT_HF_REVISION_MAP = {
+    "IgBert": "81a4abb8a4dac5cdcbefc28e5b331a82224c485d",
+    "IgBert_unpaired": "53ed1be4a09fd30ef3f21ba0c8aae778ccdfff74",
+}
+
 
 ### IgBert Modal Resource Specs
 

@@ -22,6 +22,17 @@ model_id_mapping = {
     IgT5ModelTypes.PAIRED: "IgT5",
 }
 
+# HuggingFace source per variant, keyed by the resolved model_id.
+# Revisions pinned to specific commit hashes for reproducibility.
+IGT5_HF_REPO_MAP = {
+    "IgT5": "Exscientia/IgT5",
+    "IgT5_unpaired": "Exscientia/IgT5_unpaired",
+}
+IGT5_HF_REVISION_MAP = {
+    "IgT5": "5db9442f2c732b23bf329d6069b432ce783ba016",
+    "IgT5_unpaired": "324edf161b2e4f94e651b95fee08dfb8d4a0fc0f",
+}
+
 
 ### IgT5 Modal Resource Specs
 

@@ -13,8 +13,8 @@ from models.commons.util.config import (
 )
 from models.commons.util.device import get_torch_device
 from models.commons.util.environment import parse_variant
-from models.esm1v.config import MODEL_FAMILY
-from models.esm1v.download import get_model_dir
+from models.esm1v.config import ESM1V_MEMBERS, MODEL_FAMILY
+from models.esm1v.download import get_member_model_dir
 from models.esm1v.schema import (
     ESM1vModelNumbers,
     ESM1vParams,
@@ -96,19 +96,17 @@ class ESM1vModel(ModelMixinSnap):
         # Get device and setup for GPU inference
         self.device = get_torch_device()
 
-        self.model_dir = get_model_dir(self.model_number)
         self.fill_masker_pipelines = {}
 
-        if self.model_number == "all":
-            model_dirs = [d for d in self.model_dir.iterdir() if d.is_dir()]
-        else:
-            model_dirs = [self.model_dir]
+        # Each ensemble member lives in its own HuggingFace snapshot directory.
+        # "all" loads every member; n1..n5 load a single member.
+        members = ESM1V_MEMBERS if self.model_number == "all" else [self.model_number]
 
-        for model_dir in model_dirs:
-            model_name = model_dir.name
+        for member in members:
+            model_dir = get_member_model_dir(member)
             logger.info(
                 "Loading ESM1v model '%s' directly on %s from: %s",
-                model_name,
+                member,
                 self.device,
                 model_dir,
             )
@@ -118,8 +116,7 @@ class ESM1vModel(ModelMixinSnap):
                 model = model.to(self.device)
                 model.eval()
 
-                model_num = model_name.split("_")[-1]
-                model_name_key = f"esm1v-n{model_num}"
+                model_name_key = f"esm1v-{member}"
 
                 # Create pipeline directly on GPU
                 fill_masker_pipeline = pipeline(
@@ -129,12 +126,10 @@ class ESM1vModel(ModelMixinSnap):
                 self.fill_masker_pipelines[model_name_key] = fill_masker_pipeline
 
                 logger.info(
-                    "Loaded ESM1v model '%s' directly on %s", model_name, self.device
+                    "Loaded ESM1v model '%s' directly on %s", member, self.device
                 )
             except Exception as e:
-                logger.error(
-                    "Failed to load model '%s': %s", model_name, e, exc_info=True
-                )
+                logger.error("Failed to load model '%s': %s", member, e, exc_info=True)
                 raise e
 
         logger.info(
