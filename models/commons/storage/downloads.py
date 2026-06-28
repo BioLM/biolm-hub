@@ -224,12 +224,22 @@ def _filter_r2_objects(
     r2_objects: list, filter_func: Optional[Callable[[str], bool]]
 ) -> list:
     """Filter R2 objects based on criteria."""
+    # Lazy import avoids a module-load cycle (r2_utils imports downloads).
+    from models.commons.storage.r2_utils import R2Utils
+
+    cache_dotfiles = (R2Utils.COMPLETION_MARKER, R2Utils.MANIFEST_FILE)
+
     files_to_process = []
     for obj in r2_objects:
         full_key = obj["Key"]
 
         # Skip directories
         if full_key.endswith("/"):
+            continue
+
+        # Never materialize the atomic cache-control dotfiles
+        # (.r2_cache_complete / .r2_manifest.json) into the model directory.
+        if full_key.rsplit("/", 1)[-1] in cache_dotfiles:
             continue
 
         # Apply filter if provided
@@ -572,7 +582,13 @@ def build_hf_snapshot_path(
 
 
 def download_archive(
-    zip_url: str, destination: Path, *, show_progress: bool = True
+    zip_url: str,
+    destination: Path,
+    *,
+    show_progress: bool = True,
+    headers: Optional[dict[str, str]] = None,
+    verify_ssl: bool = True,
+    timeout: int = 600,
 ) -> dict:
     """
     Stream a .zip archive to `destination` with progress and error cleanup.
@@ -584,6 +600,9 @@ def download_archive(
         zip_url: URL of the zip file to download
         destination: Path where the zip file should be saved
         show_progress: Whether to show download progress (default True)
+        headers: Optional HTTP headers (e.g. auth) to send with the request
+        verify_ssl: Whether to verify SSL certificates (default True)
+        timeout: Per-request timeout in seconds (default 600)
 
     Returns:
         Dictionary with download metadata:
@@ -606,7 +625,13 @@ def download_archive(
     logger.info(f"📥 Downloading archive from {zip_url.split('/')[-1]}...")
 
     try:
-        response = requests.get(zip_url, stream=True, timeout=600)
+        response = requests.get(
+            zip_url,
+            stream=True,
+            timeout=timeout,
+            headers=headers,
+            verify=verify_ssl,
+        )
         response.raise_for_status()
 
         # Get total size for progress reporting
@@ -737,3 +762,41 @@ def extract_archive_subtree(
 
     except Exception as e:
         raise RuntimeError(f"Failed to extract archive: {e}") from e
+
+
+def detect_archive_root_prefix(zip_path: Path) -> str:
+    """
+    Detect the single top-level directory of a source archive.
+
+    Source archives produced by GitHub (and most ``git archive`` tooling) wrap
+    all files under one ``<Repo>-<ref>/`` root directory. This returns that root
+    (with a trailing slash) so callers can strip it when extracting subtrees.
+
+    Args:
+        zip_path: Path to the .zip archive to inspect
+
+    Returns:
+        The shared top-level prefix including the trailing slash
+        (e.g. ``"TEMPRO-main/"``), or ``""`` if the archive has no single
+        common root directory.
+
+    Raises:
+        RuntimeError: If the archive file does not exist.
+
+    Example:
+        >>> detect_archive_root_prefix(Path("/tmp/TEMPRO-main.zip"))
+        'TEMPRO-main/'
+    """
+    if not zip_path.exists():
+        raise RuntimeError(f"Archive file not found: {zip_path}")
+
+    with zipfile.ZipFile(zip_path, "r") as zip_ref:
+        names = [n for n in zip_ref.namelist() if n]
+
+    if not names:
+        return ""
+
+    top = names[0].split("/", 1)[0]
+    if top and all(n.split("/", 1)[0] == top for n in names):
+        return f"{top}/"
+    return ""

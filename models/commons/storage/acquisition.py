@@ -45,9 +45,10 @@ Non-obvious details:
   not environment variables.
 
 Notes on current state:
-- Library-managed strategies often pass a small `custom_function` (still in active
-  use) to trigger the third-party library downloads. A future migration to
-  CustomSourceConfig is possible, but custom_function remains supported.
+- Library-managed strategies pass a small `custom_function` (the library init
+  entry point) to trigger the third-party library downloads. It is required by
+  the LIBRARY_MANAGED strategy and is NOT deprecated; CustomSourceConfig serves
+  the separate CUSTOM strategy.
 """
 
 logger = get_logger(__name__)
@@ -111,11 +112,12 @@ class LibrarySourceConfig:
     """Configuration for library-managed acquisition strategy."""
 
     library_name: str
-    setup_function: Optional[Callable[[Path], None]] = None
-    import_modules: Optional[list[str]] = None
+    # ``monitor_directories`` is an accepted-but-unread field. The bypass
+    # detector that consumed it was removed (W-acq); live per-model callers
+    # (evo/pro1/msa_transformer/chai1/ablang2) still pass it, so it is retained
+    # for signature compatibility until the Phase 2 per-model migration.
     monitor_directories: Optional[list[str]] = None
     env_vars: Optional[dict[str, str]] = None
-    enable_diagnostics: bool = True
 
 
 @dataclass
@@ -161,7 +163,7 @@ class AcquisitionConfig:
     url_config: Optional[UrlSourceConfig] = None
     custom_config: Optional[CustomSourceConfig] = None
     custom_function: Optional[Callable[[Path], Any]] = (
-        None  # Deprecated, use custom_config instead
+        None  # Library-managed init entry point (required by LIBRARY_MANAGED)
     )
 
 
@@ -517,6 +519,40 @@ def _acquire_r2_only(config: AcquisitionConfig) -> AcquisitionResult:
         logger.info("   🔍 Using custom filter function")
 
     try:
+        # Marker gate (B1/B2): an R2 prefix without a valid completion marker is
+        # an incomplete/interrupted cache. Treat it as a MISS so the caller's
+        # source fallback runs, instead of silently restoring a partial weight
+        # set as a false "success". This unifies the R2-primary read semantics
+        # with R2Utils.restore_from_r2_atomic, which already requires the marker.
+        from models.commons.storage.r2 import get_r2_client
+
+        r2_prefix = R2Utils.get_r2_prefix_from_target_dir(target_dir)
+        if not R2Utils.check_completion_marker(
+            get_r2_client(),
+            r2_prefix,
+            r2_bucket_name,
+            config.cache_config.cache_timeout_hours,
+        ):
+            logger.info(
+                "🚫 No valid R2 completion marker at %s — treating as cache miss",
+                r2_prefix,
+            )
+            return AcquisitionResult(
+                success=False,
+                target_dir=target_dir,
+                error_message=(
+                    f"R2 cache incomplete: no completion marker at '{r2_prefix}' "
+                    "(interrupted or absent upload)"
+                ),
+                acquisition_time_seconds=time.time() - start_time,
+                metadata={
+                    "strategy": "r2_only",
+                    "model_slug": r2_config.base_model_slug,
+                    "params_version": r2_config.params_version,
+                    "cache_miss_reason": "no_completion_marker",
+                },
+            )
+
         # Use the existing download_model_from_r2 function
         sync_result = download_model_from_r2(
             model_dir=target_dir,
@@ -1087,39 +1123,6 @@ def _acquire_custom(config: AcquisitionConfig) -> AcquisitionResult:
     )
 
 
-def acquire_custom_weights(
-    config: AcquisitionConfig,
-    custom_config: CustomSourceConfig,
-    cache_config: Optional[CacheConfig] = None,
-    validation_config: Optional[ValidationConfig] = None,
-) -> AcquisitionResult:
-    """
-    Standalone function to acquire model weights using custom strategy.
-
-    This is a convenience wrapper that allows calling the custom acquisition
-    with separate parameters instead of embedding everything in the config.
-
-    Args:
-        config: Base acquisition configuration
-        custom_config: Custom source configuration with user function
-        cache_config: Optional R2 caching configuration (overrides config.cache_config)
-        validation_config: Optional validation settings (overrides config.validation_config)
-
-    Returns:
-        AcquisitionResult with download status and metadata
-    """
-    # Create a copy of config with overrides
-    modified_config = AcquisitionConfig(
-        strategy=AcquisitionStrategy.CUSTOM,
-        target_dir=config.target_dir,
-        cache_config=cache_config or config.cache_config,
-        validation_config=validation_config or config.validation_config,
-        custom_config=custom_config,
-    )
-
-    return _acquire_custom(modified_config)
-
-
 def _validate_required_files(
     actual_path: Path, required_files: list[str]
 ) -> Optional[str]:
@@ -1218,7 +1221,6 @@ def acquire_model_weights(config: AcquisitionConfig) -> AcquisitionResult:
 
     This function coordinates the entire acquisition process including:
     - Strategy-specific acquisition
-    - Bypass detection
     - Validation
     - R2 caching (when applicable)
 

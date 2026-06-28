@@ -8,15 +8,13 @@ from models.commons.storage.acquisition import (
     AcquisitionResult,
     AcquisitionStrategy,
     CacheConfig,
+    CustomSourceConfig,
     HfSourceConfig,
     LibrarySourceConfig,
     R2OnlyConfig,
     UrlSourceConfig,
     ValidationConfig,
     acquire_model_weights,
-)
-from models.commons.storage.r2_utils import (
-    R2Utils,
 )
 
 """
@@ -34,7 +32,7 @@ Layer 1 (Top) → Uses acquisition.py (strategies) → downloads.py (low-level o
 Common patterns:
 - standard_r2_download(...): R2-only (legacy/compat)
 - download_with_fallback(primary, fallback): try R2, then source (HF/library/URLs)
-- acquire_library_managed_model(...): wrap library-managed flows with bypass detection
+- acquire_library_managed_model(...): DEPRECATED — prefer r2_then_library
 - extract_model_variant(...): fetch variant axes from variant_config
 
 Notes:
@@ -57,6 +55,11 @@ def standard_r2_download(
 ) -> AcquisitionResult:
     """
     Simple wrapper for R2-only downloads with standard configuration.
+
+    R2-only; cannot self-populate. Prefer a fallback wrapper
+    (``r2_then_hf`` / ``r2_then_urls`` / ``r2_then_library`` / ``r2_then_archive``)
+    so a missing R2 cache fetches from the original source. Use this only for a
+    model with no fetchable upstream source (e.g. the self-trained ``esmstabp``).
 
     Args:
         base_model_slug: Model family identifier
@@ -135,32 +138,34 @@ def acquire_library_managed_model(
     library_name: str,
     target_dir: Path,
     init_fn: Optional[Callable[[Path], Any]] = None,
-    setup_function: Optional[Callable[[Path], None]] = None,
-    import_modules: Optional[list[str]] = None,
     monitor_directories: Optional[list[str]] = None,
     env_vars: Optional[dict] = None,
     cache_to_r2: bool = True,
     required_files: Optional[list[str]] = None,
 ) -> AcquisitionResult:
     """
-    Library-managed acquisition with bypass detection and optional R2 caching.
+    Library-managed acquisition with optional R2 caching.
 
-    This function allows libraries to manage their own downloads while providing
-    bypass detection and caching capabilities.
+    .. deprecated::
+        Prefer :func:`r2_then_library`, which adds the marker-gated R2-primary
+        read in front of the library download. This wrapper is retained only
+        until ``evo``/``pro1`` migrate (Phase 2), after which it is removed.
+
+    This function lets libraries manage their own downloads while providing
+    R2 caching.
 
     Args:
         library_name: Name of the library managing the download
         target_dir: Directory where the model should be downloaded
         init_fn: Function that triggers the library's download (returns model path)
-        setup_function: Optional function to set up environment before download
-        import_modules: Optional list of modules to import for the download
-        monitor_directories: Optional list of directories to monitor for bypass
+        monitor_directories: Retained for caller compatibility; no longer read
+            (the bypass detector that consumed it was removed).
         env_vars: Optional dictionary of environment variables to set
         cache_to_r2: Whether to cache downloaded model to R2
         required_files: Optional list of files to validate after download
 
     Returns:
-        AcquisitionResult with download status and bypass detection info
+        AcquisitionResult with download status
 
     Examples:
         >>> def init_esm3(target_dir):
@@ -174,14 +179,11 @@ def acquire_library_managed_model(
         ...     library_name="esm3",
         ...     target_dir=Path("/models/esm3"),
         ...     init_fn=init_esm3,
-        ...     monitor_directories=["~/.cache/huggingface"]
         ... )
     """
     # Create library configuration
     library_config = LibrarySourceConfig(
         library_name=library_name,
-        setup_function=setup_function,
-        import_modules=import_modules,
         monitor_directories=monitor_directories,
         env_vars=env_vars,
     )
@@ -208,61 +210,6 @@ def acquire_library_managed_model(
 
     # Execute acquisition
     return acquire_model_weights(config)
-
-
-def quick_r2_check(
-    base_model_slug: str,
-    params_version: str,
-    model_variant: Optional[str] = None,
-    sub_path: Optional[str] = None,
-) -> bool:
-    """
-    Quick check if model exists in R2 without downloading.
-
-    Args:
-        base_model_slug: Model family identifier
-        params_version: Parameter version
-        model_variant: Model size/variant (optional)
-        sub_path: Subdirectory path (optional)
-
-    Returns:
-        True if model appears to be available in R2
-
-    Examples:
-        >>> if quick_r2_check("esm2", "v1", "8b"):
-        ...     print("Model available in R2")
-    """
-    try:
-        from models.commons.storage.downloads import get_model_dir_util
-        from models.commons.storage.r2 import get_r2_client
-        from models.commons.util.config import r2_bucket_name
-
-        # Get the expected R2 path
-        model_dir = get_model_dir_util(
-            base_model_slug=base_model_slug,
-            params_version=params_version,
-            model_variant=model_variant,
-            sub_path=sub_path,
-        )
-
-        r2_prefix = str(model_dir).lstrip("/")
-
-        # Check for completion marker using R2Utils
-        if R2Utils.check_r2_cache_exists(r2_prefix):
-            return True
-
-        # Fallback: check if any files exist for partial caches
-        try:
-            r2_client = get_r2_client()
-            response = r2_client.list_objects_v2(
-                Bucket=r2_bucket_name, Prefix=r2_prefix + "/", MaxKeys=1
-            )
-            return response.get("KeyCount", 0) > 0
-        except Exception:
-            return False
-
-    except Exception:
-        return False
 
 
 def download_with_fallback(
@@ -524,12 +471,20 @@ def r2_then_library(
     monitor_directories: Optional[list[str]] = None,
     env_vars: Optional[dict[str, str]] = None,
     required_files: Optional[list[str]] = None,
-    enable_diagnostics: bool = True,
+    cache_to_r2: bool = True,
 ) -> AcquisitionResult:
     """Try R2 first, fall back to library-managed download with R2 caching.
 
     The ``init_fn`` is called with ``target_dir`` and should trigger the
     library's own download mechanism (e.g. ``ESM3.from_pretrained``).
+
+    Args:
+        cache_to_r2: When True (default) the library output is uploaded to R2
+            after a source fetch so future deploys self-populate. Set False for
+            libraries that manage their own out-of-tree cache and cannot be
+            redirected into ``target_dir`` (e.g. ``evo``/``pro1``).
+        monitor_directories: Retained for caller compatibility; no longer read
+            (the bypass detector that consumed it was removed).
     """
     from models.commons.storage.downloads import get_model_dir_util
 
@@ -554,13 +509,12 @@ def r2_then_library(
     fallback = AcquisitionConfig(
         strategy=AcquisitionStrategy.LIBRARY_MANAGED,
         target_dir=target_dir,
-        cache_config=CacheConfig(enable_r2_cache=True),
+        cache_config=CacheConfig(enable_r2_cache=cache_to_r2),
         validation_config=ValidationConfig(required_files=required_files),
         library_config=LibrarySourceConfig(
             library_name=library_name,
             monitor_directories=monitor_directories,
             env_vars=env_vars,
-            enable_diagnostics=enable_diagnostics,
         ),
         custom_function=init_fn,
     )
@@ -611,6 +565,122 @@ def r2_then_urls(
             verify_ssl=verify_ssl,
             timeout=timeout,
             chunk_size=chunk_size,
+        ),
+    )
+
+    return download_with_fallback(primary, fallback)
+
+
+def r2_then_archive(
+    *,
+    base_model_slug: str,
+    params_version: str,
+    model_variant: Optional[str] = None,
+    sub_path: Optional[str] = None,
+    archive_url: str,
+    extract_subtrees: dict[str, str],
+    strip_repo_root: bool = True,
+    required_files: Optional[list[str]] = None,
+    headers: Optional[dict[str, str]] = None,
+    verify_ssl: bool = True,
+    timeout: int = 1800,
+) -> AcquisitionResult:
+    """Try R2 first, fall back to a source ``.zip`` archive with R2 caching.
+
+    On an R2 cache miss the archive at ``archive_url`` is downloaded once, then
+    each ``(src_prefix -> dest)`` entry in ``extract_subtrees`` is extracted into
+    ``target_dir / dest``. The extracted tree is then cached back to R2 (with the
+    completion marker) so future deploys self-populate from R2.
+
+    This replaces the hand-rolled "download zip → unzip subtree" logic that
+    several models (tempro/deepviscosity/temberture/clean) carry inline.
+
+    Args:
+        archive_url: URL of the source ``.zip`` (e.g. a GitHub archive link).
+        extract_subtrees: Mapping of archive subtree prefix (relative to the
+            repo root, e.g. ``"tempro/models/"``) to a destination directory
+            relative to ``target_dir`` (use ``""`` to extract into the root).
+        strip_repo_root: When True (default) the single ``<Repo>-<ref>/`` root
+            directory that GitHub archives wrap everything in is auto-detected
+            and prepended to each ``src_prefix``. Set False to provide prefixes
+            that already include the archive root.
+        required_files: Files validated (relative to ``target_dir``) after
+            extraction; also enforced on the R2-primary read.
+        headers / verify_ssl / timeout: Forwarded to the archive download.
+
+    Returns:
+        AcquisitionResult; on success ``actual_model_path`` is ``target_dir``.
+    """
+    from models.commons.storage.downloads import (
+        detect_archive_root_prefix,
+        download_archive,
+        extract_archive_subtree,
+        get_model_dir_util,
+    )
+
+    target_dir = get_model_dir_util(
+        base_model_slug=base_model_slug,
+        params_version=params_version,
+        model_variant=model_variant,
+        sub_path=sub_path,
+    )
+
+    primary = _build_r2_primary(
+        base_model_slug=base_model_slug,
+        params_version=params_version,
+        model_variant=model_variant,
+        sub_path=sub_path,
+        target_dir=target_dir,
+        required_files=required_files,
+    )
+
+    def _acquire_archive(target_dir: Path, **_: Any) -> dict[str, Any]:
+        import tempfile
+
+        with tempfile.TemporaryDirectory(prefix="r2_then_archive_") as tmp:
+            zip_path = Path(tmp) / "source_archive.zip"
+            meta = download_archive(
+                archive_url,
+                zip_path,
+                headers=headers,
+                verify_ssl=verify_ssl,
+                timeout=timeout,
+            )
+
+            root_prefix = (
+                detect_archive_root_prefix(zip_path) if strip_repo_root else ""
+            )
+
+            cleared: set[Path] = set()
+            for src_prefix, dest_rel in extract_subtrees.items():
+                full_prefix = f"{root_prefix}{src_prefix}"
+                dest_dir = target_dir / dest_rel if dest_rel else target_dir
+                # Only clear (rmtree) a destination the first time we write to
+                # it, so multiple subtrees mapped into one dir don't clobber.
+                extract_archive_subtree(
+                    zip_path,
+                    full_prefix,
+                    dest_dir,
+                    overwrite=dest_dir not in cleared,
+                )
+                cleared.add(dest_dir)
+
+        return {
+            "archive_url": archive_url,
+            "subtrees_extracted": len(extract_subtrees),
+            "bytes_downloaded": meta.get("bytes_downloaded", 0),
+            "stripped_root": root_prefix,
+        }
+
+    fallback = AcquisitionConfig(
+        strategy=AcquisitionStrategy.CUSTOM,
+        target_dir=target_dir,
+        cache_config=CacheConfig(enable_r2_cache=True),
+        validation_config=ValidationConfig(required_files=required_files),
+        custom_config=CustomSourceConfig(
+            acquisition_fn=_acquire_archive,
+            name=f"{base_model_slug}_archive",
+            description=f"Download + extract source archive from {archive_url}",
         ),
     )
 
