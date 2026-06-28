@@ -53,6 +53,9 @@ image = setup_download_layer(
     base_model_slug=IgBertParams.base_model_slug,
     params_version=IgBertParams.params_version,
     variant_config=variant_config,
+    # huggingface_hub needed in the download layer for the r2_then_hf fallback
+    # when the R2 cache is empty (self-population).
+    extra_pip_packages=["huggingface_hub==0.26.0"],
 )
 # Add dependencies and packages
 image = (
