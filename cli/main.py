@@ -1,15 +1,16 @@
 import typer
 from rich.console import Console
-from rich.layout import Layout
 from rich.padding import Padding
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
+from cli.cache import cache_app
 from cli.deploy import deploy_cmd
 from cli.kb import kb_app
 from cli.r2 import r2_app
 from cli.serve import serve_cmd
+from cli.setup import setup_cmd
 
 """
 BioLM-Modal Command Line Interface
@@ -50,6 +51,10 @@ def main(
 # Mount subcommands
 app.add_typer(r2_app, name="r2")
 app.add_typer(kb_app, name="kb")
+app.add_typer(cache_app, name="cache")
+
+# Mount the setup command (environment check / first-run guidance)
+app.command("setup")(setup_cmd)
 
 # Mount the deploy command directly
 app.command("deploy")(deploy_cmd)
@@ -60,8 +65,6 @@ app.command("serve")(serve_cmd)
 
 def display_cli_help() -> None:
     """Display a rich formatted help message."""
-    layout = Layout()
-
     header = Panel(
         "BioLM Command Line Interface",
         style="bold blue",
@@ -78,7 +81,11 @@ def display_cli_help() -> None:
         border_style="blue",
         padding=(1, 2),
     )
-    commands_table.add_row("r2", "Manage Cloudflare R2 storage resources")
+    commands_table.add_row("setup", "Check your Modal + R2 configuration")
+    commands_table.add_row("deploy", "Deploy one or more models to Modal")
+    commands_table.add_row("serve", "Launch the local catalog web app")
+    commands_table.add_row("cache", "Inspect response-caching configuration")
+    commands_table.add_row("r2", "Browse Cloudflare R2 storage (read-only)")
     commands_table.add_row("kb", "Manage model knowledge bases")
 
     storage_table = Table(show_header=True, box=None, padding=(0, 2))
@@ -87,16 +94,15 @@ def display_cli_help() -> None:
 
     storage_panel = Panel(
         storage_table,
-        title="[bold]Storage",
+        title="[bold]Storage (read-only)",
         border_style="blue",
         padding=(1, 2),
     )
-    commands_table.add_row("r2 ls", "List contents of R2 buckets")
-    commands_table.add_row("r2 cp", "Copy files between local and R2")
-    commands_table.add_row("r2 cat", "Display contents of a text file from R2")
-    commands_table.add_row("r2 du", "Calculate folder size in R2 storage")
-    commands_table.add_row("r2 rm", "Remove files and directories from R2")
-    commands_table.add_row(
+    storage_table.add_row("r2 ls", "List contents of R2 buckets")
+    storage_table.add_row("r2 download", "Download files from R2 to local storage")
+    storage_table.add_row("r2 cat", "Display contents of a text file from R2")
+    storage_table.add_row("r2 du", "Calculate folder size in R2 storage")
+    storage_table.add_row(
         "r2 download-outputs", "Download test fixture outputs for a model"
     )
     commands_table.add_row("kb status", "Show knowledge base completion status")
@@ -112,11 +118,10 @@ def display_cli_help() -> None:
         (1, 0),
     )
 
-    layout.split(
-        Layout(header), Layout(commands_panel), Layout(storage_panel), Layout(footer)
-    )
-
-    console.print(layout)
+    console.print(header)
+    console.print(commands_panel)
+    console.print(storage_panel)
+    console.print(footer)
 
 
 @app.command(name="help")

@@ -16,21 +16,18 @@ from rich.tree import Tree
 
 from models.commons.storage.downloads import (
     DOWNLOAD_LARGE_FILE_THRESHOLD,
-    UPLOAD_SMALL_FILE_THRESHOLD,
     download_file_with_size_optimization,
-    upload_file_with_size_optimization,
 )
 from models.commons.storage.r2 import (
     get_r2_client,
     get_r2_transfer_config,
-    get_r2_upload_transfer_config,
 )
 from models.commons.util.config import r2_bucket_name
 
 # Initialize Rich console for formatted output
 console = Console()
 r2_app = typer.Typer(
-    help="Manage Cloudflare R2 storage resources.",
+    help="Browse Cloudflare R2 storage (read-only: ls, download, cat, du).",
     no_args_is_help=True,
 )
 
@@ -164,46 +161,6 @@ def list_r2_objects(  # noqa: C901
         raise click.Abort() from e
 
 
-def should_ignore_path(path: Path) -> bool:
-    """
-    Check if a file path should be ignored during upload.
-
-    Args:
-        path: Path to check
-
-    Returns:
-        bool: True if path matches any ignore patterns, False otherwise
-
-    Patterns include Python bytecode, Git files, test cache, and other temporary files.
-    """
-    patterns_to_ignore = [
-        "__pycache__",
-        "*.pyc",
-        "*.pyo",
-        "*.pyd",
-        ".git",
-        ".pytest_cache",
-        ".mypy_cache",
-        ".ruff_cache",
-        "htmlcov",
-        ".coverage",
-        "*.egg-info",
-    ]
-
-    current = path
-    while current != Path("."):
-        name = current.name
-        for pattern in patterns_to_ignore:
-            if pattern.startswith("*"):
-                if name.endswith(pattern[1:]):
-                    return True
-            else:
-                if name == pattern:
-                    return True
-        current = current.parent
-    return False
-
-
 def _download_one(
     r2_client, bucket: str, key: str, local_path: str, file_size: int, label: str
 ) -> None:
@@ -233,40 +190,6 @@ def _download_one(
             r2_client, bucket, key, local_path, file_size
         )
         console.print(f"  Downloaded {label}")
-
-
-def _upload_one(
-    r2_client, bucket: str, key: str, src_path: Path, file_size: int
-) -> None:
-    """Upload a single file with progress bar (TTY, large files) or optimized transfer."""
-    if file_size > UPLOAD_SMALL_FILE_THRESHOLD and console.is_terminal:
-        upload_config = get_r2_upload_transfer_config()
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            BarColumn(),
-            TimeRemainingColumn(),
-        ) as progress:
-            task = progress.add_task(
-                f"Uploading {src_path.name}", total=max(file_size, 1)
-            )
-
-            def callback(bytes_transferred):
-                progress.update(task, advance=bytes_transferred)
-
-            r2_client.upload_file(
-                str(src_path), bucket, key, Callback=callback, Config=upload_config
-            )
-    else:
-        upload_file_with_size_optimization(
-            r2_client, bucket, key, str(src_path), file_size
-        )
-        size_str = (
-            f"{file_size:,} bytes"
-            if file_size <= UPLOAD_SMALL_FILE_THRESHOLD
-            else f"{file_size / (1024 * 1024):.1f} MB"
-        )
-        console.print(f"  Uploaded {src_path.name} ({size_str})")
 
 
 def download_from_r2(
@@ -337,176 +260,6 @@ def download_from_r2(
         )
 
 
-def upload_to_r2(src_path: Path, bucket: str, dest_key: str, dry_run: bool = False):
-    """
-    Upload a file or directory to R2 storage.
-
-    Args:
-        src_path: Local path to upload
-        bucket: Destination R2 bucket
-        dest_key: Destination key (path) in the bucket
-        dry_run: If True, only show what would be uploaded without actual upload
-
-    Features:
-    - Size-based optimization (put_object for <10MB, upload_file for larger)
-    - Progress bar with spinner for large file uploads (TTY only)
-    - Recursive directory handling
-    - Pattern-based file filtering
-    - Dry-run capability
-    """
-    r2_client = get_r2_client()
-    original_dest_key = dest_key
-    dest_key = dest_key.rstrip("/")
-
-    if src_path.is_file():
-        if original_dest_key == "" or original_dest_key.endswith("/"):
-            dest_key = f"{dest_key}/{src_path.name}" if dest_key else src_path.name
-
-        if should_ignore_path(src_path):
-            return
-
-        if dry_run:
-            console.print(
-                f"[yellow]Would upload: {src_path} -> r2://{bucket}/{dest_key}[/yellow]"
-            )
-            return
-
-        try:
-            _upload_one(r2_client, bucket, dest_key, src_path, src_path.stat().st_size)
-        except ClientError as e:
-            console.print(f"[red]Error uploading {src_path}: {str(e)}[/red]")
-            raise click.Abort() from e
-
-    elif src_path.is_dir():
-        for item in src_path.rglob("*"):
-            if item.is_file() and not should_ignore_path(item):
-                relative_path = item.relative_to(src_path)
-                new_key = (
-                    f"{dest_key}/{relative_path}" if dest_key else str(relative_path)
-                )
-                upload_to_r2(item, bucket, new_key, dry_run)
-
-    else:
-        console.print(f"[red]Path not found: {src_path}[/red]")
-        raise click.Abort()
-
-
-def delete_r2_objects(bucket: str, prefix: str, dry_run: bool = False) -> None:
-    """Delete objects in R2 bucket with given prefix or exact key."""
-    r2_client = get_r2_client()
-
-    try:
-        # First check if this is an exact file match
-        try:
-            r2_client.head_object(Bucket=bucket, Key=prefix)
-            # It's a single file
-            objects = [{"Key": prefix}]
-        except ClientError:
-            # Not a single file, paginate to list all objects under the prefix
-            objects = []
-            paginator = r2_client.get_paginator("list_objects_v2")
-            for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
-                objects.extend(page.get("Contents", []))
-
-            if not objects:
-                console.print(f"No objects found at r2://{bucket}/{prefix}")
-                return
-
-        total_objects = len(objects)
-
-        if dry_run:
-            console.print("\nWould delete the following objects:")
-            for obj in objects:
-                console.print(f"📄 r2://{bucket}/{obj['Key']}")
-            console.print(f"\nTotal: {total_objects} objects would be deleted")
-            return
-
-        # Confirm deletion
-        console.print(
-            f"\nFound {total_objects} objects to delete in r2://{bucket}/{prefix}"
-        )
-        for obj in objects:
-            console.print(f"📄 r2://{bucket}/{obj['Key']}")
-
-        confirm = typer.confirm(
-            "\nAre you sure you want to delete these objects?", default=False
-        )
-        if not confirm:
-            console.print("[yellow]Deletion cancelled.[/yellow]")
-            raise typer.Exit()
-
-        # Delete objects with progress bar
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            BarColumn(),
-            TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
-        ) as progress:
-            task = progress.add_task("Deleting objects...", total=total_objects)
-
-            for obj in objects:
-                r2_client.delete_object(Bucket=bucket, Key=obj["Key"])
-                progress.advance(task)
-
-        console.print("[green]Successfully deleted all objects![/green]")
-
-    except ClientError as e:
-        console.print(f"[red]Error deleting objects: {str(e)}[/red]")
-        raise typer.Exit(1) from e
-
-
-@click.group()
-def r2():
-    """
-    Manage Cloudflare R2 storage resources.
-
-    This command group provides tools for interacting with Cloudflare R2 storage:
-    • ls: List bucket contents
-    • cp: Copy files **between local storage and R2** (upload or download; files or directories)
-    • cat: Display contents of text files
-    • du: Display directory size or file-level sizes in R2 storage
-    • rm: Remove files and directories recursively
-
-    Examples:
-        # List root contents
-        bm r2 ls
-
-        # List model directory with tree view
-        bm r2 ls -r r2://biolm-modal/model-store/esm2
-
-        # Upload a model directory
-        bm r2 cp models/esm2 r2://biolm-modal/model-store/esm2/v1
-
-        # Download a single file to current directory
-        bm r2 cp r2://biolm-modal/test-data/foo.json .
-
-        # Download an entire prefix to ./tmp (dry-run)
-        bm r2 cp r2://biolm-modal/test-data/ ./tmp --dry-run
-
-        # Preview upload with dry-run
-        bm r2 cp models/esm2 r2://biolm-modal/model-store/esm2/v1 --dry-run
-
-        # Display contents of a configuration file
-        bm r2 cat r2://biolm-modal/test-data/models/chai1/input.json
-
-        # Pipe JSON to jq
-        bm r2 cat r2://biolm-modal/test-data/models/chai1/input.json | jq '.params'
-
-        # Directory-level totals
-        bm r2 du r2://biolm-modal/model-store/
-
-        # Directory size with file details
-        bm r2 du r2://biolm-modal/model-store/ --per-file
-
-        # Preview deletion
-        bm r2 rm r2://biolm-modal/test-qamar --dry-run
-
-        # Remove directory and contents (requires confirmation)
-        bm r2 rm r2://biolm-modal/test-qamar
-    """
-    pass
-
-
 @r2_app.command()
 def ls(
     path: str = typer.Argument(None, help="R2 path in format r2://bucket/path"),
@@ -522,13 +275,13 @@ def ls(
         bm r2 ls
 
         # List specific model directory
-        bm r2 ls r2://biolm-modal/model-store/esm2
+        bm r2 ls r2://biolm-public/model-store/esm2
 
         # List all contents recursively
-        bm r2 ls r2://biolm-modal/model-store/esm2 --recursive
+        bm r2 ls r2://biolm-public/model-store/esm2 --recursive
 
         # List test data directory
-        bm r2 ls r2://biolm-modal/test-data
+        bm r2 ls r2://biolm-public/test-data
     """
     try:
         if path:
@@ -543,82 +296,61 @@ def ls(
 
 
 @r2_app.command()
-def cp(
-    source: str = typer.Argument(..., help="Local path or R2 path (r2://bucket/key)"),
+def download(
+    source: str = typer.Argument(
+        ..., help="R2 path to a file or prefix (r2://bucket/key)"
+    ),
     destination: str = typer.Argument(
-        ..., help="R2 path (for upload) or local path (for download)"
+        ..., help="Local destination path (file or directory)"
     ),
     dry_run: bool = typer.Option(
-        False, help="Show what would be copied without making changes"
+        False, help="Show what would be downloaded without making changes"
     ),
 ) -> None:
     """
-    Copy files between local storage and R2.
+    Download a file or prefix from R2 to local storage (read-only).
 
     Examples:
-        # Upload a single model file
-        bm r2 cp models/esm2/model.pt r2://biolm-modal/model-store/esm2/v1/
+        # Download a single file to the current directory
+        bm r2 download r2://biolm-public/test-data/foo.json .
 
-        # Upload entire model directory with dry-run
-        bm r2 cp models/esm2 r2://biolm-modal/model-store/esm2 --dry-run
+        # Download an entire prefix to ./tmp
+        bm r2 download r2://biolm-public/test-data/ ./tmp
 
-        # Download a remote file to current directory
-        bm r2 cp r2://biolm-modal/test-data/foo.txt .
-
-        # Download a remote folder to ./tmp
-        bm r2 cp r2://biolm-modal/test-data/ ./tmp --dry-run
+        # Preview a download without writing anything
+        bm r2 download r2://biolm-public/test-data/ ./tmp --dry-run
     """
     try:
-        # Remote → Local
-        if source.startswith("r2://") and not destination.startswith("r2://"):
-            bucket, key = format_r2_path(source)
-            dest_path = Path(destination)
-            r2_client = get_r2_client()
-
-            if dest_path.exists() and dest_path.is_file() and key.endswith("/"):
-                console.print(
-                    "[red]Error: Cannot download a directory into a single file.[/red]"
-                )
-                raise typer.Exit(1)
-
-            download_from_r2(r2_client, bucket, key, dest_path, dry_run)
-
-            if not dry_run:
-                console.print("[green]Download completed successfully![/green]")
-            return
-
-        # Local → Remote
-        if source.startswith("r2://"):
+        if not source.startswith("r2://"):
             console.print(
-                "[red]Downloading from R2 requires local destination; "
-                "destination path appears to be remote.[/red]"
+                "[red]Error: source must be an R2 path (r2://bucket/key).[/red]"
+            )
+            raise typer.Exit(1)
+        if destination.startswith("r2://"):
+            console.print(
+                "[red]Error: destination must be a local path. "
+                "`bm r2` is read-only and cannot write to R2.[/red]"
             )
             raise typer.Exit(1)
 
-        src_path = Path(source)
-        bucket, dest_key = format_r2_path(destination)
+        bucket, key = format_r2_path(source)
+        dest_path = Path(destination)
+        r2_client = get_r2_client()
 
-        if not src_path.exists():
-            console.print(f"[red]Source path does not exist: {source}[/red]")
+        if dest_path.exists() and dest_path.is_file() and key.endswith("/"):
+            console.print(
+                "[red]Error: Cannot download a directory into a single file.[/red]"
+            )
             raise typer.Exit(1)
 
-        warn_as_dir = False
-        if src_path.is_dir() and not dest_key.endswith("/"):
-            dest_key += "/"
-            warn_as_dir = True
-
-        upload_to_r2(src_path, bucket, dest_key, dry_run)
-
-        if warn_as_dir and not dry_run:
-            console.print(
-                f"[yellow]Interpreting destination r2://{bucket}/{dest_key.rstrip('/')} "
-                "as a directory.[/yellow]"
-            )
+        download_from_r2(r2_client, bucket, key, dest_path, dry_run)
 
         if not dry_run:
-            console.print("[green]Upload completed successfully![/green]")
+            console.print("[green]Download completed successfully![/green]")
 
     except Exception as e:
+        if isinstance(e, typer.Exit):
+            raise
         console.print(f"[red]Error: {str(e)}[/red]")
         raise typer.Exit(1) from e
 
@@ -665,16 +397,16 @@ def cat(
 
     Examples:
         # Display a configuration file
-        bm r2 cat r2://biolm-modal/test-data/models/chai1/input.json
+        bm r2 cat r2://biolm-public/test-data/models/chai1/input.json
 
         # Pipe output to jq for JSON processing
-        bm r2 cat r2://biolm-modal/test-data/models/chai1/input.json | jq '.params'
+        bm r2 cat r2://biolm-public/test-data/models/chai1/input.json | jq '.params'
 
         # Pipe to grep for searching
-        bm r2 cat r2://biolm-modal/test-data/models/chai1/input.json | grep "name"
+        bm r2 cat r2://biolm-public/test-data/models/chai1/input.json | grep "name"
 
         # View with less for pagination
-        bm r2 cat r2://biolm-modal/test-data/models/chai1/input.json | less
+        bm r2 cat r2://biolm-public/test-data/models/chai1/input.json | less
     """
     import sys
 
@@ -744,13 +476,13 @@ def du(  # noqa: C901
 
     Examples:
         # Display directory-level totals
-        bm r2 du r2://biolm-modal/model-store/
+        bm r2 du r2://biolm-public/model-store/
 
         # Display directory-level totals for a specific subfolder
-        bm r2 du r2://biolm-modal/model-store/esm2/
+        bm r2 du r2://biolm-public/model-store/esm2/
 
         # Display directory size with file-level details
-        bm r2 du r2://biolm-modal/model-store/esm2/ --per-file
+        bm r2 du r2://biolm-public/model-store/esm2/ --per-file
     """
     try:
         bucket, prefix = format_r2_path(path)
@@ -841,48 +573,6 @@ def du(  # noqa: C901
 
     except ClientError as e:
         console.print(f"[red]Error calculating folder size: {str(e)}[/red]")
-        raise typer.Exit(1) from e
-
-
-@r2_app.command()
-def rm(
-    path: str = typer.Argument(..., help="R2 path to delete (r2://bucket/path)"),
-    dry_run: bool = typer.Option(
-        False, help="Show what would be deleted without making changes"
-    ),
-) -> None:
-    """
-    Remove objects from R2 storage (single file or directory).
-
-    Requires confirmation before deletion.
-
-    Examples:
-        # Delete a single file
-        bm r2 rm r2://biolm-modal/test-data/models/esm2/3b_encode.json
-
-        # Preview deletion (dry run)
-        bm r2 rm r2://biolm-modal/test-qamar --dry-run
-
-        # Delete a directory and all its contents
-        bm r2 rm r2://biolm-modal/test-qamar/
-
-        # Delete a specific model version
-        bm r2 rm r2://biolm-modal/model-store/esm2/v1/
-    """
-    try:
-        bucket, prefix = format_r2_path(path)
-
-        if not prefix:
-            console.print(
-                "[red]Error: Cannot delete bucket root. Please specify a path.[/red]"
-            )
-            raise typer.Exit(1)
-
-        # Don't automatically append slash - let delete_r2_objects handle file vs directory
-        delete_r2_objects(bucket, prefix, dry_run)
-
-    except Exception as e:
-        console.print(f"[red]Error: {str(e)}[/red]")
         raise typer.Exit(1) from e
 
 

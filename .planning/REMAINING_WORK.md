@@ -95,7 +95,12 @@ Per-model LICENSE files frequently carry **inferred** copyright holders/years (f
 - **igbert/igt5** — CC-BY-4.0 (attribution obligation).
 - Inferred holders/years across Batch B/E/F + boltz/chai1/rf3/rfd3/boltzgen/abodybuilder3/immunebuilder/etc.
 - W-sec: gitleaks/trufflehog scan (CI + pre-launch); confirm `biolm-public` holds **no raw third-party PDFs**;
-  fix any remaining internal identifiers.
+  fix any remaining internal identifiers. **De-internalization sweep — `biolm-modal`→`biolm-public` bucket
+  name still appears in ~11 non-`.planning` files** (`models/dummy/{sources.yaml,BIOLOGY.md}` doc blocks,
+  `models/esmstabp/{README,MODEL}.md`+`_train.py`+`download.py`, `models/boltz/{fixture,test}.py`,
+  `models/deepviscosity/fixture.py`, `models/commons/storage/cache.py`). W10 fixed only the dummy template's
+  W10-broken `bm r2 cp` command + `dummy/MODEL.md`; the rest (incl. code path-strings in fixtures/tests that
+  need care) is this sweep. Also de-internalize the temp bootstrap `CLAUDE.md` (deleted at launch anyway).
 
 ---
 
@@ -127,7 +132,31 @@ Per-model LICENSE files frequently carry **inferred** copyright holders/years (f
   review (all 🟠/🟡 addressed). The **deployed-catalog path** (`BIOLM_GATEWAY_CATALOG=1`) is NOT deploy-tested
   (Milestone B). NOTE for W14 docs: warn that a deployed catalog / `bm serve --host 0.0.0.0` is unauthenticated
   and bills the operator's Modal account.
-- **W10 CLI** — `bm setup`/`deploy`/`serve`/`cache`/`r2`; the 3-command quickstart.
+- **W10 CLI — ✅ DONE (Modal-free; T0 + CLI smoke + fresh-Opus review).** New `bm setup`
+  (`cli/setup.py`): network-free Modal-auth check (REQUIRED → non-zero exit + `modal token new`
+  guidance if missing) + OPTIONAL local R2 creds (AWS_*); rich summary. New `bm cache`
+  (`cli/cache.py`): `status` reports whether response caching (`BIOLM_CACHE_ENABLED`, off by default)
+  would bake into a deploy; it's a deploy-time setting. `bm deploy --cache/--no-cache` flag bakes the
+  env var in (default None = leave env untouched). **`bm r2` is now STRICTLY READ-ONLY** (user
+  directive: OSS repo, no writes): removed `cp`/`rm` + all write helpers (`upload_to_r2`/`_upload_one`/
+  `should_ignore_path`/`delete_r2_objects`) + a dead vestigial `@click.group() def r2()`; `cp`→read-only
+  `download` (R2→local); kept `ls`/`download`/`cat`/`du`/`download-outputs`; de-internalized
+  `biolm-modal`→`biolm-public` in docstrings (incl. `models/dummy/MODEL.md`). Quickstart verified
+  Modal-free (esm2 already deploy-proven; no re-deploy). **Pre-existing (NOT W10):** `cli/test_kb.py
+  TestValidateCmd` 12 failures = `typer.Exit` vs `click.exceptions.Exit` mismatch in `kb.py` tests
+  (confirmed on a clean tree) → fix in W11/W17 test-collection pass.
+- **🟣 R2 PUBLIC-READ MODEL (user-surfaced 2026-06-28, during W10; NOT yet implemented — decision +
+  infra + commons change).** Intended end-state: the BioLM-owned **`biolm-public` bucket should be
+  anonymously public-READABLE but not writable**. Today the Modal download layer mounts
+  `cloudflare_r2_secret` even to READ public weights (this is why Milestone A's esm2 deploy blocked on a
+  missing secret), so the README's "happy path needs no credentials beyond Modal" is **not yet true**.
+  To make it true: **(infra, user)** enable anonymous/unsigned reads on `biolm-public` (R2 public bucket
+  / r2.dev / bucket policy); **(code, commons)** give the R2 read client an unsigned-access path
+  (`botocore Config(signature_version=UNSIGNED)`) when no creds are present, and stop REQUIRING the
+  `cloudflare-r2` secret for read-only public-bucket access (writes/self-population to your own bucket
+  still need creds). This is a W4/W3b-adjacent commons change + a representative deploy to validate —
+  **Modal-spend-gated → fold into the interim-validation pattern or Milestone B.** `bm setup` already
+  frames R2 as optional in anticipation of this.
 - **W11 CI/CD** — maintainer-gated (`pull_request_target` hardened); port `detect_models.py`; lint+mypy+unit on every PR.
 - **W12 Shared test-asset library** — `test-data/shared/`; naming convention locked in `02`; populate incrementally.
 - **W13 Skills** — port `.claude/skills/`; resolve the README-standard conflict; teach the final Global Rules.

@@ -248,6 +248,14 @@ def deploy_cmd(
             help="Deploy specific variant (e.g., MODEL_SIZE=150m)",
         ),
     ] = None,
+    cache: Annotated[
+        Optional[bool],
+        typer.Option(
+            "--cache/--no-cache",
+            help="Bake response caching (BIOLM_CACHE_ENABLED) into the "
+            "deployment. Off by default.",
+        ),
+    ] = None,
 ):
     """
     Deploy one or more BioLM models.
@@ -256,11 +264,21 @@ def deploy_cmd(
         bm deploy esm2
         bm deploy esm2 --force
         bm deploy esm2 --variant MODEL_SIZE=150m
+        bm deploy esm2 --cache          # enable response caching for this deploy
         bm deploy esm2 esmc esmfold --force
     """
 
     # Consolidate force flags
     force = force or force_deploy
+
+    # Response caching is a deploy-time setting read inside the container via
+    # BIOLM_CACHE_ENABLED. The deploy subprocess inherits os.environ, so set it
+    # here. Default (None) leaves any pre-existing export untouched; --cache
+    # forces it on, --no-cache forces it off.
+    if cache is True:
+        os.environ["BIOLM_CACHE_ENABLED"] = "1"
+    elif cache is False:
+        os.environ.pop("BIOLM_CACHE_ENABLED", None)
 
     # Deploy each model
     for model_name in models:

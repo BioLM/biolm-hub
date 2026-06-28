@@ -10,9 +10,9 @@
 
      Primary sources: Use sources.yaml primary_papers and source_repos.
      Access paper content via:
-       bm r2 cat r2://biolm-modal/knowledge-base/models/{slug}/primary/papers-md/{paper}.md
+       bm r2 cat r2://biolm-public/knowledge-base/models/{slug}/primary/papers-md/{paper}.md
      Or download locally:
-       bm r2 cp r2://biolm-modal/knowledge-base/models/{slug}/ /tmp/kb/{slug}/ --recursive
+       bm r2 download r2://biolm-public/knowledge-base/models/{slug}/ /tmp/kb/{slug}/
 
      Sections marked [OPTIONAL] should be INCLUDED if relevant and REMOVED
      (not left empty) if not applicable.
@@ -287,7 +287,7 @@
 
      - Training command: `modal run models/MODEL/_train.py`
      - Training data source: URL or R2 path
-     - Artifact storage: `r2://biolm-modal/model-store/{slug}/v1/`
+     - Artifact storage: `r2://biolm-public/model-store/{slug}/v1/`
 -->
 
 ## Versions & Changelog
