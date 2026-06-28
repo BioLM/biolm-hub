@@ -1,6 +1,7 @@
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
 from models.commons.testing.fixture import FixtureGenerator
+from models.commons.testing.shared_assets import STANDARD_PROTEIN
 from models.dsm.config import MODEL_FAMILY
 from models.dsm.schema import (
     DSMEncodeIncludeOptions,
@@ -111,11 +112,7 @@ fixture_generation_suite = TestSuite(
                         params=DSMEncodeRequestParams(
                             include=[DSMEncodeIncludeOptions.MEAN],
                         ),
-                        items=[
-                            DSMEncodeRequestItem(
-                                sequence="TPSSKEMMSQALKATFSGFTKEQQRLGIPKDPRQWTETHVRDWVMWAVNEFSLKGVDFQKF"
-                            )
-                        ],
+                        items=[DSMEncodeRequestItem(sequence=STANDARD_PROTEIN)],
                     ),
                     input_filename_template=ENCODE_MEAN_INPUT,
                     expected_output_fixture=ENCODE_MEAN_OUTPUT_TPL,
@@ -147,9 +144,7 @@ fixture_generation_suite = TestSuite(
                             DSMScoreRequestItem(
                                 sequence="MKAAVDLKTFPFPSPDMECADVPLLTPSSKEMMSQALKATFSGFTKEQQRLGIPKDPRQWTETHVRDWVMWAVNEFSLKGVDFQKF"
                             ),
-                            DSMScoreRequestItem(
-                                sequence="TPSSKEMMSQALKATFSGFTKEQQRLGIPKDPRQWTETHVRDWVMWAVNEFSLKGVDFQKF"
-                            ),
+                            DSMScoreRequestItem(sequence=STANDARD_PROTEIN),
                         ]
                     ),
                     input_filename_template=SCORE_INPUT,
@@ -232,11 +227,7 @@ fixture_generation_suite = TestSuite(
                         params=DSMEncodeRequestParams(
                             include=[DSMEncodeIncludeOptions.MEAN],
                         ),
-                        items=[
-                            DSMEncodeRequestItem(
-                                sequence="TPSSKEMMSQALKATFSGFTKEQQRLGIPKDPRQWTETHVRDWVMWAVNEFSLKGVDFQKF"
-                            )
-                        ],
+                        items=[DSMEncodeRequestItem(sequence=STANDARD_PROTEIN)],
                     ),
                     input_filename_template=ENCODE_MEAN_INPUT,
                     expected_output_fixture=ENCODE_MEAN_OUTPUT_TPL,
@@ -268,9 +259,7 @@ fixture_generation_suite = TestSuite(
                             DSMScoreRequestItem(
                                 sequence="MKAAVDLKTFPFPSPDMECADVPLLTPSSKEMMSQALKATFSGFTKEQQRLGIPKDPRQWTETHVRDWVMWAVNEFSLKGVDFQKF"
                             ),
-                            DSMScoreRequestItem(
-                                sequence="TPSSKEMMSQALKATFSGFTKEQQRLGIPKDPRQWTETHVRDWVMWAVNEFSLKGVDFQKF"
-                            ),
+                            DSMScoreRequestItem(sequence=STANDARD_PROTEIN),
                         ]
                     ),
                     input_filename_template=SCORE_INPUT,

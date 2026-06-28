@@ -29,7 +29,11 @@ test_suite = TestSuite(
             test_cases=[
                 ActionTestCase(
                     action_name=ModelActions.PREDICT,
-                    # Programmatic input - create data on the fly
+                    # Programmatic input - create data on the fly.
+                    # For a STANDARD sequence, import it from the shared library
+                    # instead of hardcoding one, e.g.:
+                    #   from models.commons.testing.shared_assets import STANDARD_PROTEIN
+                    # Or reference a large shared R2 asset by a "shared/..." path.
                     input_fixture=DummySvcRequest.model_validate(
                         {
                             "items": [

@@ -1,6 +1,7 @@
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
 from models.commons.testing.fixture import FixtureGenerator
+from models.commons.testing.shared_assets import STANDARD_PROTEIN
 from models.esm1b.config import MODEL_FAMILY
 from models.esm1b.schema import (
     ESM1bEncodeRequest,
@@ -21,7 +22,7 @@ MASKED_PREDICT_OUTPUT = "masked_predict_expected_output.json"
 
 # Test sequences (standard protein sequences)
 TEST_SEQUENCE_SHORT = "MKTAYIAKQRQISFVKSHFSRQLEERLGLIEVQAPILSRVGDGTQDNLSGAEKAV"
-TEST_SEQUENCE_MEDIUM = "TPSSKEMMSQALKATFSGFTKEQQRLGIPKDPRQWTETHVRDWVMWAVNEFSLKGVDFQKF"
+TEST_SEQUENCE_MEDIUM = STANDARD_PROTEIN
 TEST_SEQUENCES_MULTIPLE = [TEST_SEQUENCE_SHORT, TEST_SEQUENCE_MEDIUM]
 TEST_SEQUENCE_MASKED = "MKTAYIAK<mask>RQISFVKSHFSRQLEERLGLIEVQAPILSRVGDGTQDNLSGAEKAV"
 

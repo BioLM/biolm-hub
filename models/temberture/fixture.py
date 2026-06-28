@@ -1,6 +1,7 @@
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
 from models.commons.testing.fixture import FixtureGenerator
+from models.commons.testing.shared_assets import STANDARD_PROTEIN_STABILITY
 from models.temberture.config import MODEL_FAMILY
 from models.temberture.schema import (
     TemBERTureEncodeIncludeOptions,
@@ -18,7 +19,7 @@ ENCODE_OUTPUT_TPL = "{variant.name}_encode_expected_output.json"
 PREDICT_OUTPUT_TPL = "{variant.name}_predict_expected_output.json"
 
 # Test sequences
-SEQUENCE_1 = "MKTVRQERLKSIVRILERSKEPVSGAQLAEELSVSRQVIVQDIAYLRSLGYNIVATPRGYVLAGG"
+SEQUENCE_1 = STANDARD_PROTEIN_STABILITY
 SEQUENCE_2 = "MEKVYGLIGFPVEHSLSPLMHNDAFARLGIPARYHLFSVEPGQVGAAIAGVRALGIAGVNVTIPHKLAVIPFLDEVDEHARRIGAVNTIINNDGRLIGFNTDGPGYVQALEEEMNITLDGKRILVIGAGGGARGIYFSLLSTAAERIDMANRTVEKAERLVREGEGGRSAYFSLAEAETRLDEYDIIINTTSVGMHPRVEVQPLSLERLRPGVIVSNIIYNPLETKWLKEAKARGARVQNGVGMLVYQGALAFEKWTGQWPDVNRMKQLVIEALRR"
 
 # Create TestSuite for fixture generation with programmatic inputs

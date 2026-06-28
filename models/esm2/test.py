@@ -1,6 +1,7 @@
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
 from models.commons.testing.runner import _validate_log_prob, generate_tests_from_suite
+from models.commons.testing.shared_assets import STANDARD_PROTEIN
 from models.esm2.config import MODEL_FAMILY
 from models.esm2.fixture import (
     MASKED_INPUT,
@@ -45,13 +46,7 @@ test_suite = TestSuite(
                 ActionTestCase(
                     action_name=ModelActions.LOG_PROB,
                     # Programmatic input - create data on the fly
-                    input_fixture={
-                        "items": [
-                            {
-                                "sequence": "TPSSKEMMSQALKATFSGFTKEQQRLGIPKDPRQWTETHVRDWVMWAVNEFSLKGVDFQKF"
-                            }
-                        ]
-                    },
+                    input_fixture={"items": [{"sequence": STANDARD_PROTEIN}]},
                     # Use shared validator from commons
                     validator=_validate_log_prob,
                 ),

@@ -21,6 +21,19 @@ from models.commons.util.config import (
 ### COMMON TEST UTILS
 
 
+def _fixture_r2_path(r2_fixture_subdir: str, slug: str, filename: str) -> str:
+    """Resolve a fixture filename to its R2 key.
+
+    A filename beginning with ``shared/`` references the cross-model shared
+    asset library at ``test-data/shared/...`` (see
+    ``models.commons.testing.shared_assets``); anything else is per-model under
+    ``test-data/<subdir>/<slug>/``.
+    """
+    if filename.startswith("shared/"):
+        return f"{r2_test_data_dir}/{filename}"
+    return f"{r2_test_data_dir}/{r2_fixture_subdir}/{slug}/{filename}"
+
+
 def _validate_log_prob(actual_output: dict, _expected_output: dict = None):
     """Consolidated validator for log probability output across all models."""
     # Common response keys: 'results', 'sequences', 'data', etc.
@@ -105,7 +118,11 @@ def _load_and_validate_payload(
         except (KeyError, AttributeError):
             # No template formatting needed (e.g., "predict_input.json")
             input_filename = case.input_fixture
-        path = f"{r2_test_data_dir}/{suite.r2_fixture_subdir}/{suite.model_family.base_model_slug}/{input_filename}"
+        path = _fixture_r2_path(
+            suite.r2_fixture_subdir,
+            suite.model_family.base_model_slug,
+            input_filename,
+        )
         input_data = read_json_from_r2(r2_bucket_name, path)
     else:
         # Programmatic input generation - handle dicts and Pydantic models
@@ -153,7 +170,11 @@ def execute_integration_test_case(
     expected_output = None
     if case.expected_output_fixture:
         filename = case.expected_output_fixture.format(variant=variant)
-        path = f"{r2_test_data_dir}/{suite.r2_fixture_subdir}/{suite.model_family.base_model_slug}/{filename}"
+        path = _fixture_r2_path(
+            suite.r2_fixture_subdir,
+            suite.model_family.base_model_slug,
+            filename,
+        )
         expected_output = read_json_from_r2(r2_bucket_name, path)
 
     # 4. Execute the remote method with retry logic (matching old system)

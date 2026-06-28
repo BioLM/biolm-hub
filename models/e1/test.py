@@ -1,6 +1,7 @@
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
 from models.commons.testing.runner import _validate_log_prob, generate_tests_from_suite
+from models.commons.testing.shared_assets import STANDARD_PROTEIN
 from models.e1.config import MODEL_FAMILY
 from models.e1.fixture import (
     ENCODE_1_INPUT,
@@ -56,11 +57,7 @@ test_suite = TestSuite(
                     action_name=ModelActions.LOG_PROB,
                     # Programmatic input - create data on the fly
                     input_fixture=E1PredictLogProbRequest(
-                        items=[
-                            E1PredictLogProbRequestItem(
-                                sequence="TPSSKEMMSQALKATFSGFTKEQQRLGIPKDPRQWTETHVRDWVMWAVNEFSLKGVDFQKF"
-                            )
-                        ]
+                        items=[E1PredictLogProbRequestItem(sequence=STANDARD_PROTEIN)]
                     ),
                     # Use shared validator from commons
                     validator=_validate_log_prob,
@@ -71,7 +68,7 @@ test_suite = TestSuite(
                     input_fixture=E1PredictLogProbRequest(
                         items=[
                             E1PredictLogProbRequestItem(
-                                sequence="TPSSKEMMSQALKATFSGFTKEQQRLGIPKDPRQWTETHVRDWVMWAVNEFSLKGVDFQKF",
+                                sequence=STANDARD_PROTEIN,
                                 context_sequences=[
                                     "MPSSKEMMSQALKATFSGFTKEQQRLGIPKDPRQWTETHVRDWVMWAVNEFSLKGVDFQKL",
                                     "TPSSKELMSQALKATFSGFTKEQQRLGIPKDPRQWTETHVRDWVMWAVNEFSLKGVDFQKY",

@@ -133,9 +133,12 @@ ServerError(+ModelExecutionError)`. Let system errors propagate (sanitized to 5x
 ### Shared test assets
 Standard cross-model inputs live under `test-data/shared/` in public R2 with stable canonical names
 (e.g. `shared/protein/<name>.fasta`, `shared/dna/<name>.fasta`, `shared/pdb/<name>.cif`). Per-model
-fixtures reference these where a standard sequence suffices (the path-templating already supports it);
-only model-specific inputs get a per-model fixture. This convention is **locked in Stage 2** so the
-Stage-3 fan-out writes fixtures against it with no later refactor. (W12.)
+fixtures reference these where a standard sequence suffices; only model-specific inputs get a per-model
+fixture. This convention is **locked in Stage 2** so the Stage-3 fan-out writes fixtures against it with
+no later refactor. **W12 DONE** (`models/commons/testing/shared_assets.py` + the runner's `shared/`
+path resolver + 2 assets wired across 7 models — see §4 in the live ledger). For small sequences, import
+the constant (Modal-free); for large files, reference a `shared/...` fixture path (resolves to
+`test-data/shared/...`, R2-populated at Milestone B).
 
 ---
 

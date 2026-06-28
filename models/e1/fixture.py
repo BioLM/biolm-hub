@@ -1,6 +1,7 @@
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
 from models.commons.testing.fixture import FixtureGenerator
+from models.commons.testing.shared_assets import STANDARD_PROTEIN
 from models.e1.config import MODEL_FAMILY
 from models.e1.schema import (
     E1EncodeIncludeOptions,
@@ -55,11 +56,7 @@ def generate():
                         E1EncodeIncludeOptions.LOGITS,
                     ]
                 ),
-                items=[
-                    E1EncodeRequestItem(
-                        sequence="TPSSKEMMSQALKATFSGFTKEQQRLGIPKDPRQWTETHVRDWVMWAVNEFSLKGVDFQKF"
-                    )
-                ],
+                items=[E1EncodeRequestItem(sequence=STANDARD_PROTEIN)],
             ),
             input_filename_template=ENCODE_1_INPUT,
             expected_output_fixture=ENCODE_1_OUTPUT_TPL,
@@ -74,11 +71,7 @@ def generate():
                 params=E1EncodeRequestParams(
                     include=[E1EncodeIncludeOptions.PER_TOKEN], repr_layers=[15]
                 ),
-                items=[
-                    E1EncodeRequestItem(
-                        sequence="TPSSKEMMSQALKATFSGFTKEQQRLGIPKDPRQWTETHVRDWVMWAVNEFSLKGVDFQKF"
-                    )
-                ],
+                items=[E1EncodeRequestItem(sequence=STANDARD_PROTEIN)],
             ),
             input_filename_template=ENCODE_2_INPUT,
             expected_output_fixture=ENCODE_2_OUTPUT_TPL,
@@ -97,7 +90,7 @@ def generate():
                 ),
                 items=[
                     E1EncodeRequestItem(
-                        sequence="TPSSKEMMSQALKATFSGFTKEQQRLGIPKDPRQWTETHVRDWVMWAVNEFSLKGVDFQKF",
+                        sequence=STANDARD_PROTEIN,
                         context_sequences=[
                             "MPSSKEMMSQALKATFSGFTKEQQRLGIPKDPRQWTETHVRDWVMWAVNEFSLKGVDFQKL",
                             "TPSSKELMSQALKATFSGFTKEQQRLGIPKDPRQWTETHVRDWVMWAVNEFSLKGVDFQKY",

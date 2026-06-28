@@ -2,7 +2,10 @@ import modal
 
 from models.commons.storage.r2 import read_json_from_r2, write_data_to_r2
 from models.commons.testing.config import TestSuite
-from models.commons.testing.runner import setup_and_get_local_model_instance
+from models.commons.testing.runner import (
+    _fixture_r2_path,
+    setup_and_get_local_model_instance,
+)
 from models.commons.util.config import (
     r2_bucket_name,
     r2_test_data_dir,
@@ -65,14 +68,21 @@ class FixtureGenerator:
             for case in test_cases:
                 print(f"    - Generating: {case.action_name}")
 
-                # Load input data from R2 if input_fixture is a string (filename)
+                # Load input data from R2 if input_fixture is a string (filename).
+                # Use the shared-aware resolver so a "shared/..." input reads from
+                # the same key the runner reads (test-data/shared/...). Outputs are
+                # always per-model, so they stay on self.r2_base_path below.
                 if isinstance(case.input_fixture, str):
                     # Format template if needed
                     try:
                         input_filename = case.input_fixture.format(variant=variant)
                     except (KeyError, AttributeError):
                         input_filename = case.input_fixture
-                    input_path = f"{self.r2_base_path}/{input_filename}"
+                    input_path = _fixture_r2_path(
+                        self.suite.r2_fixture_subdir,
+                        self.suite.model_family.base_model_slug,
+                        input_filename,
+                    )
                     input_data = read_json_from_r2(r2_bucket_name, input_path)
                 else:
                     # Already a dict or Pydantic model - convert to dict

@@ -1,6 +1,7 @@
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
 from models.commons.testing.fixture import FixtureGenerator
+from models.commons.testing.shared_assets import STANDARD_PROTEIN
 from models.esmc.config import MODEL_FAMILY
 from models.esmc.schema import (
     ESMCEncodeIncludeOptions,
@@ -50,11 +51,7 @@ def generate():
                         ESMCEncodeIncludeOptions.LOGITS,
                     ]
                 ),
-                items=[
-                    ESMCEncodeRequestItem(
-                        sequence="TPSSKEMMSQALKATFSGFTKEQQRLGIPKDPRQWTETHVRDWVMWAVNEFSLKGVDFQKF"
-                    )
-                ],
+                items=[ESMCEncodeRequestItem(sequence=STANDARD_PROTEIN)],
             ),
             input_filename_template=ENCODE_1_INPUT,
             expected_output_fixture=ENCODE_1_OUTPUT_TPL,
@@ -69,11 +66,7 @@ def generate():
                 params=ESMCEncodeRequestParams(
                     include=[ESMCEncodeIncludeOptions.PER_TOKEN], repr_layers=[15]
                 ),
-                items=[
-                    ESMCEncodeRequestItem(
-                        sequence="TPSSKEMMSQALKATFSGFTKEQQRLGIPKDPRQWTETHVRDWVMWAVNEFSLKGVDFQKF"
-                    )
-                ],
+                items=[ESMCEncodeRequestItem(sequence=STANDARD_PROTEIN)],
             ),
             input_filename_template=ENCODE_2_INPUT,
             expected_output_fixture=ENCODE_2_OUTPUT_TPL,

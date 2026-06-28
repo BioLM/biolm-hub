@@ -107,7 +107,11 @@ Tests are the coherence mechanism. There are four tiers (full detail in the test
 - **Generate fixtures, then run the file:** `python -m pytest models/<name>/test.py`.
 - The **golden output is the oracle** — don't regenerate goldens to force a test green. Regenerate
   only when an output change is *intended*, and say so in the PR.
-- Reuse the shared test assets (`test-data/shared/`) for standard sequences rather than duplicating.
+- **Reuse shared test assets** rather than hardcoding a standard sequence in your fixture. Standard
+  cross-model inputs live in `models/commons/testing/shared_assets.py` as importable constants
+  (e.g. `from models.commons.testing.shared_assets import STANDARD_PROTEIN`). Larger shared inputs
+  live in public R2 under the canonical convention `test-data/shared/<category>/<name>.<ext>` — a
+  fixture path beginning with `shared/` resolves there instead of your per-model directory.
 - Target ≥85% coverage on testable code.
 
 ## Pull requests

@@ -173,7 +173,17 @@ Per-model LICENSE files frequently carry **inferred** copyright holders/years (f
   required reviewers, and `MODAL_TOKEN_*`/`R2_*` as **environment** secrets (see the deploy.yml header);
   (c) `--smart` uses a two-dot diff (`git fetch --depth=1`) → may over-detect if base advanced (cost only);
   (d) the `cli/test_kb.py TestValidateCmd` 12 fails (typer.Exit vs click.exceptions.Exit) still open (W17).
-- **W12 Shared test-asset library** — `test-data/shared/`; naming convention locked in `02`; populate incrementally.
+- **W12 Shared test-asset library — ✅ DONE (Modal-free; T0 + 12 commons/testing tests + fresh-Opus review,
+  no 🔴).** New `models/commons/testing/shared_assets.py` (importable canonical constants: `STANDARD_PROTEIN`
+  61aa + `STANDARD_PROTEIN_STABILITY` 65aa, each with its `test-data/shared/<cat>/<name>` canonical R2 name).
+  Runner+generator gained a shared-aware resolver `_fixture_r2_path` — a fixture path starting with `shared/`
+  resolves to `test-data/shared/...` (else per-model, byte-identical to before); read (runner) + input-read
+  (generator) symmetric, outputs stay per-model. **2 assets wired across 7 models** (esm2/esm1b/esmc/e1/dsm +
+  esmstabp/temberture) — de-duped the standard protein that was hardcoded 15×; substring-safe (longer composite
+  sequences left intact). `test_shared_assets.py` (6 Modal-free tests). Convention propagated to CONTRIBUTING +
+  the dummy template; `02` reconciled. **FOLLOW-UP (Milestone B):** populate `test-data/shared/` in `biolm-public`
+  + live-test the `shared/`-path read; only asset population is incremental (no model references a `shared/` path
+  yet — current reuse is via the importable constants).
 - **W13 Skills** — port `.claude/skills/`; resolve the README-standard conflict; teach the final Global Rules.
 - **W14 Docs site + DX** — mkdocs in CI; per-model FastAPI schema docs; render the knowledge graph; **author the
   permanent public `CLAUDE.md` and DELETE the temporary bootstrap `CLAUDE.md`** (tracked deliverable).
