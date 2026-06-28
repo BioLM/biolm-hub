@@ -12,6 +12,7 @@ from models.commons.util.config import (
 )
 from models.commons.util.device import get_torch_device
 from models.esm_if1.config import MODEL_FAMILY, ESMIF1ResourceSpec
+from models.esm_if1.download import get_model_dir
 from models.esm_if1.schema import (
     ESMIF1GenerateRequest,
     ESMIF1GenerateResponse,
@@ -24,13 +25,21 @@ logger = get_logger(__name__)
 # Build Modal container image
 # Pinned: esm+openfold incompatible with Python 3.12
 image = modal.Image.from_registry("pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime")
-# Setup download layer with model weights
+# Setup download layer with model weights.
+# Include fair-esm so the r2_then_library fallback can fetch weights at build time
+# (the download layer runs before the main dependency install below). The init_fn
+# downloads the checkpoint only (no model construction), so fair-esm alone suffices
+# here — esm_if1's full loader would import esm.inverse_folding (torch_geometric/
+# biotite/scipy), which are not in the download layer.
 image = setup_download_layer(
     image,
     base_model_slug=ESMIF1Params.base_model_slug,
     params_version=ESMIF1Params.params_version,
     variant_config=None,  # this model has no variants
-    sub_path="checkpoints",
+    extra_pip_packages=[
+        # fair-esm 2.0.1 from GitHub (needed for the fallback download)
+        "https://github.com/facebookresearch/esm/archive/2b369911bb5b4b0dda914521b9475cad1656b2ac.zip",
+    ],
 )
 # Add dependencies and packages
 image = (
@@ -91,13 +100,8 @@ class ESMIF1Model(ModelMixinSnap):
         self.torch = torch
         self.device = get_torch_device()
 
-        # Get base model dir (without checkpoints subdirectory) for torch.hub.set_dir
-        from models.commons.storage.downloads import get_model_dir_util
-
-        self.model_dir = get_model_dir_util(
-            base_model_slug=ESMIF1Params.base_model_slug,
-            params_version=ESMIF1Params.params_version,
-        )
+        # Hub dir where fair-esm reads <dir>/checkpoints/esm_if1_gvp4_t16_142M_UR50.pt
+        self.model_dir = get_model_dir()
 
         # Set the Torch Hub cache directory to the internal model path
         torch.hub.set_dir(self.model_dir)

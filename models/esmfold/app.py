@@ -27,12 +27,21 @@ logger = get_logger(__name__)
 # Build Modal container image
 # Pinned: esm package mutable dataclass defaults on Python 3.12
 image = modal.Image.from_registry("pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime")
-# Setup download layer with model weights
+# Setup download layer with model weights.
+# Include fair-esm so the r2_then_library fallback can fetch weights at build time
+# (the download layer runs before the main dependency install below). The init_fn
+# downloads the checkpoints only (no model construction), so fair-esm alone
+# suffices here — esmfold's full loader would import openfold, which is not (and
+# cannot cleanly be) installed in the download layer.
 image = setup_download_layer(
     image,
     base_model_slug=ESMFoldParams.base_model_slug,
     params_version=ESMFoldParams.params_version,
     variant_config=None,  # this model has no variants
+    extra_pip_packages=[
+        # fair-esm 2.0.1 from GitHub (needed for the fallback download)
+        "https://github.com/facebookresearch/esm/archive/2b369911bb5b4b0dda914521b9475cad1656b2ac.zip",
+    ],
 )
 # Add dependencies and packages
 image = (
