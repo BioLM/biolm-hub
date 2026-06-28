@@ -15,6 +15,8 @@
   4 wrapper patterns deploy-proven (sample-validate) + 2 build fixes (StrEnum-3.10 shim; hf_hub in download
   layer). evo + progen2 resolved; pro1/esmstabp = documented exceptions.
 - **boltzgen** internal protocols/output-delivery removed.
+- **W8 Gateway — ✅ DONE (`97a513f`)** — bare + cached gateways, config-driven discovery (AST deleted),
+  status_code→HTTP promotion, CI guard. Modal-free (T0+T1+Opus). No interim gateway deploy yet (see §4).
 
 ---
 
@@ -95,9 +97,17 @@ Per-model LICENSE files frequently carry **inferred** copyright holders/years (f
 
 ---
 
-## 4. Remaining project phases (`03_WORKSTREAMS` — NOT started)
-- **W8 Gateway** — bare (~20-line, no cache) + cached (both tiers off by default); replace AST class-discovery
-  with the `modal_class_name` field (already set on every config) + CI guard; decide status_code→HTTP promotion.
+## 4. Remaining project phases (`03_WORKSTREAMS`)
+- **W8 Gateway — ✅ DONE (committed `97a513f`, 2026-06-28).** Bare `gateway/gateway.py` + cached
+  `gateway/gateway_with_cache.py` (both response-cache tiers OFF by default behind `BIOLM_CACHE_ENABLED`);
+  shared core `gateway/routing.py`. AST class-discovery deleted → config-driven `modal_class_name`
+  (set on dummy too); routes via `modal_app_name`. status_code→HTTP promotion = **YES** (ratified).
+  CI guard `gateway/test_discovery.py` (88 checks: class resolves + every action has a `@modal_endpoint`
+  method). Stripped auth/billing/analytics/middleware/state (−1.8k LOC). T0+T1+Opus-review clean, Modal-free.
+  **NO interim gateway deploy done yet** — the one W8 artifact with zero deploy coverage; either smoke-deploy
+  the bare gateway to `biolm-models-dev` (cheap: CPU image, invoke the already-deployed peptides/esm2) or fold
+  into Milestone B. **Deferred to W3b** (COMMONS_REQUESTS): de-dup the partial-payload closure shared with
+  `commons/core/decorator.py`.
 - **W9 Web app** — catalog + run-inference UI; deployed=active / undeployed=greyed-out; `bm serve`.
 - **W10 CLI** — `bm setup`/`deploy`/`serve`/`cache`/`r2`; the 3-command quickstart.
 - **W11 CI/CD** — maintainer-gated (`pull_request_target` hardened); port `detect_models.py`; lint+mypy+unit on every PR.
