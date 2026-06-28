@@ -40,12 +40,15 @@ model_type = variant_config["MODEL_TYPE"]
 
 # Build Modal container image
 image = modal.Image.micromamba(python_version="3.10")
-# Setup download layer with model weights
+# Setup download layer with model weights.
+# huggingface_hub is needed in the download layer so the source fallback can
+# fetch ProtT5 (snapshot_download) when the R2 cache is empty.
 image = setup_download_layer(
     image,
     base_model_slug=AbodyBuilder3Params.base_model_slug,
     params_version=AbodyBuilder3Params.params_version,
     variant_config=variant_config,
+    extra_pip_packages=["huggingface_hub==0.26.0"],
 )
 # Add dependencies and packages
 image = (
