@@ -123,7 +123,7 @@ def get_model_dir_util(
     Single responsibility: Path resolution only.
 
     Args:
-        base_model_slug: The base model identifier (e.g., "esm2", "nanobert")
+        base_model_slug: The base model identifier (e.g., "esm2", "ablang2")
         params_version: Version of the model parameters (e.g., "v1", "v2")
         model_variant: Optional model variant/size (e.g., "8b", "250m")
         sub_path: Optional subdirectory path (e.g., "checkpoints")

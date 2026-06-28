@@ -44,14 +44,14 @@ for ★fold; `predict_log_prob`→`log_prob` everywhere; `extract_features`→`p
 | evo | Apache-2.0 | SHIP | log_prob, generate | TBD | |
 | evo2 | Apache-2.0 | SHIP | encode, log_prob, generate | Hard (GPU build) | |
 | gemme | Academic | EXCLUDE | score | Medium | non-commercial |
-| igbert | MIT | SHIP | encode, generate, log_prob | TBD | 🧬ab |
-| igt5 | MIT | SHIP | encode | TBD | 🧬ab |
+| igbert | CC-BY-4.0 (Zenodo/Exscientia; matrix "MIT" was wrong) | SHIP | encode, generate, log_prob | TBD | 🧬ab; commercial-OK with attribution |
+| igt5 | CC-BY-4.0 (Zenodo/Exscientia; matrix "MIT" was wrong) | SHIP | encode | TBD | 🧬ab; commercial-OK with attribution |
 | immunebuilder | BSD-3 | SHIP | fold | Hard (conda) | 🧬ab ★fold |
 | immunefold | Apache-2.0 | SHIP | fold | Hard (conda) | 🧬ab ★fold; TCR fields → `tcr_*`/`peptide`/`mhc` |
 | mpnn | MIT | SHIP | generate | Medium (micromamba) | candidate hard vertical slice (Stage 1d) |
 | msa_search_nim | NIM | EXCLUDE | encode, encode_paired | Hard (NIM) | closed NVIDIA ECR |
 | msa_transformer | MIT | SHIP | encode | Easy | |
-| nanobert | MIT | SHIP | encode, generate, log_prob | TBD | 🧬ab; nanobody → `sequence` becomes lone `heavy_chain` + `NANOBODY` tag |
+| nanobert | **CC-BY-NC-SA-4.0** (HF card `NaturalAntibody/nanoBERT`; matrix "MIT" was wrong — GitHub LICENSE 404s) | **EXCLUDE** | encode, generate, log_prob | TBD | 🧬ab; NonCommercial weights — **user-confirmed EXCLUDE 2026-06-28** (revisitable if NaturalAntibody grants a commercial license) |
 | nt | CC-BY-NC-SA-4.0 | EXCLUDE | encode, log_prob | Easy | non-commercial |
 | omni_dna | Apache-2.0 | SHIP | encode, log_prob | Easy | |
 | peptides | Apache-2.0 | SHIP | encode | Easy | simplest CPU model — 2nd vertical slice |
@@ -60,7 +60,7 @@ for ★fold; `predict_log_prob`→`log_prob` everywhere; `extract_features`→`p
 | pro4s | CC-BY-NC-4.0 | EXCLUDE | predict | TBD | non-commercial |
 | prody | MIT | SHIP | encode, predict | Easy | structure as input → stays `predict` |
 | progen2 | BSD-3 | SHIP | generate | Medium | |
-| propermab | MIT | SHIP | predict | Hard (conda) | 🧬ab; **`extract_features`→`predict`** (returns 34 engineered descriptors, not embeddings) |
+| propermab | **Non-Commercial / Academic-Only** (Regeneron `propermab/LICENSE.md`; matrix "MIT" was wrong) | **EXCLUDE** | predict | Hard (conda) | 🧬ab; NonCommercial weights (Regeneron Pharmaceuticals) — **EXCLUDE 2026-06-28** by the ratified NC criterion (same call as nanobert) |
 | proteina_complexa | code Apache-2.0 / **weights NVIDIA Open Model License (REVOCABLE)** | **EXCLUDE** | generate | TBD | weights royalty-free + commercial but **revocable** (on litigation/guardrail-bypass) + attribution; **user-confirmed EXCLUDE 2026-06-27** (revisitable later) |
 | prostt5 | MIT | SHIP | encode, generate | TBD | |
 | rf3 | BSD-3 | SHIP | fold | Medium | ★fold |
@@ -75,11 +75,15 @@ for ★fold; `predict_log_prob`→`log_prob` everywhere; `extract_features`→`p
 | thermompnn_d | MIT | SHIP | predict | Hard (conda) | |
 | zymctrl | Apache-2.0 | SHIP | generate, encode | TBD | |
 
-**Totals (61 rows = 60 model dirs on `main` + the not-yet-on-disk `esmfold2`):** **45 SHIP** (incl.
-`esmc` 300M, `pro1`) + **1 SHIP-LATER** (`esmfold2`) + **1 TEMPLATE** (`dummy`) + **14 EXCLUDE**
-(`ablef`, `af2_nim`, `biolmtox2`, `camsol`, `diamond`, `esm3`, `gemme`, `msa_search_nim`, `nt`, `poet`,
-`pro4s`, `proteina_complexa`, `saprot`, `soluprot`). **0 remaining legal holds or conditionals**
-(esmc ships with the Cambrian-Open attribution honored).
+**Totals (61 rows = 60 model dirs on `main` + the not-yet-on-disk `esmfold2`):** **43 SHIP** (incl.
+`esmc` 300M, `pro1`) + **1 SHIP-LATER** (`esmfold2`) + **1 TEMPLATE** (`dummy`) + **16 EXCLUDE**
+(`ablef`, `af2_nim`, `biolmtox2`, `camsol`, `diamond`, `esm3`, `gemme`, `msa_search_nim`, `nanobert`,
+`nt`, `poet`, `pro4s`, `propermab`, `proteina_complexa`, `saprot`, `soluprot`).
+**W5 license verification (2026-06-28) corrected the matrix:** `nanobert` (CC-BY-NC-SA-4.0) and
+`propermab` (Regeneron NonCommercial) were wrongly listed MIT → now **EXCLUDED** (NonCommercial, same
+criterion as esm3/nt/poet); `igbert`/`igt5` were wrongly listed MIT → corrected to **CC-BY-4.0** (still
+SHIP, commercial-OK with attribution). Verify each model's `sources.yaml` license string against
+upstream before launch (the matrix has been wrong on licenses repeatedly).
 
 ---
 
