@@ -41,12 +41,18 @@ model_size = variant_config["MODEL_SIZE"]
 
 # Build Modal container image
 image = modal.Image.from_registry("pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime")
-# Setup download layer with model weights
+# Setup download layer with model weights.
+# Include fair-esm so the r2_then_library fallback can import `esm` at build time
+# (the download layer runs before the main dependency install below).
 image = setup_download_layer(
     image,
     base_model_slug=ESM2Params.base_model_slug,
     params_version=ESM2Params.params_version,
     variant_config=variant_config,
+    extra_pip_packages=[
+        # fair-esm 2.0.1 from GitHub (needed for the fallback download)
+        "https://github.com/facebookresearch/esm/archive/2b369911bb5b4b0dda914521b9475cad1656b2ac.zip",
+    ],
 )
 # Add dependencies and packages
 image = (

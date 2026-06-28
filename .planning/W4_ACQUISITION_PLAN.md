@@ -7,6 +7,18 @@
 > R2_ONLY). Internal repo was R2_ONLY too (its bucket was pre-populated separately). Based on two Opus
 > audits (per-model download.py + commons acquisition subsystem). Internal file — deleted at launch.
 
+## 🔑 REFERENCE THE INTERNAL REPO (production source of truth — user directive 2026-06-28)
+For EVERY model migration, consult the read-only internal worktree
+`/Users/qamar/dev/biolm-modal-worktrees/oss-readonly-main/models/<m>/` — it is BioLM's working production
+repo where the download logic actually works. Port its **working source config** (HF repo IDs/revisions,
+direct URLs, GitHub commits, library loaders — in its `download.py`/`config.py`) and its **app.py image-build
+ordering** (e.g. `extra_pip_packages=` on `setup_download_layer` so a library fallback can import at build
+time — the fair-esm fix esm2 needed), then adapt onto OUR cleaned wrappers (`r2_then_hf/urls/library/
+archive`). This is faster + lower-risk than guessing or web-searching, and resolves the low-confidence
+sources below. (Caveat: some internal models are R2_ONLY against a *pre-populated* internal bucket, so their
+`download.py` may not contain a fetchable source — in that case use sources.yaml + the loader + the
+already-self-populating OSS templates `msa_transformer`/`esm1b`/`tempro`.)
+
 ## Canonical public API (standardize on these; demote `standard_r2_download`)
 `r2_then_hf` · `r2_then_urls` · `r2_then_library` · **`r2_then_archive` (NEW)** · `download_with_fallback`
 + `CustomSourceConfig` (escape hatch only). Templates: `esm1b` (hf), `msa_transformer` (fair-esm library),
