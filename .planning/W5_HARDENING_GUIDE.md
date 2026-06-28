@@ -199,7 +199,7 @@ After a batch is committed, tick its models in the `02` per-model checklist and 
 |---|---|---|
 | A | esm2, esm1b, esm1v, esm_if1, msa_transformer, esmfold, esmstabp, esmc | DONE (commit f57bf41) |
 | B | dnabert2, omni_dna, e1, evo, dna_chisel | DONE (commit fe5b084) |
-| C | ablang2, igbert, igt5, nanobert, sadie, antifold | pending |
+| C | ablang2, igbert, igt5, sadie, antifold | DONE; nanobert HELD (CC-BY-NC-SA-4.0 NonCommercial — user ship/exclude decision pending) |
 | D | abodybuilder3, immunebuilder, immunefold, propermab | pending |
 | E | boltz, chai1, rf3, rfd3, boltzgen | DONE (commit 4bc1a17) |
 | F | thermompnn, thermompnn_d, deepviscosity, temberture, tempro, spurs | DONE |

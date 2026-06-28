@@ -1,9 +1,9 @@
 import hashlib
-import logging
 
 import modal
 
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.error import ValidationError400
 from models.commons.core.logging import get_logger
 from models.commons.modal.source import setup_source_layer
 from models.commons.model.base import ModelMixinSnap
@@ -98,7 +98,7 @@ class SADIEModel(ModelMixinSnap):
                 for seq in sequences
             ]
         except Exception as e:
-            logging.error(f"SADIE call failed with error [{e}]")
+            logger.error("SADIE call failed", exc_info=True)
             raise e
 
         return SADIEPredictResponse(results=results)
@@ -125,7 +125,7 @@ class SADIEModel(ModelMixinSnap):
             )[0]
             r["e_value"] = r["e-value"]
         except Exception as e:
-            raise ValueError(f"Error processing sequence {seq}: {e}") from e
+            raise ValidationError400(f"Error processing sequence {seq}: {e}") from e
 
         return SADIEPredictResponseResult(**r)
 

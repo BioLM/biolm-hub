@@ -45,7 +45,7 @@ AbLang2 handles different antibody regions with varying quality:
 
 **Problem**: Evaluating whether an engineered or mutant antibody sequence is biophysically plausible requires assessing how well it fits known antibody sequence patterns. This is important for filtering designed sequences, assessing humanization quality, and predicting developability.
 
-**How AbLang2 helps**: The `predict` action returns per-position likelihood scores, and `predict_log_prob` returns total sequence log-probability. These scores quantify how "antibody-like" a sequence is under the model.
+**How AbLang2 helps**: The `predict` action returns per-position likelihood scores, and `log_prob` returns total sequence log-probability. These scores quantify how "antibody-like" a sequence is under the model.
 
 **Biological meaning**: A high likelihood score indicates the sequence is consistent with natural antibody patterns. Positions with low likelihood may indicate destabilizing mutations, unusual CDR conformations, or deviations from canonical structures. The germline debiasing ensures these scores reflect functional plausibility rather than proximity to common germline genes.
 
@@ -76,7 +76,7 @@ AbLang2 can be combined with other models on the BioLM platform:
 Typical multi-model workflows:
 1. Use SADIE `predict` to annotate and number antibody sequences
 2. Use AbLang2 `encode` to generate embeddings for clustering and property prediction
-3. Use AbLang2 `predict_log_prob` to score engineered variants
+3. Use AbLang2 `log_prob` to score engineered variants
 
 ### Alternative Models
 

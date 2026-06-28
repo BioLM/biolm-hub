@@ -45,7 +45,7 @@ IgBERT handles different antibody regions and contexts:
 
 **Problem**: Evaluating whether engineered or mutant antibody sequences are biophysically plausible requires scoring them against known antibody sequence patterns.
 
-**How IgBERT helps**: The `predict_log_prob` action computes the total log-probability of a sequence under the IgBERT model by summing log P(residue_i | context) at each position (excluding special tokens). This provides a single scalar score for sequence plausibility.
+**How IgBERT helps**: The `log_prob` action computes the total log-probability of a sequence under the IgBERT model by summing log P(residue_i | context) at each position (excluding special tokens). This provides a single scalar score for sequence plausibility.
 
 **Biological meaning**: Higher (less negative) log-probability scores indicate sequences more consistent with natural antibody patterns. Comparing scores between wild-type and mutant sequences can identify mutations that disrupt conserved structural motifs or introduce unfavorable interactions.
 
@@ -76,7 +76,7 @@ Other complementary models on the BioLM platform:
 Typical multi-model workflows:
 1. Use SADIE to annotate and number sequences
 2. Use IgBERT `encode` to generate embeddings for clustering
-3. Use IgBERT `predict_log_prob` to score engineered variants
+3. Use IgBERT `log_prob` to score engineered variants
 
 ### Alternative Models
 

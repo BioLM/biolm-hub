@@ -48,7 +48,7 @@ The model operates on 3D structures in PDB format and uses IMGT numbering to ide
 
 **Biological context**: Certain amino acid motifs in antibodies are associated with manufacturing or clinical liabilities, such as deamidation (NG motifs), oxidation (exposed methionine), or aggregation-prone hydrophobic patches. Identifying and removing these liabilities while maintaining function is a key step in antibody developability assessment.
 
-**How AntiFold helps**: The `score` action evaluates how well the current sequence fits the observed structure, providing a global compatibility score. The `predict_log_prob` action gives a per-structure log-probability that can be used to compare wild-type versus engineered variants. Positions with low per-residue log-probabilities may indicate residues that are structurally strained and could be targets for optimization.
+**How AntiFold helps**: The `score` action evaluates how well the current sequence fits the observed structure, providing a global compatibility score. The `log_prob` action gives a per-structure log-probability that can be used to compare wild-type versus engineered variants. Positions with low per-residue log-probabilities may indicate residues that are structurally strained and could be targets for optimization.
 
 ### Structure-Based Antibody Library Design
 

@@ -159,11 +159,6 @@ class AntiFoldModel(ModelMixinSnap):
             "AntiFold model loaded directly on %s for GPU memory snapshot!", self.device
         )
 
-        # Continue billing through snapshot creation (billing was started in a_billing_enter)
-        # This ensures we bill for all time including snapshot creation time
-        # The billing thread is non-blocking and will stop naturally when container exits
-        # On restore, it's a new container so the old billing thread won't be running
-
     def _prepare_pdb_input(self, pdb_str: str, params) -> tuple[str, str, str]:
         """
         Creates a temporary pdb file, writes the pdb_str into it, and prepares the input DataFrame.
@@ -184,11 +179,12 @@ class AntiFoldModel(ModelMixinSnap):
             # Use the basename (without extension) as identifier.
             _pdb = os.path.splitext(os.path.basename(tmp_pdb))[0]
 
-            # Determine chain: prefer heavy_chain unless a nanobody_chain is provided.
+            # Determine chain: prefer heavy_chain_id unless a nanobody_chain_id is
+            # provided.
             h_chain_input = (
-                params.heavy_chain
-                if not params.nanobody_chain
-                else params.nanobody_chain
+                params.heavy_chain_id
+                if not params.nanobody_chain_id
+                else params.nanobody_chain_id
             )
 
             # Build the input DataFrame.
@@ -196,12 +192,12 @@ class AntiFoldModel(ModelMixinSnap):
                 {
                     "pdb": _pdb,
                     "Hchain": h_chain_input,
-                    "Lchain": params.light_chain,
+                    "Lchain": params.light_chain_id,
                 },
                 index=[0],
             )
-            if params.antigen_chain:
-                input_df.loc[0, "Agchain"] = params.antigen_chain
+            if params.antigen_chain_id:
+                input_df.loc[0, "Agchain"] = params.antigen_chain_id
 
             pdb_dir = os.path.dirname(tmp_pdb)
             return input_df, pdb_dir, tmp_pdb
@@ -323,7 +319,7 @@ class AntiFoldModel(ModelMixinSnap):
                     num_threads=0,
                     seed=None,
                     save_flag=False,
-                    light_chain=payload.params.light_chain,
+                    light_chain=payload.params.light_chain_id,
                 )
                 for r in results_tmp:
                     results = {}
@@ -393,7 +389,7 @@ class AntiFoldModel(ModelMixinSnap):
                     num_threads=0,
                     seed=None,
                     save_flag=False,
-                    light_chain=payload.params.light_chain,
+                    light_chain=payload.params.light_chain_id,
                     score=True,
                 )
                 for r in results_tmp:

@@ -8,7 +8,7 @@ strengths:
   - "From the same large-scale paired antibody training dataset as IgBERT (Exscientia/Kenlay et al. 2023), providing a direct architecture comparison (T5 encoder vs BERT) on identical training data"
   - "Published benchmarks show IgT5 Paired achieves 91.63% VH accuracy on paired sequence recovery, establishing it as a competitive baseline for antibody language models"
   - "HuggingFace Transformers-compatible model weights, making integration with standard ML ecosystems and transfer learning pipelines straightforward"
-  - "MIT license with no commercial restrictions, suitable for proprietary therapeutic antibody development"
+  - "Permissively licensed (CC-BY-4.0 per the authoritative Zenodo deposit; permits commercial use with attribution), suitable for therapeutic antibody development"
   - "Mean-pooled or per-residue embeddings capture both sequence-level and position-level representations for flexible downstream use"
 
 weaknesses:
@@ -28,7 +28,7 @@ use_when:
   - "You are building a multi-model ensemble combining IgT5, IgBERT, and AbLang2 embeddings for improved downstream prediction through representation diversity"
 
 dont_use_when:
-  - "You need sequence generation, masked residue prediction, or log-probability scoring -- use IgBERT (generate + predict_log_prob actions) or AbLang2 (four actions including predict and generate)"
+  - "You need sequence generation, masked residue prediction, or log-probability scoring -- use IgBERT (generate + log_prob actions) or AbLang2 (four actions including predict and generate)"
   - "You need germline-debiased antibody representations -- use AbLang2 with focal-loss training that explicitly reduces germline bias in embeddings"
   - "You are working with nanobody (VHH) sequences and need VHH-specific representations -- use NanoBERT, which is trained exclusively on nanobody sequences"
   - "You need the most cost-effective antibody embeddings and GPU resources are limited -- use AbLang2 (CPU-only, 4 GB RAM) or NanoBERT (CPU-only, 2 GB RAM)"
@@ -38,10 +38,10 @@ dont_use_when:
 
 alternatives:
   - model: "igbert"
-    when_better: "IgBERT provides generate and predict_log_prob actions in addition to encode, enabling sequence completion and scoring not available in IgT5; also uses less GPU memory (6 GB vs 16 GB)"
+    when_better: "IgBERT provides generate and log_prob actions in addition to encode, enabling sequence completion and scoring not available in IgT5; also uses less GPU memory (6 GB vs 16 GB)"
     when_worse: "IgBERT uses BERT architecture while IgT5 uses T5 with relative position biases; for tasks sensitive to long-range dependencies in variable-length sequences, T5 may be advantageous"
   - model: "ablang2"
-    when_better: "AbLang2 provides four actions (encode, predict, generate, predict_log_prob) with germline debiasing on CPU-only -- more functionality at lower compute cost"
+    when_better: "AbLang2 provides four actions (encode, predict, generate, log_prob) with germline debiasing on CPU-only -- more functionality at lower compute cost"
     when_worse: "AbLang2 requires paired input only and uses a custom library; IgT5 offers both paired and unpaired variants with HuggingFace compatibility for fine-tuning"
   - model: "nanobert"
     when_better: "NanoBERT is specifically trained on nanobody sequences and captures VHH-specific hallmark residues and extended CDR3 patterns on CPU-only"

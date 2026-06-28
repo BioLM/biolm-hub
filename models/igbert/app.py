@@ -3,6 +3,7 @@ from typing import Union
 import modal
 
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.error import ValidationError400
 from models.commons.core.logging import get_logger
 from models.commons.data.validator import (
     aa_extended,
@@ -145,14 +146,14 @@ class IgBertModel(ModelMixinSnap):
                 and self.model_type != IgBertModelTypes.UNPAIRED
             )
         ):
-            raise ValueError(
+            raise ValidationError400(
                 f"Mismatch detected: expected '{self.model_type}' but got '{request_kind}' in request."
             )
 
         if self.model_type == IgBertModelTypes.PAIRED:
-            # item.heavy & item.light are guaranteed non-None by schema
+            # item.heavy_chain & item.light_chain are guaranteed non-None by schema
             input_sequences = [
-                " ".join(item.heavy) + " [SEP] " + " ".join(item.light)
+                " ".join(item.heavy_chain) + " [SEP] " + " ".join(item.light_chain)
                 for item in payload.items
             ]
         else:
@@ -262,10 +263,12 @@ class IgBertModel(ModelMixinSnap):
         for item in payload.items:
             if item._kind == IgBertModelTypes.PAIRED:
                 heavy_masked_str = " ".join(
-                    c if c != "*" else self.tokenizer.mask_token for c in item.heavy
+                    c if c != "*" else self.tokenizer.mask_token
+                    for c in item.heavy_chain
                 )
                 light_masked_str = " ".join(
-                    c if c != "*" else self.tokenizer.mask_token for c in item.light
+                    c if c != "*" else self.tokenizer.mask_token
+                    for c in item.light_chain
                 )
                 input_text = heavy_masked_str + " [SEP] " + light_masked_str
 
@@ -335,15 +338,17 @@ class IgBertModel(ModelMixinSnap):
 
             # 6) Re-split heavy & light by their original length
             if item._kind == IgBertModelTypes.PAIRED:
-                num_heavy = len(item.heavy)
-                num_light = len(item.light)
+                num_heavy = len(item.heavy_chain)
+                num_light = len(item.light_chain)
                 heavy_tokens = filtered_tokens[:num_heavy]
                 light_tokens = filtered_tokens[num_heavy : num_heavy + num_light]
 
                 filled_heavy = "".join(heavy_tokens)
                 filled_light = "".join(light_tokens)
                 results.append(
-                    IgBertGenerateResponseResult(heavy=filled_heavy, light=filled_light)
+                    IgBertGenerateResponseResult(
+                        heavy_chain=filled_heavy, light_chain=filled_light
+                    )
                 )
             else:
                 filled_seq = "".join(filtered_tokens)

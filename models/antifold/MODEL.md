@@ -76,7 +76,7 @@ The BioLM implementation is verified against the original AntiFold codebase usin
 |---------------|--------|-------------|--------|
 | 3HFM | encode | Cosine distance < 0.02, rel_tol 3e-4 | PASS |
 | 8OI2 (IMGT) | encode | Cosine distance < 0.02, rel_tol 3e-4 | PASS |
-| 3HFM | predict_log_prob | rel_tol 1e-4 | PASS |
+| 3HFM | log_prob | rel_tol 1e-4 | PASS |
 | 3HFM | score | rel_tol 1e-4 | PASS |
 | 3HFM | generate | Structure validation (sequence count) | PASS |
 | 8OI2 (IMGT) | generate | Structure validation (sequence count) | PASS |
@@ -141,7 +141,7 @@ Request
 | GPU | None (CPU-only) |
 | Memory | 2 GB RAM |
 | CPU | 1.0 cores |
-| Batch size (encode/score/predict_log_prob) | 32 |
+| Batch size (encode/score/log_prob) | 32 |
 | Batch size (generate) | 1 |
 
 The model runs entirely on CPU, which is sufficient given the relatively small model size. The GNN encoder processes backbone coordinates efficiently without requiring GPU acceleration.
@@ -155,11 +155,11 @@ The model runs entirely on CPU, which is sufficient given the relatively small m
 | NumPy seed | Set per-request for generate |
 | User-specified seed | Supported via `seed` parameter in generate |
 
-The `encode`, `score`, and `predict_log_prob` actions are deterministic. The `generate` action is stochastic by default (time-based seed) but can be made reproducible by providing a `seed` parameter.
+The `encode`, `score`, and `log_prob` actions are deterministic. The `generate` action is stochastic by default (time-based seed) but can be made reproducible by providing a `seed` parameter.
 
 ### Caching Behavior
 
-Standard BioLM caching is applied via the `BillingMixinSnap` base class:
+Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
 
 - Redis (Modal Dict) caching for fast repeated lookups
 - R2 caching for persistence
@@ -169,7 +169,7 @@ Standard BioLM caching is applied via the `BillingMixinSnap` base class:
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v1 | 2024 | Initial implementation with encode, generate, score, predict_log_prob actions |
+| v1 | 2024 | Initial implementation with encode, generate, score, log_prob actions |
 
 ---
 

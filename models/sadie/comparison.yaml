@@ -32,7 +32,7 @@ use_when:
 dont_use_when:
   - "You need numerical embeddings or representations of antibody sequences for ML tasks -- use AbLang2, IgBERT, NanoBERT, or IgT5 for language model embeddings"
   - "You need to predict 3D antibody structures -- use AbodyBuilder3, ImmuneBuilder, or ImmuneFold for structure prediction"
-  - "You need sequence generation, restoration, or scoring -- use AbLang2 or IgBERT, which provide generate and predict_log_prob actions"
+  - "You need sequence generation, restoration, or scoring -- use AbLang2 or IgBERT, which provide generate and log_prob actions"
   - "You need to design antibody sequences conditioned on structure -- use AntiFold for structure-based inverse folding"
   - "You need developability property predictions -- use AbLEF or ProperMAB for biophysical property assessment"
   - "You need gold-standard IMGT numbering for regulatory submissions -- consider IMGT/DomainGapAlign for official IMGT validation"

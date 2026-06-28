@@ -55,8 +55,8 @@ test_suite = TestSuite(
                     input_fixture=AbLang2LogProbRequest(
                         items=[
                             {
-                                "heavy": "QVQLVQSGGQMKKPGSSVRVSCKASGYTFTNYGMNWVRQAPGQGLEWMGRI",
-                                "light": "DIQMTQSPSSLSASVGDRVTITCKASQDVSTAVA",
+                                "heavy_chain": "QVQLVQSGGQMKKPGSSVRVSCKASGYTFTNYGMNWVRQAPGQGLEWMGRI",
+                                "light_chain": "DIQMTQSPSSLSASVGDRVTITCKASQDVSTAVA",
                             }
                         ]
                     ),

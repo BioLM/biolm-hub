@@ -60,12 +60,12 @@ Generates embeddings for antibody sequences. Supports mean-pooled and per-residu
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
-| `items[].heavy` | str | `null` | 1--256 chars | Heavy chain sequence (paired mode) |
-| `items[].light` | str | `null` | 1--256 chars | Light chain sequence (paired mode) |
+| `items[].heavy_chain` | str | `null` | 1--256 chars | Heavy chain sequence (paired mode) |
+| `items[].light_chain` | str | `null` | 1--256 chars | Light chain sequence (paired mode) |
 | `items[].sequence` | str | `null` | 1--512 chars | Single chain sequence (unpaired mode) |
 | `params.include` | list[str] | `["mean"]` | `mean`, `residue` | Output types to include |
 
-Provide either (`heavy` + `light`) for paired mode or `sequence` for unpaired mode. Do not mix both.
+Provide either (`heavy_chain` + `light_chain`) for paired mode or `sequence` for unpaired mode. Do not mix both.
 
 **Response:**
 
@@ -98,8 +98,8 @@ encode_request = IgT5EncodeRequest(
     params=IgT5EncodeRequestParams(include=["mean"]),
     items=[
         IgT5EncodeRequestItem(
-            heavy="QVQLVQSGAEVKKPGASVKVSCKVSGYTSPTTIHWVRQAPGKGLEWMG",
-            light="DIQMTQSPSSVSASVGDRVTITCRASQSIGSFLAWYQQKPGKAPKLLIY",
+            heavy_chain="QVQLVQSGAEVKKPGASVKVSCKVSGYTSPTTIHWVRQAPGKGLEWMG",
+            light_chain="DIQMTQSPSSVSASVGDRVTITCRASQSIGSFLAWYQQKPGKAPKLLIY",
         ),
     ],
 )
@@ -159,7 +159,7 @@ Numerical reproduction: The BioLM implementation loads official pre-trained weig
 - **Dependencies**: `transformers==4.48.1`, `sentencepiece==0.2.0`, `safetensors==0.5.3`
 - **Variant dispatch**: The model type (paired/unpaired) is set at deployment time via the `MODEL_TYPE` environment variable.
 - **Embedding computation**: Special tokens are masked out before mean pooling. Per-residue embeddings include padding positions which are zeroed out.
-- **Caching**: Inherits standard Redis/R2 two-tier caching from `BillingMixinSnap`.
+- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
 
 ## License
 

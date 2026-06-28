@@ -2,6 +2,7 @@ from functools import partial
 from typing import Annotated, Optional
 
 from pydantic import (
+    AliasChoices,
     BeforeValidator,
     ConfigDict,
     Field,
@@ -52,19 +53,32 @@ class IgT5EncodeRequestParams(RequestModel):
 
 
 class IgT5EncodeRequestItem(RequestModel):
-    heavy: Optional[
+    # Canonical antibody field names; old `heavy`/`light` accepted via alias.
+    model_config = ConfigDict(populate_by_name=True)
+
+    heavy_chain: Optional[
         Annotated[
             str,
             BeforeValidator(validate_aa_extended),
-            Field(None, min_length=1, max_length=IgT5Params.max_sequence_len),
+            Field(
+                None,
+                min_length=1,
+                max_length=IgT5Params.max_sequence_len,
+                validation_alias=AliasChoices("heavy_chain", "heavy"),
+            ),
         ]
     ] = None
 
-    light: Optional[
+    light_chain: Optional[
         Annotated[
             str,
             BeforeValidator(validate_aa_extended),
-            Field(None, min_length=1, max_length=IgT5Params.max_sequence_len),
+            Field(
+                None,
+                min_length=1,
+                max_length=IgT5Params.max_sequence_len,
+                validation_alias=AliasChoices("light_chain", "light"),
+            ),
         ]
     ] = None
 
@@ -89,11 +103,16 @@ class IgT5EncodeRequestItem(RequestModel):
         """
         from models.igt5.config import IgT5ModelTypes
 
-        heavy, light, sequence = instance.heavy, instance.light, instance.sequence
+        heavy, light, sequence = (
+            instance.heavy_chain,
+            instance.light_chain,
+            instance.sequence,
+        )
 
         if sequence and (heavy or light):
             raise ValueError(
-                "Cannot provide both `sequence` and (`heavy`, `light`). Pick one."
+                "Cannot provide both `sequence` and (`heavy_chain`, `light_chain`). "
+                "Pick one."
             )
 
         if heavy and light:
@@ -102,7 +121,8 @@ class IgT5EncodeRequestItem(RequestModel):
             instance._kind = IgT5ModelTypes.UNPAIRED
         else:
             raise ValueError(
-                "Must provide either (`heavy`, `light`) OR `sequence`, but not both."
+                "Must provide either (`heavy_chain`, `light_chain`) OR `sequence`, "
+                "but not both."
             )
 
         return instance

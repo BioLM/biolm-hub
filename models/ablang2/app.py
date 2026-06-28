@@ -159,7 +159,7 @@ class AbLang2Model(ModelMixinSnap):
     @modal.enter(snap=False)
     def setup_model(self):
         """
-        Transfers model to GPU and starts billing.
+        Transfers the model to the inference device (GPU when available).
         """
 
         # Set deterministic behavior for consistent results across GPU loading
@@ -188,7 +188,7 @@ class AbLang2Model(ModelMixinSnap):
             - AbLang2RescodingResponse
         depending on payload.params.include.
         """
-        input_batch = [(item.heavy, item.light) for item in payload.items]
+        input_batch = [(item.heavy_chain, item.light_chain) for item in payload.items]
         include = payload.params.include  # "seqcoding" or "rescoding"
 
         align = (
@@ -252,7 +252,7 @@ class AbLang2Model(ModelMixinSnap):
         """
         Uses ablang2's "lilelihood" mode, which computs the logits
         """
-        input_batch = [(item.heavy, item.light) for item in payload.items]
+        input_batch = [(item.heavy_chain, item.light_chain) for item in payload.items]
 
         raw_output = self.model(
             input_batch,
@@ -266,7 +266,7 @@ class AbLang2Model(ModelMixinSnap):
             results.append(
                 AbLang2LikelihoodResult(
                     likelihood=canonical_logits_matrix.astype(float).tolist(),
-                    sequence_tokens=list(f"<{item.heavy}>|<{item.light}>"),
+                    sequence_tokens=list(f"<{item.heavy_chain}>|<{item.light_chain}>"),
                     vocab_tokens=self.vocab_tokens,
                 )
             )
@@ -277,7 +277,7 @@ class AbLang2Model(ModelMixinSnap):
     @modal_endpoint(app_name=app_name)
     def generate(self, payload: AbLang2GenerateRequest) -> AbLang2GenerateResponse:
         align = payload.params.align
-        input_batch = [(item.heavy, item.light) for item in payload.items]
+        input_batch = [(item.heavy_chain, item.light_chain) for item in payload.items]
 
         raw_output = self.model(
             input_batch,
@@ -289,7 +289,7 @@ class AbLang2Model(ModelMixinSnap):
         results = []
         for seq_str in raw_output:
             heavy, light = (part.strip("<>") for part in seq_str.split("|"))
-            results.append(AbLang2RestoreItem(heavy=heavy, light=light))
+            results.append(AbLang2RestoreItem(heavy_chain=heavy, light_chain=light))
 
         return AbLang2GenerateResponse(results=results)
 
@@ -297,7 +297,9 @@ class AbLang2Model(ModelMixinSnap):
     @modal_endpoint(app_name=app_name)
     def log_prob(self, payload: AbLang2LogProbRequest) -> AbLang2LogProbResponse:
         # 1. Format the input sequences (using the same convention as elsewhere)
-        formatted_batch = [f"<{item.heavy}>|<{item.light}>" for item in payload.items]
+        formatted_batch = [
+            f"<{item.heavy_chain}>|<{item.light_chain}>" for item in payload.items
+        ]
 
         # 2. Get the token IDs for the formatted sequences.
         #    (Assume that the tokenizer returns a torch.Tensor of shape [B, L],

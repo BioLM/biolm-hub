@@ -45,12 +45,12 @@ def generate():
 
     # Define common input data
     seq_1 = AbLang2SequenceItem(
-        heavy="QVQLVQSGGQMKKPGSSVRVSCKASGYTFTNYGMNWVRQAPGQGLEWMGRI",
-        light="DIQMTQSPSSLSASVGDRVTITCKASQDVSTAVA",
+        heavy_chain="QVQLVQSGGQMKKPGSSVRVSCKASGYTFTNYGMNWVRQAPGQGLEWMGRI",
+        light_chain="DIQMTQSPSSLSASVGDRVTITCKASQDVSTAVA",
     )
     seq_2 = AbLang2SequenceItem(
-        heavy="EVQLVESGGGLVKPGGSLKLSCAASGFTFSSYAMNWVRQAPGKGLEWVASIL",
-        light="DVVMTQTPLSLPVSLGDQASISCRSSQSLVHSNGNTYLHW",
+        heavy_chain="EVQLVESGGGLVKPGGSLKLSCAASGFTFSSYAMNWVRQAPGKGLEWVASIL",
+        light_chain="DVVMTQTPLSLPVSLGDQASISCRSSQSLVHSNGNTYLHW",
     )
 
     # Test Case 1: encode() with SEQCODING
@@ -97,8 +97,8 @@ def generate():
                 params=AbLang2RestoreParams(align=False),
                 items=[
                     AbLang2MissingSequenceItem(
-                        heavy="QVQLVQ*GGQMKKPGSSVRVSCKASGYTFTNYGMN**VRQAPGQGLEWMGRI",
-                        light="DIQMTQSPSSLSA*VGDRVTITCKASQDVSTAVA",
+                        heavy_chain="QVQLVQ*GGQMKKPGSSVRVSCKASGYTFTNYGMN**VRQAPGQGLEWMGRI",
+                        light_chain="DIQMTQSPSSLSA*VGDRVTITCKASQDVSTAVA",
                     )
                 ],
             ),

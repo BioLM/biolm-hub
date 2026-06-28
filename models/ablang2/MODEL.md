@@ -77,7 +77,7 @@ The BioLM implementation uses official pre-trained weights loaded via `ablang2.p
 | Relative tolerance | 1e-4 | PASS |
 | Cosine distance | < 0.02 | PASS |
 
-Tests cover encode (seqcoding + rescoding), predict, generate, and predict_log_prob actions.
+Tests cover encode (seqcoding + rescoding), predict, generate, and log_prob actions.
 
 ### Comparison to Alternatives
 
@@ -131,7 +131,7 @@ Request
   |     |-- encode: seqcoding or rescoding mode
   |     |-- predict: likelihood mode (logits)
   |     |-- generate: restore mode (fill masked positions)
-  |     |-- predict_log_prob: logits -> log_softmax -> sum
+  |     |-- log_prob: logits -> log_softmax -> sum
   |-- 4. Post-process outputs to response schema
   |-- 5. Return typed response
 ```
@@ -158,7 +158,7 @@ The model runs entirely on CPU, making it cost-effective for high-throughput ant
 
 ### Caching Behavior
 
-AbLang2 inherits standard two-tier caching from `BillingMixinSnap`:
+Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
 - **Redis (Modal Dict)**: Fast lookup, TTL-based expiration
 - **R2**: Persistent storage for cached results
 - **Cache key**: Determined by the request payload (sequences, params, mode)
@@ -167,7 +167,7 @@ AbLang2 inherits standard two-tier caching from `BillingMixinSnap`:
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v1 | 2025-02-05 | Initial implementation with encode, predict, generate, predict_log_prob actions |
+| v1 | 2025-02-05 | Initial implementation with encode, predict, generate, log_prob actions |
 
 ---
 

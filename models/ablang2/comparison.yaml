@@ -4,7 +4,7 @@ last_updated: "2026-03-17"
 
 strengths:
   - "Germline-debiased representations that focus on functional antibody properties rather than germline gene identity, making embeddings more informative for distinguishing functionally distinct antibodies within the same germline family"
-  - "Four complementary actions (encode, predict, generate, predict_log_prob) in a single model, covering embedding, per-position likelihood, sequence restoration, and global log-probability scoring"
+  - "Four complementary actions (encode, predict, generate, log_prob) in a single model, covering embedding, per-position likelihood, sequence restoration, and global log-probability scoring"
   - "Paired heavy-light chain modeling captures inter-chain co-evolutionary signals critical for accurate paratope representation, unlike single-chain models that miss VH-VL interface effects"
   - "CPU-only inference (4 GB RAM, no GPU) enables cost-effective high-throughput screening of large antibody libraries without GPU infrastructure"
   - "Sequence restoration (generate action) fills missing residues using paired heavy-light context, which is particularly valuable for CDR recovery from noisy NGS or single-cell sequencing data"
@@ -63,7 +63,7 @@ complements:
     workflow: "Use AbLang2 to score and rank antibody variants by sequence plausibility, then predict 3D structures for top candidates with AbodyBuilder3 for structure-based analysis and design"
     example_protocol: null
   - model: "antifold"
-    workflow: "Use AbLang2 predict_log_prob to score sequences for evolutionary plausibility, then use AntiFold on predicted structures to generate structurally compatible CDR variants -- combining sequence-level and structure-level fitness assessments"
+    workflow: "Use AbLang2 log_prob to score sequences for evolutionary plausibility, then use AntiFold on predicted structures to generate structurally compatible CDR variants -- combining sequence-level and structure-level fitness assessments"
     example_protocol: null
   - model: "propermab"
     workflow: "Use AbLang2 encode for initial high-throughput embedding-based clustering of antibody libraries, then run ProperMAB on representative candidates to extract detailed biophysical developability features"

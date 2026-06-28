@@ -43,7 +43,7 @@ Single variant -- no size options. The model slug is `antifold`.
 
 **Other considerations:**
 - The `generate` action is stochastic by default; provide a `seed` for reproducibility
-- Generate batch size is limited to 1 PDB per request (encode/score/predict_log_prob support up to 32)
+- Generate batch size is limited to 1 PDB per request (encode/score/log_prob support up to 32)
 - PDB structures should use IMGT-compatible numbering for correct region identification
 
 ## Actions / Endpoints
@@ -56,10 +56,10 @@ Extract structure-conditioned embeddings and/or logits from an antibody structur
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
-| `params.heavy_chain` | str | None | PDB chain ID | Heavy chain identifier |
-| `params.light_chain` | str | None | PDB chain ID | Light chain identifier |
-| `params.nanobody_chain` | str | None | PDB chain ID | Nanobody chain identifier (mutually exclusive with heavy/light) |
-| `params.antigen_chain` | str | None | PDB chain ID | Optional antigen chain for context |
+| `params.heavy_chain_id` | str | None | PDB chain ID | Heavy chain identifier |
+| `params.light_chain_id` | str | None | PDB chain ID | Light chain identifier |
+| `params.nanobody_chain_id` | str | None | PDB chain ID | Nanobody chain identifier (mutually exclusive with heavy/light) |
+| `params.antigen_chain_id` | str | None | PDB chain ID | Optional antigen chain for context |
 | `params.include` | list | `["mean"]` | `mean`, `residue`, `logits` | What to include in response |
 | `items[].pdb` | str | (required) | Valid PDB string | PDB structure content |
 
@@ -93,10 +93,10 @@ Sample new antibody sequences conditioned on backbone structure.
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
-| `params.heavy_chain` | str | None | PDB chain ID | Heavy chain identifier |
-| `params.light_chain` | str | None | PDB chain ID | Light chain identifier |
-| `params.nanobody_chain` | str | None | PDB chain ID | Nanobody chain (mutually exclusive with heavy/light) |
-| `params.antigen_chain` | str | None | PDB chain ID | Optional antigen chain for context |
+| `params.heavy_chain_id` | str | None | PDB chain ID | Heavy chain identifier |
+| `params.light_chain_id` | str | None | PDB chain ID | Light chain identifier |
+| `params.nanobody_chain_id` | str | None | PDB chain ID | Nanobody chain (mutually exclusive with heavy/light) |
+| `params.antigen_chain_id` | str | None | PDB chain ID | Optional antigen chain for context |
 | `params.seed` | int | None | Any int | Random seed for reproducibility |
 | `params.include` | list | None | `logprobs`, `logits` | Optional additional outputs |
 | `params.num_seq_per_target` | int | 1 | 1-50,000 | Number of sequences to generate |
@@ -128,8 +128,8 @@ Sample new antibody sequences conditioned on backbone structure.
         {
           "global_score": -1.23,
           "score": -0.98,
-          "heavy": "EVQLVESGGGLVQPGG...",
-          "light": "DIQMTQSPSSLSASV...",
+          "heavy_chain": "EVQLVESGGGLVQPGG...",
+          "light_chain": "DIQMTQSPSSLSASV...",
           "temperature": 0.2,
           "mutations": 3,
           "seq_recovery": 0.97
@@ -151,10 +151,10 @@ Score how well the native sequence fits the observed backbone structure.
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
-| `params.heavy_chain` | str | None | PDB chain ID | Heavy chain identifier |
-| `params.light_chain` | str | None | PDB chain ID | Light chain identifier |
-| `params.nanobody_chain` | str | None | PDB chain ID | Nanobody chain (mutually exclusive with heavy/light) |
-| `params.antigen_chain` | str | None | PDB chain ID | Optional antigen chain for context |
+| `params.heavy_chain_id` | str | None | PDB chain ID | Heavy chain identifier |
+| `params.light_chain_id` | str | None | PDB chain ID | Light chain identifier |
+| `params.nanobody_chain_id` | str | None | PDB chain ID | Nanobody chain (mutually exclusive with heavy/light) |
+| `params.antigen_chain_id` | str | None | PDB chain ID | Optional antigen chain for context |
 | `items[].pdb` | str | (required) | Valid PDB string | PDB structure content |
 
 **Response:**
@@ -164,14 +164,14 @@ Score how well the native sequence fits the observed backbone structure.
   "results": [
     {
       "global_score": -1.23,
-      "heavy": "EVQLVESGGGLVQPGG...",
-      "light": "DIQMTQSPSSLSASV..."
+      "heavy_chain": "EVQLVESGGGLVQPGG...",
+      "light_chain": "DIQMTQSPSSLSASV..."
     }
   ]
 }
 ```
 
-### `predict_log_prob`
+### `log_prob`
 
 Compute the total log-probability of each input structure's sequence given its backbone coordinates.
 
@@ -205,8 +205,8 @@ from models.antifold.schema import (
 
 request = AntiFoldEncodeRequest(
     params=AntiFoldEncodeRequestParams(
-        heavy_chain="H",
-        light_chain="L",
+        heavy_chain_id="H",
+        light_chain_id="L",
         include=[AntiFoldEncodeIncludeOptions.MEAN],
     ),
     items=[AntiFoldBaseRequestItem(pdb=pdb_string)],
@@ -225,8 +225,8 @@ from models.antifold.schema import (
 
 request = AntiFoldGenerateRequest(
     params=AntiFoldGenerateRequestParams(
-        heavy_chain="H",
-        light_chain="L",
+        heavy_chain_id="H",
+        light_chain_id="L",
         num_seq_per_target=100,
         sampling_temp=0.2,
         regions=[AntiFoldValidRegions.CDRH3],
@@ -247,8 +247,8 @@ from models.antifold.schema import (
 
 request = AntiFoldPredictRequest(
     params=AntiFoldPredictRequestParams(
-        heavy_chain="H",
-        light_chain="L",
+        heavy_chain_id="H",
+        light_chain_id="L",
     ),
     items=[AntiFoldBaseRequestItem(pdb=pdb_string)],
 )
@@ -266,7 +266,7 @@ from models.antifold.schema import (
 
 request = AntiFoldGenerateRequest(
     params=AntiFoldGenerateRequestParams(
-        nanobody_chain="A",
+        nanobody_chain_id="A",
         num_seq_per_target=50,
         sampling_temp=0.3,
         regions=[AntiFoldValidRegions.CDR1, AntiFoldValidRegions.CDR2, AntiFoldValidRegions.CDR3],
@@ -303,7 +303,7 @@ Option A -- Numerical Reproduction: outputs from the BioLM implementation are co
 |-------|--------|-----------|--------|
 | PDB 3HFM (antibody) | encode | cosine_distance < 0.02, rel_tol 3e-4 | PASS |
 | PDB 8OI2 IMGT (antibody) | encode | cosine_distance < 0.02, rel_tol 3e-4 | PASS |
-| PDB 3HFM | predict_log_prob | rel_tol 1e-4 | PASS |
+| PDB 3HFM | log_prob | rel_tol 1e-4 | PASS |
 | PDB 3HFM | score | rel_tol 1e-4 | PASS |
 | PDB 3HFM | generate | Sequence count match | PASS |
 | PDB 8OI2 IMGT | generate | Sequence count match | PASS |
@@ -325,7 +325,7 @@ Option A -- Numerical Reproduction: outputs from the BioLM implementation are co
 
 ## Implementation Notes
 
-- **Memory snapshots**: Uses `@modal.enter(snap=True)` with `BillingMixinSnap` for fast cold starts. Despite being a CPU model, GPU snapshot is enabled in the configuration.
+- **Memory snapshots**: Uses `@modal.enter(snap=True)` with `ModelMixinSnap` for fast cold starts. Despite being a CPU model, GPU snapshot is enabled in the configuration.
 - **Container image**: Based on `pytorch/pytorch:2.3.1-cuda12.1-cudnn8-runtime` with AntiFold cloned from GitHub at commit `c306ae6`.
 - **External modifications**: Two files from the original AntiFold repository (`main.py` and `antiscripts.py`) are replaced with modified versions in `models/antifold/external/` for API compatibility.
 - **Temporary files**: PDB strings are written to temporary files in `/tmp_pdbs/` during inference and cleaned up after each request.

@@ -79,7 +79,7 @@ The BioLM implementation loads official pre-trained weights from HuggingFace via
 |--------|-----------|--------|
 | Relative tolerance | 1e-4 | PASS |
 
-Tests cover encode, generate, and predict_log_prob actions for both paired and unpaired variants.
+Tests cover encode, generate, and log_prob actions for both paired and unpaired variants.
 
 ### Comparison to Alternatives
 
@@ -160,7 +160,7 @@ Request
 
 ### Caching Behavior
 
-IgBERT inherits standard two-tier caching from `BillingMixinSnap`:
+Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
 - **Redis (Modal Dict)**: Fast lookup, TTL-based expiration
 - **R2**: Persistent storage for cached results
 - **Cache key**: Determined by request payload (sequences, params, model type)
@@ -169,7 +169,7 @@ IgBERT inherits standard two-tier caching from `BillingMixinSnap`:
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v1 | 2025-01-30 | Initial implementation with encode, generate, predict_log_prob actions |
+| v1 | 2025-01-30 | Initial implementation with encode, generate, log_prob actions |
 
 ---
 

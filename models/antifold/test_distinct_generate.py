@@ -64,10 +64,10 @@ def extract_sequences_from_response(response: dict) -> list[str]:
     for result in response["results"]:
         if isinstance(result, dict) and "sequences" in result:
             for seq_item in result["sequences"]:
-                if isinstance(seq_item, dict) and "heavy" in seq_item:
-                    sequences.append(seq_item["heavy"])
-                    if seq_item.get("light"):
-                        sequences.append(seq_item["light"])
+                if isinstance(seq_item, dict) and "heavy_chain" in seq_item:
+                    sequences.append(seq_item["heavy_chain"])
+                    if seq_item.get("light_chain"):
+                        sequences.append(seq_item["light_chain"])
 
     return sequences
 
@@ -96,7 +96,7 @@ def test_generate_diversity_with_rng_seed_fix(
 
         payload = {
             "params": {
-                "heavy_chain": "A",
+                "heavy_chain_id": "A",
                 "num_seq_per_target": 4,
                 "sampling_temp": temperature,
                 "regions": ["all"],
@@ -133,7 +133,7 @@ def test_generate_seed_reproducibility():
 
         payload = {
             "params": {
-                "heavy_chain": "A",
+                "heavy_chain_id": "A",
                 "num_seq_per_target": 2,
                 "sampling_temp": 0.5,
                 "regions": ["all"],
@@ -174,7 +174,7 @@ def test_generate_default_is_diverse():
 
         payload = {
             "params": {
-                "heavy_chain": "A",
+                "heavy_chain_id": "A",
                 "num_seq_per_target": 2,
                 "sampling_temp": 1.0,
                 "regions": ["all"],

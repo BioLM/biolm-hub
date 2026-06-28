@@ -41,7 +41,7 @@ SADIE is a single-variant tool with no size options.
 **CANNOT be used for:**
 - Sequence embedding (use AbLang2, IgBERT, IgT5, or NanoBERT)
 - Sequence generation or completion (use AbLang2 or IgBERT `generate`)
-- Log-probability scoring (use AbLang2 or IgBERT `predict_log_prob`)
+- Log-probability scoring (use AbLang2 or IgBERT `log_prob`)
 - Non-immunoglobulin/non-TCR proteins
 - 3D structure prediction
 
@@ -217,7 +217,7 @@ Output comparison: The BioLM implementation uses the `sadie-antibody` PyPI packa
 - **Dependencies**: `sadie-antibody==1.0.6` (requires Pydantic v1 internally; accommodated in schema design).
 - **Sequence hashing**: Sequences are hashed with SHA-256 for internal tracking.
 - **No GPU**: SADIE runs entirely on CPU with minimal resource allocation.
-- **Caching**: Inherits standard Redis/R2 two-tier caching from `BillingMixinSnap`.
+- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
 
 ## License
 

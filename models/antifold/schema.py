@@ -2,7 +2,9 @@ from functools import partial
 from typing import Annotated, Optional, Union
 
 from pydantic import (
+    AliasChoices,
     BeforeValidator,
+    ConfigDict,
     Field,
     PrivateAttr,
     model_validator,
@@ -139,10 +141,24 @@ class AntiFoldGenerateIncludeOptions(EnhancedStringEnum):
 
 
 class AntiFoldPredictRequestParams(RequestModel):
-    heavy_chain: Optional[str] = None
-    light_chain: Optional[str] = None
-    nanobody_chain: Optional[str] = None
-    antigen_chain: Optional[str] = None
+    # These are PDB chain SELECTORS (which chain in the input PDB), not sequences,
+    # so they take the canonical `_id` suffix. Old names accepted via alias.
+    model_config = ConfigDict(populate_by_name=True)
+
+    heavy_chain_id: Optional[str] = Field(
+        default=None, validation_alias=AliasChoices("heavy_chain_id", "heavy_chain")
+    )
+    light_chain_id: Optional[str] = Field(
+        default=None, validation_alias=AliasChoices("light_chain_id", "light_chain")
+    )
+    nanobody_chain_id: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("nanobody_chain_id", "nanobody_chain"),
+    )
+    antigen_chain_id: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("antigen_chain_id", "antigen_chain"),
+    )
 
     # Private attribute to store the inferred "chain mode"
     _custom_chain_mode: Optional[bool] = PrivateAttr(default=False)
@@ -154,26 +170,29 @@ class AntiFoldPredictRequestParams(RequestModel):
           - Otherwise => error.
         """
         heavy, light, nanobody, antigen = (
-            instance.heavy_chain,
-            instance.light_chain,
-            instance.nanobody_chain,
-            instance.antigen_chain,
+            instance.heavy_chain_id,
+            instance.light_chain_id,
+            instance.nanobody_chain_id,
+            instance.antigen_chain_id,
         )
 
         if not any([heavy, light, nanobody]):
             raise ValueError(
-                "PDB chain for heavy_chain and light_chain or nanobody_chain must be specified"
+                "PDB chain for heavy_chain_id and light_chain_id or "
+                "nanobody_chain_id must be specified"
             )
         if nanobody and (heavy or light):
             instance._custom_chain_mode = True
             raise ValueError(
-                "Cannot provide both `nanobody_chain` and (`heavy_chain`, `light_chain`). Pick one."
+                "Cannot provide both `nanobody_chain_id` and "
+                "(`heavy_chain_id`, `light_chain_id`). Pick one."
             )
 
         if light and not heavy:
             raise ValueError(
-                "Cannot provide just `light_chain`."
-                "Provide both 'heavy_chain' and 'light_chain' and set 'exclude_heavy' or 'exclude_light' to restrict sampling to one chain"
+                "Cannot provide just `light_chain_id`. Provide both "
+                "`heavy_chain_id` and `light_chain_id` and set `exclude_heavy` or "
+                "`exclude_light` to restrict sampling to one chain"
             )
         if heavy and not light:
             instance._custom_chain_mode = True
@@ -220,14 +239,14 @@ class AntiFoldPredictRequest(RequestModel):
         for item in items:
             chain_counts, chain_list = parse_pdb_string(item.pdb)
 
-            if params.heavy_chain:
-                validate_chain_id(chain_list, params.heavy_chain)
-            if params.light_chain:
-                validate_chain_id(chain_list, params.light_chain)
-            if params.nanobody_chain:
-                validate_chain_id(chain_list, params.nanobody_chain)
-            if params.antigen_chain:
-                validate_chain_id(chain_list, params.antigen_chain)
+            if params.heavy_chain_id:
+                validate_chain_id(chain_list, params.heavy_chain_id)
+            if params.light_chain_id:
+                validate_chain_id(chain_list, params.light_chain_id)
+            if params.nanobody_chain_id:
+                validate_chain_id(chain_list, params.nanobody_chain_id)
+            if params.antigen_chain_id:
+                validate_chain_id(chain_list, params.antigen_chain_id)
 
         return instance
 
@@ -283,17 +302,19 @@ class AntiFoldGenerateRequest(RequestModel):
         for item in items:
             chain_counts, chain_list = parse_pdb_string(item.pdb)
 
-            if params.heavy_chain:
-                validate_chain_id(chain_list, params.heavy_chain)
-                validate_positions(chain_counts, params.regions, params.heavy_chain)
-            if params.light_chain:
-                validate_chain_id(chain_list, params.light_chain)
-                validate_positions(chain_counts, params.regions, params.light_chain)
-            if params.nanobody_chain:
-                validate_chain_id(chain_list, params.nanobody_chain)
-                validate_positions(chain_counts, params.regions, params.nanobody_chain)
-            if params.antigen_chain:
-                validate_chain_id(chain_list, params.antigen_chain)
+            if params.heavy_chain_id:
+                validate_chain_id(chain_list, params.heavy_chain_id)
+                validate_positions(chain_counts, params.regions, params.heavy_chain_id)
+            if params.light_chain_id:
+                validate_chain_id(chain_list, params.light_chain_id)
+                validate_positions(chain_counts, params.regions, params.light_chain_id)
+            if params.nanobody_chain_id:
+                validate_chain_id(chain_list, params.nanobody_chain_id)
+                validate_positions(
+                    chain_counts, params.regions, params.nanobody_chain_id
+                )
+            if params.antigen_chain_id:
+                validate_chain_id(chain_list, params.antigen_chain_id)
 
         return instance
 
@@ -340,8 +361,12 @@ class AntiFoldGenerateResponseResultSamples(RequestModel):
     }
     global_score: float
     score: float
-    heavy: str
-    light: Optional[str] = None
+    # Designed antibody chain sequences. Canonical output names; the upstream
+    # AntiFold keys (`heavy`/`light`) are accepted via alias.
+    heavy_chain: str = Field(validation_alias=AliasChoices("heavy_chain", "heavy"))
+    light_chain: Optional[str] = Field(
+        default=None, validation_alias=AliasChoices("light_chain", "light")
+    )
     temperature: float
     mutations: int
     seq_recovery: float
@@ -399,8 +424,12 @@ class AntiFoldScoreResponseResult(ResponseModel):
         },
     }
     global_score: float
-    heavy: str
-    light: Optional[str] = None
+    # Scored antibody chain sequences. Canonical output names; the upstream
+    # AntiFold keys (`heavy`/`light`) are accepted via alias.
+    heavy_chain: str = Field(validation_alias=AliasChoices("heavy_chain", "heavy"))
+    light_chain: Optional[str] = Field(
+        default=None, validation_alias=AliasChoices("light_chain", "light")
+    )
 
 
 class AntiFoldScoreResponse(ResponseModel):

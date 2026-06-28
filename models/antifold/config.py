@@ -36,6 +36,8 @@ AntiFoldResourceSpec = ModalResourceSpec(cpu=1.0, memory=2 * 1024, gpu=None)  # 
 MODEL_FAMILY = ModelFamily(
     base_model_slug=AntiFoldParams.base_model_slug,
     display_name=AntiFoldParams.display_name,
+    # The @biolm_model_class container class in app.py (gateway routing, W8).
+    modal_class_name="AntiFoldModel",
     tags=ModelTags(
         input_modality=[InputModality.STRUCTURE],
         input_molecule=[InputMolecule.ANTIBODY, InputMolecule.NANOBODY],

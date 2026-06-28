@@ -2,6 +2,7 @@ from functools import partial
 from typing import Annotated, Optional
 
 from pydantic import (
+    AliasChoices,
     BeforeValidator,
     ConfigDict,
     Field,
@@ -55,19 +56,32 @@ class IgBertEncodeRequestParams(RequestModel):
 
 
 class IgBertEncodeRequestItem(RequestModel):
-    heavy: Optional[
+    # Canonical antibody field names; old `heavy`/`light` accepted via alias.
+    model_config = ConfigDict(populate_by_name=True)
+
+    heavy_chain: Optional[
         Annotated[
             str,
             BeforeValidator(validate_aa_extended),
-            Field(None, min_length=1, max_length=IgBertParams.max_sequence_len),
+            Field(
+                None,
+                min_length=1,
+                max_length=IgBertParams.max_sequence_len,
+                validation_alias=AliasChoices("heavy_chain", "heavy"),
+            ),
         ]
     ] = None
 
-    light: Optional[
+    light_chain: Optional[
         Annotated[
             str,
             BeforeValidator(validate_aa_extended),
-            Field(None, min_length=1, max_length=IgBertParams.max_sequence_len),
+            Field(
+                None,
+                min_length=1,
+                max_length=IgBertParams.max_sequence_len,
+                validation_alias=AliasChoices("light_chain", "light"),
+            ),
         ]
     ] = None
 
@@ -92,11 +106,16 @@ class IgBertEncodeRequestItem(RequestModel):
           - If `sequence` => "unpaired"
           - Otherwise => error.
         """
-        heavy, light, sequence = instance.heavy, instance.light, instance.sequence
+        heavy, light, sequence = (
+            instance.heavy_chain,
+            instance.light_chain,
+            instance.sequence,
+        )
 
         if sequence and (heavy or light):
             raise ValueError(
-                "Cannot provide both `sequence` and (`heavy`, `light`). Pick one."
+                "Cannot provide both `sequence` and (`heavy_chain`, `light_chain`). "
+                "Pick one."
             )
 
         from models.igbert.config import IgBertModelTypes
@@ -107,7 +126,8 @@ class IgBertEncodeRequestItem(RequestModel):
             instance._kind = IgBertModelTypes.UNPAIRED
         else:
             raise ValueError(
-                "Must provide either (`heavy`, `light`) OR `sequence`, but not both."
+                "Must provide either (`heavy_chain`, `light_chain`) OR `sequence`, "
+                "but not both."
             )
 
         return instance
@@ -126,17 +146,30 @@ class IgBertGenerateRequestItem(RequestModel):
     which must still be valid length and contain at least 1 '*'.
     """
 
-    heavy: Optional[
+    # Canonical antibody field names; old `heavy`/`light` accepted via alias.
+    model_config = ConfigDict(populate_by_name=True)
+
+    heavy_chain: Optional[
         Annotated[
             str,
-            Field(None, min_length=1, max_length=IgBertParams.max_sequence_len),
+            Field(
+                None,
+                min_length=1,
+                max_length=IgBertParams.max_sequence_len,
+                validation_alias=AliasChoices("heavy_chain", "heavy"),
+            ),
         ]
     ] = None
 
-    light: Optional[
+    light_chain: Optional[
         Annotated[
             str,
-            Field(None, min_length=1, max_length=IgBertParams.max_sequence_len),
+            Field(
+                None,
+                min_length=1,
+                max_length=IgBertParams.max_sequence_len,
+                validation_alias=AliasChoices("light_chain", "light"),
+            ),
         ]
     ] = None
 
@@ -154,9 +187,15 @@ class IgBertGenerateRequestItem(RequestModel):
     @model_validator(mode="after")
     def validate_and_infer_type(cls, instance):
         # Still do the same logic to detect paired vs. unpaired
-        heavy, light, sequence = instance.heavy, instance.light, instance.sequence
+        heavy, light, sequence = (
+            instance.heavy_chain,
+            instance.light_chain,
+            instance.sequence,
+        )
         if sequence and (heavy or light):
-            raise ValueError("Cannot provide both `sequence` and (`heavy`, `light`).")
+            raise ValueError(
+                "Cannot provide both `sequence` and (`heavy_chain`, `light_chain`)."
+            )
         from models.igbert.config import IgBertModelTypes
 
         if heavy and light:
@@ -166,7 +205,9 @@ class IgBertGenerateRequestItem(RequestModel):
             instance._kind = IgBertModelTypes.UNPAIRED
             sequence_to_validate = sequence
         else:
-            raise ValueError("Must provide either `heavy`+`light` OR `sequence`.")
+            raise ValueError(
+                "Must provide either `heavy_chain`+`light_chain` OR `sequence`."
+            )
 
         SingleOrMoreOccurrencesOf(token="*")(sequence_to_validate)
         AAUnambiguousPlusExtra(extra=["*"])(sequence_to_validate)
@@ -206,8 +247,9 @@ class IgBertEncodeResponse(ResponseModel):
 
 
 class IgBertGenerateResponseResult(ResponseModel):
-    heavy: Optional[str] = None
-    light: Optional[str] = None
+    # Restore output mirrors the canonical antibody field names.
+    heavy_chain: Optional[str] = None
+    light_chain: Optional[str] = None
     sequence: Optional[str] = None
 
 

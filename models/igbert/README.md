@@ -35,7 +35,7 @@ The paired variant processes both chains jointly (separated by `[SEP]`). The unp
 **CAN be used for:**
 - Generating mean-pooled, per-residue, or logit embeddings for antibody sequences
 - Masked residue prediction (sequence completion with `*` placeholders)
-- Zero-shot antibody sequence scoring via log-probability (`predict_log_prob`)
+- Zero-shot antibody sequence scoring via log-probability (`log_prob`)
 - Both paired (heavy+light) and unpaired (single chain) analysis
 
 **CANNOT be used for:**
@@ -59,8 +59,8 @@ Generates embeddings for antibody sequences. Supports mean-pooled embeddings, pe
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
-| `items[].heavy` | str | `null` | 1--256 chars | Heavy chain sequence (paired mode) |
-| `items[].light` | str | `null` | 1--256 chars | Light chain sequence (paired mode) |
+| `items[].heavy_chain` | str | `null` | 1--256 chars | Heavy chain sequence (paired mode) |
+| `items[].light_chain` | str | `null` | 1--256 chars | Light chain sequence (paired mode) |
 | `items[].sequence` | str | `null` | 1--512 chars | Single chain sequence (unpaired mode) |
 | `params.include` | list[str] | `["mean"]` | `mean`, `residue`, `logits` | Output types to include |
 
@@ -92,8 +92,8 @@ Restores missing residues marked with `*` by predicting the most likely canonica
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
-| `items[].heavy` | str | `null` | 1--256 chars | Heavy chain with `*` at unknown positions (paired) |
-| `items[].light` | str | `null` | 1--256 chars | Light chain with `*` at unknown positions (paired) |
+| `items[].heavy_chain` | str | `null` | 1--256 chars | Heavy chain with `*` at unknown positions (paired) |
+| `items[].light_chain` | str | `null` | 1--256 chars | Light chain with `*` at unknown positions (paired) |
 | `items[].sequence` | str | `null` | 1--512 chars | Single chain with `*` at unknown positions (unpaired) |
 
 At least one `*` must be present in each item.
@@ -104,8 +104,8 @@ At least one `*` must be present in each item.
 {
   "results": [
     {
-      "heavy": "QVQLVQSGAEVKKPGASVKVSC...",
-      "light": "DIQMTQSPSSVSASVGDRVTITC...",
+      "heavy_chain": "QVQLVQSGAEVKKPGASVKVSC...",
+      "light_chain": "DIQMTQSPSSVSASVGDRVTITC...",
       "sequence": null
     }
   ]
@@ -118,8 +118,8 @@ At least one `*` must be present in each item.
 {
   "results": [
     {
-      "heavy": null,
-      "light": null,
+      "heavy_chain": null,
+      "light_chain": null,
       "sequence": "QVQLVQSGAEVKKPGASVKVSC..."
     }
   ]
@@ -128,7 +128,7 @@ At least one `*` must be present in each item.
 
 **Schema classes**: `IgBertGenerateRequest` -> `IgBertGenerateResponse`
 
-### `predict_log_prob`
+### `log_prob`
 
 Computes the total log-probability of antibody sequences under the IgBERT model by summing log P(residue_i | context) at each non-special-token position.
 
@@ -136,8 +136,8 @@ Computes the total log-probability of antibody sequences under the IgBERT model 
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
-| `items[].heavy` | str | `null` | 1--256 chars | Heavy chain sequence (paired) |
-| `items[].light` | str | `null` | 1--256 chars | Light chain sequence (paired) |
+| `items[].heavy_chain` | str | `null` | 1--256 chars | Heavy chain sequence (paired) |
+| `items[].light_chain` | str | `null` | 1--256 chars | Light chain sequence (paired) |
 | `items[].sequence` | str | `null` | 1--512 chars | Single chain sequence (unpaired) |
 
 **Response:**
@@ -170,8 +170,8 @@ encode_request = IgBertEncodeRequest(
     params=IgBertEncodeRequestParams(include=["mean"]),
     items=[
         IgBertEncodeRequestItem(
-            heavy="QVQLVQSGAEVKKPGASVKVSCKVSGYTSPTTIHWVRQAPGKGLEWMG",
-            light="DIQMTQSPSSVSASVGDRVTITCRASQSIGSFLAWYQQKPGKAPKLLIY",
+            heavy_chain="QVQLVQSGAEVKKPGASVKVSCKVSGYTSPTTIHWVRQAPGKGLEWMG",
+            light_chain="DIQMTQSPSSVSASVGDRVTITCRASQSIGSFLAWYQQKPGKAPKLLIY",
         ),
     ],
 )
@@ -192,8 +192,8 @@ from models.igbert.schema import IgBertGenerateRequest, IgBertGenerateRequestIte
 generate_request = IgBertGenerateRequest(
     items=[
         IgBertGenerateRequestItem(
-            heavy="QVQLVQSG*EVKKPGASVKVSCKVSGYTSPTTI*WVRQAPGKGLEWMG",
-            light="DIQMTQSPSSVSASVGDRVTITCRASQ*IGSFLAWYQQKPGKAPKLLIY",
+            heavy_chain="QVQLVQSG*EVKKPGASVKVSCKVSGYTSPTTI*WVRQAPGKGLEWMG",
+            light_chain="DIQMTQSPSSVSASVGDRVTITCRASQ*IGSFLAWYQQKPGKAPKLLIY",
         ),
     ],
 )
@@ -204,8 +204,8 @@ from models.igbert.schema import IgBertLogProbRequest, IgBertEncodeRequestItem
 log_prob_request = IgBertLogProbRequest(
     items=[
         IgBertEncodeRequestItem(
-            heavy="QVQLVQSGAEVKKPGASVKVSCKVSGYTSPTTIHWVRQAPGKGLEWMG",
-            light="DIQMTQSPSSVSASVGDRVTITCRASQSIGSFLAWYQQKPGKAPKLLIY",
+            heavy_chain="QVQLVQSGAEVKKPGASVKVSCKVSGYTSPTTIHWVRQAPGKGLEWMG",
+            light_chain="DIQMTQSPSSVSASVGDRVTITCRASQSIGSFLAWYQQKPGKAPKLLIY",
         ),
     ],
 )
@@ -237,8 +237,8 @@ Numerical reproduction: The BioLM implementation loads official pre-trained weig
 | Unpaired encode | `encode` | unpaired | Relative tolerance 1e-4 |
 | Paired generate | `generate` | paired | Exact match to golden output |
 | Unpaired generate | `generate` | unpaired | Exact match to golden output |
-| Paired log prob | `predict_log_prob` | paired | Validates negative finite float |
-| Unpaired log prob | `predict_log_prob` | unpaired | Validates negative finite float |
+| Paired log prob | `log_prob` | paired | Validates negative finite float |
+| Unpaired log prob | `log_prob` | unpaired | Validates negative finite float |
 
 ### Verification Status
 
@@ -258,7 +258,7 @@ Numerical reproduction: The BioLM implementation loads official pre-trained weig
 - **Weight loading**: Weights are downloaded from R2 and loaded via HuggingFace `BertForMaskedLM.from_pretrained()`.
 - **Dependencies**: `transformers==4.48.1`, `sentencepiece==0.2.0`, `safetensors==0.5.3`
 - **Variant dispatch**: The model type (paired/unpaired) is set at deployment time via the `MODEL_TYPE` environment variable.
-- **Caching**: Inherits standard Redis/R2 two-tier caching from `BillingMixinSnap`.
+- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
 
 ## License
 

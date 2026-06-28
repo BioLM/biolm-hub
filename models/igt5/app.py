@@ -1,6 +1,7 @@
 import modal
 
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.error import ValidationError400
 from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
@@ -139,13 +140,13 @@ class IgT5Model(ModelMixinSnap):
                 and self.model_type != IgT5ModelTypes.UNPAIRED
             )
         ):
-            raise ValueError(
+            raise ValidationError400(
                 f"Mismatch detected: expected '{self.model_type}' but got '{request_kind}' in request."
             )
 
         if self.model_type == IgT5ModelTypes.PAIRED:
             input_sequences = [
-                f"{' '.join(item.heavy)} </s> {' '.join(item.light)}"
+                f"{' '.join(item.heavy_chain)} </s> {' '.join(item.light_chain)}"
                 for item in payload.items
             ]
         else:

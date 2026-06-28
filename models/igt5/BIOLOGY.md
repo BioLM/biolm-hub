@@ -53,7 +53,7 @@ IgT5 is primarily an embedding model suitable for:
 
 ### Companion Models
 
-- **IgBERT**: BERT-based companion model from the same paper. Offers generate and predict_log_prob actions not available in IgT5. Use IgBERT when you need masked prediction or sequence scoring.
+- **IgBERT**: BERT-based companion model from the same paper. Offers generate and log_prob actions not available in IgT5. Use IgBERT when you need masked prediction or sequence scoring.
 
 ### Complementary Models
 
@@ -64,7 +64,7 @@ IgT5 is primarily an embedding model suitable for:
 Typical multi-model workflows:
 1. Use SADIE to annotate sequences and extract variable domains
 2. Use IgT5 `encode` to generate embeddings for clustering or property prediction
-3. Use IgBERT `predict_log_prob` to score top candidates from the analysis
+3. Use IgBERT `log_prob` to score top candidates from the analysis
 
 ### Alternative Models
 

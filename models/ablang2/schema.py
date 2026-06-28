@@ -1,7 +1,9 @@
 from typing import Annotated, Optional, Union
 
 from pydantic import (
+    AliasChoices,
     BeforeValidator,
+    ConfigDict,
     Field,
     model_validator,
 )
@@ -35,15 +37,28 @@ class AbLang2SequenceItem(RequestModel):
     A single item in an AbLang2 request, which must have heavy + light sequences.
     """
 
-    heavy: Annotated[
+    # Canonical antibody field names; old `heavy`/`light` accepted via alias.
+    model_config = ConfigDict(populate_by_name=True)
+
+    heavy_chain: Annotated[
         str,
         BeforeValidator(validate_aa_extended),
-        Field(..., min_length=1, max_length=AbLang2Params.max_sequence_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=AbLang2Params.max_sequence_len,
+            validation_alias=AliasChoices("heavy_chain", "heavy"),
+        ),
     ]
-    light: Annotated[
+    light_chain: Annotated[
         str,
         BeforeValidator(validate_aa_extended),
-        Field(..., min_length=1, max_length=AbLang2Params.max_sequence_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=AbLang2Params.max_sequence_len,
+            validation_alias=AliasChoices("light_chain", "light"),
+        ),
     ]
 
 
@@ -148,18 +163,31 @@ class AbLang2MissingSequenceItem(RequestModel):
     which must still be valid length and contain at least 1 '*'.
     """
 
-    heavy: Annotated[
+    # Canonical antibody field names; old `heavy`/`light` accepted via alias.
+    model_config = ConfigDict(populate_by_name=True)
+
+    heavy_chain: Annotated[
         str,
-        Field(..., min_length=1, max_length=AbLang2Params.max_sequence_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=AbLang2Params.max_sequence_len,
+            validation_alias=AliasChoices("heavy_chain", "heavy"),
+        ),
     ]
-    light: Annotated[
+    light_chain: Annotated[
         str,
-        Field(..., min_length=1, max_length=AbLang2Params.max_sequence_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=AbLang2Params.max_sequence_len,
+            validation_alias=AliasChoices("light_chain", "light"),
+        ),
     ]
 
     @model_validator(mode="after")
     def validate_combined_sequence(cls, values):
-        combined = values.heavy + values.light
+        combined = values.heavy_chain + values.light_chain
         SingleOrMoreOccurrencesOf(token="*")(combined)
         AAUnambiguousPlusExtra(extra=["*"])(combined)
         return values
@@ -231,8 +259,9 @@ AbLang2PredictResponse = _AbLang2LikelihoodResponse  # Alias to conform to Model
 
 
 class AbLang2RestoreItem(RequestModel):
-    heavy: str
-    light: str
+    # Restore output mirrors the canonical antibody field names.
+    heavy_chain: str
+    light_chain: str
 
 
 class _AbLang2RestoreResponse(ResponseModel):

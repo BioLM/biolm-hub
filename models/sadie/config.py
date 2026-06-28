@@ -29,6 +29,8 @@ SADIEResourceSpec = ModalResourceSpec(
 MODEL_FAMILY = ModelFamily(
     base_model_slug=SADIEParams.base_model_slug,
     display_name=SADIEParams.display_name,
+    # The @biolm_model_class container class in app.py (gateway routing, W8).
+    modal_class_name="SADIEModel",
     tags=ModelTags(
         input_modality=[InputModality.SEQUENCE],
         input_molecule=[InputMolecule.ANTIBODY, InputMolecule.TCR],

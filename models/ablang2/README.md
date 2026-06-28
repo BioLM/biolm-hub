@@ -35,7 +35,7 @@ AbLang2 is a single-variant model with no size options.
 - Generating per-residue embeddings for paired antibodies (`rescoding`)
 - Computing per-position likelihood distributions for antibody sequences
 - Restoring missing residues in antibody sequences (sequence completion)
-- Zero-shot antibody sequence scoring via log-probability (`predict_log_prob`)
+- Zero-shot antibody sequence scoring via log-probability (`log_prob`)
 
 **CANNOT be used for:**
 - Single-chain (unpaired) antibody analysis -- both heavy and light chains are required
@@ -59,8 +59,8 @@ Generates sequence-level (`seqcoding`) or residue-level (`rescoding`) embeddings
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
-| `items[].heavy` | str | *(required)* | 1--1024 chars | Heavy chain amino acid sequence |
-| `items[].light` | str | *(required)* | 1--1024 chars | Light chain amino acid sequence |
+| `items[].heavy_chain` | str | *(required)* | 1--1024 chars | Heavy chain amino acid sequence |
+| `items[].light_chain` | str | *(required)* | 1--1024 chars | Light chain amino acid sequence |
 | `params.include` | str | `"seqcoding"` | `seqcoding`, `rescoding` | Embedding mode |
 | `params.align` | bool | `false` | -- | Alignment mode (rescoding only; not yet supported) |
 
@@ -99,8 +99,8 @@ Returns per-position likelihood distributions over the 20 canonical amino acids 
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
-| `items[].heavy` | str | *(required)* | 1--1024 chars | Heavy chain amino acid sequence |
-| `items[].light` | str | *(required)* | 1--1024 chars | Light chain amino acid sequence |
+| `items[].heavy_chain` | str | *(required)* | 1--1024 chars | Heavy chain amino acid sequence |
+| `items[].light_chain` | str | *(required)* | 1--1024 chars | Light chain amino acid sequence |
 
 **Response:**
 
@@ -128,8 +128,8 @@ Restores missing residues marked with `*` in paired antibody sequences by predic
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
-| `items[].heavy` | str | *(required)* | 1--1024 chars | Heavy chain with `*` at unknown positions |
-| `items[].light` | str | *(required)* | 1--1024 chars | Light chain with `*` at unknown positions |
+| `items[].heavy_chain` | str | *(required)* | 1--1024 chars | Heavy chain with `*` at unknown positions |
+| `items[].light_chain` | str | *(required)* | 1--1024 chars | Light chain with `*` at unknown positions |
 | `params.align` | bool | `false` | -- | Alignment mode (not yet supported) |
 
 At least one `*` must be present across the combined heavy+light sequence.
@@ -140,8 +140,8 @@ At least one `*` must be present across the combined heavy+light sequence.
 {
   "results": [
     {
-      "heavy": "QVQLVQSGGQMKKPGSSVRVSCKASGYTFTNYGMNWVRQAPGQGLEWMGRI",
-      "light": "DIQMTQSPSSLSASVGDRVTITCKASQDVSTAVA"
+      "heavy_chain": "QVQLVQSGGQMKKPGSSVRVSCKASGYTFTNYGMNWVRQAPGQGLEWMGRI",
+      "light_chain": "DIQMTQSPSSLSASVGDRVTITCKASQDVSTAVA"
     }
   ]
 }
@@ -149,7 +149,7 @@ At least one `*` must be present across the combined heavy+light sequence.
 
 **Schema classes**: `AbLang2GenerateRequest` -> `AbLang2GenerateResponse`
 
-### `predict_log_prob`
+### `log_prob`
 
 Computes the total log-probability of paired antibody sequences under the AbLang2 model. Useful for zero-shot sequence scoring and variant effect prediction.
 
@@ -157,8 +157,8 @@ Computes the total log-probability of paired antibody sequences under the AbLang
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
-| `items[].heavy` | str | *(required)* | 1--1024 chars | Heavy chain amino acid sequence |
-| `items[].light` | str | *(required)* | 1--1024 chars | Light chain amino acid sequence |
+| `items[].heavy_chain` | str | *(required)* | 1--1024 chars | Heavy chain amino acid sequence |
+| `items[].light_chain` | str | *(required)* | 1--1024 chars | Light chain amino acid sequence |
 
 **Response:**
 
@@ -190,8 +190,8 @@ encode_request = AbLang2EncodeRequest(
     params=AbLang2EncodeParams(include="seqcoding"),
     items=[
         AbLang2SequenceItem(
-            heavy="QVQLVQSGGQMKKPGSSVRVSCKASGYTFTNYGMNWVRQAPGQGLEWMGRI",
-            light="DIQMTQSPSSLSASVGDRVTITCKASQDVSTAVA",
+            heavy_chain="QVQLVQSGGQMKKPGSSVRVSCKASGYTFTNYGMNWVRQAPGQGLEWMGRI",
+            light_chain="DIQMTQSPSSLSASVGDRVTITCKASQDVSTAVA",
         ),
     ],
 )
@@ -207,8 +207,8 @@ generate_request = AbLang2GenerateRequest(
     params=AbLang2RestoreParams(align=False),
     items=[
         AbLang2MissingSequenceItem(
-            heavy="QVQLVQ*GGQMKKPGSSVRVSCKASGYTFTNYGMN**VRQAPGQGLEWMGRI",
-            light="DIQMTQSPSSLSA*VGDRVTITCKASQDVSTAVA",
+            heavy_chain="QVQLVQ*GGQMKKPGSSVRVSCKASGYTFTNYGMN**VRQAPGQGLEWMGRI",
+            light_chain="DIQMTQSPSSLSA*VGDRVTITCKASQDVSTAVA",
         ),
     ],
 )
@@ -219,8 +219,8 @@ from models.ablang2.schema import AbLang2LogProbRequest, AbLang2SequenceItem
 log_prob_request = AbLang2LogProbRequest(
     items=[
         AbLang2SequenceItem(
-            heavy="QVQLVQSGGQMKKPGSSVRVSCKASGYTFTNYGMNWVRQAPGQGLEWMGRI",
-            light="DIQMTQSPSSLSASVGDRVTITCKASQDVSTAVA",
+            heavy_chain="QVQLVQSGGQMKKPGSSVRVSCKASGYTFTNYGMNWVRQAPGQGLEWMGRI",
+            light_chain="DIQMTQSPSSLSASVGDRVTITCKASQDVSTAVA",
         ),
     ],
 )
@@ -252,7 +252,7 @@ Numerical reproduction: The BioLM implementation loads official pre-trained weig
 | Rescoding embedding | `encode` | 1 paired sequence | Cosine distance < 0.02 |
 | Likelihood prediction | `predict` | 1 paired sequence | Relative tolerance 1e-4 |
 | Sequence restoration | `generate` | 1 sequence with `*` masks | Exact match to golden output |
-| Log probability | `predict_log_prob` | 1 paired sequence | Validates output is negative finite float |
+| Log probability | `log_prob` | 1 paired sequence | Validates output is negative finite float |
 
 ### Verification Status
 
@@ -270,7 +270,7 @@ Numerical reproduction: The BioLM implementation loads official pre-trained weig
 - **Determinism**: Seeds are set (`torch.manual_seed(42)`) for reproducible outputs.
 - **Weight loading**: Weights are downloaded from R2 with library-managed fallback. A symlink is created from the ablang2 library's expected weights location to the managed weights directory.
 - **Dependencies**: `ablang2==0.2.1`, `einops==0.8.1`, `rotary-embedding-torch==0.8.9`
-- **Caching**: Inherits standard Redis/R2 two-tier caching from `BillingMixinSnap`.
+- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
 
 ## License
 
