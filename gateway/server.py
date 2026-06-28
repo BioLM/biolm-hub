@@ -21,7 +21,10 @@ from gateway.config import (
     local_gateway_path,
     remote_gateway_path,
 )
+from models.commons.core.logging import get_logger
 from models.commons.util.config import common_requirements, remote_models_path
+
+logger = get_logger(__name__)
 
 # The gateway imports every model's config.py at startup, so it needs the WHOLE
 # models/ tree (models/__init__.py + models/commons/ + every models/<slug>/)
@@ -61,8 +64,25 @@ _custom_domains = [d] if (d := get_custom_domain()) else []
 @modal.concurrent(max_inputs=100)
 @modal.asgi_app(custom_domains=_custom_domains)
 def web():
-    """ASGI entrypoint: build and return the bare (no-cache) gateway app."""
+    """ASGI entrypoint: build and return the bare (no-cache) gateway app.
+
+    API-only by default; set ``BIOLM_GATEWAY_CATALOG=1`` to also mount the
+    interactive catalog UI on this deployment (hosted web app).
+    """
+    from gateway.config import catalog_enabled
     from gateway.model_discovery import get_model_mapper
     from gateway.routing import build_gateway_app
 
-    return build_gateway_app(get_model_mapper(), use_cache=False)
+    mapper = get_model_mapper()
+    fastapi_app = build_gateway_app(mapper, use_cache=False)
+    if catalog_enabled():
+        # The catalog is a cosmetic, opt-in layer — never let mounting it fail
+        # the no-auth /api/v3 API. Deployment status is skipped here: a deployed
+        # container has no Modal CLI credentials to query it.
+        try:
+            from gateway.catalog.mount import mount_catalog
+
+            mount_catalog(fastapi_app, mapper, check_deployment_status=False)
+        except Exception as e:  # noqa: BLE001 - cosmetic feature must not break the API
+            logger.warning("Could not mount catalog UI; serving API only: %s", e)
+    return fastapi_app

@@ -25,6 +25,21 @@ def get_custom_domain() -> str | None:
     return domain or None
 
 
+def catalog_enabled() -> bool:
+    """Serve the interactive catalog UI on a *deployed* gateway.
+
+    Off by default (the deployed gateway is API-only — W8). Set
+    ``BIOLM_GATEWAY_CATALOG`` to a truthy value (``1``/``true``/``yes``) to also
+    mount ``/catalog`` on the deployment, turning it into a hosted web app.
+    (``bm serve`` always mounts the catalog locally regardless of this flag.)
+    """
+    return os.getenv("BIOLM_GATEWAY_CATALOG", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+
+
 def get_cors_allowed_origins() -> list[str]:
     """CORS allow-list for the gateway.
 

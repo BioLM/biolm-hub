@@ -25,20 +25,24 @@
                             {% if group.variants|length == 1 %}
                                 <!-- Single model - show as primary button -->
                                 {% set variant = group.variants[0] %}
-                                <a href="/catalog/{{ variant.slug }}" class="model-button primary">
+                                {% set dep = status.get(variant.slug) %}
+                                <a href="/catalog/{{ variant.slug }}" class="model-button primary{{ ' not-deployed' if dep == false else '' }}">
                                     <div class="button-content">
                                         <span class="model-name">{{ variant.display_name }}</span>
                                         <span class="endpoint-count">{{ variant.endpoints|length }} endpoint{{ 's' if variant.endpoints|length != 1 else '' }}</span>
+                                        {% if dep == false %}<span class="status-badge undeployed">● not deployed</span>{% elif dep %}<span class="status-badge deployed">● deployed</span>{% endif %}
                                     </div>
                                     <div class="button-arrow">→</div>
                                 </a>
                             {% else %}
                                 <!-- Multiple variants - show as button group -->
                                 {% for variant in group.variants %}
-                                    <a href="/catalog/{{ variant.slug }}" class="model-button variant">
+                                    {% set dep = status.get(variant.slug) %}
+                                    <a href="/catalog/{{ variant.slug }}" class="model-button variant{{ ' not-deployed' if dep == false else '' }}">
                                         <div class="button-content">
                                             <span class="model-name">{{ variant.display_name }}</span>
                                             <span class="variant-info">{{ variant.slug.split('-')[-1] }}</span>
+                                            {% if dep == false %}<span class="status-badge undeployed">● not deployed</span>{% elif dep %}<span class="status-badge deployed">● deployed</span>{% endif %}
                                         </div>
                                         <div class="button-arrow">→</div>
                                     </a>

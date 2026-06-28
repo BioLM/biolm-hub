@@ -760,3 +760,50 @@ button[type="submit"]:active {
         padding: 1.25rem;
     }
 }
+
+/* --- Deployment status (W9) --- */
+.status-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.status-badge.deployed {
+    color: #34d399;
+    background: rgba(52, 211, 153, 0.12);
+}
+
+.status-badge.undeployed {
+    color: #94a3b8;
+    background: rgba(148, 163, 184, 0.12);
+}
+
+/* Greyed-out, but still clickable so the schema/docs remain browsable. */
+.model-button.not-deployed {
+    opacity: 0.55;
+    filter: grayscale(0.6);
+}
+
+.model-button.not-deployed:hover {
+    opacity: 0.8;
+}
+
+.deploy-notice {
+    margin-bottom: 1.5rem;
+    padding: 0.85rem 1.1rem;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: rgba(148, 163, 184, 0.1);
+    color: #cbd5e1;
+    font-size: 0.9rem;
+}
+
+.deploy-notice code {
+    color: #e2e8f0;
+}

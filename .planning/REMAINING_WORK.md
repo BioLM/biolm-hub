@@ -16,7 +16,9 @@
   layer). evo + progen2 resolved; pro1/esmstabp = documented exceptions.
 - **boltzgen** internal protocols/output-delivery removed.
 - **W8 Gateway — ✅ DONE (`97a513f`)** — bare + cached gateways, config-driven discovery (AST deleted),
-  status_code→HTTP promotion, CI guard. Modal-free (T0+T1+Opus). No interim gateway deploy yet (see §4).
+  status_code→HTTP promotion, CI guard. Bare gateway deploy-proven on dev (see §4).
+- **W9 Web app — ✅ DONE** — `bm serve` local catalog web app (browse + run individual models, no gateway
+  deploy needed); deployed/undeployed greying; `[serve]` extra. bm-serve deploy-proven; T0+T1+Opus. See §4.
 
 ---
 
@@ -113,7 +115,18 @@ Per-model LICENSE files frequently carry **inferred** copyright holders/years (f
   Deploy gotchas found+fixed: file `gateway/gateway.py` shadowed the `gateway` package on `modal deploy`
   (→ renamed `server.py`); `local_models_path`=`models/commons` not `models/` (→ gateway computes the real
   dir); the cache stack imports `requests` (→ lazy-imported so the bare gateway stays minimal).
-- **W9 Web app** — catalog + run-inference UI; deployed=active / undeployed=greyed-out; `bm serve`.
+- **W9 Web app — ✅ DONE + bm-serve DEPLOY-PROVEN (2026-06-28).** Local catalog web app: `bm serve` runs
+  the gateway routing **in-process** (no gateway deployment needed) + mounts the catalog UI; forms POST
+  same-origin to `/api/v3/...` which calls your **individual** deployed Modal models. Deployed=active /
+  undeployed=greyed (deployment status from `modal app list --json`, best-effort tri-state True/False/None,
+  TTL-cached, off-loop). `gateway/catalog/{deployment_status,mount}.py` + `cli/serve.py` (`bm serve`
+  `--host/--port/--env/--gateway-url`). Deployed gateway can opt into the catalog via `BIOLM_GATEWAY_CATALOG=1`
+  (isolated in try/except; status query skipped in-container). Web deps = **`[serve]` extra** (`pip install
+  '.[serve]'`; fastapi pinned ==0.112.0 to match the image's FastAPI internals). Validated: live `bm serve`
+  against dev (6 deployed/73 undeployed correct) + 5 unit/route tests (TestClient, Modal-free) + fresh Opus
+  review (all 🟠/🟡 addressed). The **deployed-catalog path** (`BIOLM_GATEWAY_CATALOG=1`) is NOT deploy-tested
+  (Milestone B). NOTE for W14 docs: warn that a deployed catalog / `bm serve --host 0.0.0.0` is unauthenticated
+  and bills the operator's Modal account.
 - **W10 CLI** — `bm setup`/`deploy`/`serve`/`cache`/`r2`; the 3-command quickstart.
 - **W11 CI/CD** — maintainer-gated (`pull_request_target` hardened); port `detect_models.py`; lint+mypy+unit on every PR.
 - **W12 Shared test-asset library** — `test-data/shared/`; naming convention locked in `02`; populate incrementally.

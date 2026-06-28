@@ -9,6 +9,7 @@ from rich.text import Text
 from cli.deploy import deploy_cmd
 from cli.kb import kb_app
 from cli.r2 import r2_app
+from cli.serve import serve_cmd
 
 """
 BioLM-Modal Command Line Interface
@@ -52,6 +53,9 @@ app.add_typer(kb_app, name="kb")
 
 # Mount the deploy command directly
 app.command("deploy")(deploy_cmd)
+
+# Mount the serve command (local catalog web app)
+app.command("serve")(serve_cmd)
 
 
 def display_cli_help() -> None:
