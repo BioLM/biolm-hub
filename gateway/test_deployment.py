@@ -10,20 +10,17 @@ from models.commons.util.config import (
     r2_bucket_name,
     r2_test_data_dir,
 )
-from models.commons.util.environment import get_environment_name
 
 # --- Test Configuration ---
 
-# Get the URL of the deployed gateway from an environment variable.
-GATEWAY_URL = os.getenv(
-    "BIOLM_GATEWAY_URL",
-    f"https://biolm-{get_environment_name()}--biolm-gateway-gateway.modal.run",
-)
+# URL of the deployed gateway. Set BIOLM_GATEWAY_URL to the deployment's URL
+# (Modal prints it on `modal deploy`, e.g. https://<workspace>--biolm-gateway-gateway.modal.run).
+GATEWAY_URL = os.getenv("BIOLM_GATEWAY_URL", "")
 
 # Skip all tests in this file if the gateway URL isn't set.
 if not GATEWAY_URL:
     pytest.skip(
-        "BIOLM_GATEWAY_URL environment variable not set, skipping gateway integration tests.",
+        "BIOLM_GATEWAY_URL environment variable not set, skipping gateway deployment tests.",
         allow_module_level=True,
     )
 

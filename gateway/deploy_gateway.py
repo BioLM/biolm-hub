@@ -1,27 +1,21 @@
+"""Deploy the bare BioLM Models gateway.
+
+Equivalent to ``modal deploy gateway/gateway.py``. The cached variant is
+deployed separately via ``modal deploy gateway/gateway_with_cache.py``.
+"""
+
 import asyncio
 
-from gateway.app import app
+from gateway.gateway import app
+from models.commons.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 
 async def main():
-    """
-    Deploys the BioLM Gateway Modal application, which includes both the main
-    FastAPI web endpoint and the persistent background worker for state management.
-    """
-
-    print(
-        "⚠️  REMINDER: If you've changed any code in the `models/*` directory,"
-        "    make sure you have redeployed those model apps first before proceeding.\n"
-    )
-
-    print("🚀 Deploying biolm-gateway...")
-    print("   - Deploying main web endpoint...")
-    print("   - Deploying persistent state updater worker...")
-
-    # The `name` parameter is what the deployment will be called in Modal dashboard.
-    # This single command deploys all functions attached to the `app` object.
+    logger.info("Deploying biolm-gateway...")
     await app.deploy.aio(name="biolm-gateway")
-    print("\n✅ Gateway and worker deployed successfully!")
+    logger.info("Gateway deployed successfully.")
 
 
 if __name__ == "__main__":

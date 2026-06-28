@@ -2,6 +2,10 @@ from fastapi.routing import APIRoute
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 
+from models.commons.core.logging import get_logger
+
+logger = get_logger(__name__)
+
 
 def get_field_details(field: FieldInfo) -> dict:
     """Extracts relevant details from a Pydantic field."""
@@ -77,14 +81,15 @@ def _detect_list_type(field: FieldInfo, details: dict) -> None:
                             name: get_field_details(nested_field)
                             for name, nested_field in list_item_type.model_fields.items()
                         }
-                        print(
-                            f"Extracted nested fields for list item {list_item_type}: {list(details['nested_fields'].keys())}"
+                        logger.debug(
+                            "Extracted nested fields for list item %s: %s",
+                            list_item_type,
+                            list(details["nested_fields"].keys()),
                         )
         except Exception as e:
-            print(
-                f"Warning: Could not extract nested fields from list type {type_str}: {e}"
+            logger.warning(
+                "Could not extract nested fields from list type %s: %s", type_str, e
             )
-            pass
 
 
 def _detect_multi_select_enum(type_str: str, details: dict) -> None:
@@ -228,7 +233,9 @@ def analyze_schema(schema: BaseModel) -> dict:
         return _sanitize_schema_dict(field_details)
     except Exception as e:
         # Debug logging for troubleshooting
-        print(f"Warning: Failed to analyze schema {schema.__class__.__name__}: {e}")
+        logger.warning(
+            "Failed to analyze schema %s: %s", schema.__class__.__name__, e
+        )
         return {}
 
 

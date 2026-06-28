@@ -1,20 +1,27 @@
-import ast
-import importlib
 import importlib.util
 from pathlib import Path
 from typing import Optional
 
 from pydantic import BaseModel
 
+from models.commons.core.logging import get_logger
 from models.commons.model.config import ModelFamily
+
+logger = get_logger(__name__)
 
 
 class ModelMapper:
     """
     Centralized model mapping and discovery system.
 
-    Discovers all models by scanning config.py files and provides
-    unified access to model metadata, schemas, and resource specifications.
+    Discovers all models by importing their ``config.py`` files and reading the
+    declarative ``MODEL_FAMILY`` object, then provides unified access to model
+    metadata, schemas, resource specs, and the Modal container class name.
+
+    The Modal class name comes straight from ``ModelFamily.modal_class_name``
+    (set per-model in ``config.py``) — there is no source-code scanning. A CI
+    guard (``gateway/test_discovery.py``) keeps each ``modal_class_name`` in sync
+    with the ``@biolm_model_class``-decorated class in that model's ``app.py``.
     """
 
     def __init__(self):
@@ -29,11 +36,13 @@ class ModelMapper:
         self._load_all_configs()
         self._build_variant_map()
         self._build_action_registry()
-        self._discover_class_names()
 
     def _load_all_configs(self):
         """
-        Scan all models/*/config.py files and load MODEL_FAMILY objects.
+        Import every ``models/*/config.py`` and register its ``MODEL_FAMILY``.
+
+        The Modal class name is read from ``MODEL_FAMILY.modal_class_name`` — the
+        single source of truth — so no AST/source scanning is needed.
         """
         models_dir = Path(__file__).parent.parent / "models"
 
@@ -62,13 +71,22 @@ class ModelMapper:
                     if hasattr(config_module, "MODEL_FAMILY"):
                         model_family = config_module.MODEL_FAMILY
                         if isinstance(model_family, ModelFamily):
-                            self._model_families[model_family.base_model_slug] = (
-                                model_family
-                            )
-                            print(f"✓ Loaded config for {model_family.base_model_slug}")
+                            base_slug = model_family.base_model_slug
+                            self._model_families[base_slug] = model_family
+                            if model_family.modal_class_name:
+                                self._class_names[base_slug] = (
+                                    model_family.modal_class_name
+                                )
+                            else:
+                                logger.warning(
+                                    "Model '%s' has no modal_class_name set; "
+                                    "gateway cannot route to it.",
+                                    base_slug,
+                                )
+                            logger.info("Loaded config for %s", base_slug)
 
             except Exception as e:
-                print(f"⚠️ Failed to load config for {model_dir.name}: {e}")
+                logger.warning("Failed to load config for %s: %s", model_dir.name, e)
 
     def _build_variant_map(self):
         """
@@ -83,6 +101,7 @@ class ModelMapper:
                     "model_variant": variant.name if variant.name else None,
                     "modal_app_name": variant.modal_app_name,
                     "env_vars": variant.env_vars,
+                    "display_name": variant.public_display_name,
                 }
 
                 # Also store resource specs indexed by modal app name
@@ -103,49 +122,6 @@ class ModelMapper:
                     action_map.response_schema,
                 )
 
-    def _discover_class_names(self):
-        """
-        Discover Modal class names by scanning app.py files for @biolm_model_class decorator.
-        """
-        models_dir = Path(__file__).parent.parent / "models"
-
-        for model_dir in models_dir.iterdir():
-            if (
-                not model_dir.is_dir()
-                or model_dir.name.startswith(("_", "."))
-                or model_dir.name == "commons"
-            ):
-                continue
-
-            app_path = model_dir / "app.py"
-            if not app_path.exists():
-                continue
-
-            try:
-                # Parse the Python file to find the decorated class
-                with open(app_path) as f:
-                    tree = ast.parse(f.read())
-
-                for node in ast.walk(tree):
-                    if isinstance(node, ast.ClassDef):
-                        # Check if class has @biolm_model_class decorator
-                        for decorator in node.decorator_list:
-                            if (
-                                isinstance(decorator, ast.Name)
-                                and decorator.id == "biolm_model_class"
-                            ):
-                                self._class_names[model_dir.name] = node.name
-                                break
-                            elif (
-                                isinstance(decorator, ast.Attribute)
-                                and decorator.attr == "biolm_model_class"
-                            ):
-                                self._class_names[model_dir.name] = node.name
-                                break
-
-            except Exception as e:
-                print(f"⚠️ Failed to parse app.py for {model_dir.name}: {e}")
-
     def get_variant_info(self, api_slug: str) -> Optional[dict]:
         """
         Get variant information for a given API slug.
@@ -154,8 +130,8 @@ class ModelMapper:
             api_slug: The public API endpoint slug (e.g., 'esm2-650m')
 
         Returns:
-            Dictionary with base_model_slug, model_variant, modal_app_name, env_vars
-            or None if not found.
+            Dictionary with base_model_slug, model_variant, modal_app_name,
+            env_vars, display_name; or None if not found.
         """
         return self._variant_map.get(api_slug)
 
@@ -176,13 +152,16 @@ class ModelMapper:
 
     def get_class_name(self, base_model_slug: str) -> Optional[str]:
         """
-        Get the Modal class name for a model.
+        Get the Modal container class name for a model.
+
+        Read directly from ``ModelFamily.modal_class_name`` (set in the model's
+        ``config.py``).
 
         Args:
             base_model_slug: The base model identifier (e.g., 'esm2')
 
         Returns:
-            The Modal class name or None if not found.
+            The Modal class name or None if not configured.
         """
         return self._class_names.get(base_model_slug)
 
@@ -258,7 +237,7 @@ def get_model_mapper() -> ModelMapper:
     """
     global _discovery_instance
     if _discovery_instance is None:
-        print("🔍 Initializing model mapper system...")
+        logger.info("Initializing model mapper system...")
         _discovery_instance = ModelMapper()
-        print(f"✅ Mapped {len(_discovery_instance._variant_map)} model variants")
+        logger.info("Mapped %d model variants", len(_discovery_instance._variant_map))
     return _discovery_instance

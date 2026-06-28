@@ -25,9 +25,12 @@ W12 shared test assets → W13 skills → W14 docs (incl. public CLAUDE.md) → 
 W-sec — then **(2)** run **Milestone B** (deploy + golden fixtures + integration/deployment matrix for
 ALL models) ONCE at the end, then **(3)** W-launch.
 **INTERIM VALIDATION = the proven cheap pattern:** for any NEW commons/architecture change, deploy +
-invoke ONE representative model (as done for esm2 / peptides / the 4 wrapper samples) to confirm the
-approach is sound before fanning out — cheap, catches systemic issues early (it already caught the
-StrEnum-3.10 + hf_hub build bugs), and avoids premature full-matrix Modal spend.
+invoke ONE representative model **per variant group the change spans** (as done for esm2 / peptides /
+the 4 wrapper samples) to confirm the approach is sound before fanning out — cheap, catches systemic
+issues early (it already caught the StrEnum-3.10 + hf_hub build bugs), and avoids premature full-matrix
+Modal spend. **Scaling rule (user-clarified 2026-06-28):** the count scales with the number of distinct
+variant groups the change touches — if commons logic has, say, 2 variants (e.g. two download-wrapper
+patterns, or CPU vs GPU build paths), pick TWO representatives (one from each group), not one overall.
 
 ## 1. MILESTONE B — full deploy + integration/deployment test matrix  ⟵ runs LAST (after all features)
 **Needs user go-ahead (real Modal spend).** Deploy ALL models to `biolm-models-dev` (then prod

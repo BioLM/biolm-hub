@@ -26,6 +26,7 @@ DummyResourceSpec = ModalResourceSpec(
 MODEL_FAMILY = ModelFamily(
     base_model_slug=DummyParams.base_model_slug,
     display_name=DummyParams.display_name,
+    modal_class_name="DummyModel",
     tags=ModelTags(
         input_modality=[InputModality.TEXT],
         input_molecule=[],
