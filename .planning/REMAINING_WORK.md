@@ -18,7 +18,18 @@
 
 ---
 
-## 1. MILESTONE B — full deploy + integration/deployment test matrix  ⟵ the big remaining validation
+## SEQUENCING (ratified by user 2026-06-28) — build ALL features first, deploy/test the full matrix LAST
+**Do NOT run the full Milestone-B deploy matrix mid-build.** Order of remaining work:
+**(1)** finish ALL platform features across the board — W8 gateway → W9 web app → W10 CLI → W11 CI →
+W12 shared test assets → W13 skills → W14 docs (incl. public CLAUDE.md) → W3b commons reconciliation →
+W-sec — then **(2)** run **Milestone B** (deploy + golden fixtures + integration/deployment matrix for
+ALL models) ONCE at the end, then **(3)** W-launch.
+**INTERIM VALIDATION = the proven cheap pattern:** for any NEW commons/architecture change, deploy +
+invoke ONE representative model (as done for esm2 / peptides / the 4 wrapper samples) to confirm the
+approach is sound before fanning out — cheap, catches systemic issues early (it already caught the
+StrEnum-3.10 + hf_hub build bugs), and avoids premature full-matrix Modal spend.
+
+## 1. MILESTONE B — full deploy + integration/deployment test matrix  ⟵ runs LAST (after all features)
 **Needs user go-ahead (real Modal spend).** Deploy ALL models to `biolm-models-dev` (then prod
 `biolm-models`) and run T2 (integration) + T3 (deployment) per `04_TESTING_STRATEGY`. It accomplishes:
 - **(a) Self-population for every model** — so far only esm2 + the 4 sample patterns (mpnn/igt5/esm_if1/
