@@ -1,5 +1,25 @@
-from enum import StrEnum
 from typing import Any
+
+try:
+    from enum import StrEnum
+except ImportError:  # Python < 3.11 — several conda model images pin 3.10
+    from enum import Enum, EnumMeta
+
+    class _StrEnumMeta(EnumMeta):
+        def __contains__(cls, member: object) -> bool:
+            # Match Python 3.12 StrEnum: value-based membership ("predict" in Enum).
+            if isinstance(member, cls):
+                return True
+            return member in cls._value2member_map_
+
+    class StrEnum(str, Enum, metaclass=_StrEnumMeta):  # type: ignore[no-redef]
+        """Backport of Python 3.11+ ``enum.StrEnum`` for 3.10 model images.
+
+        Members are ``str`` instances valued by the assignment; ``str(member)``
+        returns that value; iteration and value-based ``in`` membership match 3.12.
+        """
+
+        __str__ = str.__str__
 
 from pydantic import BaseModel
 
