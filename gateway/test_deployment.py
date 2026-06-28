@@ -14,7 +14,7 @@ from models.commons.util.config import (
 # --- Test Configuration ---
 
 # URL of the deployed gateway. Set BIOLM_GATEWAY_URL to the deployment's URL
-# (Modal prints it on `modal deploy`, e.g. https://<workspace>--biolm-gateway-gateway.modal.run).
+# (Modal prints it on deploy, e.g. https://<workspace>--biolm-gateway-web.modal.run).
 GATEWAY_URL = os.getenv("BIOLM_GATEWAY_URL", "")
 
 # Skip all tests in this file if the gateway URL isn't set.

@@ -1,22 +1,42 @@
-"""Deploy the bare BioLM Models gateway.
+"""Deploy a BioLM Models gateway.
 
-Equivalent to ``modal deploy gateway/gateway.py``. The cached variant is
-deployed separately via ``modal deploy gateway/gateway_with_cache.py``.
+Run from the repo root:
+
+    MODAL_ENVIRONMENT=biolm-models-dev python -m gateway.deploy_gateway          # bare
+    MODAL_ENVIRONMENT=biolm-models-dev python -m gateway.deploy_gateway --cache  # cached
+
+(``modal deploy gateway/server.py`` also works; this entrypoint just adds the
+``--cache`` switch and clearer logging.)
 """
 
-import asyncio
+import argparse
 
-from gateway.gateway import app
+import modal
+
 from models.commons.core.logging import get_logger
 
 logger = get_logger(__name__)
 
 
-async def main():
-    logger.info("Deploying biolm-gateway...")
-    await app.deploy.aio(name="biolm-gateway")
-    logger.info("Gateway deployed successfully.")
+def main():
+    parser = argparse.ArgumentParser(description="Deploy a BioLM Models gateway.")
+    parser.add_argument(
+        "--cache",
+        action="store_true",
+        help="Deploy the cache-enabled gateway instead of the bare one.",
+    )
+    args = parser.parse_args()
+
+    if args.cache:
+        from gateway.server_with_cache import app
+    else:
+        from gateway.server import app
+
+    logger.info("Deploying %s ...", app.name)
+    with modal.enable_output():
+        app.deploy()
+    logger.info("Deployed %s successfully.", app.name)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

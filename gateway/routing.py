@@ -33,9 +33,12 @@ from pydantic import BaseModel
 
 from gateway.config import get_cors_allowed_origins
 from gateway.model_discovery import ModelMapper
-from models.commons.core.caching import non_cacheable_actions, process_with_cache
 from models.commons.core.logging import DebugLogger, get_logger
 from models.commons.data.serializer import serialize_model
+
+# NOTE: the response-cache stack (commons.core.caching → commons.storage.*) is
+# imported lazily inside the cache code path only, so the bare gateway never
+# pulls in the weight-acquisition deps (e.g. `requests`) it doesn't use.
 
 logger = get_logger(__name__)
 
@@ -130,6 +133,9 @@ async def _run_cached(
     (off by default), so this path is a no-op cache that computes every item
     unless an operator opts in.
     """
+    # Lazy import: only the cache path needs the storage/acquisition stack.
+    from models.commons.core.caching import process_with_cache
+
     items = getattr(payload, "items", [])
     params_obj = getattr(payload, "params", None)
     params_dict = serialize_model(params_obj) if params_obj else None
@@ -183,8 +189,15 @@ async def _handle_request(
     """Route one request to the model and promote any model error to HTTP status."""
     # Never cache stochastic actions (e.g. `generate`) — caching them would
     # return byte-identical samples for repeated identical inputs. Mirrors the
-    # model-side guard in commons/core/decorator.py.
-    if use_cache and model_action not in non_cacheable_actions:
+    # model-side guard in commons/core/decorator.py. (non_cacheable_actions is
+    # imported lazily so the bare gateway doesn't pull in the cache stack.)
+    route_through_cache = use_cache
+    if use_cache:
+        from models.commons.core.caching import non_cacheable_actions
+
+        route_through_cache = model_action not in non_cacheable_actions
+
+    if route_through_cache:
         try:
             response_dict = await _run_cached(
                 payload,

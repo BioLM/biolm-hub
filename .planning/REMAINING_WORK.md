@@ -98,16 +98,21 @@ Per-model LICENSE files frequently carry **inferred** copyright holders/years (f
 ---
 
 ## 4. Remaining project phases (`03_WORKSTREAMS`)
-- **W8 Gateway — ✅ DONE (committed `97a513f`, 2026-06-28).** Bare `gateway/gateway.py` + cached
-  `gateway/gateway_with_cache.py` (both response-cache tiers OFF by default behind `BIOLM_CACHE_ENABLED`);
-  shared core `gateway/routing.py`. AST class-discovery deleted → config-driven `modal_class_name`
-  (set on dummy too); routes via `modal_app_name`. status_code→HTTP promotion = **YES** (ratified).
-  CI guard `gateway/test_discovery.py` (88 checks: class resolves + every action has a `@modal_endpoint`
-  method). Stripped auth/billing/analytics/middleware/state (−1.8k LOC). T0+T1+Opus-review clean, Modal-free.
-  **NO interim gateway deploy done yet** — the one W8 artifact with zero deploy coverage; either smoke-deploy
-  the bare gateway to `biolm-models-dev` (cheap: CPU image, invoke the already-deployed peptides/esm2) or fold
-  into Milestone B. **Deferred to W3b** (COMMONS_REQUESTS): de-dup the partial-payload closure shared with
-  `commons/core/decorator.py`.
+- **W8 Gateway — ✅ DONE + bare-gateway DEPLOY-PROVEN (2026-06-28).** Bare `gateway/server.py`
+  (`biolm-gateway`) + cached `gateway/server_with_cache.py` (`biolm-gateway-cache`; both response-cache
+  tiers OFF by default behind `BIOLM_CACHE_ENABLED`); shared core `gateway/routing.py`. ASGI fn = `web`
+  (qualified `gateway.server.web` — renamed from the funky `gateway.gateway.gateway`). AST class-discovery
+  deleted → config-driven `modal_class_name` (set on dummy too); routes via `modal_app_name`.
+  status_code→HTTP promotion = **YES** (proven live: esm2 out-of-bounds layers → HTTP 400 `user.validation`).
+  CI guard `gateway/test_discovery.py` (88 checks). Stripped auth/billing/analytics/state (−1.8k LOC).
+  **Bare gateway deployed to `biolm-models-dev` + smoke-tested:** health (130 routes), peptides encode
+  (200, real features), status_code promotion (400). The **cached** gateway is NOT deploy-tested yet (its
+  `_run_cached` + lazy cache-stack import + `requests==2.32.3` dep are analysis-validated only) → Milestone B.
+  **Deferred to W3b** (COMMONS_REQUESTS): de-dup the partial-payload closure (`decorator.py`); fix/remove the
+  `local_models_path` misnomer.
+  Deploy gotchas found+fixed: file `gateway/gateway.py` shadowed the `gateway` package on `modal deploy`
+  (→ renamed `server.py`); `local_models_path`=`models/commons` not `models/` (→ gateway computes the real
+  dir); the cache stack imports `requests` (→ lazy-imported so the bare gateway stays minimal).
 - **W9 Web app** — catalog + run-inference UI; deployed=active / undeployed=greyed-out; `bm serve`.
 - **W10 CLI** — `bm setup`/`deploy`/`serve`/`cache`/`r2`; the 3-command quickstart.
 - **W11 CI/CD** — maintainer-gated (`pull_request_target` hardened); port `detect_models.py`; lint+mypy+unit on every PR.
@@ -130,7 +135,8 @@ Per-model LICENSE files frequently carry **inferred** copyright holders/years (f
 - **Deploys MUST set `MODAL_ENVIRONMENT=biolm-models-dev`** — the local active Modal profile is the internal
   `qa` env. Run modal via `.venv/bin/modal` (modal 1.3.5). Both `biolm-models` (prod) + `biolm-models-dev` exist.
 - **Currently deployed on `biolm-models-dev`** (idle = $0; `modal app stop <name> --env biolm-models-dev` to remove):
-  `peptides`, `esm2-150m`, `protein-mpnn`, `igt5-paired`, `esm-if1`, `abodybuilder3-plddt`.
+  `peptides`, `esm2-150m`, `protein-mpnn`, `igt5-paired`, `esm-if1`, `abodybuilder3-plddt`, **`biolm-gateway`**
+  (bare gateway, W8 smoke-test; URL `https://biolm-biolm-models-dev--biolm-gateway-web.modal.run`).
 - **Secrets in `biolm-models-dev`:** `cloudflare-r2` + `hf-api-token` (user-added). `protocols-r2-bkt` NOT needed
   (boltzgen fixed). `ngc-cli-api-key` NOT needed (NIM excluded).
 - **T0 gate** = `uvx ruff@0.6.9 check --no-fix <paths>` + `uvx black@24.10.0 --check` (a bare newer ruff gives
