@@ -171,7 +171,7 @@ The model is lightweight enough to run entirely on CPU, making it very cost-effe
 
 ### Caching Behavior
 
-- Caching is managed through the standard BillingMixinSnap infrastructure
+- Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container
 - Redis (Modal Dict) and R2 caching are available via the billing mixin
 - Cache keys are composed from request parameters including PDB content and generation parameters
 - Given the stochastic nature of sequence design, caching is most useful when a fixed seed is provided

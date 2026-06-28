@@ -6,6 +6,7 @@ import modal
 from pydantic import ValidationError
 
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.error import ValidationError400
 from models.commons.core.logging import get_logger
 from models.commons.data.validator import aa_unambiguous
 from models.commons.modal.downloader import setup_download_layer
@@ -231,7 +232,7 @@ class MPNNModel(ModelMixinSnap):
             }
             validated_params = SpecificParamsModel.model_validate(filtered_user_params)
         except ValidationError as e:
-            raise ValueError(
+            raise ValidationError400(
                 f"Invalid parameters for model_type '{self.model_type}': {e}"
             ) from e
 

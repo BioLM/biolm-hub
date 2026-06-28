@@ -66,6 +66,8 @@ mpnn_schema_map = {
 MODEL_FAMILY = ModelFamily(
     base_model_slug=MPNNParams.base_model_slug,
     display_name=MPNNParams.display_name,
+    # The @biolm_model_class container class in app.py (gateway routing, W8).
+    modal_class_name="MPNNModel",
     tags=ModelTags(
         input_modality=[InputModality.STRUCTURE],
         input_molecule=[InputMolecule.PROTEIN, InputMolecule.COMPLEX],
