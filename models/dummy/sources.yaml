@@ -7,14 +7,11 @@
 # (lightweight, no binaries) and points to bulk artifacts stored in R2.
 #
 # R2 path convention:
-#   r2://biolm-modal/knowledge-base/models/{model_slug}/
-#   r2://biolm-modal/knowledge-base/training/{model_slug}/
-#   r2://biolm-modal/knowledge-base/workflows/{model_slug}/
+#   r2://biolm-public/knowledge-base/models/{model_slug}/
 #
-# Quick access patterns:
-#   bm r2 ls r2://biolm-modal/knowledge-base/models/{model_slug}/
-#   bm r2 cat r2://biolm-modal/knowledge-base/models/{model_slug}/primary/papers-md/paper.md
-#   bm r2 cat r2://biolm-modal/knowledge-base/models/{model_slug}/manifest.json
+# Quick access patterns (read-only):
+#   bm r2 ls r2://biolm-public/knowledge-base/models/{model_slug}/
+#   bm r2 cat r2://biolm-public/knowledge-base/models/{model_slug}/primary/papers-md/paper.md
 #   bm r2 download r2://biolm-public/knowledge-base/models/{model_slug}/ /tmp/kb/{model_slug}/
 #
 # For a template field marked "TODO", include a brief note on how to obtain

@@ -184,7 +184,22 @@ Per-model LICENSE files frequently carry **inferred** copyright holders/years (f
   the dummy template; `02` reconciled. **FOLLOW-UP (Milestone B):** populate `test-data/shared/` in `biolm-public`
   + live-test the `shared/`-path read; only asset population is incremental (no model references a `shared/` path
   yet — current reuse is via the importable constants).
-- **W13 Skills** — port `.claude/skills/`; resolve the README-standard conflict; teach the final Global Rules.
+- **W13 Skills — ✅ DONE (Modal-free; T0/pre-commit clean + in-context review).** Ported + **SIMPLIFIED**
+  the 3 checked-in skills (note: `code-quality` never existed). User-directed **aggressive collapse**:
+  `model-implementation` 12→**7 files**, 8 phases→**4** (investigate→implement→validate→document; dropped the
+  plan-doc/tiered-review/standalone-verification ceremony); `model-knowledge-base` 16→**5 files**, **acquisition
+  pipeline DROPPED entirely** (OSS contributors have no R2 write — `bm r2 cp` gone) → it now only authors the 5
+  knowledge-graph files from PUBLIC sources; `pr-management` de-internalized (1 file). Total 29→**13 files**.
+  README-standard conflict RESOLVED (points to `models/dummy/README.md`; dropped the 100-line rule + ESM-2
+  inline example). Validate step = `make check` MANDATORY + OPTIONAL local deploy (full matrix is W11
+  maintainer-gated). De-internalized throughout (biolm-modal→biolm-public, qa→biolm-models-dev, billing→
+  ModelMixin, "do NOT run make check" INVERTED, Modal-Sandbox section dropped, action list completed). Also fixed
+  `models/dummy/sources.yaml` KB-path comments. **PROCESS NOTE:** the 2 model-skill writer subagents + the Opus
+  reviewer all hit transient infra failures (401 / stall) mid-run — I completed the 4 unreached files + did the
+  review IN-CONTEXT (verified every commons API against real OSS code; **fixed one real drift**: the skill's
+  `download.py` taught the hand-rolled `AcquisitionConfig` instead of the canonical `r2_then_hf/library/urls`
+  wrappers). **FOLLOW-UP:** a fresh-Opus skills review never completed cleanly — re-run one when infra is stable
+  (low risk; in-context review was thorough).
 - **W14 Docs site + DX** — mkdocs in CI; per-model FastAPI schema docs; render the knowledge graph; **author the
   permanent public `CLAUDE.md` and DELETE the temporary bootstrap `CLAUDE.md`** (tracked deliverable).
 - **W15 Off-Modal Dockerfile** — OPTIONAL (go/defer decided late); eligible models only (no GPU-at-build, public source).
