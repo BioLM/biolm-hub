@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Optional
 
 from models.boltzgen.helpers import DEFAULT_PIPELINE_STEPS
-from models.boltzgen.output_delivery import CheckpointManifest, OutputJob
 from models.boltzgen.schema import (
     BoltzGenDesignParams,
     BoltzGenDesignResponse,
@@ -207,8 +206,8 @@ class BoltzGenPipelineMixin:
     ) -> None:
         """Run `boltzgen configure` to write per-step YAML configs into output_dir.
 
-        Always passes --reuse so skip_existing=True is baked into every step config.
-        This makes both fresh runs and resumes safe to re-run without duplicating work.
+        Always passes --reuse so skip_existing=True is baked into every step config,
+        making the run safe to re-execute without duplicating completed work.
         """
         import subprocess
 
@@ -272,8 +271,7 @@ class BoltzGenPipelineMixin:
 
         The steps to run are determined by the ``steps.yaml`` manifest written
         by ``boltzgen configure``.  With ``--reuse`` baked in, any step whose
-        output files already exist is automatically skipped, making this safe
-        for both fresh runs and resumes.
+        output files already exist is automatically skipped.
 
         Streams stdout/stderr live so step progress is visible in Modal logs.
         """
@@ -319,17 +317,12 @@ class BoltzGenPipelineMixin:
         yaml_file: Path,
         output_dir: Path,
         params: BoltzGenDesignParams,
-        job: OutputJob,
     ) -> BoltzGenDesignResponse:
         """Configure and execute the BoltzGen pipeline.
 
-        Runs ``boltzgen configure`` once to write per-step YAML configs (with
-        ``--reuse`` so ``skip_existing=True``), then a single ``boltzgen execute``
-        call that runs all configured steps.  Steps whose output files already
-        exist (from a prior run or checkpoint restore) are skipped automatically.
-
-        If the container is killed mid-run, the ``@modal.exit()`` handler in
-        ``BoltzGenModel`` uploads a checkpoint to R2 so the job can be resumed.
+        Runs ``boltzgen configure`` once to write per-step YAML configs, then a
+        single ``boltzgen execute`` call that runs all configured steps.  Each
+        design is read off disk and returned inline in the response.
         """
         steps_requested = params.steps if params.steps else DEFAULT_PIPELINE_STEPS
         requested_step_values = [s.value for s in steps_requested]
@@ -340,39 +333,13 @@ class BoltzGenPipelineMixin:
         # boltzgen configure renames any previous config/ dir to previous-config-N.
         self._run_configure(yaml_file, output_dir, params)
 
-        # Set sentinel attrs so the @modal.exit() handler can checkpoint if the
-        # container is killed during execution.
-        self._pipeline_job = job
-        self._pipeline_output_dir = output_dir
-        self._pipeline_requested_steps = requested_step_values
-
         self._run_execute(output_dir)
-
-        # Pipeline completed successfully — clear sentinel BEFORE uploading the
-        # normal checkpoint so the exit handler doesn't race with us.
-        self._pipeline_job = None
-
-        # Upload checkpoint so the user can resume later (e.g. to add more steps).
-        manifest = CheckpointManifest(
-            job_id=job.job_id,
-            model_slug="boltzgen",
-            completed_steps=requested_step_values,
-            remaining_steps=[],
-            requested_steps=requested_step_values,
-        )
-        job.upload_checkpoint(output_dir, manifest)
 
         # Read and return results
         results = self._read_results(output_dir, params)
 
         logger.info("Successfully read %s design(s)", len(results))
-        return BoltzGenDesignResponse(
-            results=results,
-            job_id=job.job_id,
-            completed_steps=requested_step_values,
-            remaining_steps=[],
-            is_complete=True,
-        )
+        return BoltzGenDesignResponse(results=results)
 
     def _read_results(
         self, output_dir: Path, params: BoltzGenDesignParams

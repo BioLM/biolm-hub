@@ -2,25 +2,16 @@
 BoltzGen pure unit tests — no Modal, no GPU, no R2, instant.
 
 Tests:
-  TestCheckpointManifest       — CheckpointManifest JSON round-trip + requested_steps
-  TestBoltzGenSchemaValidation — request/response schema; resume/partial-response fields
-  TestExitHandler              — @modal.exit() checkpoint handler logic (mocked)
+  TestBoltzGenSchemaValidation — request/response schema validation
   TestPipelinePureFunctions    — Pure helper functions in pipeline.py and app.py
 
 Run:
     pytest models/boltzgen/test_unit.py -v
 """
 
-import os
-from unittest.mock import MagicMock, patch
-
 import pytest
 from pydantic import ValidationError
 
-from models.boltzgen.output_delivery import (
-    CheckpointManifest,
-    OutputJob,
-)
 from models.boltzgen.schema import (
     BoltzGenChainSelector,
     BoltzGenDesignInsertion,
@@ -38,126 +29,7 @@ from models.boltzgen.schema import (
 )
 
 # ---------------------------------------------------------------------------
-# Unit: CheckpointManifest
-# ---------------------------------------------------------------------------
-
-
-class TestCheckpointManifest:
-    def test_json_round_trip(self):
-        m = CheckpointManifest(
-            job_id="abc-123",
-            model_slug="boltzgen",
-            completed_steps=["design", "inverse_folding"],
-            remaining_steps=["folding", "analysis", "filtering"],
-            requested_steps=[
-                "design",
-                "inverse_folding",
-                "folding",
-                "analysis",
-                "filtering",
-            ],
-        )
-        m2 = CheckpointManifest.from_json(m.to_json())
-        assert m2.job_id == "abc-123"
-        assert m2.completed_steps == ["design", "inverse_folding"]
-        assert m2.remaining_steps == ["folding", "analysis", "filtering"]
-        assert m2.requested_steps == [
-            "design",
-            "inverse_folding",
-            "folding",
-            "analysis",
-            "filtering",
-        ]
-        assert m2.created_at == m.created_at
-
-    def test_updated_at_refreshes_on_upload(self, tmp_path):
-        """upload_checkpoint mutates manifest.updated_at before uploading."""
-        import time
-
-        m = CheckpointManifest(
-            job_id="x",
-            model_slug="boltzgen",
-            completed_steps=[],
-            remaining_steps=["design"],
-            requested_steps=["design"],
-        )
-        original_updated = m.updated_at
-        time.sleep(0.01)  # ensure clock advances
-
-        output_dir = tmp_path / "output"
-        output_dir.mkdir()
-        (output_dir / "dummy.txt").write_text("hello")
-
-        job = OutputJob("boltzgen", "x")
-
-        fake_client = MagicMock()
-        fake_client.upload_fileobj = MagicMock()
-
-        with (
-            patch(
-                "models.commons.storage.r2.get_r2_client",
-                return_value=fake_client,
-            ),
-            patch.dict(os.environ, {"PROTOCOLS_R2_BUCKET": "test-bucket"}),
-        ):
-            result = job.upload_checkpoint(output_dir, m)
-
-        assert result is True
-        assert m.updated_at != original_updated
-
-    def test_default_requested_steps_is_empty_list(self):
-        """requested_steps defaults to [] for backward compat with old checkpoints."""
-        m = CheckpointManifest(
-            job_id="y",
-            model_slug="boltzgen",
-            completed_steps=["design"],
-            remaining_steps=[],
-        )
-        assert m.requested_steps == []
-
-    def test_from_json_without_requested_steps(self):
-        """Old checkpoint JSON missing requested_steps round-trips via from_json without error."""
-        import json
-
-        old_json = json.dumps(
-            {
-                "job_id": "old",
-                "model_slug": "boltzgen",
-                "completed_steps": ["design"],
-                "remaining_steps": [],
-                "created_at": "2024-01-01T00:00:00Z",
-                "updated_at": "2024-01-01T00:00:00Z",
-            }
-        )
-        m = CheckpointManifest.from_json(old_json)
-        assert m.requested_steps == []
-        assert m.job_id == "old"
-
-    def test_from_json_ignores_unknown_keys(self):
-        """from_json silently drops keys not in the dataclass — forward compat."""
-        import json
-
-        future_json = json.dumps(
-            {
-                "job_id": "future",
-                "model_slug": "boltzgen",
-                "completed_steps": ["design"],
-                "remaining_steps": [],
-                "requested_steps": ["design"],
-                "created_at": "2024-01-01T00:00:00Z",
-                "updated_at": "2024-01-01T00:00:00Z",
-                "new_future_field": "should be ignored",
-                "another_unknown": 42,
-            }
-        )
-        m = CheckpointManifest.from_json(future_json)
-        assert m.job_id == "future"
-        assert m.completed_steps == ["design"]
-        assert not hasattr(m, "new_future_field")
-
-
-# ---------------------------------------------------------------------------
-# Unit: schema validation (resume fields)
+# Unit: schema validation
 # ---------------------------------------------------------------------------
 
 
@@ -253,51 +125,11 @@ class TestBoltzGenSchemaValidation:
         assert len(response.results) == 2
         assert response.results[0].metrics == {"plddt": 85.5, "ptm": 0.75}
         assert response.results[1].sequence == "WYTSVRQPNMLKIHGFEDCA"
-        assert response.is_complete is True
 
-    def test_resume_rejects_items(self):
-        """items must not be provided alongside resume_job_id."""
-        with pytest.raises(ValidationError, match="Cannot provide 'items'"):
-            BoltzGenDesignRequest.model_validate(
-                {
-                    "items": [
-                        {"entities": [{"protein": {"id": "A", "sequence": "MKLL"}}]}
-                    ],
-                    "params": {"resume_job_id": "abc-123"},
-                }
-            )
-
-    def test_resume_without_items(self):
-        """Resume request with only resume_job_id is valid."""
-        r = BoltzGenDesignRequest.model_validate(
-            {"params": {"resume_job_id": "abc-123"}}
-        )
-        assert r.params.resume_job_id == "abc-123"
-        assert r.items is None
-
-    def test_fresh_run_requires_items(self):
-        """Fresh run without items (and no resume_job_id) must fail."""
-        with pytest.raises(ValidationError, match="'items' is required"):
+    def test_request_requires_items(self):
+        """A design request without items must fail (items is required)."""
+        with pytest.raises(ValidationError, match="items"):
             BoltzGenDesignRequest.model_validate({"params": {}})
-
-    def test_response_new_fields_defaults(self):
-        """New response fields have sensible defaults — backward compat."""
-        resp = BoltzGenDesignResponse(results=[])
-        assert resp.is_complete is True
-        assert resp.job_id is None
-        assert resp.completed_steps is None
-        assert resp.remaining_steps is None
-
-    def test_partial_response(self):
-        resp = BoltzGenDesignResponse(
-            results=[],
-            job_id="x",
-            completed_steps=["design"],
-            remaining_steps=["folding", "analysis"],
-            is_complete=False,
-        )
-        assert resp.is_complete is False
-        assert resp.remaining_steps == ["folding", "analysis"]
 
     def test_entity_rejects_multiple_types(self):
         with pytest.raises(ValidationError, match="Exactly one entity type"):
@@ -352,50 +184,6 @@ class TestBoltzGenSchemaValidation:
             BoltzGenDesignInsertion(insertion={"res_index": 26})
         with pytest.raises(ValidationError, match="'res_index' key"):
             BoltzGenDesignInsertion(insertion={"id": "B"})
-
-
-# ---------------------------------------------------------------------------
-# Unit: @modal.exit() checkpoint handler (mocked — no GPU, no R2)
-# ---------------------------------------------------------------------------
-
-
-class TestExitHandler:
-    """Tests for the @modal.exit() checkpoint handler."""
-
-    def test_exit_handler_uploads_checkpoint(self, tmp_path):
-        """Exit handler uploads checkpoint when pipeline is in-progress."""
-        from models.boltzgen.output_delivery import CheckpointManifest
-
-        job = OutputJob("boltzgen", "test-exit")
-        output_dir = tmp_path
-        requested_steps = ["design", "inverse_folding"]
-
-        with patch.object(
-            OutputJob, "upload_checkpoint", return_value=True
-        ) as mock_upload:
-            manifest = CheckpointManifest(
-                job_id=job.job_id,
-                model_slug="boltzgen",
-                completed_steps=[],
-                remaining_steps=[],
-                requested_steps=requested_steps,
-            )
-            job.upload_checkpoint(output_dir, manifest)
-
-        mock_upload.assert_called_once()
-        manifest = mock_upload.call_args[0][1]
-        assert manifest.job_id == "test-exit"
-        assert manifest.requested_steps == ["design", "inverse_folding"]
-
-    def test_exit_handler_noop_when_complete(self):
-        """Exit handler does nothing when _pipeline_job is None (pipeline completed)."""
-        pipeline_job = None
-
-        with patch.object(OutputJob, "upload_checkpoint") as mock_upload:
-            if pipeline_job is not None:
-                mock_upload()
-
-        mock_upload.assert_not_called()
 
 
 # ---------------------------------------------------------------------------

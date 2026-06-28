@@ -9,4 +9,4 @@
 
 | model | file:line | what | why | status |
 |---|---|---|---|---|
-| _(none yet — batches append here)_ | | | | |
+| boltzgen | `models/commons/util/config.py:71-72` | Remove `protocols_r2_bucket_secret` + `protocols_r2_bucket_secret_name = "protocols-r2-bkt"` | Now unused after boltzgen's protocols output-delivery (checkpoint/resume to internal R2 bucket) removal. boltzgen was the only referencer; `grep -rl protocols_r2_bucket_secret models/` now matches only `commons/util/config.py`. Drop the definition (and the `protocols-r2-bkt` Modal secret) in W3b. | open |

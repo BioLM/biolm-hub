@@ -732,15 +732,6 @@ class BoltzGenDesignParams(RequestModel):
             "Use this to up-weight or down-weight specific metrics relative to the protocol default."
         ),
     )
-    resume_job_id: Optional[str] = Field(
-        default=None,
-        description=(
-            "Job ID of a previously checkpointed run to resume. "
-            "When set, 'items' must not be provided — the entities and spec are restored from the checkpoint. "
-            "The pipeline will skip already-completed steps and continue from where it left off. "
-            "Obtain this ID from the 'job_id' field of a prior partial response (is_complete=False)."
-        ),
-    )
 
     @field_validator("additional_filters", mode="after")
     @classmethod
@@ -793,26 +784,11 @@ class BoltzGenDesignRequestItem(RequestModel):
 class BoltzGenDesignRequest(RequestModel):
     """Design request for BoltzGen."""
 
-    items: Optional[
-        Annotated[
-            list[BoltzGenDesignRequestItem],
-            Field(min_length=1, max_length=BoltzGenParams.batch_size),
-        ]
-    ] = None
+    items: Annotated[
+        list[BoltzGenDesignRequestItem],
+        Field(min_length=1, max_length=BoltzGenParams.batch_size),
+    ]
     params: BoltzGenDesignParams = BoltzGenDesignParams()
-
-    @model_validator(mode="after")
-    def validate_items_vs_resume(self):
-        if self.params.resume_job_id:
-            if self.items:
-                raise ValueError(
-                    "Cannot provide 'items' when resuming a job (resume_job_id is set). "
-                    "Entities are restored from the checkpoint."
-                )
-        else:
-            if not self.items:
-                raise ValueError("'items' is required when not resuming a job.")
-        return self
 
 
 ### BoltzGen Response
@@ -851,37 +827,6 @@ class BoltzGenDesignResponse(ResponseModel):
     results: list[BoltzGenDesignResult] = Field(
         description=(
             "List of individual design results. Each entry contains the CIF structure, "
-            "quality metrics, and sequence for one design. "
-            "Empty when is_complete=False (pipeline checkpointed mid-run)."
+            "quality metrics, and sequence for one design."
         )
-    )
-    job_id: Optional[str] = Field(
-        default=None,
-        description=(
-            "Unique identifier for this pipeline run. "
-            "Pass this as 'resume_job_id' in a subsequent request to continue a checkpointed run. "
-            "Always present — use it to correlate logs and checkpoints."
-        ),
-    )
-    completed_steps: Optional[list[str]] = Field(
-        default=None,
-        description=(
-            "Pipeline steps that have successfully completed in this run. "
-            "Useful for confirming which stages of the pipeline were executed."
-        ),
-    )
-    remaining_steps: Optional[list[str]] = Field(
-        default=None,
-        description=(
-            "Pipeline steps that have not yet run. "
-            "Non-empty only when is_complete=False — these are the steps the next resume call will execute."
-        ),
-    )
-    is_complete: bool = Field(
-        default=True,
-        description=(
-            "True when all requested pipeline steps have finished and results are populated. "
-            "False when the pipeline was checkpointed mid-run due to container time limits — "
-            "in this case results is empty and the job must be resumed using resume_job_id."
-        ),
     )

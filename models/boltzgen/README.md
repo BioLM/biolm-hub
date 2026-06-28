@@ -406,8 +406,8 @@ Tests are split into three tiers with different speed/coverage tradeoffs.
 pytest models/boltzgen/test.py -k "not integration and not deployment and not slow" -v
 ```
 
-Tests `CheckpointManifest` serialization, request/response schema validation, and the
-exit-handler checkpoint logic (all mocked, no subprocess calls).
+Tests request/response schema validation and pure pipeline helper functions
+(no subprocess calls).
 
 ### Tier 2 — Integration tests (<5 min on warm container)
 
@@ -415,14 +415,13 @@ exit-handler checkpoint logic (all mocked, no subprocess calls).
 pytest models/boltzgen/test.py -m integration --no-cov -v -s
 ```
 
-Two tests:
+One test:
 
 | Test | Protocol | Steps | What it validates |
 |------|----------|-------|-------------------|
-| `generate-programmatic` | protein-small_molecule | design only | CIF output produced, job_id returned |
-| `checkpoint_and_resume` | protein-small_molecule | design only | checkpoint upload → R2 → resume → results |
+| `generate-programmatic` | protein-small_molecule | design only | CIF output produced inline in the response |
 
-These run on every PR via CI. Cost: ~2-3 min GPU per run.
+This runs on every PR via CI. Cost: ~2-3 min GPU per run.
 
 ### Tier 3 — Slow tests (30-60 min, run before releases)
 
@@ -471,7 +470,7 @@ The remaining validated fixtures (`cyclic_hiv_9d3d`, `streptavidin_cyclic`,
 - **Source code**: BoltzGen repository cloned at commit `617e549` and installed as an editable package at `/opt/boltzgen`.
 - **Checkpoint source**: Weights downloaded from HuggingFace (`boltzgen/boltzgen-1` for model checkpoints, `boltzgen/inference-data` for molecule dictionary) with R2 caching fallback.
 - **Timeout**: 24-hour maximum (86400 seconds) to accommodate large design campaigns.
-- **Output delivery**: Each design returns a CIF structure, extracted amino acid sequence, and metrics dictionary inline in the response. R2 uploads are used only for checkpointing (resume support).
+- **Output delivery**: Each design returns a CIF structure, extracted amino acid sequence, and metrics dictionary inline in the response.
 - **Determinism**: BoltzGen is a stochastic generative model. Results vary between runs. Tests use structural validation (CIF parseable, valid sequences, metric presence, design diversity) rather than exact output comparison.
 
 ## Use Cases
@@ -707,40 +706,6 @@ Constraints are structural requirements enforced during diffusion sampling:
 | `contact` | Distance constraints between residues | `contact: {token1: [A, 5], token2: [B, 42], max_distance: 8.0}` |
 | `pocket` | Binder must contact pocket residues | `pocket: {binder: A, contacts: [[B, 91], [B, 128]]}` |
 | `total_len` | Bound total designable residues | `total_len: {min: 80, max: 200}` |
-
-## Resume and Checkpointing
-
-The pipeline supports checkpointing and resume for interrupted jobs. If a container is killed mid-run (preemption, OOM, timeout), a `@modal.exit()` handler uploads the current output directory to R2 so the job can be resumed.
-
-### How It Works
-
-```
-Fresh run                          Resume run
-─────────                          ──────────
-POST {items, params}               POST {params: {resume_job_id: "abc123"}}
-  │                                  │
-  ├─ Create OutputJob              ├─ Create OutputJob from job_id
-  ├─ Convert to YAML               ├─ Download checkpoint from R2
-  ├─ mkdir output/                  ├─ Restore output/ dir + YAML
-  │                                  ├─ Read manifest.requested_steps
-  ├─ boltzgen configure (--reuse)  ├─ boltzgen configure (--reuse)
-  ├─ boltzgen execute              ├─ boltzgen execute
-  │   (all steps, single call)     │   (skips steps with existing outputs)
-  └─ Return full results            └─ Return full results
-
-Container dies mid-execute:
-  → @modal.exit() fires
-  → checkpoint_on_exit() uploads output/ to R2
-  → Caller retries with resume_job_id
-```
-
-### `@modal.exit()` Checkpoint Handler
-
-The `BoltzGenModel.checkpoint_on_exit()` method runs when the container shuts down. It checks a sentinel attribute (`_pipeline_job`) that is set before `boltzgen execute` starts and cleared after it completes. If the sentinel is still set, the handler uploads the current `output/` directory and a `CheckpointManifest` to R2.
-
-### `--reuse` Flag
-
-All `boltzgen configure` calls include `--reuse`, which bakes `skip_existing=True` into every step config. This is the mechanism that makes resume work: when a resumed run calls `boltzgen execute`, each step checks whether its output files already exist and skips if so. No step-level tracking is needed — boltzgen handles it at the file level.
 
 ## Code Organization
 

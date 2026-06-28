@@ -1,4 +1,3 @@
-import os
 from typing import Optional
 
 from models.boltzgen.schema import BoltzGenPipelineStep
@@ -44,17 +43,6 @@ DEFAULT_PIPELINE_STEPS = [
     BoltzGenPipelineStep.ANALYSIS,
     BoltzGenPipelineStep.FILTERING,
 ]
-
-
-# R2 namespace — set BOLTZGEN_R2_NAMESPACE=test in CI/integration tests to
-# keep test outputs separate from production data in R2.
-# Production default: None → paths are "boltzgen/outputs/..." and "boltzgen/checkpoints/..."
-# Test override:      "test" → "test/boltzgen/outputs/..." and "test/boltzgen/checkpoints/..."
-
-
-def get_r2_namespace() -> Optional[str]:
-    """Read R2 namespace at call time (not import time) for snapshot safety."""
-    return os.environ.get("BOLTZGEN_R2_NAMESPACE") or None
 
 
 def _chain_dict(chain) -> dict:

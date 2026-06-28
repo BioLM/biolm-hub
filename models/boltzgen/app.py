@@ -13,11 +13,6 @@ from models.boltzgen.helpers import (
     convert_chain_selectors,
     convert_design_specs,
     convert_ss_specs,
-    get_r2_namespace,
-)
-from models.boltzgen.output_delivery import (
-    CheckpointManifest,
-    OutputJob,
 )
 from models.boltzgen.pipeline import BoltzGenPipelineMixin
 from models.boltzgen.schema import (
@@ -25,7 +20,6 @@ from models.boltzgen.schema import (
     BoltzGenDesignRequest,
     BoltzGenDesignResponse,
     BoltzGenParams,
-    BoltzGenPipelineStep,
 )
 from models.commons.core.decorator import modal_endpoint
 from models.commons.core.error import UserError
@@ -37,7 +31,6 @@ from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
     common_requirements,
-    protocols_r2_bucket_secret,
 )
 
 logger = get_logger(__name__)
@@ -141,7 +134,7 @@ app = modal.App(app_name, image=image)
 
 @app.cls(
     image=image,
-    secrets=[cloudflare_r2_secret, protocols_r2_bucket_secret],
+    secrets=[cloudflare_r2_secret],
     enable_memory_snapshot=True,  # Required for ModelMixinSnap
     experimental_options={
         "enable_gpu_snapshot": False
@@ -244,45 +237,9 @@ class BoltzGenModel(BoltzGenPipelineMixin, ModelMixinSnap):
                         "Using HuggingFace cache directory as moldir: %s", self.moldir
                     )
 
-        # Sentinel attrs for @modal.exit() checkpoint handler.
-        # Set before pipeline execution, cleared on completion.
-        self._pipeline_job = None
-        self._pipeline_output_dir = None
-        self._pipeline_requested_steps = None
-
         logger.info("BoltzGen model setup complete")
         logger.info("   Model directory: %s", self.model_dir)
         logger.info("   Checkpoints: %s", list(self.checkpoints.keys()))
-
-    @modal.exit()
-    def checkpoint_on_exit(self):
-        """Upload checkpoint if pipeline was in-progress when container shuts down.
-
-        Covers container preemption, OOM, and timeout. On resume, ``--reuse``
-        (``skip_existing=True``) makes boltzgen skip steps whose output files
-        already exist, so no step-level tracking is needed here.
-        """
-        job = getattr(self, "_pipeline_job", None)
-        if job is None:
-            return
-
-        logger.info(
-            "Container shutting down with pipeline in-progress for job %s. "
-            "Uploading checkpoint...",
-            job.job_id,
-        )
-        manifest = CheckpointManifest(
-            job_id=job.job_id,
-            model_slug="boltzgen",
-            completed_steps=[],
-            remaining_steps=[],
-            requested_steps=self._pipeline_requested_steps or [],
-        )
-        ok = job.upload_checkpoint(self._pipeline_output_dir, manifest)
-        if ok:
-            logger.info("Checkpoint uploaded for job %s", job.job_id)
-        else:
-            logger.warning("Checkpoint upload failed for job %s", job.job_id)
 
     @modal.method()
     @modal_endpoint(app_name=app_name, debug=True)
@@ -290,13 +247,9 @@ class BoltzGenModel(BoltzGenPipelineMixin, ModelMixinSnap):
         """
         Generate protein designs using BoltzGen.
 
-        Supports two modes:
-        - Fresh run: provide `items` describing the design target.
-        - Resume: provide only `params.resume_job_id` to continue a checkpointed run.
-          The checkpoint is downloaded from R2, and ``--reuse`` ensures boltzgen
-          skips steps whose output files already exist.
+        Provide `items` describing the design target. Each design is returned
+        inline in the response as an mmCIF structure with metrics and sequence.
         """
-        import shutil
         import sys
 
         import yaml
@@ -308,57 +261,27 @@ class BoltzGenModel(BoltzGenPipelineMixin, ModelMixinSnap):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = Path(tmpdir)
 
-            if params.resume_job_id:
-                # --- Resume path ---
-                job = OutputJob(
-                    "boltzgen", params.resume_job_id, namespace=get_r2_namespace()
+            if len(payload.items) > 1:
+                raise UserError(
+                    f"BoltzGen only supports one design item per request, got {len(payload.items)}."
                 )
-                logger.info("Resuming BoltzGen job %s", job.job_id)
-                manifest = job.download_checkpoint(tmp_path)
-                output_dir = tmp_path / "output"
-                yaml_file = output_dir / "design_spec.yaml"
-                if not yaml_file.exists():
-                    raise UserError(
-                        f"design_spec.yaml not found in checkpoint for job {job.job_id}. "
-                        "The checkpoint may be corrupt or from an older version."
-                    )
-                # Restore the original pipeline steps from the manifest so the resume
-                # continues exactly the original job — caller cannot change steps on resume.
-                if manifest.requested_steps:
-                    restored = [
-                        BoltzGenPipelineStep(s) for s in manifest.requested_steps
-                    ]
-                    params = BoltzGenDesignParams.model_validate(
-                        {
-                            **params.model_dump(exclude={"steps", "resume_job_id"}),
-                            "steps": restored,
-                        }
-                    )
-            else:
-                # --- Fresh run path ---
-                if len(payload.items) > 1:
-                    raise UserError(
-                        f"BoltzGen only supports one design item per request, got {len(payload.items)}."
-                    )
-                job = OutputJob.create("boltzgen", namespace=get_r2_namespace())
-                item = payload.items[0]
-                logger.info("BoltzGen generate [job_id=%s]", job.job_id)
+            item = payload.items[0]
+            logger.info("BoltzGen generate")
 
-                # Convert Pydantic model to YAML and write to tmp_path
-                logger.info("Converting request to YAML format...")
-                yaml_spec = self._convert_to_yaml_spec(item, params, tmp_path)
-                yaml_file = tmp_path / "design_spec.yaml"
-                with open(yaml_file, "w") as f:
-                    yaml.dump(yaml_spec, f, default_flow_style=False)
-                logger.info("YAML spec written to %s", yaml_file)
+            # Convert Pydantic model to YAML and write to tmp_path
+            logger.info("Converting request to YAML format...")
+            yaml_spec = self._convert_to_yaml_spec(item, params, tmp_path)
+            yaml_file = tmp_path / "design_spec.yaml"
+            with open(yaml_file, "w") as f:
+                yaml.dump(yaml_spec, f, default_flow_style=False)
+            logger.info("YAML spec written to %s", yaml_file)
 
-                # Create output directory and copy spec into it so it is included in checkpoints
-                output_dir = tmp_path / "output"
-                output_dir.mkdir()
-                shutil.copy2(yaml_file, output_dir / "design_spec.yaml")
-                logger.info("Output directory created: %s", output_dir)
+            # Create output directory
+            output_dir = tmp_path / "output"
+            output_dir.mkdir()
+            logger.info("Output directory created: %s", output_dir)
 
-            return self._run_boltzgen_pipeline(yaml_file, output_dir, params, job)
+            return self._run_boltzgen_pipeline(yaml_file, output_dir, params)
 
     def _convert_to_yaml_spec(
         self, item, params: BoltzGenDesignParams, tmp_path: Path

@@ -1,14 +1,12 @@
 """
 BoltzGen integration, deployment, and slow tests.
 
-Unit tests live in test_unit.py (schema validation, checkpoint manifest, pipeline helpers).
+Unit tests live in test_unit.py (schema validation, pipeline helpers).
 
 Integration tests  (<5 min on warm GPU)
 ----------------------------------------
   generate-programmatic        — protein-small_molecule + ATP, num_designs=1,
                                  steps=["design"] only; validates CIF is produced
-  checkpoint_and_resume        — two-phase: fresh design → resume with job_id,
-                                 verifies checkpoint round-trip through R2
 
 Slow tests  (30-60 min each, run manually before releases)
 -----------------------------------------------------------
@@ -24,9 +22,6 @@ Run
     pytest models/boltzgen/test.py -m slow --no-cov -v -s            # slow
     pytest models/boltzgen/test.py -m deployment --no-cov -v -s      # deployment
 """
-
-import modal
-import pytest
 
 from models.boltzgen.config import MODEL_FAMILY
 from models.boltzgen.schema import (
@@ -114,17 +109,7 @@ def validate_boltzgen_fast_response(actual, expected=None):
     """
     response = BoltzGenDesignResponse.model_validate(actual)
 
-    # Checkpoint response: is_complete=False has no results yet — that's OK
-    if not response.is_complete:
-        assert response.job_id, "Partial response must include job_id"
-        assert response.remaining_steps, "Partial response must have remaining_steps"
-        print(
-            f"✅ Partial response: job_id={response.job_id}, remaining={response.remaining_steps}"
-        )
-        return
-
-    assert response.results, "Complete response has no results"
-    assert response.job_id, "Complete response must include job_id"
+    assert response.results, "Response has no results"
 
     for idx, result in enumerate(response.results):
         assert result.cif, f"Result {idx}: No CIF content"
@@ -139,7 +124,7 @@ def validate_boltzgen_fast_response(actual, expected=None):
                 "ATOM" in result.cif or "HETATM" in result.cif or "data_" in result.cif
             )
 
-    print(f"✅ Fast validate: {len(response.results)} CIF(s), job_id={response.job_id}")
+    print(f"✅ Fast validate: {len(response.results)} CIF(s)")
 
 
 # ---------------------------------------------------------------------------
@@ -246,75 +231,5 @@ slow_test_suite = TestSuite(
 test_boltzgen_slow = generate_tests_from_suite(slow_test_suite, test_type="slow")
 
 
-# ---------------------------------------------------------------------------
-# Checkpoint + resume integration test (two Modal calls, ~4 min total)
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.integration
-def test_boltzgen_checkpoint_and_resume():
-    """Two-phase checkpoint/resume integration test.
-
-    Phase 1: fresh design-only run → checkpoints after design, returns job_id.
-    Phase 2: resume with that job_id → downloads checkpoint, reads results from
-             restored output_dir, returns is_complete=True with same designs.
-
-    Validates:
-    - Checkpoint is uploaded to R2 after design completes
-    - download_checkpoint extracts the output directory correctly
-    - Resume with resume_job_id produces results without re-running design
-    - Response includes job_id, completed_steps, is_complete=True on both phases
-    """
-    from models.commons.testing.runner import setup_and_get_local_model_instance
-
-    variants = MODEL_FAMILY.resolved_variants
-    assert variants, "No variants found for BoltzGen"
-    variant = variants[0]
-
-    model_instance, app_object = setup_and_get_local_model_instance(test_suite, variant)
-    fn = model_instance.generate
-
-    # Run both phases in a single app context to avoid "app is stopped" errors
-    # when the Phase 1 context closes before Phase 2 can call fn.remote().
-    with modal.enable_output(), app_object.run():
-        # Phase 1: fresh run, design step only
-        phase1 = fn.remote(_FAST_INPUT, _skip_cache=True)
-
-        print(f"\nPhase 1 response: {phase1}")
-        assert (
-            phase1.get("is_complete") is True
-        ), f"Phase 1 should be complete (design-only run). Got: {phase1}"
-        assert phase1.get("job_id"), "Phase 1 must return job_id"
-        assert phase1.get("results"), "Phase 1 must return at least one design"
-
-        job_id = phase1["job_id"]
-        print(
-            f"✅ Phase 1 complete: job_id={job_id}, {len(phase1['results'])} design(s)"
-        )
-
-        # Phase 2: resume — no items, just resume_job_id
-        resume_payload = BoltzGenDesignRequest(
-            params=BoltzGenDesignParams(resume_job_id=job_id)
-        )
-        phase2 = fn.remote(resume_payload, _skip_cache=True)
-
-    print(f"\nPhase 2 response (resume): {phase2}")
-    assert (
-        phase2.get("is_complete") is True
-    ), f"Phase 2 resume should be complete. Got: {phase2}"
-    assert phase2.get("results"), "Phase 2 must return results from checkpoint"
-    assert (
-        phase2.get("job_id") == job_id
-    ), f"Phase 2 job_id should match phase 1: {job_id} != {phase2.get('job_id')}"
-
-    # Both phases should produce a CIF
-    for idx, result in enumerate(phase2["results"]):
-        assert result.get("cif"), f"Phase 2 result {idx}: no CIF"
-
-    print(
-        f"✅ Phase 2 resume complete: {len(phase2['results'])} design(s) from checkpoint"
-    )
-
-
-# Unit tests (CheckpointManifest, schema validation, pipeline helpers) have been
-# moved to test_unit.py for faster CI execution.
+# Unit tests (schema validation, pipeline helpers) have been moved to
+# test_unit.py for faster CI execution.
