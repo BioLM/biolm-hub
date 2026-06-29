@@ -43,26 +43,44 @@
 >   **Environment secrets on the `modal-dev` environment** of the (future) repo — env-scoped, so org secrets
 >   don't auto-apply. Same token values as the internal repo.
 >
-> **NEXT, in order (all Modal-free until Milestone B):**
-> 1. ~~Block 3 — R2 unauthenticated HTTP read path~~ **✅ DONE (`fb0afaa`).**
-> 2. **W3b commons reconciliation** (§2 below): remove `protocols_r2_bucket_secret` from `config.py` +
->    delete the `protocols-r2-bkt` Modal secret (boltzgen no longer uses it); Phase-1-deferred dead-code
->    (bypass_detected/locations, monitor_directories, use_auth_token — migrate readers then delete);
->    `r2_then_archive` NIT-1 clobber fix; + the R2 secret-mount activation switch follow-up (above).
-> 3. **Round-1 corrections tail** — deferred items in `.planning/reviews/round-1/PHASE_B_DEFERRED.md` that
->    are NOT Milestone-B/commons-gated (cross-model coordinated renames; lower-priority cleanups). Also a
->    skill-doc cleanup: `model-implementation/investigation/GUIDE.md` examples still reference EXCLUDED
->    models `nt/`/`esm3/` (fix in the skill-review pass).
-> 3. **W3b** commons reconciliation (§2 below) + Phase-A-deferred CI items (mypy-over-`.github/scripts`
->    [67 errs], gitleaks gate, T20-ignore narrowing — see the Phase A note further down).
-> 4. **W-sec** — §3 below (license confirmations; gitleaks; final residue sweep). **needs-human license
->    confirmations in §0 open-questions** (peptides one is now moot — model dropped).
-> 5. **(optional) Round-2 verification review** before the big spend.
-> 6. **Milestone B** — full deploy + golden-fixture + integration/deployment matrix (§1). **GATED on user
->    infra: GitHub deploy-gate (label + `modal-dev` env + `MODAL_TOKEN_*`/`R2_*` secrets), R2 read-path
->    deploy-validate. Also applies the response-shape renames deferred in PHASE_B_DEFERRED.md.** Before any
->    real weight WRITES, do the `biolm-hub/`-prefix R2 re-path (else weights land under the old prefix).
-> 7. **W-launch** — incl. the full `RENAME_TO_BIOLM_HUB.md` bundle.
+> **Modal-free workstreams — ✅ essentially COMPLETE this session.** Done & committed:
+> - **Block 3** R2 unauthenticated HTTP read path (`fb0afaa`).
+> - **W3b commons reconciliation:** `protocols-r2-bkt`/`ngc-cli-api-key` secrets already gone (verified);
+>   dead `local_models_path` removed (`7c24838`); accepted-but-unread fields removed
+>   (`monitor_directories`/`use_auth_token`/`bypass_detected`/`bypass_locations`, 13 files); `r2_then_archive`
+>   NIT-1 clobber fix (two-phase clear). [Commits in `git log`.]
+> - **W-sec:** the `biolm-modal`/`qa` de-internalization sweep is **VERIFIED CLEAN** across all shipped files
+>   (the old offenders were dropped models esmstabp/boltz + already-swept files; only a skill *instruction*
+>   not-to-use-it remains, which is correct). gitleaks secret-scan CI gate + `.gitleaks.toml` added (needs a
+>   first-CI-run confirm). Dead `esmstabp` T20 ignore removed. License needs-human items consolidated into
+>   `.planning/MAINTAINER_LAUNCH_CHECKLIST.md`. **No copyleft models remain** (peptides dropped → catalog is
+>   permissive; prody MIT + transitive OpenBabel system-dep noted; tempro = all-rights-reserved decision in
+>   the checklist).
+> - **Round-1 tail:** skill `nt/`/`esm3/` excluded-model refs fixed.
+> - **mypy-over-`.github/scripts`** (Phase-A-deferred 67 errors): IN PROGRESS (delegated).
+>
+> **DEFERRED (with rationale) — Modal-free but lower-value / safer-with-deploy → Phase-C or Milestone B:**
+> - `seed_everything` lift to commons — the abodybuilder3 vs immunebuilder impls **diverge** (Lightning +
+>   PYTHONHASHSEED vs logging), so it's not a clean de-dup; shared core is ~8 lines; both are GPU models
+>   untestable locally → fold into Milestone B or leave.
+> - `STANDARD_PROTEIN_HOMOLOGS` shared asset (e1 only) — marginal; do when another model reuses it.
+> - PHASE_B_DEFERRED group B (response class-name drift, DTO inheritance, plddt/Tm field convergence) —
+>   schema-class touches, safer batched with the Milestone-B response-shape deploy-verify pass.
+> - `decorator.py` partial-payload de-dup (COMMONS_REQUESTS row 13) — touches every model's runtime path →
+>   per the plan, do in a W3b pass WITH a representative deploy (Milestone-B-adjacent).
+>
+> **REMAINING — GATED (needs Modal/R2/infra or a human):**
+> 1. **R2 secret-mount activation switch** — make the `cloudflare-r2` Modal secret mount optional
+>    (`downloader.py:113`) so a creds-less deploy can start. Code task but Modal-validated → Milestone B.
+> 2. **Needs-human** — the `MAINTAINER_LAUNCH_CHECKLIST.md` items (license confirmations; SECURITY/CoC
+>    contacts; tempro all-rights-reserved decision; infra: Modal CI token on `modal-dev` env, deploy-gate).
+> 3. **(optional) Round-2 verification review** before the big spend.
+> 4. **Milestone B** — full deploy + golden-fixture + integration/deployment matrix (§1). Deploy-validates
+>    the R2 HTTP read + secret-mount switch + all self-population; applies the PHASE_B_DEFERRED response-shape
+>    renames (deploy-verify then apply). **Before any real weight WRITES, do the `biolm-hub/`-prefix R2
+>    re-path** (else weights land under the old prefix — see `RENAME_TO_BIOLM_HUB.md` §4).
+> 5. **W-launch** — the full `RENAME_TO_BIOLM_HUB.md` rebrand bundle + delete `.planning/` + nuke history +
+>    flip public.
 
 ## STATUS SNAPSHOT — what's DONE (committed on `main`)
 - **Commons + global rules** (W1/W2/W3a/W-acq/W6/W7/W17) — earlier commits.
