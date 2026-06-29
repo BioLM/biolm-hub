@@ -22,6 +22,50 @@
 
 ---
 
+## 0. ROUND-1 INDEPENDENT REVIEW + USER DECISIONS (2026-06-30)
+Full multi-agent review in `.planning/reviews/round-1/` (README dashboard + FIX_PLAN.md + 44 `models/` +
+12 `global/`). 540 findings → 529 after adversarial verification: 🔴31 / 🟠222 / 🟡276. Framework sound;
+debt is application-level. **Modal-free fix campaign IN PROGRESS** (grouped/triaged per FIX_PLAN.md).
+
+**User decisions (2026-06-30) — APPLIED / IN-PROGRESS:**
+- **DROP `clean`** (permanent — upstream is a Non-Exclusive Research Use / non-commercial license).
+- **DROP `boltz` + `rfd3` + `esmstabp`** (temporary — re-inclusion conditions in `.planning/reviews/round-1/DROPPED_MODELS.md`).
+  esmstabp = self-trained RF, no public source, not OSS-reproducible yet (also voids its 🔴 `biolm-modal` `_train.py` bug + its Milestone-B manual-upload blocker).
+- **`peptides` → relicense to GPL-3.0** (its `peptides.py` dep declares GPLv3 copyleft) + fix attribution.
+- **`tempro` → KEEP**; research upstream license aggressively; if none found, ship an explicit
+  "no upstream license found" notice (do NOT fabricate MIT).
+- **Modal env names:** dev/testing = `biolm-models-dev`, prod = `biolm-models` (replaces internal `qa`).
+- **`esmfold` pLDDT:** standardize on the correct convention (pLDDT is 0–100; align all models' plddt to 0–100).
+- Catalog: 43 SHIP → **39 SHIP** (+ dummy) after the 4 drops (clean, boltz, rfd3, esmstabp).
+
+**OPEN QUESTIONS — NEED A USER RESPONSE (tracked so they aren't lost):**
+1. **R2 anonymous public-read on `biolm-public`** — make it anonymously readable so the "no creds beyond
+   Modal" happy path is true? YES → user enables public read on the bucket + I add the unsigned-read code
+   path (`signature_version=UNSIGNED`); NO → I soften the README claim. Gates the credential-less quickstart.
+2. **SECURITY.md / CODE_OF_CONDUCT.md contacts** — need a real security-report email + CoC enforcement
+   contact (currently placeholders that must not ship).
+3. **Copyleft inclusion** — confirm it's acceptable to ship one GPL-3.0 (copyleft) model (`peptides`) in
+   the otherwise-permissive catalog.
+4. **Knowledge-base PDF policy** — `sources.yaml` `*_r2` paths point at third-party paper PDFs; confirm
+   none of those raw PDFs land in public `biolm-public` (W-sec).
+
+### Fix campaign Phase A — DONE (2026-06-30; one agent failed, recovered in-context)
+Foundational shared-file fixes landed + verified (ruff/black clean, commons imports, `mkdocs build
+--strict` green, `cli/test_kb.py` 35 pass [was 14 fail], `.github/scripts` 53 pass, schema guard ✓40,
+new `docs/test_docgen.py` 18 pass): commons de-internalized (`qa`→`biolm-models-dev`, `biolm-modal`
+gone, `ServerError` added to ERROR_MAP, `parquet_utils.py` deleted, cosine-tolerance + runner fixes);
+gateway dead billing schema (`introspection.py`) deleted; CLI fixed (`bm kb matrix`/`bm kb missing`,
+`r2 cat` UTF-8, `main.py` BioLM-Modal, `test_kb` typer); dummy template de-internalized; docs-site
+generator fixed (tagline blockquote, same-page anchors) + tests added; `.github/scripts` hardened;
+`ci.yml` W11 ref removed.
+**DEFERRED from Phase A (the ci-config agent failed; these are risky/manual, do in a focused pass):**
+(a) include `.github/scripts` in CI mypy — surfaces **67 pre-existing type errors**, fix as its own pass
+(FIX_PLAN S12); (b) gitleaks secret-scan gate — scans full git history (still holds internal refs;
+history is nuked at launch) → do at **W-sec** (S12/security); (c) narrow the over-broad `**/test*.py`
+T20 ignore — `commons/testing/fixture.py` legitimately prints (generation tool); needs an explicit
+exempt rather than a naive narrowing (FIX_PLAN S16); (d) `deploy.yml` enforced required-reviewers = the
+GitHub Environment setting in the manual-actions list.
+
 ## SEQUENCING (ratified by user 2026-06-28) — build ALL features first, deploy/test the full matrix LAST
 **Do NOT run the full Milestone-B deploy matrix mid-build.** Order of remaining work:
 **(1)** finish ALL platform features across the board — W8 gateway → W9 web app → W10 CLI → W11 CI →
@@ -59,11 +103,10 @@ patterns, or CPU vs GPU build paths), pick TWO representatives (one from each gr
 - **conda/python-3.10 models** (immunefold, deepviscosity, thermompnn, thermompnn_d) — confirm the StrEnum
   3.10 shim (abodybuilder3 + esm_if1 already deploy-confirmed it; immunebuilder is 3.12).
 
-### ⚠️ esmstabp — REQUIRES a manual one-time step before it can deploy:
-esmstabp is a self-trained RandomForest with **no public source**. On an empty `biolm-public` its
-`standard_r2_download` fails with the `_train.py` hint. **The maintainer must train + upload** the
-`{1..4}.joblib` to `model-store/esmstabp/v1/` via the atomic upload (writes the completion marker) before
-esmstabp can deploy. **Until then esmstabp cannot deploy.**
+### ~~esmstabp — manual upload~~ → DROPPED (2026-06-30)
+esmstabp was dropped from the catalog (self-trained RF, no public source, not OSS-reproducible yet —
+see `.planning/reviews/round-1/DROPPED_MODELS.md`). The previous "maintainer must train + upload the
+`{1..4}.joblib`" requirement is therefore **void** for v1 launch.
 
 ### Antibody golden-OUTPUT regen (W5-deferred):
 `ablang2` generate, `igbert` paired-generate, `antifold` generate+score now serialize the canonical
