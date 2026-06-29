@@ -3,9 +3,9 @@ display_name: ProDy
 last_updated: "2026-03-17"
 
 strengths:
-  - "Comprehensive non-covalent interaction analysis detects 6 interaction types: hydrogen bonds, salt bridges, hydrophobic contacts, pi-stacking, cation-pi, and disulfide bonds -- the most complete interaction toolkit on the platform"
+  - "Comprehensive non-covalent interaction analysis detects 6 interaction types: hydrogen bonds, salt bridges, hydrophobic contacts, pi-stacking, cation-pi, and repulsive ionic -- the most complete interaction toolkit on the platform"
   - "Both intra-chain and inter-chain interaction analysis, enabling characterization of protein-protein interfaces (antibody-antigen, enzyme-substrate, homo/hetero-oligomer contacts)"
-  - "Energy estimation for each interaction provides quantitative assessment of interaction strength, enabling identification of energetically significant contacts"
+  - "Interaction energy matrix available on request (via return_energy_matrix) provides a global quantitative view of the interaction network for identifying energetically significant contacts"
   - "Frequent interactor analysis identifies 'hotspot' residues that make many contacts -- these are prime targets for mutagenesis and correlate with binding affinity contributions"
   - "Interaction matrix and energy matrix output options provide a global view of the interaction network for systems-level structural analysis"
   - "RMSD computation with both structural alignment (default) and sequence-based alignment for comparing homologous proteins with different sequences"
@@ -26,7 +26,7 @@ use_when:
   - "You are analyzing antibody-antigen complexes and want to identify critical interface contacts for antibody engineering or epitope mapping"
   - "You need to understand the intramolecular interaction network within a protein to identify residues critical for structural stability"
   - "You want to compare wild-type and mutant structures via RMSD and then analyze how mutations alter the interaction network"
-  - "You need energetic characterization of protein interactions for rational mutagenesis -- identifying which contacts contribute most to binding or stability"
+  - "You need interaction network characterization for rational mutagenesis -- the interaction matrix reveals which contacts contribute most to binding or stability"
   - "You are building an automated structural analysis pipeline that combines structure prediction with detailed interaction characterization"
 
 dont_use_when:

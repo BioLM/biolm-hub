@@ -6,7 +6,7 @@ import numpy as np
 from models.commons.core.decorator import modal_endpoint
 from models.commons.core.logging import get_logger
 from models.commons.modal.source import setup_source_layer
-from models.commons.model.base import ModelMixin
+from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
     cloudflare_r2_secret,
@@ -14,11 +14,11 @@ from models.commons.util.config import (
 )
 from models.dna_chisel.config import MODEL_FAMILY
 from models.dna_chisel.schema import (
+    DnaChiselEncodeRequest,
+    DnaChiselEncodeResponse,
+    DnaChiselEncodeResponseResult,
     DnaChiselFeatureOptions,
     DnaChiselParams,
-    DnaChiselPredictRequest,
-    DnaChiselPredictResponse,
-    DnaChiselPredictResponseResult,
 )
 
 logger = get_logger(__name__)
@@ -53,7 +53,7 @@ app = modal.App(app_name, image=image)
     **modal_resource_spec.to_modal_options(),
 )
 @biolm_model_class
-class DnaChiselModel(ModelMixin):
+class DnaChiselModel(ModelMixinSnap):
     app_username: str = modal.parameter(default="default_user")
 
     @modal.enter(snap=True)
@@ -380,17 +380,18 @@ class DnaChiselModel(ModelMixin):
     @modal.method()
     @modal_endpoint(app_name=app_name)
     def encode(  # noqa: C901
-        self, payload: DnaChiselPredictRequest
-    ) -> DnaChiselPredictResponse:
+        self, payload: DnaChiselEncodeRequest
+    ) -> DnaChiselEncodeResponse:
         results = []
         for item in payload.items:
             # Standardize sequence to uppercase case
             sequence = item.sequence.upper()
             include = payload.params.include
             species = payload.params.species
-            restriction_enzymes = payload.params.restriction_enzymes
+            # Treat None and [] identically: both disable restriction site checking
+            restriction_enzymes = payload.params.restriction_enzymes or []
 
-            out = DnaChiselPredictResponseResult()
+            out = DnaChiselEncodeResponseResult()
 
             if DnaChiselFeatureOptions.GC_CONTENT in include:
                 out.gc_content = self.compute_gc_content(sequence)
@@ -466,7 +467,7 @@ class DnaChiselModel(ModelMixin):
 
             results.append(out)
 
-        return DnaChiselPredictResponse(results=results)
+        return DnaChiselEncodeResponse(results=results)
 
 
 if __name__ == "__main__":

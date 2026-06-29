@@ -6,7 +6,7 @@
 
 The peptides module is not a machine learning model but an algorithmic feature extractor. It computes physicochemical properties, amino acid composition statistics, and descriptor vectors from amino acid sequences using published scales and formulas from the biochemistry literature.
 
-The implementation wraps the `peptides` Python package (v0.3.4), which is a Python port of the original R `Peptides` package by Osorio et al. (2015). The innovation is in providing a comprehensive, standardized set of sequence-derived features through a unified API, consolidating dozens of individual physicochemical scales into a single computation.
+The implementation wraps the `peptides` Python package (v0.3.4) — [althonos/peptides.py](https://github.com/althonos/peptides.py) by Martin Larralde, an independent Python reimplementation that computes the physicochemical scales popularized by the R `Peptides` package (Osorio et al., 2015). The innovation is in providing a comprehensive, standardized set of sequence-derived features through a unified API, consolidating dozens of individual physicochemical scales into a single computation.
 
 ### Parameters & Layers
 

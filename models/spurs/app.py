@@ -43,12 +43,18 @@ logger = get_logger(__name__)
 # Build Modal container image
 # Pinned: hydra dataclass bug on Python 3.12
 image = modal.Image.from_registry("pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime")
-# Setup download layer with ESM2 weights (needed for cached embeddings)
+# Setup download layer with ESM2 weights (needed for cached embeddings).
+# Include fair-esm so the r2_then_library fallback can `import esm` at build
+# time (the download layer runs before the main dependency install below).
 image = setup_download_layer(
     image,
     base_model_slug=ESM2Params.base_model_slug,
     params_version=ESM2Params.params_version,
     variant_config={"MODEL_SIZE": ESM2ModelSizes.SIZE_650M},
+    extra_pip_packages=[
+        # fair-esm 2.0.1 from GitHub (needed for the fallback download)
+        "https://github.com/facebookresearch/esm/archive/2b369911bb5b4b0dda914521b9475cad1656b2ac.zip",
+    ],
 )
 # Setup download layer with SPURS checkpoints
 image = setup_download_layer(
@@ -178,19 +184,12 @@ class SpursModel(ModelMixinSnap):
             # If variant_sequence provided, calculate mutations automatically
             if item.variant_sequence and not item.return_full_dms:
                 logger.info(
-                    "  Processing item %s/%s: auto-calculating mutations from variant_sequence",
+                    "  Processing item %s/%s: auto-calculating mutations from variant_sequence"
+                    " (wt_len=%d, variant_len=%d)",
                     i + 1,
                     len(payload.items),
-                )
-                logger.info(
-                    "    Wild-type sequence:  %s%s",
-                    item.sequence[:50],
-                    "..." if len(item.sequence) > 50 else "",
-                )
-                logger.info(
-                    "    Variant sequence:    %s%s",
-                    item.variant_sequence[:50],
-                    "..." if len(item.variant_sequence) > 50 else "",
+                    len(item.sequence),
+                    len(item.variant_sequence),
                 )
 
                 # Calculate mutations: wild-type (sequence) -> variant (variant_sequence)
@@ -250,7 +249,7 @@ class SpursModel(ModelMixinSnap):
             ddg_value = runtime_result.get("ddg_value")
             ddg_matrix = runtime_result.get("ddg_matrix")
             if ddg_value is not None:
-                logger.info(f"    → ΔΔG = {ddg_value:.3f} kcal/mol")
+                logger.info("    -> ddG = %.3f kcal/mol", ddg_value)
                 if calculated_from_variant:
                     logger.info(
                         "       (auto-calculated mutations: %s)", ", ".join(mutations)
@@ -268,8 +267,8 @@ class SpursModel(ModelMixinSnap):
         # Log summary of results
         manual_mut_count = sum(
             1
-            for r in results
-            if r.mutations and results.index(r) not in auto_calculated_items
+            for idx, r in enumerate(results)
+            if r.mutations and idx not in auto_calculated_items
         )
         matrix_count = sum(1 for r in results if r.ddG_matrix is not None)
 
@@ -313,7 +312,7 @@ if __name__ == "__main__":
     Usage:
         python models/spurs/app.py
 
-        # Force deploy to QA or production:
+        # Force deploy to dev (biolm-models-dev) or production (biolm-models):
         python models/spurs/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

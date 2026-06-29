@@ -116,11 +116,16 @@ image = (
 )
 
 # Setup download layer with model weights
+# huggingface_hub is listed explicitly: the HF fallback in the download layer
+# runs at build time, before the boltzgen runtime layer is installed. Even
+# though boltzgen transitively provides huggingface_hub in the runtime image,
+# declaring it here ensures the download layer is self-contained.
 image = setup_download_layer(
     image,
     base_model_slug=BoltzGenParams.base_model_slug,
     params_version=BoltzGenParams.params_version,
     variant_config=None,
+    extra_pip_packages=["huggingface_hub==0.26.0"],
 )
 
 # Finally, add all model files
@@ -242,7 +247,7 @@ class BoltzGenModel(BoltzGenPipelineMixin, ModelMixinSnap):
         logger.info("   Checkpoints: %s", list(self.checkpoints.keys()))
 
     @modal.method()
-    @modal_endpoint(app_name=app_name, debug=True)
+    @modal_endpoint(app_name=app_name)
     def generate(self, payload: BoltzGenDesignRequest) -> BoltzGenDesignResponse:
         """
         Generate protein designs using BoltzGen.
@@ -261,6 +266,8 @@ class BoltzGenModel(BoltzGenPipelineMixin, ModelMixinSnap):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp_path = Path(tmpdir)
 
+            # Belt-and-suspenders: BoltzGenDesignRequest.items has max_length=1
+            # (batch_size=1), so Pydantic validation always rejects >1 before here.
             if len(payload.items) > 1:
                 raise UserError(
                     f"BoltzGen only supports one design item per request, got {len(payload.items)}."
@@ -457,7 +464,7 @@ if __name__ == "__main__":
     Usage:
         python models/boltzgen/app.py
 
-        # Force deploy to "qa" or "main" environment:
+        # Force deploy to "biolm-models-dev" or "biolm-models" environment:
         python models/boltzgen/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

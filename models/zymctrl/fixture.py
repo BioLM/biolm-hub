@@ -1,6 +1,7 @@
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
 from models.commons.testing.fixture import FixtureGenerator
+from models.commons.testing.shared_assets import STANDARD_PROTEIN_STABILITY
 from models.zymctrl.config import MODEL_FAMILY
 from models.zymctrl.schema import (
     ZymCTRLEncodeParams,
@@ -70,7 +71,8 @@ def generate():
                 ),
                 items=[
                     ZymCTRLEncodeRequestItem(
-                        sequence="MKTVRQERLKSIVRILERSKEPVSGAQLAEELSVSRQVIVQDI",
+                        # First 43 residues of STANDARD_PROTEIN_STABILITY (W12 shared asset)
+                        sequence=STANDARD_PROTEIN_STABILITY[:43],
                         ec_number="3.5.5.1",  # Optional EC context
                     ),
                 ],

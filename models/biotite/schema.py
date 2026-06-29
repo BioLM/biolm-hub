@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from pydantic import BeforeValidator, Field
+from pydantic import AliasChoices, BeforeValidator, Field, model_validator
 
 from models.commons.data.structure_validator import validate_pdb
 from models.commons.model.base import ModelParams
@@ -18,23 +18,21 @@ class BiotiteParams(ModelParams):
     base_model_slug = "biotite"
     log_identifier = "BIOTITE"
     batch_size = 8
-    max_sequence_len = 2048
 
 
 ### Biotite Request
 
 
-class BiotiteExtractChainsRequestParams(RequestModel):
-    """Optional parameters for chain extraction."""
-
-    pass
-
-
 class BiotiteExtractChainsRequestItem(RequestModel):
-    pdb_string: Annotated[
+    pdb: Annotated[
         str,
         BeforeValidator(validate_pdb),
-        Field(..., min_length=1, description="PDB structure as string"),
+        Field(
+            ...,
+            min_length=1,
+            description="PDB structure as string",
+            validation_alias=AliasChoices("pdb", "pdb_string"),
+        ),
     ]
     chain_ids: Annotated[
         list[str],
@@ -45,10 +43,6 @@ class BiotiteExtractChainsRequestItem(RequestModel):
 
 
 class BiotiteExtractChainsRequest(RequestModel):
-    params: BiotiteExtractChainsRequestParams | None = Field(
-        default=None,
-        description="Optional parameters controlling this action (defaults are used when omitted).",
-    )
     items: Annotated[
         list[BiotiteExtractChainsRequestItem],
         Field(
@@ -57,12 +51,6 @@ class BiotiteExtractChainsRequest(RequestModel):
             description="Batch of inputs to process in a single request. Up to 8 structures per request.",
         ),
     ]
-
-
-class BiotiteRMSDRequestParams(RequestModel):
-    """Optional parameters for RMSD computation."""
-
-    pass
 
 
 class BiotiteRMSDRequestItem(RequestModel):
@@ -76,20 +64,58 @@ class BiotiteRMSDRequestItem(RequestModel):
         BeforeValidator(validate_pdb),
         Field(..., min_length=1, description="Second PDB structure as string"),
     ]
-    chain_ids: Annotated[
-        dict[str, list[str]],
+    chain_a: Annotated[
+        list[str],
         Field(
             ...,
-            description="Mapping of PDB to chain IDs: {'a': [chain_ids_for_pdb_a], 'b': [chain_ids_for_pdb_b]}",
+            min_length=1,
+            description=(
+                "Chain IDs from pdb_a for RMSD comparison. "
+                "Must have the same length as chain_b."
+            ),
+        ),
+    ]
+    chain_b: Annotated[
+        list[str],
+        Field(
+            ...,
+            min_length=1,
+            description=(
+                "Chain IDs from pdb_b for RMSD comparison. "
+                "Must have the same length as chain_a."
+            ),
         ),
     ]
 
+    @model_validator(mode="before")
+    @classmethod
+    def _accept_legacy_chain_ids(cls, values: object) -> object:
+        """Accept legacy chain_ids dict format: {'a': [...], 'b': [...]}.
+
+        Callers may still send ``chain_ids={"a": [...], "b": [...]}``; this
+        validator converts that form to the canonical ``chain_a``/``chain_b``
+        fields so existing integrations keep working.
+        """
+        if isinstance(values, dict) and "chain_ids" in values:
+            chain_ids = values.pop("chain_ids")
+            if isinstance(chain_ids, dict) and "chain_a" not in values:
+                if "a" in chain_ids:
+                    values["chain_a"] = chain_ids["a"]
+                if "b" in chain_ids:
+                    values["chain_b"] = chain_ids["b"]
+        return values
+
+    @model_validator(mode="after")
+    def _validate_chain_lengths(self) -> "BiotiteRMSDRequestItem":
+        if len(self.chain_a) != len(self.chain_b):
+            raise ValueError(
+                f"chain_a and chain_b must have the same length: "
+                f"got {len(self.chain_a)} vs {len(self.chain_b)}"
+            )
+        return self
+
 
 class BiotiteRMSDRequest(RequestModel):
-    params: BiotiteRMSDRequestParams | None = Field(
-        default=None,
-        description="Optional parameters controlling this action (defaults are used when omitted).",
-    )
     items: Annotated[
         list[BiotiteRMSDRequestItem],
         Field(

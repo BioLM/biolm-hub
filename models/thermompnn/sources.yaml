@@ -3,7 +3,9 @@ display_name: ThermoMPNN
 license:
   type: MIT
   url: https://github.com/Kuhlman-Lab/ThermoMPNN/blob/main/LICENSE
-  notes: ''
+  notes: ThermoMPNN bundles the ProteinMPNN backbone (Dauparas et al., 2022; University of Washington)
+    as a frozen inference dependency; ProteinMPNN is independently MIT-licensed
+    (https://github.com/dauparas/ProteinMPNN/blob/main/LICENSE).
 molecule_types:
 - protein
 applicable_to:

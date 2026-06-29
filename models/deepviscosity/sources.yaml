@@ -27,7 +27,7 @@ primary_papers:
 source_repos:
 - type: github
   url: https://github.com/Lailabcode/DeepViscosity
-  commit: ''
+  commit: '2d22a5bfd3905ca508fe675fd212d2d431876517'
   snapshot_r2: pending
   readme_md_r2: knowledge-base/models/deepviscosity/primary/pages/gh-deepviscosity-readme.md
 applied_literature:

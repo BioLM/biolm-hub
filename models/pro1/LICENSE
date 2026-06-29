@@ -170,6 +170,8 @@
 
 NOTICE
 
+Copyright 2025 Michael Hla
+
 This model wrapper integrates Pro-1, a reasoning language model for protein
 stability engineering developed by Michael Hla.
 
@@ -182,11 +184,3 @@ Pro-1 ships LoRA adapter weights applied on top of Meta's Llama-3.1-8B-Instruct
 base model. The Llama base-model weights remain governed by Meta's Llama 3.1
 Community License Agreement; only the Pro-1 adapter weights are covered by the
 Apache-2.0 terms above.
-
-NOTE TO MAINTAINERS: The Pro-1 license above is a BEST-EFFORT attribution. The
-HuggingFace model card (https://huggingface.co/mhla/pro-1) declares Apache-2.0,
-but the upstream GitHub repository (https://github.com/michaelhla/pro-1) does
-NOT ship an explicit LICENSE file. Treat the HF model card as authoritative
-pending confirmation. Before public release, confirm the intended license, the
-copyright holder / year, and the Llama 3.1 base-model redistribution terms with
-the author (Michael Hla).

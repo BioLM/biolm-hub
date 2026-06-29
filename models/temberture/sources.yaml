@@ -2,8 +2,8 @@ model_slug: temberture
 display_name: TemBERTure
 license:
   type: MIT
-  url: https://github.com/ibmm-unibe-ch/TemBERTure
-  notes: ''
+  url: https://github.com/ibmm-unibe-ch/TemBERTure/blob/main/LICENSE
+  notes: 'Copyright (c) 2024 Institute of Biochemistry and Molecular Medicine. Base model (ProtBERT-BFD, Rostlab/prot_bert_bfd) has no explicit license on HuggingFace; verify redistribution terms before production use.'
 molecule_types:
 - protein
 applicable_to:
@@ -16,12 +16,12 @@ tasks:
 primary_papers:
 - title: 'TemBERTure: advancing protein thermostability prediction with deep learning and attention mechanisms'
   arxiv: ''
-  doi: 10.1093/bioinformatics/btae157
-  venue: Bioinformatics, 2024
+  doi: 10.1093/bioadv/vbae103
+  venue: Bioinformatics Advances, 2024
   year: 2024
   authors:
   - Chiara Rodella
-  - Florian Lazaro
+  - Symela Lazaridi
   - Thomas Lemmin
   pdf_r2: pending
   md_r2: pending

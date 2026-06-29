@@ -25,13 +25,10 @@ primary_papers:
       - "Patrick Kunzmann"
       - "Kay Hamacher"
     pdf_r2: "knowledge-base/models/biotite/primary/papers/kunzmann2018.pdf"
-    md_r2: "pending"
     figures_of_note: []
 source_repos:
   - type: "github"
     url: "https://github.com/biotite-dev/biotite"
-    commit: ""
-    snapshot_r2: "pending"
   - type: "pypi"
     url: "https://pypi.org/project/biotite/"
     notes: "Structure analysis toolkit for computational biology"

@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING
 import modal
 
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.error import ModelExecutionError
 from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
@@ -126,10 +127,6 @@ class DNABERT2Model(ModelMixinSnap):
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.snapshot_path,
             trust_remote_code=True,
-            padding=True,
-            truncation=True,
-            max_length=DNABERT2Params.max_sequence_len,
-            return_tensors="pt",
         )
 
         logger.info(
@@ -167,7 +164,7 @@ class DNABERT2Model(ModelMixinSnap):
             return_tensors="pt",
             padding=True,
             truncation=True,
-            max_length=DNABERT2Params.max_sequence_len,
+            max_length=DNABERT2Params.max_token_len,
         ).to(self.device)
 
         with self.torch.no_grad():
@@ -202,7 +199,7 @@ class DNABERT2Model(ModelMixinSnap):
                 return_tensors="pt",
                 add_special_tokens=True,
                 truncation=True,
-                max_length=DNABERT2Params.max_sequence_len,
+                max_length=DNABERT2Params.max_token_len,
             )
             # shape: [L]
             input_ids = enc["input_ids"][0]
@@ -231,7 +228,7 @@ class DNABERT2Model(ModelMixinSnap):
 
             mask_id = self.tokenizer.mask_token_id
             if mask_id is None:
-                raise ValueError("Tokenizer has no [MASK] token.")
+                raise ModelExecutionError("Tokenizer has no [MASK] token.")
 
             # Build a batch of masked sequences
             masked_input_ids = input_ids.unsqueeze(0).repeat(
@@ -271,7 +268,7 @@ if __name__ == "__main__":
     Usage:
         python models/dnabert2/app.py
 
-        # Force deploy in QA/prod:
+        # Force deploy:
         python models/dnabert2/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

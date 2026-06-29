@@ -133,7 +133,7 @@ class ESM1vModel(ModelMixinSnap):
                 )
             except Exception as e:
                 logger.error("Failed to load model '%s': %s", member, e, exc_info=True)
-                raise e
+                raise
 
         logger.info(
             "ESM1v model(s) loaded directly on %s for GPU memory snapshot!", self.device
@@ -165,14 +165,14 @@ class ESM1vModel(ModelMixinSnap):
                     resp = fill_masker_pipeline(
                         sequence, targets=aa_unambiguous_list, top_k=n_aa_unambiguous
                     )
-                except Exception as e:
+                except Exception:
                     logger.error(
                         "Model call failed for sequence %s with model %s",
                         idx + 1,
                         model_name,
                         exc_info=True,
                     )
-                    raise e
+                    raise
 
                 resp_sorted = sorted(resp, key=lambda x: x["score"], reverse=True)
                 result[model_name] = [
@@ -196,7 +196,7 @@ if __name__ == "__main__":
     Usage:
         MODEL_NUMBER="all" python models/esm1v/app.py
 
-        # Force deploy to "qa" or "main" environment:
+        # Force deploy to the configured environment:
         MODEL_NUMBER="all" python models/esm1v/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

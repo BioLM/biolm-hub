@@ -67,9 +67,7 @@ Users can request embeddings from any Transformer layer via `repr_layers`, enabl
 
 ## Applied Use Cases
 
-ESM C was released in late 2024 and the applied literature is still emerging. The ESM model family broadly has been used in hundreds of published studies for protein engineering, variant interpretation, and function prediction.
-
-<!-- TODO: Add ESMC-specific applied literature entries as they are published -- see sources.yaml applied_literature -->
+ESM C was released in late 2024 and the applied literature is still emerging. The ESM model family broadly has been used in hundreds of published studies for protein engineering, variant interpretation, and function prediction. See `sources.yaml` for known applied literature entries.
 
 ## Related Models
 

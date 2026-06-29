@@ -97,12 +97,11 @@ class OmniDNAModel(ModelMixinSnap):
 
     @modal.enter(snap=True)
     def setup_model(self):
-        """Load model directly on GPU for GPU memory snapshot with deterministic behavior."""
+        """Load model on GPU for GPU memory snapshot with deterministic behavior."""
         import torch
-        from safetensors.torch import load_file
-        from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
+        from transformers import AutoModelForCausalLM, AutoTokenizer
 
-        logger.info("Loading Omni-DNA model directly on GPU for GPU memory snapshot...")
+        logger.info("Loading Omni-DNA model for GPU memory snapshot...")
 
         # Set deterministic behavior for consistent results
         torch.manual_seed(42)
@@ -122,36 +121,32 @@ class OmniDNAModel(ModelMixinSnap):
         snapshot_dir = build_hf_snapshot_path(model_cache_dir, hf_repo_id, hf_revision)
 
         logger.info(
-            "Loading Omni-DNA model directly on %s from snapshot: %s",
+            "Loading Omni-DNA model on %s from snapshot: %s",
             self.device,
             snapshot_dir,
         )
 
-        # Load config and create model directly on GPU
-        config = AutoConfig.from_pretrained(snapshot_dir, trust_remote_code=True)
-        self.model = AutoModelForCausalLM.from_config(
-            config,
+        # Load model via from_pretrained so HF handles key remapping / weight tying
+        self.model = AutoModelForCausalLM.from_pretrained(
+            snapshot_dir,
             trust_remote_code=True,
         )
         self.model.eval()
 
-        # Load the model weights from the .safetensors file
-        safetensors_path = snapshot_dir / "model.safetensors"
-        state_dict = load_file(str(safetensors_path))
-        self.model.load_state_dict(state_dict, strict=False)
-
-        # Move model to GPU with deterministic behavior
+        # Move model to GPU
         self.model = self.model.to(self.device, non_blocking=False)
 
-        # Load tokenizer
+        # Load tokenizer and ensure right-padding (required for last-token pooling and
+        # log-prob shift logic — causal LMs sometimes default to left-padding)
         self.tokenizer = AutoTokenizer.from_pretrained(
             snapshot_dir,
             trust_remote_code=True,
             use_fast=True,
         )
+        self.tokenizer.padding_side = "right"
 
         logger.info(
-            "Omni-DNA model (%s) loaded directly on %s for GPU memory snapshot!",
+            "Omni-DNA model (%s) loaded on %s for GPU memory snapshot.",
             model_size,
             self.device,
         )
@@ -292,7 +287,7 @@ if __name__ == "__main__":
     Usage:
         MODEL_SIZE="1b" python models/omni_dna/app.py
 
-        # Force deploy in QA/prod:
+        # Force deploy:
         MODEL_SIZE="1b" python models/omni_dna/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

@@ -240,6 +240,21 @@ class MPNNModel(ModelMixinSnap):
         params = AllMPNNGenerateParams().model_dump()
         params.update(validated_params.model_dump(exclude_none=True))
 
+        # Internal/plumbing defaults not exposed in the public schema — set server-side
+        params["fasta_seq_separation"] = ":"
+        params["file_ending"] = ""
+        params["zero_indexed"] = 0
+        params["pdb_path"] = None
+        params["redesigned_residues_multi"] = None
+        params["fixed_residues_multi"] = None
+        params["bias_AA_per_residue_multi"] = None
+        params["omit_AA_per_residue_multi"] = None
+        params["save_stats"] = None
+        params["verbose"] = True
+        params["ligand_mpnn_use_side_chain_context"] = (
+            MPNNParams.ligand_mpnn_use_side_chain_context
+        )
+
         pdbs = [item.pdb for item in payload.items]
 
         os.makedirs("/tmp_pdbs/", exist_ok=True)
@@ -291,7 +306,7 @@ if __name__ == "__main__":
     Usage:
         MODEL_TYPE="protein" python models/mpnn/app.py
 
-        # Force deploy to "qa" or "main" environment:
+        # Deploy to dev (biolm-models-dev) or prod (biolm-models) environment:
         MODEL_TYPE="protein" python models/mpnn/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

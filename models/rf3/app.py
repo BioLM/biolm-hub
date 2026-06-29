@@ -4,15 +4,17 @@ RosettaFold3 is an all-atom biomolecular structure prediction network.
 Based on RosettaCommons/foundry implementation (BSD 3-Clause License).
 """
 
+import gzip
 import json
 import os
 import tempfile
 from pathlib import Path
 
 import modal
+import numpy as np
 
 from models.commons.core.decorator import modal_endpoint
-from models.commons.core.error import UserError
+from models.commons.core.error import ServerError
 from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
@@ -156,17 +158,12 @@ class RF3Model(ModelMixinSnap):
         else:
             logger.info("Checkpoint will be downloaded to: %s", self.ckpt_path)
 
-        # Import RF3 inference engine from foundry
-        try:
-            from rf3.inference_engines.rf3 import RF3InferenceEngine
+        # Import RF3 inference engine from foundry — let ImportError surface immediately
+        # so a misconfigured container fails at load rather than at the first request.
+        from rf3.inference_engines.rf3 import RF3InferenceEngine
 
-            self.RF3InferenceEngine = RF3InferenceEngine
-            logger.info("RosettaFold3 dependencies loaded successfully")
-        except ImportError as e:
-            logger.warning("Warning: Could not import foundry/rf3: %s", e)
-            logger.warning("This may be expected if foundry is not yet installed")
-            # Don't raise here - just log the warning
-
+        self.RF3InferenceEngine = RF3InferenceEngine
+        logger.info("RosettaFold3 dependencies loaded successfully")
         logger.info("RF3 model setup complete on %s", self.device)
 
     @modal.method()
@@ -210,14 +207,6 @@ class RF3Model(ModelMixinSnap):
 
             # Create inference engine and run prediction
             try:
-                # Check if RF3InferenceEngine is available
-                if not hasattr(self, "RF3InferenceEngine"):
-                    raise UserError(
-                        "RF3 inference engine not available. "
-                        "Foundry library may not be installed correctly. "
-                        "This is expected during initial setup before foundry integration is complete."
-                    )
-
                 # Create RF3 inference engine with init parameters only
                 engine = self.RF3InferenceEngine(
                     ckpt_path=str(self.ckpt_path) if self.ckpt_path else None,
@@ -248,7 +237,9 @@ class RF3Model(ModelMixinSnap):
 
             except Exception as e:
                 logger.error("RosettaFold3 inference failed: %s", e, exc_info=True)
-                raise UserError(f"RosettaFold3 inference failed: {str(e)}") from e
+                raise ServerError(
+                    "RosettaFold3 inference failed; see server logs for details."
+                ) from e
 
             # Process outputs
             results = []
@@ -286,8 +277,9 @@ class RF3Model(ModelMixinSnap):
                     )
                     results.append(result)
                 else:
-                    raise UserError(
-                        "No structures generated and no score file found. Check input parameters."
+                    raise ServerError(
+                        "RosettaFold3 produced no structures or score file; "
+                        "see server logs for details."
                     )
             else:
                 logger.info("Found %s generated structures", len(cif_files))
@@ -305,8 +297,6 @@ class RF3Model(ModelMixinSnap):
                     cif_files[: params.diffusion_batch_size]
                 ):
                     # Read CIF file
-                    import gzip
-
                     if cif_path.suffix == ".gz":
                         with gzip.open(cif_path, "rt") as f:
                             cif_content = f.read()
@@ -331,8 +321,6 @@ class RF3Model(ModelMixinSnap):
                     if params.include_pae:
                         pae_path = item_output_dir / f"{item.name}_pae_model_{idx}.npz"
                         if pae_path.exists():
-                            import numpy as np
-
                             pae_data = np.load(pae_path)
                             if "pae" in pae_data:
                                 pae = pae_data["pae"].tolist()
@@ -344,8 +332,6 @@ class RF3Model(ModelMixinSnap):
                             item_output_dir / f"{item.name}_plddt_model_{idx}.npz"
                         )
                         if plddt_path.exists():
-                            import numpy as np
-
                             plddt_data = np.load(plddt_path)
                             if "plddt" in plddt_data:
                                 plddt = plddt_data["plddt"].tolist()
@@ -389,7 +375,10 @@ class RF3Model(ModelMixinSnap):
 
         # Convert components
         for comp in item.components:
-            comp_spec = {}
+            comp_spec: dict = {}
+
+            if comp.type:
+                comp_spec["entity_type"] = comp.type.value
 
             if comp.sequence:
                 comp_spec["seq"] = comp.sequence
@@ -397,7 +386,13 @@ class RF3Model(ModelMixinSnap):
                 comp_spec["smiles"] = comp.smiles
             if comp.ccd_code:
                 comp_spec["ccd_code"] = comp.ccd_code
-            if comp.structure_path:
+            if comp.structure_cif:
+                # Write inline CIF content to a temp file so foundry can read it
+                temp_cif_path = temp_dir_path / f"{comp.name}_template.cif"
+                temp_cif_path.write_text(comp.structure_cif)
+                comp_spec["path"] = str(temp_cif_path)
+            elif comp.structure_path:
+                # Container-local path; only usable in test/internal scenarios
                 comp_spec["path"] = comp.structure_path
             if comp.chain_id:
                 comp_spec["chain_id"] = comp.chain_id
@@ -448,7 +443,7 @@ if __name__ == "__main__":
     Usage:
         python models/rf3/app.py
 
-        # Force deploy to "qa" or "main" environment:
+        # Force deploy to "biolm-models-dev" (staging) or "biolm-models" (prod):
         python models/rf3/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

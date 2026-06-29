@@ -9,10 +9,9 @@ from models.chai1.schema import (
     Chai1PredictRequest,
     Chai1PredictResponse,
     Chai1PredictResponseResult,
-    Chai1ScoreOptions,
 )
 from models.commons.core.decorator import modal_endpoint
-from models.commons.core.error import UserError
+from models.commons.core.error import ServerError, UserError
 from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
@@ -125,7 +124,8 @@ class Chai1Model(ModelMixinSnap):
         conformers_file = Path(self.model_dir) / "conformers_v1.apkl"
         if conformers_file.exists():
             logger.info(
-                f"conformers_v1.apkl found ({conformers_file.stat().st_size / 1024**2:.1f} MB)"
+                "conformers_v1.apkl found (%.1f MB)",
+                conformers_file.stat().st_size / 1024**2,
             )
         else:
             logger.warning("Warning: conformers_v1.apkl not found")
@@ -229,7 +229,7 @@ class Chai1Model(ModelMixinSnap):
                             # Write each a3m file
                             for db, a3m_content in molecule.alignment.items():
                                 if db == "small_bfd":
-                                    filename = "hits_bfd_uniclust.a3m"  # TODO: check why just BFD is not allowed
+                                    filename = "hits_bfd_uniclust.a3m"
                                 else:
                                     filename = f"hits_{db.value}.a3m"
 
@@ -278,9 +278,7 @@ class Chai1Model(ModelMixinSnap):
                     for idx, cif_path in enumerate(candidates.cif_paths):
                         cif_file_path = Path(cif_path)
                         if not cif_file_path.exists():
-                            raise FileNotFoundError(
-                                f"Missing CIF file: {cif_file_path}"
-                            )
+                            raise ServerError(f"Missing CIF file for sample {idx}")
 
                         logger.info(
                             "Processing CIF file %s/%s: %s",
@@ -294,19 +292,7 @@ class Chai1Model(ModelMixinSnap):
                             cif_content = cif_file.read()
 
                         # Create the response entry for this CIF file
-                        result = Chai1PredictResponseResult(
-                            cif=cif_content,
-                            pae=(
-                                candidates.pae[idx].tolist()
-                                if Chai1ScoreOptions.PAE in params.include
-                                else None
-                            ),
-                            plddt=(
-                                candidates.plddt[idx].tolist()
-                                if Chai1ScoreOptions.PLDDT in params.include
-                                else None
-                            ),
-                        )
+                        result = Chai1PredictResponseResult(cif=cif_content)
                         results.append(result)
 
                     logger.info("All CIF files processed successfully.")
@@ -320,7 +306,7 @@ if __name__ == "__main__":
     Usage:
         python models/chai1/app.py
 
-        # Force deploy to "qa" or "main" environment:
+        # Force deploy to dev or prod environment:
         python models/chai1/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

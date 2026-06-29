@@ -206,54 +206,6 @@ class MPNNGenerateParams(RequestModel):
         description="If true, includes nearby ligand atoms when packing side chains.",
     )
 
-    # Hardcoded param defaults from argparser
-    fasta_seq_separation: str = Field(
-        default=":",
-        description="Separator character used between chains in multi-chain FASTA output.",
-    )
-    file_ending: str = Field(
-        default="",
-        description="Optional suffix appended to intermediate output file names; empty by default.",
-    )
-    zero_indexed: int = Field(
-        default=0,
-        description="Controls residue numbering in output files; 0 = one-based numbering (default).",
-    )
-
-    # Unused or always set to None in the model
-    pdb_path: None = Field(
-        default=None,
-        description="Internal use only; always null in API requests.",
-    )
-    redesigned_residues_multi: None = Field(
-        default=None,
-        description="Internal use only; always null in API requests.",
-    )
-    fixed_residues_multi: None = Field(
-        default=None,
-        description="Internal use only; always null in API requests.",
-    )
-    bias_AA_per_residue_multi: None = Field(
-        default=None,
-        description="Internal use only; always null in API requests.",
-    )
-    omit_AA_per_residue_multi: None = Field(
-        default=None,
-        description="Internal use only; always null in API requests.",
-    )
-    save_stats: None = Field(
-        default=None,
-        description="Internal use only; always null in API requests.",
-    )
-    verbose: bool = Field(
-        default=True,
-        description="Internal verbosity flag; always true in server mode.",
-    )
-    ligand_mpnn_use_side_chain_context: None = Field(
-        default=None,
-        description="Internal use only; always null in API requests.",
-    )
-
 
 class LigandMPNNGenerateParams(MPNNGenerateParams):
     ligand_mpnn_use_atom_context: Optional[bool] = Field(
@@ -346,11 +298,11 @@ class MPNNGenerateRequestItem(RequestModel):
 
 def parse_pdb_string(pdb_string):
     """
-    Parses a PDB string, returning a dict of chain -> count of unique residues,
-    and a sorted list of the chain IDs found.
+    Parses a PDB string, returning a dict of chain -> set of (res_num_str, insertion_code)
+    residue identifiers using PDB author numbering, and a sorted list of chain IDs found.
     """
-    chain_residues = {}
-    chains = set()
+    chain_residues: dict[str, set] = {}
+    chains: set[str] = set()
 
     for line in pdb_string.splitlines():
         if line.startswith("ATOM") or line.startswith("HETATM"):
@@ -364,13 +316,8 @@ def parse_pdb_string(pdb_string):
             chain_residues[chain_id].add(residue_id)
             chains.add(chain_id)
 
-    # Convert sets to counts
-    chain_residue_counts = {
-        chain: len(residues) for chain, residues in chain_residues.items()
-    }
-    chains_list = sorted(chains)  # Sorting to have a consistent order
-
-    return chain_residue_counts, chains_list
+    chains_list = sorted(chains)
+    return chain_residues, chains_list
 
 
 def split_residue_string(s: str, field: str) -> tuple[str, int, Optional[str]]:
@@ -392,27 +339,30 @@ def split_residue_string(s: str, field: str) -> tuple[str, int, Optional[str]]:
 
 
 def validate_residue_lists(
-    chain_counts: dict[str, int],
+    chain_residues: dict[str, set],
     chains: list[str],
     model_field: Optional[list[str]],
     model_field_name: str,
 ):
     """
     Validates that every residue string in model_field is actually present
-    in the specified PDB (i.e., chain exists and residue number is within range).
+    in the specified PDB using PDB author numbering (membership check against
+    the actual residue set, not a 1..count range).
     """
     if model_field:
         for i in model_field:
-            chain_id, residue_number, _ = split_residue_string(i, model_field_name)
+            chain_id, residue_number, insertion_code = split_residue_string(
+                i, model_field_name
+            )
             if chain_id not in chains:
                 raise ValueError(
                     f"Residue specification {i} has invalid chain id not "
                     f"detected in PDB chains: {chains}"
                 )
-            if not 1 <= int(residue_number) <= chain_counts[chain_id]:
+            res_key = (str(residue_number), insertion_code if insertion_code else "")
+            if res_key not in chain_residues.get(chain_id, set()):
                 raise ValueError(
-                    f"Residue specification {i} has invalid position greater than "
-                    f"chain length: {chain_counts[chain_id]}"
+                    f"Residue specification {i} not found in chain '{chain_id}'"
                 )
 
 
@@ -448,7 +398,7 @@ class MPNNGenerateRequest(RequestModel):
 
         # Validate each provided PDB
         for item in items:
-            chain_counts, chains = parse_pdb_string(item.pdb)
+            chain_residues, chains = parse_pdb_string(item.pdb)
 
             # Validate chains_to_design
             if params.chains_to_design:
@@ -468,19 +418,22 @@ class MPNNGenerateRequest(RequestModel):
 
             # Validate residue lists
             validate_residue_lists(
-                chain_counts, chains, params.fixed_residues, "fixed_residues"
+                chain_residues, chains, params.fixed_residues, "fixed_residues"
             )
             validate_residue_lists(
-                chain_counts, chains, params.redesigned_residues, "redesigned_residues"
+                chain_residues,
+                chains,
+                params.redesigned_residues,
+                "redesigned_residues",
             )
             validate_residue_lists(
-                chain_counts,
+                chain_residues,
                 chains,
                 params.transmembrane_buried,
                 "transmembrane_buried",
             )
             validate_residue_lists(
-                chain_counts,
+                chain_residues,
                 chains,
                 params.transmembrane_interface,
                 "transmembrane_interface",
@@ -489,34 +442,40 @@ class MPNNGenerateRequest(RequestModel):
             # Validate bias_AA_per_residue
             if params.bias_AA_per_residue:
                 for spec, aa_dict in params.bias_AA_per_residue.items():
-                    chain_id, residue_number, _ = split_residue_string(
+                    chain_id, residue_number, insertion_code = split_residue_string(
                         spec, "bias_AA_per_residue"
                     )
                     if chain_id not in chains:
                         raise ValueError(
                             f"Residue specification {spec} has an invalid chain ID not found in PDB chains: {chains}"
                         )
-                    if not (1 <= residue_number <= chain_counts.get(chain_id, 0)):
+                    res_key = (
+                        str(residue_number),
+                        insertion_code if insertion_code else "",
+                    )
+                    if res_key not in chain_residues.get(chain_id, set()):
                         raise ValueError(
-                            f"Residue specification {spec} has invalid position "
-                            f"greater than chain length ({chain_counts.get(chain_id, 0)})"
+                            f"Residue specification {spec} not found in chain '{chain_id}'"
                         )
                     validate_aa_unambiguous("".join(aa_dict.keys()))
 
             # Validate omit_AA_per_residue
             if params.omit_AA_per_residue:
                 for spec, omit_val in params.omit_AA_per_residue.items():
-                    chain_id, residue_number, _ = split_residue_string(
+                    chain_id, residue_number, insertion_code = split_residue_string(
                         spec, "omit_AA_per_residue"
                     )
                     if chain_id not in chains:
                         raise ValueError(
                             f"Residue specification {spec} has an invalid chain ID not found in PDB chains: {chains}"
                         )
-                    if not (1 <= residue_number <= chain_counts.get(chain_id, 0)):
+                    res_key = (
+                        str(residue_number),
+                        insertion_code if insertion_code else "",
+                    )
+                    if res_key not in chain_residues.get(chain_id, set()):
                         raise ValueError(
-                            f"Residue specification {spec} has invalid position "
-                            f"greater than chain length ({chain_counts.get(chain_id, 0)})"
+                            f"Residue specification {spec} not found in chain '{chain_id}'"
                         )
                     validate_aa_unambiguous(omit_val)
 
@@ -524,17 +483,20 @@ class MPNNGenerateRequest(RequestModel):
             if params.symmetry_residues:
                 for pairs in params.symmetry_residues:
                     for spec in pairs:
-                        chain_id, residue_number, _ = split_residue_string(
+                        chain_id, residue_number, insertion_code = split_residue_string(
                             spec, "symmetry_residues"
                         )
                         if chain_id not in chains:
                             raise ValueError(
                                 f"Residue specification {spec} has an invalid chain ID not found in PDB chains: {chains}"
                             )
-                        if not (1 <= residue_number <= chain_counts.get(chain_id, 0)):
+                        res_key = (
+                            str(residue_number),
+                            insertion_code if insertion_code else "",
+                        )
+                        if res_key not in chain_residues.get(chain_id, set()):
                             raise ValueError(
-                                f"Residue specification {spec} has invalid position "
-                                f"greater than chain length ({chain_counts.get(chain_id, 0)})"
+                                f"Residue specification {spec} not found in chain '{chain_id}'"
                             )
 
             # Ensure symmetry_residues and symmetry_weights match
@@ -550,80 +512,12 @@ class MPNNGenerateRequest(RequestModel):
         return instance
 
 
-class LigandMPNNGenerateRequest(MPNNGenerateRequest):
-    params: LigandMPNNGenerateParams = Field(
-        description="Optional parameters controlling this action (defaults are used when omitted).",
-    )
-    items: Annotated[
-        list[MPNNGenerateRequestItem],
-        Field(
-            min_length=1,
-            max_length=MPNNParams.items_batch_size,
-            description="Batch of inputs to process in a single request. Accepts exactly 1 PDB structure.",
-        ),
-    ]
-
-
-class GlobalMembraneMPNNGenerateRequest(MPNNGenerateRequest):
-    params: GlobalMembraneMPNNGenerateParams = Field(
-        description="Optional parameters controlling this action (defaults are used when omitted).",
-    )
-    items: Annotated[
-        list[MPNNGenerateRequestItem],
-        Field(
-            min_length=1,
-            max_length=MPNNParams.items_batch_size,
-            description="Batch of inputs to process in a single request. Accepts exactly 1 PDB structure.",
-        ),
-    ]
-
-
-class ResidueMembraneMPNNGenerateRequest(MPNNGenerateRequest):
-    params: ResidueMembraneMPNNGenerateParams = Field(
-        description="Optional parameters controlling this action (defaults are used when omitted).",
-    )
-    items: Annotated[
-        list[MPNNGenerateRequestItem],
-        Field(
-            min_length=1,
-            max_length=MPNNParams.items_batch_size,
-            description="Batch of inputs to process in a single request. Accepts exactly 1 PDB structure.",
-        ),
-    ]
-
-    @model_validator(mode="after")
-    def validate_membrane_params(cls, instance):
-        params = instance.params
-        items = instance.items
-
-        if not items:
-            raise ValueError("Items must be populated for membrane params validation")
-
-        for item in items:
-            chain_counts, chains = parse_pdb_string(item.pdb)
-
-            validate_residue_lists(
-                chain_counts,
-                chains,
-                params.transmembrane_buried,
-                "transmembrane_buried",
-            )
-            validate_residue_lists(
-                chain_counts,
-                chains,
-                params.transmembrane_interface,
-                "transmembrane_interface",
-            )
-
-        return instance
-
-
 ### MPNN Response
 
 FloatLike = Annotated[float, BeforeValidator(lambda v: float(v))]
 
 
-class MPNNGenerateResponseItem(RequestModel):
+class MPNNGenerateResponseItem(ResponseModel):
     sequence: str = Field(
         description=(
             "Designed amino acid sequence; chains are separated by ':'"

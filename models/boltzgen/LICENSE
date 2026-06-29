@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2025 BoltzGen Contributors
+Copyright (c) 2025 Hannes Stärk
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,11 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-Upstream source: https://github.com/HannesStark/boltzgen
-License URL: https://github.com/HannesStark/boltzgen/blob/main/LICENSE
-Note: Copyright holder ("BoltzGen Contributors", primary author Hannes Stark)
-and year (2025) inferred from upstream GitHub repository owner and primary
-paper year (bioRxiv 2025). Reviewer should verify against the upstream LICENSE
-file before public release.

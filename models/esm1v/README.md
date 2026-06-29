@@ -41,7 +41,7 @@ The BioLM platform deploys all 5 individual models (n1--n5) plus an "all" varian
 
 **CANNOT be used for:**
 - Multi-site mutation effects (only one `<mask>` per sequence)
-- Sequences longer than 512 residues
+- Sequences longer than 1022 residues
 - Generating protein embeddings (use ESM2 or ESMC for embeddings)
 - Structure-aware predictions (sequence-only model)
 - Absolute fitness prediction (outputs are relative probabilities)
@@ -57,7 +57,7 @@ Predict amino acid probabilities at a masked position in a protein sequence.
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
 | `items` | list[ESM1vPredictRequestItem] | (required) | 1--5 items | List of masked sequences |
-| `items[].sequence` | str | (required) | 1--512 chars | Amino acid sequence with exactly one `<mask>` token |
+| `items[].sequence` | str | (required) | 1--1022 chars | Amino acid sequence with exactly one `<mask>` token |
 
 **Response (individual variant n1--n5):**
 
@@ -185,7 +185,7 @@ Option A -- Numerical Reproduction: outputs from the BioLM implementation are co
 | CPU | 2.0 cores | 4.0 cores |
 | Models loaded | 1 | 5 |
 | Batch size | 5 | 5 |
-| Max sequence length | 512 | 512 |
+| Max sequence length | 1022 | 1022 |
 | Memory snapshot | Enabled (GPU snapshot) | Enabled (GPU snapshot) |
 
 ## Implementation Notes

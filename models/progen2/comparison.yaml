@@ -1,12 +1,3 @@
-# comparison.yaml — Model Comparison Metadata
-# Machine-readable guidance for model selection.
-# Generated as part of Phase 3.5 of the model-knowledge-base workflow.
-#
-# Requirements:
-#   - strengths, weaknesses, use_when, dont_use_when: 5+ entries each (min 3)
-#   - alternatives, complements: 1+ entries where applicable
-#   - All referenced model slugs must exist in models/
-
 model_slug: "progen2"
 display_name: "ProGen2"
 last_updated: "2026-03-17"

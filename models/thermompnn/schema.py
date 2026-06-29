@@ -47,7 +47,7 @@ class ThermoMPNNPredictRequestItem(RequestModel):
     ]
     mutations: Optional[list[str]] = Field(
         default=None,
-        description="Optional list of mutations in format 'WT{position}MUT' (e.g., 'A100V' for Ala100->Val). If not provided, performs site-saturation mutagenesis (SSM) scan for all positions.",
+        description="Optional list of mutations in format 'WT{position}MUT' (e.g., 'A100V' for Ala->Val at position 100). Position is 1-indexed within the selected chain's modeled sequence (not PDB residue numbers). If not provided, performs site-saturation mutagenesis (SSM) scan for all positions.",
     )
 
     @model_validator(mode="after")
@@ -94,7 +94,7 @@ class ThermoMPNNPredictRequest(RequestModel):
         list[ThermoMPNNPredictRequestItem],
         Field(
             min_length=1,
-            max_length=1,
+            max_length=ThermoMPNNParams.batch_size,
             description="Batch of inputs to process in a single request. Exactly 1 PDB structure per request.",
         ),
     ]
@@ -107,7 +107,10 @@ class ThermoMPNNPredictResponseItem(ResponseModel):
     """Response item for a single mutation prediction"""
 
     mutation: str = Field(..., description="Mutation in format 'WT{position}MUT'.")
-    position: int = Field(..., description="Residue position (1-indexed).")
+    position: int = Field(
+        ...,
+        description="Residue position (1-indexed within the selected chain's modeled sequence, not PDB residue numbers).",
+    )
     wildtype: str = Field(..., description="Wildtype amino acid.")
     mutation_aa: str = Field(..., description="Mutant amino acid.")
     ddg: float = Field(

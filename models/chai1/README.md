@@ -53,7 +53,7 @@ Single variant -- no size options.
 
 ## Actions / Endpoints
 
-### `predict`
+### `fold`
 
 Predicts the 3D structure of a biomolecular complex from input molecule sequences.
 
@@ -172,7 +172,9 @@ Option A (Numerical Reproduction): The BioLM implementation wraps the official `
 
 ### Test Cases
 
-<!-- TODO: Add specific test cases with known protein structures and their predicted RMSD values -->
+Integration tests use golden output comparisons with RMSD thresholds (0.5 Å for single-protein,
+3.5 Å for MSA-assisted) against reference outputs stored in R2. Deployment tests validate basic
+response structure using a minimal 1-residue protein input.
 
 ### Verification Status
 
@@ -187,7 +189,7 @@ Option A (Numerical Reproduction): The BioLM implementation wraps the official `
 | CPU | 8 cores |
 | Cold start | ~3-5 minutes (memory snapshot enabled) |
 | Inference P50 | ~30-120 seconds (depends on complex size and parameters) |
-| Dependencies | `chai-lab==0.6.1`, `torch==2.3.1`, `biopython==1.83` |
+| Dependencies | `chai-lab==0.6.1`, `torch==2.6.0`, `biopython==1.83` |
 
 ## Implementation Notes
 

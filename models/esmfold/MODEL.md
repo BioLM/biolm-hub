@@ -25,8 +25,6 @@ The central insight is that the ESM-2 language model, trained purely on evolutio
 | Recycling iterations | 4 (default in BioLM implementation via `num_recycles=4`) |
 | Output | Full-atom PDB coordinates, pLDDT, pTM |
 
-<!-- TODO: Extract exact folding trunk parameter count and loss weights/training hyperparameters from paper supplementary -- see sources.yaml primary_papers[0] -->
-
 ### Training Data
 
 | Property | Details |
@@ -34,8 +32,6 @@ The central insight is that the ESM-2 language model, trained purely on evolutio
 | Language model pre-training | UniRef50 (same as ESM-2) |
 | Structure supervision | Experimentally determined structures from the Protein Data Bank (PDB) |
 | Distillation | AlphaFold2-predicted structures from the AlphaFold Protein Structure Database |
-
-<!-- TODO: Extract exact PDB/distillation structure counts and temporal cutoff from paper Methods and supplementary -->
 
 The language model backbone (ESM-2) is pre-trained on UniRef50, covering proteins from all domains of life. The folding trunk is then trained on experimental PDB structures, with additional distillation from AlphaFold2 predictions to increase the diversity of training structures.
 
@@ -80,12 +76,10 @@ ESMFold was evaluated on CAMEO and CASP14 targets, comparing single-sequence pre
 | AlphaFold2 | - | 0.88 | MSA-based |
 | RoseTTAFold | - | 0.76 | MSA-based |
 
-<!-- TODO: Extract exact CAMEO benchmark numbers from paper Figure 3 / Table 1, and measure actual GPU memory/latency at various sequence lengths on QA deployment -->
-
 #### Key Findings (Lin et al., Science 2023)
 
 - ESMFold achieves competitive accuracy with MSA-based methods for proteins with high evolutionary coverage
-- On single-domain proteins, ESMFold pLDDT > 0.7 correlates with TM-score > 0.8 relative to experimental structures
+- On single-domain proteins, ESMFold pLDDT > 70 correlates with TM-score > 0.8 relative to experimental structures
 - Prediction speed is approximately 60x faster than AlphaFold2 due to elimination of MSA search
 - Accuracy degrades for sequences with few homologs in UniRef50 (low evolutionary coverage)
 
@@ -134,7 +128,7 @@ The BioLM implementation loads official pre-trained weights via `esm.pretrained.
 - **Low-homology proteins**: Sequences with few detectable homologs in UniRef50 produce unreliable structures (low pLDDT, low pTM)
 - **Intrinsically disordered regions**: These regions will have low pLDDT but may be modeled as extended or compact structures that do not reflect their biological disorder
 - **Large multi-chain complexes**: Accuracy decreases with more than 2 chains, and memory usage increases quadratically
-- **CUDA out of memory**: Very long sequences or sequences near the 768-residue limit can exceed GPU memory. The BioLM implementation returns empty results (pdb="", mean_plddt=0.0, ptm=0.0) for OOM batches rather than crashing
+- **CUDA out of memory**: Very long sequences or sequences near the 768-residue limit can exceed GPU memory. The implementation raises a `ModelExecutionError` so the failure is visible to the caller rather than being silently swallowed
 - **Membrane proteins**: Under-represented in training data; transmembrane helical bundles may be poorly predicted
 
 ## Implementation Details
@@ -152,7 +146,7 @@ Request
   |     |-- Extract per-sequence confidence scores:
   |     |     |-- mean_plddt: average per-residue confidence
   |     |     \-- ptm: predicted TM-score
-  |     \-- Handle CUDA OOM: return empty results for failed batches
+  |     \-- Handle CUDA OOM: raise ModelExecutionError (propagates as typed server error)
   \-- 5. Return ESMFoldPredictResponse with results list
 ```
 
@@ -181,18 +175,15 @@ The model produces reproducible outputs on the same GPU architecture. Small nume
 
 ### Caching Behavior
 
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
-- **Redis (Modal Dict)**: Fast lookup, TTL-based expiration
-- **R2**: Persistent storage for cached results
-- **Cache key**: Determined by the full request payload (sequences, parameters)
+Response caching is handled by the serving infrastructure outside the model container. The model container itself is stateless; cache key and eviction policy are determined by the deployment layer, not by this code.
 
 ## Versions & Changelog
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v1 | 2024-11-06 | Initial ESMFold implementation with predict action |
-| v1 (updated) | 2026-03-14 | Migrated to declarative download system and source layer setup |
+| v1 | 2024-11-06 | Initial ESMFold implementation with fold action |
 | v1 (updated) | 2024-12-23 | Added multi-chain support with `:` separator |
+| v1 (updated) | 2026-03-14 | Migrated to declarative download system and source layer setup |
 
 
 ---

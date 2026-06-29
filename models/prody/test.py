@@ -3,56 +3,11 @@ from models.commons.testing.config import ActionTestCase, TestSuite, VariantTest
 from models.commons.testing.runner import generate_tests_from_suite
 from models.prody.config import MODEL_FAMILY
 
-# TODO: ProDy Encode Test Non-Determinism Investigation
-# ========================================================
-#
-# ISSUE ENCOUNTERED:
-# When running encode tests multiple times with the same input (e.g., 1UBQ chain A),
-# we observe slight variations in interaction counts, particularly for hydrogen bonds.
-# For example:
-#   - Run 1: 10 hydrogen bonds, 52 hydrophobic, 2 salt bridges
-#   - Run 2: 11 hydrogen bonds, 52 hydrophobic, 2 salt bridges
-#   - Run 3: 10 hydrogen bonds, 52 hydrophobic, 2 salt bridges
-#
-# ROOT CAUSE:
-# The non-determinism stems from the hydrogen addition process (PDBFixer/OpenBabel):
-# 1. Hydrogen atom placement has slight variations between runs due to:
-#    - Non-deterministic optimization algorithms in PDBFixer
-#    - Floating point precision in energy minimization
-#    - Different initial random states
-# 2. ProDy's interaction detection uses distance/angle cutoffs
-# 3. Borderline interactions (right at the cutoff thresholds) may be detected
-#    or missed depending on the exact hydrogen placement
-#
-# BIOLOGICAL IMPLICATIONS:
-# - The core, stable interactions remain consistent (e.g., hydrophobic, salt bridges)
-# - Only borderline hydrogen bonds near cutoff thresholds vary (typically ±1-2)
-# - This is acceptable because:
-#   a) These borderline interactions are weak/transient in reality
-#   b) The overall interaction profile remains stable
-#   c) This reflects real uncertainty in hydrogen placement for predicted structures
-#
-# SOLUTION IMPLEMENTED:
-# We use a custom validator (`validate_encode_interaction_counts`) that checks:
-# - Interaction counts by type (hydrogen bonds, hydrophobic, salt bridges, etc.)
-# - Rather than exact atom-level matches
-# - This allows for the ±1-2 variation in borderline interactions while ensuring
-#   the overall interaction profile is consistent
-#
-# FUTURE IMPROVEMENTS:
-# 1. Investigate if ProDy's hydrogen addition can be made deterministic by:
-#    - Setting explicit random seeds for PDBFixer's energy minimization
-#    - Using consistent pH and temperature parameters
-#    - Pre-processing structures to ensure deterministic starting states
-# 2. Consider implementing tolerance ranges for interaction counts (e.g., ±2)
-# 3. Document expected interaction count ranges for common test structures
-# 4. Add integration tests that verify interaction count stability over N runs
-#
-# RELATED: RMSD Near-Zero Values
-# For RMSD tests comparing identical structures, we observe values like 1.16e-14
-# instead of exactly 0.0. This is expected due to floating point precision limits
-# in the alignment and RMSD calculation algorithms. These values are effectively
-# zero for all practical purposes.
+# ProDy encode tests use a custom validator instead of exact matching because
+# hydrogen bond counts may vary by +/-1 between runs (due to borderline detection
+# at PDBFixer/OpenBabel cutoff thresholds). All other interaction types are exact.
+# RMSD comparisons of identical structures may return ~1e-14 instead of 0.0 due
+# to floating-point precision in the alignment algorithm.
 
 
 def _assert_interaction_counts(expected_counts: dict, actual_counts: dict, label: str):

@@ -116,13 +116,13 @@ class AntiFoldModel(ModelMixinSnap):
 
     @modal.enter(snap=True)
     def setup_model(self):
-        """Load model directly on GPU for GPU memory snapshot with deterministic behavior."""
+        """Load model onto device with deterministic behavior for memory snapshot."""
         import antifold.antiscripts
         import antifold.main
         import pandas as pd
         import torch
 
-        logger.info("Loading AntiFold model directly on GPU for GPU memory snapshot...")
+        logger.info("Loading AntiFold model for memory snapshot...")
 
         # Set deterministic behavior for consistent results
         torch.manual_seed(42)
@@ -132,7 +132,7 @@ class AntiFoldModel(ModelMixinSnap):
         self.torch = torch
         self.model_dir = get_model_dir()
 
-        # Get device and setup for GPU inference
+        # Resolve the inference device (CPU for this model; get_torch_device falls back accordingly)
         self.device = get_torch_device()
 
         self.pd = pd
@@ -145,7 +145,7 @@ class AntiFoldModel(ModelMixinSnap):
             self.model_dir,
         )
 
-        # Load model directly on GPU
+        # Load model onto device
         self.model = self.antifold_antiscripts.load_model_modified(
             checkpoint_path=Path(self.model_dir) / "model.pt"
         )
@@ -155,9 +155,7 @@ class AntiFoldModel(ModelMixinSnap):
         # Pre-compute amino acid position mapping
         self.aa_to_pos = {aa: i for i, aa in enumerate(list(aa_unambiguous))}
 
-        logger.info(
-            "AntiFold model loaded directly on %s for GPU memory snapshot!", self.device
-        )
+        logger.info("AntiFold model loaded on %s.", self.device)
 
     def _prepare_pdb_input(self, pdb_str: str, params) -> tuple[str, str, str]:
         """
@@ -179,13 +177,7 @@ class AntiFoldModel(ModelMixinSnap):
             # Use the basename (without extension) as identifier.
             _pdb = os.path.splitext(os.path.basename(tmp_pdb))[0]
 
-            # Determine chain: prefer heavy_chain_id unless a nanobody_chain_id is
-            # provided.
-            h_chain_input = (
-                params.heavy_chain_id
-                if not params.nanobody_chain_id
-                else params.nanobody_chain_id
-            )
+            h_chain_input = params.heavy_chain_id
 
             # Build the input DataFrame.
             input_df = self.pd.DataFrame(
@@ -202,11 +194,11 @@ class AntiFoldModel(ModelMixinSnap):
             pdb_dir = os.path.dirname(tmp_pdb)
             return input_df, pdb_dir, tmp_pdb
 
-        except Exception as e:
+        except Exception:
             # In case of an error, ensure the temporary file is removed.
             if os.path.exists(tmp_file.name):
                 os.remove(tmp_file.name)
-            raise e
+            raise
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
@@ -273,7 +265,7 @@ class AntiFoldModel(ModelMixinSnap):
     @modal_endpoint(app_name=app_name)
     def generate(self, payload: AntiFoldGenerateRequest) -> AntiFoldGenerateResponse:
         """
-        Inverse Fold the input pdb str
+        Sample new antibody sequences conditioned on the input PDB backbone structure.
         """
         import random
         import time
@@ -365,7 +357,9 @@ class AntiFoldModel(ModelMixinSnap):
     @modal_endpoint(app_name=app_name)
     def score(self, payload: AntiFoldPredictRequest) -> AntiFoldScoreResponse:
         """
-        Inverse Fold the input pdb str
+        Score how well the native sequence fits the observed backbone structure.
+        Runs AntiFold with sample_n=0 and score=True to compute the global_score
+        (mean per-residue inverse-folding log-likelihood) without generating new sequences.
         """
         results_list = []
         for item in payload.items:
@@ -451,7 +445,7 @@ if __name__ == "__main__":
     Usage:
          python models/antifold/app.py
 
-        # Force deploy to "qa" or "main" environment:
+        # Force deploy to "biolm-models-dev" or "biolm-models" environment:
         python models/antifold/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

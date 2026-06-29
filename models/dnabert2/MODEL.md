@@ -28,7 +28,7 @@ The underlying architecture uses the Transformer encoder from the `BertForMasked
 | Vocabulary | ~4,096 tokens (BPE-learned) |
 | Positional encoding | Learned absolute positional embeddings |
 | Activation | GELU |
-| Max input length | 2,048 tokens (BioLM enforced) |
+| Max input length | 2,048 nucleotides (request schema enforced) |
 
 DNABERT-2 is a single-variant model with no size options.
 
@@ -60,14 +60,14 @@ This self-supervised objective forces the model to learn contextual relationship
 - **Vocabulary**: ~4,096 tokens of variable-length DNA subwords.
 - **Special tokens**: `[CLS]`, `[SEP]`, `[PAD]`, `[MASK]`, `[UNK]`
 - **Input alphabet**: A, C, G, T only (validated by `validate_dna_unambiguous`; ambiguous IUPAC codes are rejected).
-- **Max length**: 2,048 tokens (BioLM enforced). Because BPE tokens represent variable-length substrings, the effective nucleotide span per request varies but is typically on the order of 4--8 kbp.
+- **Max length**: 2,048 nucleotides (request schema enforced). The BPE tokenizer processes variable-length subwords, so the token count is always fewer than the character count; the practical ceiling is the 2,048-character input limit (~2 kbp).
 - **Truncation**: Sequences exceeding max token length are truncated.
 
 **Comparison of DNA tokenization strategies:**
 
 | Model | Tokenization | Resolution | Vocabulary | Context (approx.) |
 |-------|-------------|------------|------------|-------------------|
-| DNABERT-2 | BPE | Variable (sub-k-mer to multi-k-mer) | ~4,096 | ~4-8 kbp |
+| DNABERT-2 | BPE | Variable (sub-k-mer to multi-k-mer) | ~4,096 | ~2 kbp (API limit: 2,048 nt) |
 | Nucleotide Transformers | 6-mer | 6 nt fixed | ~4,105 | ~12 kbp |
 | Evo | Byte-level | Single nucleotide | ~8 | Up to 131 kbp |
 | DNABERT (v1) | k-mer (k=3..6) | k nt fixed | 4^k | ~2 kbp |
@@ -76,7 +76,7 @@ This self-supervised objective forces the model to learn contextual relationship
 
 ### Published Benchmarks
 
-From Zhou et al. (arXiv 2306.15006), DNABERT-2 was evaluated on the Genome Understanding Evaluation (GUE) benchmark, which spans 36 datasets across 9 task categories.
+From Zhou et al. (arXiv 2306.15006), DNABERT-2 was evaluated on the Genome Understanding Evaluation (GUE) benchmark, which spans 28 datasets across 7 task categories.
 
 #### GUE Benchmark (Overall)
 
@@ -86,8 +86,6 @@ From Zhou et al. (arXiv 2306.15006), DNABERT-2 was evaluated on the Genome Under
 | NT-v2-500M | 500M | Second best | 4.3x larger |
 | HyenaDNA | 1.6M-6.6M | Competitive on some tasks | Much smaller |
 | DNABERT v1 (6-mer) | ~117M | Baseline | Original k-mer approach |
-
-<!-- TODO: Extract exact GUE numerical scores per task category from Zhou et al. 2023 Table 2  --  requires paper PDF from R2 -->
 
 Key findings from the paper:
 - DNABERT-2 achieves top performance on most GUE tasks despite having only 117M parameters -- significantly fewer than competing models.
@@ -105,7 +103,7 @@ Key findings from the paper:
 
 | Model | Parameters | Tokenization | Context | When to prefer |
 |-------|-----------|-------------|---------|----------------|
-| **DNABERT-2** | 117M | BPE | ~4-8 kbp | Lightweight; fine-grained tokenization; multi-species generalization |
+| **DNABERT-2** | 117M | BPE | ~2 kbp (API limit: 2,048 nt) | Lightweight; fine-grained tokenization; multi-species generalization |
 | NT-v2-250M | 250M | 6-mer | ~12 kbp | Longer context; strong multi-species genomic benchmarks |
 | NT-v2-500M | 500M | 6-mer | ~12 kbp | Best NT accuracy; longer context |
 | Evo | 7B | Byte-level | 131 kbp | Very long genomic contexts; generative DNA tasks |
@@ -121,7 +119,7 @@ Key findings from the paper:
 
 ### Cons
 
-- **Shorter effective context** than NT or Evo: the ~4-8 kbp effective span is sufficient for promoters and regulatory elements but too short for full gene bodies or large regulatory domains.
+- **Shorter effective context** than NT or Evo: the 2,048-nucleotide API limit is sufficient for promoters and regulatory elements but too short for full gene bodies or large regulatory domains.
 - **Single variant only**: No size options -- users cannot trade off between accuracy and speed across model sizes.
 - **BPE token boundaries are not biologically meaningful**: Unlike k-mers (which have a fixed biological interpretation), BPE token boundaries are data-driven and may not align with codons, motifs, or other biologically relevant boundaries.
 
@@ -130,7 +128,7 @@ Key findings from the paper:
 - **Repetitive low-complexity DNA** (e.g., microsatellites, telomeric repeats): BPE may collapse repetitive regions into few tokens, yielding embeddings with limited discriminative power.
 - **Very short sequences** (< ~10 nt): insufficient context for meaningful embeddings or log-probability scores.
 - **Non-standard DNA** (RNA, modified bases, ambiguous IUPAC codes): input validation rejects non-A/C/G/T characters.
-- **Sequences near the token limit**: because BPE token lengths vary, the effective nucleotide coverage for a 2,048-token input depends on sequence composition.
+- **Sequences at the nucleotide limit**: the 2,048-nucleotide character cap is enforced by the request schema before tokenization.
 
 ## Implementation Details
 
@@ -188,9 +186,8 @@ Seeds are set during model loading. Inference uses `torch.no_grad()` and the mod
 
 ### Caching Behavior
 
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
 - **Memory snapshots**: GPU memory snapshots are enabled (`enable_memory_snapshot=True`, `enable_gpu_snapshot=True`) for faster cold starts.
-- **Cache key**: Determined by action name, input payload, and model variant.
+- **Response caching**: Handled outside the model container by the serving layer; cache key is determined by action name, input payload, and model variant.
 
 ## Versions & Changelog
 

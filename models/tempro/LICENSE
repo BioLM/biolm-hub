@@ -1,21 +1,24 @@
-MIT License
+No upstream license found.
 
-Copyright (c) 2024 Jerome Anthony E. Alvarez
+The source repository (https://github.com/Jerome-Alvarez/TEMPRO, commit
+d2752834f16c30df1a684304a568ad1bac036583) does not contain any LICENSE file.
+The GitHub API reports license: null for this repository. Under default copyright
+law, all rights are reserved by the original author(s).
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+The model code and weights distributed as user.zip from the upstream repository
+are NOT open-source and are NOT available under any permissive or copyleft license.
+Redistribution, commercial use, or any other use of the upstream weights or code
+requires explicit permission from the copyright holder(s):
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+  Jerome Anthony E. Alvarez and Scott N. Dean
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+The published paper describing the model is:
+  Alvarez, Jerome Anthony E. and Dean, Scott N.
+  "TEMPRO: nanobody melting temperature estimation model using protein embeddings."
+  Scientific Reports, 14, 19074 (2024). DOI: 10.1038/s41598-024-70101-6
+
+The paper is published under CC-BY 4.0, which permits free use of the paper text
+and figures. That license does NOT extend to the model code or weights.
+
+This model is included in the catalog for reference. Usage of the upstream weights
+requires contacting the authors for an explicit license grant.

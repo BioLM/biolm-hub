@@ -41,22 +41,22 @@ ESM1V_HF_REVISION_MAP = {
 
 ESM1v_VARIANT_RESOURCE_SPECS = {
     ESM1vModelNumbers.N1: ModalResourceSpec(
-        cpu=2.0, memory=8 * 1024, gpu=None  # 2GB RAM
+        cpu=2.0, memory=8 * 1024, gpu=None  # 8GB RAM
     ),
     ESM1vModelNumbers.N2: ModalResourceSpec(
-        cpu=2.0, memory=8 * 1024, gpu=None  # 2GB RAM
+        cpu=2.0, memory=8 * 1024, gpu=None  # 8GB RAM
     ),
     ESM1vModelNumbers.N3: ModalResourceSpec(
-        cpu=2.0, memory=8 * 1024, gpu=None  # 2GB RAM
+        cpu=2.0, memory=8 * 1024, gpu=None  # 8GB RAM
     ),
     ESM1vModelNumbers.N4: ModalResourceSpec(
-        cpu=2.0, memory=8 * 1024, gpu=None  # 2GB RAM
+        cpu=2.0, memory=8 * 1024, gpu=None  # 8GB RAM
     ),
     ESM1vModelNumbers.N5: ModalResourceSpec(
-        cpu=2.0, memory=8 * 1024, gpu=None  # 2GB RAM
+        cpu=2.0, memory=8 * 1024, gpu=None  # 8GB RAM
     ),
     ESM1vModelNumbers.ALL: ModalResourceSpec(
-        cpu=4.0, memory=28 * 1024, gpu=ModalGPU.T4  # 16GB RAM
+        cpu=4.0, memory=28 * 1024, gpu=ModalGPU.T4  # 28GB RAM
     ),
 }
 
@@ -66,7 +66,7 @@ ESM1v_VARIANT_RESOURCE_SPECS = {
 MODEL_FAMILY = ModelFamily(
     base_model_slug=ESM1vParams.base_model_slug,
     display_name=ESM1vParams.display_name,
-    # The @biolm_model_class container class in app.py (gateway routing, W8).
+    # The @biolm_model_class container class in app.py.
     modal_class_name="ESM1vModel",
     tags=ModelTags(
         input_modality=[InputModality.SEQUENCE],

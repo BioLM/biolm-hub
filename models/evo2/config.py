@@ -89,8 +89,8 @@ EVO2_HF_REVISION_MAP = {
 
 
 # Static configuration values
-def get_build_gpu(variant: str) -> str:
-    """Get the GPU string value for building CUDA extensions."""
+def get_build_gpu(variant: str) -> ModalGPU:
+    """Get the GPU enum value for building CUDA extensions."""
     return EVO2_VARIANT_RESOURCE_SPECS[Evo2ModelVariants(variant)].gpu
 
 

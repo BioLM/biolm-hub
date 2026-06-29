@@ -46,9 +46,6 @@ alternatives:
   - model: chai1
     when_better: "Chai-1 has more published cross-docking benchmarks; ESM embedding integration provides a single-sequence quality boost; commercially supported by Chai Discovery"
     when_worse: "RF3 supports template conditioning, cyclic peptides, and CCD codes; newer architecture potentially more accurate; BSD-3-Clause license; Baker Lab pedigree with decades of protein modeling expertise"
-  - model: af2_nim
-    when_better: "AlphaFold2 is the most validated protein structure predictor with the broadest published benchmark literature; well-established MSA pipeline via NVIDIA NIM"
-    when_worse: "AF2 is protein-only (no ligands, DNA, RNA); no diffusion-based sampling; no template conditioning beyond homolog detection; limited to 512 residues per chain"
   - model: esmfold
     when_better: "100-1000x faster single-sequence inference on A10G GPU; no MSA needed; ideal for high-throughput screening where speed outweighs accuracy"
     when_worse: "Protein-only with substantially lower accuracy; no multi-molecule support; 768 residue limit; no template conditioning or diffusion sampling"

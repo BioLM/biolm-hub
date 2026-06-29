@@ -40,7 +40,7 @@ ESM-1b handles **globular, soluble proteins** best, as these dominate the traini
 
 **Problem**: Predicting the functional impact of amino acid substitutions (missense mutations) is critical for clinical genetics, protein engineering, and understanding disease. Experimental methods (deep mutational scanning) are expensive and limited to one protein at a time.
 
-**How ESM-1b helps**: The `log_prob` action computes the pseudo-log-likelihood of a protein sequence. By comparing log P(wildtype) vs log P(mutant), researchers can estimate variant effects without task-specific training. Evolutionarily conserved positions will have high log-probability for the wildtype amino acid and low probability for substitutions.
+**How ESM-1b helps**: The `log_prob` action computes the summed log-likelihood of a protein sequence in a single unmasked forward pass (wt-marginal scoring). By comparing log P(wildtype) vs log P(mutant), researchers can estimate variant effects without task-specific training. Evolutionarily conserved positions will have high log-probability for the wildtype amino acid and low probability for substitutions.
 
 **Biological meaning**: A large negative change in log-probability (mutant much less likely than wildtype) suggests the mutation disrupts an evolutionarily conserved position and is likely deleterious. The BioLM verification confirms this: real ubiquitin scores dramatically higher (-0.17 per-residue log-prob) than a shuffled version with identical composition (-36.74), demonstrating the model captures evolutionary constraints.
 
@@ -90,7 +90,7 @@ Many of these applications have since migrated to ESM-2, which provides improved
 
 ### Complementary Models
 
-ESM-1b embeddings can be used as input features for downstream models on the BioLM platform:
+ESM-1b embeddings can be used as input features for downstream models:
 
 - **ESMStabP**: Protein thermostability prediction (though ESMStabP uses ESM-2 embeddings specifically)
 - **Boltz / Chai-1**: Structure prediction for top-scoring variants from ESM-1b log-likelihood screening

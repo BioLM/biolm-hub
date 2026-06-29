@@ -6,16 +6,16 @@ strengths:
   - "Self-contained model with its own ProtBERT-BFD backbone -- does not require ESM2 as a dependency, simplifying deployment and reducing inference pipeline complexity"
   - "Dual-mode capability: classifier variant provides binary thermophilic/non-thermophilic classification (83% accuracy on TemStaPro benchmark), regression variant predicts quantitative Tm in degrees C"
   - "Thermostability-aware embeddings via the encode action capture stability-relevant features learned during fine-tuning, useful as input features for custom downstream models"
-  - "Three output types from a single model family: embeddings, classification logits, and scalar Tm predictions -- versatile for different analysis workflows"
+  - "Three output types from a single model family: embeddings, classification probabilities, and scalar Tm predictions -- versatile for different analysis workflows"
   - "Handles proteins up to 512 residues from all domains of life, covering both thermophilic and mesophilic organisms"
-  - "Published in Bioinformatics (2024) with clear benchmarking against TemStaPro and other thermostability prediction methods"
+  - "Published in Bioinformatics Advances (2024) with clear benchmarking against TemStaPro and other thermostability prediction methods"
   - "MIT license enables unrestricted commercial use in enzyme engineering and pharmaceutical development"
 
 weaknesses:
   - "Requires T4 GPU with 16 GB RAM for both classifier and regression variants due to the ProtBERT-BFD backbone -- significantly more resource-intensive than ESMStabP's CPU-only Random Forest"
   - "Maximum sequence length of 512 residues is more restrictive than ESM2-based alternatives (1022 residues), excluding many larger proteins"
   - "Classification provides only binary thermophilic/non-thermophilic distinction -- does not quantify the degree of thermostability within each class"
-  - "Regression accuracy for quantitative Tm prediction has not been independently benchmarked to be superior to ESMStabP's R-squared 0.94"
+  - "Regression accuracy for quantitative Tm prediction has not been independently benchmarked to be superior to ESMStabP's R-squared 0.95"
   - "No per-mutation resolution -- predicts global protein stability properties without identifying which specific residues or mutations influence thermostability"
   - "ProtBERT-BFD backbone is an older protein language model compared to ESM2, potentially capturing less nuanced sequence representations"
   - "No support for organism growth temperature context that could improve prediction accuracy for proteins from characterized organisms"
@@ -29,7 +29,7 @@ use_when:
   - "You want to generate embeddings that specifically capture thermal stability features, rather than general protein representations from ESM2"
 
 dont_use_when:
-  - "You need the highest regression accuracy for Tm prediction -- ESMStabP (R-squared 0.94) likely outperforms TemBERTure's regression mode"
+  - "You need the highest regression accuracy for Tm prediction -- ESMStabP (R-squared 0.95) likely outperforms TemBERTure's regression mode"
   - "You need per-mutation ddG predictions to identify specific stabilizing mutations -- use ThermoMPNN or SPURS with a 3D structure"
   - "Your sequences exceed 512 residues -- use ESMStabP (1022 residue limit) or other ESM2-based approaches"
   - "You need nanobody-specific Tm prediction -- use TEMPRO which is specifically trained on nanobody thermal stability data"
@@ -38,7 +38,7 @@ dont_use_when:
 
 alternatives:
   - model: esmstabp
-    when_better: "ESMStabP achieves higher Tm regression accuracy (R-squared 0.94) with CPU-only inference (after ESM2 embedding), optional OGT context, and broader sequence length support (1022 residues)"
+    when_better: "ESMStabP achieves higher Tm regression accuracy (R-squared 0.95) with CPU-only inference (after ESM2 embedding), optional OGT context, and broader sequence length support (1022 residues)"
     when_worse: "ESMStabP depends on ESM2 as a prerequisite, provides no classification mode, and does not generate thermostability-aware embeddings; TemBERTure is self-contained with richer output options"
   - model: thermompnn
     when_better: "ThermoMPNN provides per-mutation ddG predictions from 3D structure with PCC ~0.75 on Megascale, enabling identification of specific stabilizing mutations"

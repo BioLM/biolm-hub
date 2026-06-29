@@ -1,0 +1,72 @@
+# ============================================================================
+# comparison.yaml — Model Comparison & Positioning
+# ============================================================================
+#
+# This file is the machine-readable positioning guide for this model relative
+# to alternatives on the platform. It is used by `bm kb` tooling and the
+# catalog web app to help users choose between models.
+#
+# Template instructions (delete this block when populating):
+#   - Populate strengths/weaknesses from the model paper and your own testing.
+#   - Use concrete, quantitative language wherever possible (benchmarks, speeds,
+#     parameter counts) rather than vague superlatives.
+#   - `alternatives` must ONLY reference models that exist in the catalog
+#     (i.e., have a config.py under models/<slug>/). Never add a slug for a
+#     model that is excluded or not yet implemented.
+#   - `complements` describes models this model is frequently used together with
+#     in a pipeline (e.g., embedding → structure → design).
+#   - Keep `last_updated` current when you edit this file.
+# ============================================================================
+
+model_slug: "dummy"
+  # Must match the directory name under models/ and sources.yaml model_slug.
+
+display_name: "Dummy"
+  # Must match config.py / ModelFamily.display_name.
+
+last_updated: "2026-06-30"
+  # ISO 8601 date of the last substantive edit to this file.
+
+strengths:
+  # Bullet list of this model's key advantages.
+  # Be specific: speed, accuracy, license, generalization, unique capabilities.
+  # Examples:
+  #   - "Runs on CPU — no GPU infrastructure required"
+  #   - "MIT license with no commercial restrictions"
+  #   - "Widest benchmark coverage of any model in this task family"
+  - "Placeholder strength A — replace with a concrete, quantified advantage"
+  - "Placeholder strength B"
+
+weaknesses:
+  # Bullet list of known limitations.
+  # Be honest: accuracy gaps, input constraints, compute cost, known biases.
+  - "Placeholder weakness A — replace with a concrete limitation"
+  - "Placeholder weakness B"
+
+use_when:
+  # Bullet list of scenarios where this model is the right choice.
+  # Write from the user's perspective: "You need X and Y is true."
+  - "Placeholder use-case A — describe the scenario where this model excels"
+  - "Placeholder use-case B"
+
+dont_use_when:
+  # Bullet list of scenarios where the user should pick a different model.
+  # Reference the alternative when relevant.
+  - "Placeholder anti-use-case A — and which model to use instead"
+  - "Placeholder anti-use-case B"
+
+alternatives:
+  # Models on the platform that are direct alternatives for the same task.
+  # IMPORTANT: every `model` slug here must exist as models/<slug>/config.py.
+  #
+  # Template: uncomment and fill in when populating.
+  # - model: esm2
+  #   when_better: "Describe concretely when the alternative outperforms this model"
+  #   when_worse:  "Describe concretely when this model outperforms the alternative"
+
+complements:
+  # Models this model is frequently combined with in a pipeline.
+  # Template: uncomment and fill in when populating.
+  # - model: esmfold
+  #   workflow: "Brief description of the combined workflow"
+  #   example_protocol: null

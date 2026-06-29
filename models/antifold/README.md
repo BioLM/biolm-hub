@@ -56,9 +56,8 @@ Extract structure-conditioned embeddings and/or logits from an antibody structur
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
-| `params.heavy_chain_id` | str | None | PDB chain ID | Heavy chain identifier |
-| `params.light_chain_id` | str | None | PDB chain ID | Light chain identifier |
-| `params.nanobody_chain_id` | str | None | PDB chain ID | Nanobody chain identifier (mutually exclusive with heavy/light) |
+| `params.heavy_chain_id` | str | None | PDB chain ID | Heavy chain (VH) or nanobody (VHH) chain identifier; for nanobody inputs omit `light_chain_id` |
+| `params.light_chain_id` | str | None | PDB chain ID | Light chain (VL) identifier |
 | `params.antigen_chain_id` | str | None | PDB chain ID | Optional antigen chain for context |
 | `params.include` | list | `["mean"]` | `mean`, `residue`, `logits` | What to include in response |
 | `items[].pdb` | str | (required) | Valid PDB string | PDB structure content |
@@ -93,9 +92,8 @@ Sample new antibody sequences conditioned on backbone structure.
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
-| `params.heavy_chain_id` | str | None | PDB chain ID | Heavy chain identifier |
-| `params.light_chain_id` | str | None | PDB chain ID | Light chain identifier |
-| `params.nanobody_chain_id` | str | None | PDB chain ID | Nanobody chain (mutually exclusive with heavy/light) |
+| `params.heavy_chain_id` | str | None | PDB chain ID | Heavy chain (VH) or nanobody (VHH) chain identifier; for nanobody inputs omit `light_chain_id` |
+| `params.light_chain_id` | str | None | PDB chain ID | Light chain (VL) identifier |
 | `params.antigen_chain_id` | str | None | PDB chain ID | Optional antigen chain for context |
 | `params.seed` | int | None | Any int | Random seed for reproducibility |
 | `params.include` | list | None | `logprobs`, `logits` | Optional additional outputs |
@@ -151,9 +149,8 @@ Score how well the native sequence fits the observed backbone structure.
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
-| `params.heavy_chain_id` | str | None | PDB chain ID | Heavy chain identifier |
-| `params.light_chain_id` | str | None | PDB chain ID | Light chain identifier |
-| `params.nanobody_chain_id` | str | None | PDB chain ID | Nanobody chain (mutually exclusive with heavy/light) |
+| `params.heavy_chain_id` | str | None | PDB chain ID | Heavy chain (VH) or nanobody (VHH) chain identifier; for nanobody inputs omit `light_chain_id` |
+| `params.light_chain_id` | str | None | PDB chain ID | Light chain (VL) identifier |
 | `params.antigen_chain_id` | str | None | PDB chain ID | Optional antigen chain for context |
 | `items[].pdb` | str | (required) | Valid PDB string | PDB structure content |
 
@@ -256,6 +253,9 @@ request = AntiFoldPredictRequest(
 
 ### Nanobody design
 
+For nanobodies (VHH), supply only `heavy_chain_id` (no `light_chain_id`). The model automatically
+uses single-domain mode.
+
 ```python
 from models.antifold.schema import (
     AntiFoldGenerateRequest,
@@ -266,7 +266,7 @@ from models.antifold.schema import (
 
 request = AntiFoldGenerateRequest(
     params=AntiFoldGenerateRequestParams(
-        nanobody_chain_id="A",
+        heavy_chain_id="A",  # VHH chain; omit light_chain_id for nanobody mode
         num_seq_per_target=50,
         sampling_temp=0.3,
         regions=[AntiFoldValidRegions.CDR1, AntiFoldValidRegions.CDR2, AntiFoldValidRegions.CDR3],
@@ -326,7 +326,7 @@ Option A -- Numerical Reproduction: outputs from the BioLM implementation are co
 ## Implementation Notes
 
 - **Memory snapshots**: Uses `@modal.enter(snap=True)` with `ModelMixinSnap` for fast cold starts. Despite being a CPU model, GPU snapshot is enabled in the configuration.
-- **Container image**: Based on `pytorch/pytorch:2.3.1-cuda12.1-cudnn8-runtime` with AntiFold cloned from GitHub at commit `c306ae6`.
+- **Container image**: `modal.Image.debian_slim(python_version="3.11")` with CPU-only PyTorch 2.3.1 (index `https://download.pytorch.org/whl/cpu`). AntiFold is CPU-only, so no CUDA base image is needed. AntiFold source is cloned from GitHub at commit `c306ae6`.
 - **External modifications**: Two files from the original AntiFold repository (`main.py` and `antiscripts.py`) are replaced with modified versions in `models/antifold/external/` for API compatibility.
 - **Temporary files**: PDB strings are written to temporary files in `/tmp_pdbs/` during inference and cleaned up after each request.
 - **Determinism**: Model weights loaded with seed 42. The `generate` action uses time-based seeding by default for diversity, or a user-provided seed for reproducibility.

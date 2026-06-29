@@ -148,8 +148,6 @@ class ImmuneFoldModel(ModelMixinSnap):
     @modal.enter(snap=True)
     def setup_model(self):
         """Load model directly on GPU for GPU memory snapshot with deterministic behavior."""
-        import logging
-
         import torch
         from omegaconf import DictConfig
 
@@ -171,7 +169,6 @@ class ImmuneFoldModel(ModelMixinSnap):
         # Get device and setup for GPU inference
         self.device = get_torch_device()
 
-        logging.basicConfig(level=logging.INFO)
         self.DictConfig = DictConfig
 
         # Configure to load directly on GPU
@@ -181,7 +178,9 @@ class ImmuneFoldModel(ModelMixinSnap):
             overrides={
                 "restore_model_ckpt": f"{get_model_dir()}/{model_id_mapping[self.model_type]}",
                 "restore_esm2_model": f"{get_model_dir()}/esm2_t36_3B_UR50D.pt",
-                "device": str(self.device),  # Load directly on GPU device
+                "gpu": str(
+                    self.device
+                ),  # Load directly on GPU device (loader reads cfg.gpu)
             },
         )
         logger.info(
@@ -208,16 +207,7 @@ class ImmuneFoldModel(ModelMixinSnap):
     ) -> ImmuneFoldModelTypes:
         request_kind = payload.items[0]._kind  # Just check the first one
 
-        if any(item._kind != self.model_type for item in payload.items) or (
-            (
-                request_kind == ImmuneFoldModelTypes.ANTIBODY
-                and self.model_type != ImmuneFoldModelTypes.ANTIBODY
-            )
-            or (
-                request_kind == ImmuneFoldModelTypes.TCR
-                and self.model_type != ImmuneFoldModelTypes.TCR
-            )
-        ):
+        if any(item._kind != self.model_type for item in payload.items):
             # Caller routed the wrong molecule type to this variant -> 400, not 500.
             raise ValidationError400(
                 f"Mismatch detected: expected '{self.model_type}' but got '{request_kind}' in request."
@@ -274,10 +264,10 @@ class ImmuneFoldModel(ModelMixinSnap):
         Predicts using the ImmuneFold model.
 
         Parameters:
-        "payload (ImmuneFoldPredictRequest): The request object containing sequences and parameters.
+        payload (ImmuneFoldPredictRequest): The request object containing sequences and parameters.
 
         Returns:
-        "ImmuneFoldPredictResponse: The response containing predict results.
+        ImmuneFoldPredictResponse: The response containing predict results.
         """
 
         import shutil
@@ -300,24 +290,27 @@ class ImmuneFoldModel(ModelMixinSnap):
                 "restore_esm2_model": f"{self.model_dir}/esm2_t36_3B_UR50D.pt",
                 "output_dir": "/tmp_out",
                 "test_data": fasta_path,
+                # Inference data loader reads cfg.gpu for placement; pin it to the
+                # runtime device so batches land on the same device as the model.
+                "gpu": str(self.device),
             }
 
             if request_kind == ImmuneFoldModelTypes.ANTIBODY:
                 fasta_header = "nanobody_H"  # fasta header seems to control pdb output chain labels and presence
                 fasta_seq = item.heavy_chain
-                type = "nb"
+                mol_type = "nb"
                 if item.light_chain:
                     fasta_header = "antibody_H_L"
                     fasta_seq = item.heavy_chain + f":{item.light_chain}"
-                    type = "ab"
+                    mol_type = "ab"
 
             else:
                 fasta_header = "TCR_B_A_P_M"
                 fasta_seq = (
                     f"{item.tcr_beta}:{item.tcr_alpha}:{item.peptide}:{item.mhc}"
                 )
-                type = "tcr"
-            overrides["type"] = type
+                mol_type = "tcr"
+            overrides["type"] = mol_type
 
             if item.pdb:
                 fasta_header = "antibody_H_L_A"
@@ -356,7 +349,7 @@ class ImmuneFoldModel(ModelMixinSnap):
                 self._handle_domain_numbering_error(e, request_kind)
             except Exception as e:
                 logger.error("Model call failed with error [%s]", e, exc_info=True)
-                raise e
+                raise
         return ImmuneFoldPredictResponse(results=results)
 
     def load_config(self, config_path: str, config_name: str, overrides: dict = None):
@@ -409,7 +402,7 @@ if __name__ == "__main__":
     Usage:
         MODEL_TYPE="antibody" python models/immunefold/app.py
 
-        # Force deploy to "qa" or "main" environment:
+        # Force deploy to "biolm-models-dev" or "biolm-models" environment:
         MODEL_TYPE="antibody" python models/immunefold/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

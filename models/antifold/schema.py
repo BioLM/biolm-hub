@@ -147,18 +147,19 @@ class AntiFoldPredictRequestParams(RequestModel):
 
     heavy_chain_id: Optional[str] = Field(
         default=None,
-        validation_alias=AliasChoices("heavy_chain_id", "heavy_chain"),
-        description="PDB chain identifier for the antibody heavy chain (VH).",
+        validation_alias=AliasChoices(
+            "heavy_chain_id",
+            "heavy_chain",
+            # back-compat: nanobody VHH is heavy-chain-only; accept old field names
+            "nanobody_chain_id",
+            "nanobody_chain",
+        ),
+        description="PDB chain identifier for the antibody heavy chain (VH) or nanobody (VHH) chain. For nanobody inputs, omit light_chain_id.",
     )
     light_chain_id: Optional[str] = Field(
         default=None,
         validation_alias=AliasChoices("light_chain_id", "light_chain"),
         description="PDB chain identifier for the antibody light chain (VL).",
-    )
-    nanobody_chain_id: Optional[str] = Field(
-        default=None,
-        validation_alias=AliasChoices("nanobody_chain_id", "nanobody_chain"),
-        description="PDB chain identifier for the nanobody (VHH) chain; mutually exclusive with heavy_chain_id.",
     )
     antigen_chain_id: Optional[str] = Field(
         default=None,
@@ -172,28 +173,18 @@ class AntiFoldPredictRequestParams(RequestModel):
     @model_validator(mode="after")
     def validate_and_infer_type(cls, instance):
         """
-        Infer chain type and ensure valid field combos:
-          - Otherwise => error.
+        Infer chain type and ensure valid field combos.
         """
-        heavy, light, nanobody, antigen = (
+        heavy, light, antigen = (
             instance.heavy_chain_id,
             instance.light_chain_id,
-            instance.nanobody_chain_id,
             instance.antigen_chain_id,
         )
 
-        if not any([heavy, light, nanobody]):
+        if not any([heavy, light]):
             raise ValueError(
-                "PDB chain for heavy_chain_id and light_chain_id or "
-                "nanobody_chain_id must be specified"
+                "At least one of heavy_chain_id or light_chain_id must be specified."
             )
-        if nanobody and (heavy or light):
-            instance._custom_chain_mode = True
-            raise ValueError(
-                "Cannot provide both `nanobody_chain_id` and "
-                "(`heavy_chain_id`, `light_chain_id`). Pick one."
-            )
-
         if light and not heavy:
             raise ValueError(
                 "Cannot provide just `light_chain_id`. Provide both "
@@ -201,8 +192,6 @@ class AntiFoldPredictRequestParams(RequestModel):
                 "`exclude_light` to restrict sampling to one chain"
             )
         if heavy and not light:
-            instance._custom_chain_mode = True
-        if nanobody:
             instance._custom_chain_mode = True
         if antigen:
             instance._custom_chain_mode = True
@@ -259,8 +248,6 @@ class AntiFoldPredictRequest(RequestModel):
                 validate_chain_id(chain_list, params.heavy_chain_id)
             if params.light_chain_id:
                 validate_chain_id(chain_list, params.light_chain_id)
-            if params.nanobody_chain_id:
-                validate_chain_id(chain_list, params.nanobody_chain_id)
             if params.antigen_chain_id:
                 validate_chain_id(chain_list, params.antigen_chain_id)
 
@@ -319,19 +306,6 @@ class AntiFoldGenerateRequestParams(AntiFoldPredictRequestParams):
     )
 
 
-class AntiFoldGenerateRequestItem(RequestModel):
-    pdb: Annotated[
-        str,
-        BeforeValidator(validate_pdb),
-        Field(
-            ...,
-            min_length=1,
-            max_length=max_pdb_str_len,
-            description="Input structure in PDB format.",
-        ),
-    ]
-
-
 class AntiFoldGenerateRequest(RequestModel):
     params: AntiFoldGenerateRequestParams = Field(
         description="Optional parameters controlling this action (defaults are used when omitted).",
@@ -361,11 +335,6 @@ class AntiFoldGenerateRequest(RequestModel):
             if params.light_chain_id:
                 validate_chain_id(chain_list, params.light_chain_id)
                 validate_positions(chain_counts, params.regions, params.light_chain_id)
-            if params.nanobody_chain_id:
-                validate_chain_id(chain_list, params.nanobody_chain_id)
-                validate_positions(
-                    chain_counts, params.regions, params.nanobody_chain_id
-                )
             if params.antigen_chain_id:
                 validate_chain_id(chain_list, params.antigen_chain_id)
 
@@ -428,15 +397,6 @@ class AntiFoldEncodeResponse(ResponseModel):
     )
 
 
-class AntiFoldGenerateResponseResultInput(RequestModel):
-    global_score: float = Field(
-        description="Mean per-residue inverse-folding log-likelihood over the full antibody sequence given the backbone structure.",
-    )
-    sequence: str = Field(
-        description="Antibody sequence in single-letter amino-acid codes.",
-    )
-
-
 class AntiFoldGenerateResponseResultSamples(RequestModel):
     model_config = {
         "populate_by_name": True,  # Ensures alias names work
@@ -470,21 +430,6 @@ class AntiFoldGenerateResponseResultSamples(RequestModel):
     )
     seq_recovery: float = Field(
         description="Fraction of positions matching the native sequence (sequence recovery rate, 0–1).",
-    )
-
-
-class AntiFoldGenerateResponseResultSequences(RequestModel):
-    model_config = {
-        "populate_by_name": True,  # Ensures alias names work
-        "json_schema_extra": {
-            "exclude_unset": True,  # Excludes unset (None) fields from the output
-            "exclude_none": True,  # Ensures that None fields do not appear in JSON
-        },
-    }
-
-    samples: Optional[list[AntiFoldGenerateResponseResultSamples]] = Field(
-        default=None,
-        description="Generated antibody sequence samples for this input.",
     )
 
 

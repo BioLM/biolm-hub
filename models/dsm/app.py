@@ -327,19 +327,20 @@ class DSMModel(ModelMixinSnap):
                 input_seq = item.sequence
                 num_sequences = payload.params.num_sequences
                 temperature = payload.params.temperature
-                max_length = payload.params.max_length or self.max_sequence_len
+                # max_length controls canvas size for unconditional mode only
+                max_length = payload.params.max_length or 100
 
                 # Generate sequences
                 if not input_seq or input_seq.strip() == "":
-                    # Unconditional generation
-                    logger.info("Mode: Unconditional generation")
+                    # Unconditional generation: build a mask canvas of max_length tokens
+                    logger.info(
+                        "Mode: Unconditional generation (canvas=%s)", max_length
+                    )
                     generated = self._generate_unconditional(
                         payload=payload,
                         num_sequences=num_sequences,
                         max_length=max_length,
                         temperature=temperature,
-                        top_k=payload.params.top_k,
-                        top_p=payload.params.top_p,
                     )
                 elif "<mask>" in input_seq:
                     # Masked sequence filling
@@ -352,8 +353,6 @@ class DSMModel(ModelMixinSnap):
                         input_sequence=input_seq,
                         num_sequences=num_sequences,
                         temperature=temperature,
-                        top_k=payload.params.top_k,
-                        top_p=payload.params.top_p,
                     )
                 else:
                     # Conditional generation from prefix
@@ -365,10 +364,7 @@ class DSMModel(ModelMixinSnap):
                         payload=payload,
                         prefix=input_seq,
                         num_sequences=num_sequences,
-                        max_length=max_length,
                         temperature=temperature,
-                        top_k=payload.params.top_k,
-                        top_p=payload.params.top_p,
                     )
 
                 # Calculate log probs and perplexity for each generated sequence
@@ -560,18 +556,20 @@ class DSMModel(ModelMixinSnap):
         num_sequences: int,
         max_length: int,
         temperature: float,
-        top_k: int = None,
-        top_p: float = None,
-    ) -> list[str]:
-        """Generate unconditional sequences using DSM's generate method."""
+    ) -> list[dict[str, str | None]]:
+        """Generate unconditional sequences using DSM's mask_diffusion_generate.
 
-        # Note: Generate batch size is limited to 1 in schema (DSMParams.generate_batch_size)
-        # so we always use items[0]. If batch size increases, this would need adjustment.
-        input_sequence = payload.items[0].sequence
+        Builds a canvas of ``max_length`` <mask> tokens so the diffusion
+        process has positions to denoise.  The output length therefore equals
+        ``max_length`` (minus any special tokens trimmed during decoding).
+        """
 
-        # Tokenize the input sequence using encode method (returns tensor directly)
+        # Build a mask canvas of the requested length
+        mask_canvas = "<mask>" * max_length
+
+        # Tokenize the mask canvas (returns tensor directly)
         input_tokens = self.tokenizer.encode(
-            input_sequence, add_special_tokens=True, return_tensors="pt"
+            mask_canvas, add_special_tokens=True, return_tensors="pt"
         ).to(self.device)
 
         # Repeat input for num_sequences and generate in batch
@@ -584,9 +582,9 @@ class DSMModel(ModelMixinSnap):
             step_divisor=payload.params.step_divisor,
             temperature=temperature,
             remasking=payload.params.remasking,
-            preview=True,  # Always show preview
-            slow=False,  # No delay
-            return_trajectory=False,  # No trajectory
+            preview=False,
+            slow=False,
+            return_trajectory=False,
         )
 
         return self._decode_sequences(generated, input_tokens_batch)
@@ -597,13 +595,15 @@ class DSMModel(ModelMixinSnap):
         input_sequence: str,
         num_sequences: int,
         temperature: float,
-        top_k: int = None,
-        top_p: float = None,
-    ) -> list[str]:
-        """Fill masked positions in a sequence."""
+    ) -> list[dict[str, str | None]]:
+        """Fill masked positions in a sequence.
+
+        Output length equals the number of tokens in ``input_sequence``
+        (including any non-masked residues).  The ``max_length`` parameter is
+        not applicable here — the canvas is determined entirely by the input.
+        """
 
         # Tokenize input with masks
-        # Tokenize the input sequence using encode method (returns tensor directly)
         input_tokens = self.tokenizer.encode(
             input_sequence, add_special_tokens=True, return_tensors="pt"
         ).to(self.device)
@@ -618,9 +618,9 @@ class DSMModel(ModelMixinSnap):
             step_divisor=payload.params.step_divisor,
             temperature=temperature,
             remasking=payload.params.remasking,
-            preview=True,  # Always show preview
-            slow=False,  # No delay
-            return_trajectory=False,  # No trajectory
+            preview=False,
+            slow=False,
+            return_trajectory=False,
         )
 
         return self._decode_sequences(generated, input_tokens_batch)
@@ -630,16 +630,15 @@ class DSMModel(ModelMixinSnap):
         payload: DSMGenerateRequest,
         prefix: str,
         num_sequences: int,
-        max_length: int,
         temperature: float,
-        top_k: int = None,
-        top_p: float = None,
-    ) -> list[str]:
-        """Generate sequences conditioned on a prefix."""
+    ) -> list[dict[str, str | None]]:
+        """Generate sequences conditioned on a prefix.
 
-        # For conditional generation, use the prefix as-is
-        # User should send the exact sequence they want to condition on
-        # Tokenize the input sequence using encode method (returns tensor directly)
+        The prefix is passed as-is to the diffusion model; it may contain
+        `<mask>` tokens appended by the caller to indicate positions to fill.
+        """
+
+        # Tokenize the prefix
         input_tokens = self.tokenizer.encode(
             prefix, add_special_tokens=True, return_tensors="pt"
         ).to(self.device)
@@ -654,9 +653,9 @@ class DSMModel(ModelMixinSnap):
             step_divisor=payload.params.step_divisor,
             temperature=temperature,
             remasking=payload.params.remasking,
-            preview=True,  # Always show preview
-            slow=False,  # No delay
-            return_trajectory=False,  # No trajectory
+            preview=False,
+            slow=False,
+            return_trajectory=False,
         )
 
         return self._decode_sequences(generated, input_tokens_batch)
@@ -674,7 +673,7 @@ if __name__ == "__main__":
         # 150M model
         MODEL_SIZE="150m" VARIANT="base" python models/dsm/app.py
 
-        # Force deploy to "qa" or "main" environment:
+        # Force deploy to your Modal environment:
         MODEL_SIZE="650m" VARIANT="base" python models/dsm/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

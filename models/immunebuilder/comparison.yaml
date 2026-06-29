@@ -49,17 +49,11 @@ alternatives:
     when_better: "ESM-2 provides general protein embeddings useful for sequence-level analysis when 3D structure is not needed; broader protein coverage beyond immune proteins"
     when_worse: "ESM-2 is a sequence model with no structure prediction capability; for immune protein structures, ImmuneBuilder is needed"
 complements:
-  - model: "propermab"
-    workflow: "Predict antibody Fv structure with ImmuneBuilder's ABodyBuilder2 variant, then extract 34 biophysical developability features with ProperMAB using the predicted structure -- this is ProperMAB's default internal pipeline"
-    example_protocol: null
   - model: "antifold"
     workflow: "Predict immune protein structures with ImmuneBuilder, then use AntiFold for structure-conditioned CDR sequence design on the predicted antibody or nanobody structures"
     example_protocol: null
   - model: "ablang2"
     workflow: "Use AbLang2 to score antibody sequences for evolutionary plausibility and embed them for clustering, then predict structures for representative candidates with ImmuneBuilder for structural analysis"
-    example_protocol: null
-  - model: "nanobert"
-    workflow: "Use NanoBERT to score and rank nanobody variants by sequence plausibility, then predict 3D structures for top candidates using ImmuneBuilder's NanoBodyBuilder2 variant"
     example_protocol: null
   - model: "mpnn"
     workflow: "Predict immune protein structures with ImmuneBuilder, then use ProteinMPNN for structure-conditioned inverse folding to redesign framework or CDR residues while preserving the predicted backbone geometry"

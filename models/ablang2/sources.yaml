@@ -17,18 +17,6 @@ tasks:
 - sequence_completion
 - property_prediction
 primary_papers:
-- title: 'AbLang: An antibody language model for completing antibody sequences'
-  arxiv: ''
-  doi: 10.1093/bioadv/vbac046
-  venue: Bioinformatics Advances, 2022
-  year: 2022
-  authors:
-  - Olsen TH
-  - Moal IH
-  - Deane CM
-  pdf_r2: pending
-  md_r2: pending
-  figures_of_note: []
 - title: 'AbLang2: Addressing the Antibody Germline Bias and Its Effect on Language Models for Improved Antibody Design'
   arxiv: ''
   doi: 10.1101/2024.02.02.578678
@@ -40,6 +28,18 @@ primary_papers:
   - Deane CM
   pdf_r2: knowledge-base/models/ablang2/primary/papers/th2024.pdf
   md_r2: knowledge-base/models/ablang2/primary/papers-md/th2024.md
+  figures_of_note: []
+- title: 'AbLang: An antibody language model for completing antibody sequences'
+  arxiv: ''
+  doi: 10.1093/bioadv/vbac046
+  venue: Bioinformatics Advances, 2022
+  year: 2022
+  authors:
+  - Olsen TH
+  - Moal IH
+  - Deane CM
+  pdf_r2: pending
+  md_r2: pending
   figures_of_note: []
 source_repos:
 - type: github

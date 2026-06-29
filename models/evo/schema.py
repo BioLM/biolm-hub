@@ -135,7 +135,7 @@ class EvoPredictLogProbResponse(ResponseModel):
 
 class EvoGenerateResponseResult(ResponseModel):
     generated: str = Field(
-        description="Full generated DNA sequence, including the prompt and newly generated nucleotides.",
+        description="Newly generated DNA continuation (does NOT include the prompt), in A/C/G/T.",
     )
     score: float = Field(
         description="Average log-probability per token of the generated sequence, reflecting model confidence.",

@@ -4,9 +4,9 @@ last_updated: "2026-03-17"
 
 strengths:
   - "Multi-mutation ddG prediction with per-mutation contributions, capturing pairwise epistatic effects that simple additive models miss -- critical for combinatorial protein engineering"
-  - "Full deep mutational scanning (DMS) matrix generation (L positions x 20 amino acids) in seconds, computationally replicating experiments that cost $50K-$500K"
+  - "Full deep mutational scanning (DMS) matrix generation (L positions x 20 amino acids) in seconds, computationally replicating what saturation mutagenesis experiments measure experimentally"
   - "Hybrid ESM2-650M + GNN architecture combines evolutionary sequence features with structural context for comprehensive stability assessment"
-  - "Published in Nature Communications (2025), demonstrating generalizable and scalable stability prediction with rigorous benchmarking"
+  - "Published in Nature Communications (2025): generalizable and scalable stability prediction"
   - "Variant sequence comparison mode automatically identifies all mutations between wild-type and variant sequences and predicts combined ddG"
   - "Supports both specific mutation lists and automatic full-DMS scanning in a single predict action, enabling flexible use from targeted queries to comprehensive landscapes"
   - "T4 GPU requirement (16 GB RAM) provides a good balance of accuracy and cost for structure-based stability prediction"
@@ -43,26 +43,11 @@ alternatives:
   - model: thermompnn_d
     when_better: "ThermoMPNN-D provides an explicit epistatic interaction mode specifically designed and benchmarked for pairwise double mutations"
     when_worse: "ThermoMPNN-D is limited to exactly two mutations; SPURS handles arbitrary numbers of simultaneous mutations and provides per-mutation contribution decomposition"
-  - model: gemme
-    when_better: "GEMME requires only an MSA (no structure), runs on CPU in minutes, and captures evolutionary constraint signals that structure-based models may miss; best for proteins with deep evolutionary history"
-    when_worse: "GEMME predicts relative fitness rather than thermodynamic ddG in kcal/mol; no structural context; no multi-mutation epistasis modeling"
-  - model: esmstabp
-    when_better: "ESMStabP predicts absolute melting temperature (Tm) from sequence alone with R-squared 0.94, providing a different stability metric without structure requirement"
-    when_worse: "ESMStabP predicts global Tm, not per-mutation ddG; cannot identify specific stabilizing mutations or generate DMS landscapes"
   - model: temberture
     when_better: "TemBERTure provides sequence-only thermostability classification and Tm prediction with thermostability-aware embeddings; no structure required"
     when_worse: "TemBERTure provides global classification/regression only; no per-mutation resolution, no DMS matrix, no epistasis modeling"
 
 complements:
-  - model: boltz
-    workflow: "Predict 3D structure with Boltz for proteins without experimental structures, then use SPURS for comprehensive stability analysis including full DMS matrix and multi-mutation ddG predictions"
-    example_protocol: null
   - model: esm2
     workflow: "Use ESM2 log_prob for fast sequence-based mutation screening to identify evolutionarily plausible mutations, then validate with SPURS structure-based ddG for a two-layer stability assessment"
-    example_protocol: null
-  - model: gemme
-    workflow: "Use GEMME for MSA-based evolutionary variant scoring to capture conservation-driven constraints, then use SPURS for structure-based ddG prediction -- combining evolutionary and structural evidence for higher-confidence mutation prioritization"
-    example_protocol: null
-  - model: pro4s
-    workflow: "Use SPURS to identify stabilizing mutations, then use Pro4S to verify that the stabilized variants maintain acceptable expression solubility -- ensuring both stability and expressibility are optimized"
     example_protocol: null

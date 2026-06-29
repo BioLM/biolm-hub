@@ -172,11 +172,10 @@ NOTICE
 
 This model wrapper integrates Omni-DNA, a unified genomic foundation model
 developed by Zehui Li, Vallijah Subasri, Yifei Shen, Dongsheng Li, Yiren Zhao,
-Guy-Bart Stan, and Caihua Shan (Imperial College London, MIT, and collaborators).
+Guy-Bart Stan, and Caihua Shan (Imperial College London, University of Toronto,
+Microsoft Research, and collaborators).
 
 Source: https://huggingface.co/zehui127/Omni-DNA-1B
 
 The Omni-DNA model weights are distributed under the Apache License, Version 2.0.
-The exact upstream copyright holder is listed in the upstream repository; if not
-explicitly stated there, attribution is to "The Omni-DNA Authors"
-(flag for reviewer to verify).
+Attribution is to "The Omni-DNA Authors".

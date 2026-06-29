@@ -88,8 +88,6 @@ request = TemproPredictRequest(
 
 ### Published Results
 
-<!-- TODO: Extract benchmark results from Alvarez (2024) preprint -- requires PDF access -->
-
 Validation against 6 nanobodies with known experimental Tms:
 
 | PDB ID | Experimental Tm (degrees C) | Sequence Length |
@@ -139,21 +137,29 @@ Tests include single-sequence prediction, batch prediction (4 sequences), and va
 
 ## License
 
-- **Code**: MIT ([GitHub](https://github.com/Jerome-Alvarez/TEMPRO))
+The upstream repository (https://github.com/Jerome-Alvarez/TEMPRO) has no LICENSE
+file (GitHub API: license null). The model code and weights are not open-source;
+all rights are reserved by the original authors by default. See [LICENSE](LICENSE)
+for details. An explicit license grant from the authors is required for redistribution
+or commercial use. The published paper is CC-BY 4.0 (Sci. Reports 14:19074, 2024).
 
 ## References & Citations
 
 ### Papers
 
-1. Alvarez J. "TEMPRO: nanobody melting temperature estimation model using protein language model embeddings." *Preprint* (2024).
+1. Alvarez, Jerome Anthony E. and Dean, Scott N. "TEMPRO: nanobody melting temperature estimation model using protein embeddings." *Scientific Reports*, 14, 19074 (2024). DOI: [10.1038/s41598-024-70101-6](https://doi.org/10.1038/s41598-024-70101-6)
 
 ### BibTeX
 
 ```bibtex
 @article{alvarez2024tempro,
-  title={TEMPRO: nanobody melting temperature estimation model using protein language model embeddings},
-  author={Alvarez, Jerome},
-  year={2024}
+  title={TEMPRO: nanobody melting temperature estimation model using protein embeddings},
+  author={Alvarez, Jerome Anthony E. and Dean, Scott N.},
+  journal={Scientific Reports},
+  volume={14},
+  pages={19074},
+  year={2024},
+  doi={10.1038/s41598-024-70101-6}
 }
 ```
 

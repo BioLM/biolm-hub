@@ -269,16 +269,23 @@ class SpursRunner:
                 handle.write(structure)
                 raw_path = Path(handle.name)
 
-            atom_array = self._load_structure(str(raw_path), chain=chain_id)
-            output_fd, output_name = tempfile.mkstemp(suffix=".pdb")
-            output_path = Path(output_name)
-            # Close the file descriptor so Biotite can write to the path
-            os.close(output_fd)
+            output_path: Path | None = None
+            try:
+                atom_array = self._load_structure(str(raw_path), chain=chain_id)
+                output_fd, output_name = tempfile.mkstemp(suffix=".pdb")
+                output_path = Path(output_name)
+                # Close the file descriptor so Biotite can write to the path
+                os.close(output_fd)
 
-            pdb_file = self._biotite_pdb.PDBFile()
-            pdb_file.set_structure(atom_array)
-            pdb_file.write(str(output_path))
-            raw_path.unlink(missing_ok=True)
+                pdb_file = self._biotite_pdb.PDBFile()
+                pdb_file.set_structure(atom_array)
+                pdb_file.write(str(output_path))
+            except Exception:
+                if output_path is not None:
+                    output_path.unlink(missing_ok=True)
+                raise
+            finally:
+                raw_path.unlink(missing_ok=True)
             return output_path
 
         if fmt == "pdb":

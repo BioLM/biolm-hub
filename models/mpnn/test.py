@@ -7,14 +7,30 @@ from models.mpnn.schema import MPNNModelTypes
 
 
 def _validate_mpnn_generate(actual_output: dict, _expected_output: dict = None):
-    """Basic validation for MPNN generate output - just check structure."""
+    """Structural validation for MPNN generate output."""
     assert "results" in actual_output, "Response missing 'results' key"
-    assert len(actual_output["results"]) > 0, "Results list is empty"
+    results = actual_output["results"]
+    assert len(results) > 0, "Results list is empty"
+    for idx, result in enumerate(results):
+        assert "sequence" in result, f"Result {idx} missing 'sequence' field"
+        assert (
+            isinstance(result["sequence"], str) and len(result["sequence"]) > 0
+        ), f"Result {idx} 'sequence' is empty or not a string"
+        assert "pdb" in result, f"Result {idx} missing 'pdb' field"
+        assert (
+            isinstance(result["pdb"], str) and len(result["pdb"]) > 0
+        ), f"Result {idx} 'pdb' is empty or not a string"
+        for conf_field in ("overall_confidence", "ligand_confidence"):
+            assert conf_field in result, f"Result {idx} missing '{conf_field}' field"
+            val = float(result[conf_field])
+            assert (
+                0.0 <= val <= 1.0
+            ), f"Result {idx} '{conf_field}' value {val} is outside [0, 1]"
 
 
-# MPNN test suite — test 2 representative variants (protein + ligand) with 1 input each.
-# Full 6-variant x 4-input matrix (24 tests) exceeds CI timeout. This gives coverage
-# of both base MPNN and LigandMPNN with minimal runtime.
+# MPNN test suite — test 3 representative variants (protein + ligand + global_label_membrane)
+# with 1 input each. Full 6-variant x 4-input matrix (24 tests) exceeds CI timeout.
+# Membrane variant is included to catch regressions in the membrane-aware code path.
 test_suite = TestSuite(
     model_family=MODEL_FAMILY,
     r2_fixture_subdir="models",
@@ -31,6 +47,16 @@ test_suite = TestSuite(
         ),
         VariantTestMapping(
             variant_config={"MODEL_TYPE": MPNNModelTypes.LIGAND},
+            test_cases=[
+                ActionTestCase(
+                    action_name=ModelActions.GENERATE,
+                    input_fixture=INPUT1,
+                    validator=_validate_mpnn_generate,
+                ),
+            ],
+        ),
+        VariantTestMapping(
+            variant_config={"MODEL_TYPE": MPNNModelTypes.GLOBAL_LABEL_MEMBRANE},
             test_cases=[
                 ActionTestCase(
                     action_name=ModelActions.GENERATE,

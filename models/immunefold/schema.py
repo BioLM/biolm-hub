@@ -29,7 +29,6 @@ class ImmuneFoldParams(ModelParams):
     log_identifier = "ImmuneFold"
     batch_size = 32
     max_sequence_len = 256
-    max_unpaired_sequence_len = 512
 
 
 class ImmuneFoldModelTypes(EnhancedStringEnum):

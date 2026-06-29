@@ -16,7 +16,6 @@ from models.commons.model.pydantic import (
 
 class ProstT5Params(ModelParams):
     params_version = "v1"
-    half_precision = True
     display_name = "ProstT5"
     base_model_slug = "prostt5"
     log_identifier = "ProstT5"
@@ -55,7 +54,7 @@ prostt5_3di_regex = re.compile(f"^[{prostt5_3di}]+$")
 def validate_prostt5_3di(text: str) -> str:
     if not prostt5_3di_regex.match(text):
         raise ValueError(
-            f"Nucleotides can only be represented with '{prostt5_3di}' characters"
+            f"3Di structural tokens can only use the lowercase characters '{prostt5_3di}'"
         )
     return text
 
@@ -112,20 +111,6 @@ class ProstT5EncodeRequestFold(RequestModel):
 
 
 ### ProstT5 Encode Response
-
-
-class ProstT5EncodeResponseLabel(RequestModel):
-    token: int = Field(description="Vocabulary token ID at this position.")
-    token_str: str = Field(description="String form of the vocabulary token.")
-    score: float = Field(
-        description="Log-probability score assigned to this token by the model."
-    )
-    sequence: str = Field(
-        description="Decoded sequence string for this generation candidate."
-    )
-
-
-ProstT5NEncodeResponseResult = list[ProstT5EncodeResponseLabel]
 
 
 class ProstT5EncodeResponseResult(ResponseModel):

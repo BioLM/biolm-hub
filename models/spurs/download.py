@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Optional
 
 from models.commons.core.logging import get_logger
 from models.commons.storage.download_helpers import r2_then_hf
@@ -10,7 +9,7 @@ from models.spurs.schema import SpursParams
 logger = get_logger(__name__)
 
 
-def get_model_dir(sub_path: Optional[str] = None) -> Path:
+def get_model_dir(sub_path: str | None = None) -> Path:
     """Resolve the local directory where SPURS weights should be stored."""
     return get_model_dir_util(
         base_model_slug=SpursParams.base_model_slug,
@@ -23,8 +22,8 @@ def get_model_dir(sub_path: Optional[str] = None) -> Path:
 def download_model_assets(
     base_model_slug: str,
     params_version: str,
-    variant_config: Optional[dict] = None,
-    sub_path: Optional[str] = None,
+    variant_config: dict | None = None,
+    sub_path: str | None = None,
 ) -> Path:
     """Download SPURS model assets."""
     logger.info("SPURS: Downloading model assets")

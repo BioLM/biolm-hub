@@ -7,7 +7,7 @@
 #   - alternatives, complements: 1+ entries where applicable
 #   - All referenced model slugs must exist in models/
 
-model_slug: "omni_dna"
+model_slug: "omni-dna"
 display_name: "Omni-DNA"
 last_updated: "2026-03-17"
 
@@ -24,7 +24,7 @@ weaknesses:
   - "Very recently published (2025) with no independent benchmark validation yet — performance claims rely solely on the original paper"
   - "No generative capability — despite autoregressive architecture, only scoring and embedding actions are exposed; cannot design or sample novel DNA sequences"
   - "No applied literature or downstream adoption studies available as of 2026-03, making real-world reliability and transferability unproven"
-  - "Single deployed variant (1B) requires an L4 GPU, offering no lightweight option for resource-constrained deployments unlike DNABERT-2 (T4) or NT-v2-250m (T4)"
+  - "Single deployed variant (1B) requires an L4 GPU, offering no lightweight option for resource-constrained deployments unlike DNABERT-2 (T4)"
   - "BPE token-level log-probabilities require careful normalization for cross-sequence comparisons since BPE produces variable numbers of tokens for different sequences"
   - "Training data composition and multi-species coverage are less documented than NT's explicit 850+ genome catalog"
   - "Does not support RNA sequences — input validation rejects non-ACGT characters"
@@ -32,15 +32,15 @@ weaknesses:
 use_when:
   - "You need the largest-capacity BPE-tokenized DNA embedding model available on the platform for complex downstream classification or regression tasks"
   - "You want true autoregressive log-probability scoring (not pseudo-log-likelihood) for DNA sequences using a BPE-tokenized model"
-  - "You are benchmarking DNA foundation models and need a recent (2025) autoregressive architecture to compare against BERT-style (DNABERT-2, NT) and byte-level (Evo/Evo2) approaches"
+  - "You are benchmarking DNA foundation models and need a recent (2025) autoregressive architecture to compare against BERT-style (DNABERT-2) and byte-level (Evo/Evo2) approaches"
   - "You need a unified model for both embedding extraction and sequence fitness scoring and want the highest parameter count in a BPE-tokenized DNA model"
   - "You need a permissively licensed (Apache-2.0) large-capacity DNA model for commercial applications"
   - "You are developing multi-task genomic analysis pipelines and want a model explicitly designed for cross-modal versatility"
 
 dont_use_when:
-  - "You need a well-validated model with extensive independent benchmarking and published downstream applications (use nt or dnabert2, which have multi-year track records)"
+  - "You need a well-validated model with extensive independent benchmarking and published downstream applications (use dnabert2, which has a multi-year track record)"
   - "You need DNA sequence generation capability (use evo or evo2, which support autoregressive generation)"
-  - "You need a lightweight model for high-throughput screening on T4 GPUs or CPUs (use dnabert2 at 117M parameters or nt-v2-250m)"
+  - "You need a lightweight model for high-throughput screening on T4 GPUs or CPUs (use dnabert2 at 117M parameters)"
   - "You need very long-range genomic context exceeding standard transformer windows (use evo2 with up to 1M-token context)"
   - "You need codon optimization or deterministic DNA feature extraction (use dna_chisel instead)"
   - "You are working with RNA sequences (use an RNA-specific model)"
@@ -50,9 +50,6 @@ alternatives:
   - model: "dnabert2"
     when_better: "Well-validated on the GUE benchmark (36 datasets) with multiple independent benchmarking studies; lightweight (117M on T4) and established since 2023"
     when_worse: "Smaller capacity (117M vs 1B parameters), shorter context window (~4-8 kbp), and masked LM architecture provides only pseudo-log-likelihood rather than true autoregressive scoring"
-  - model: "nt"
-    when_better: "Extensive multi-species pretraining (850+ genomes), multiple independent benchmark validations, two size variants for deployment flexibility, and longer effective context (~12 kbp)"
-    when_worse: "Fixed 6-mer tokenization is coarser than BPE, non-commercial license (CC-BY-NC-SA-4.0), and encoder-only architecture limits to pseudo-log-likelihood scoring"
   - model: "evo2"
     when_better: "Generation capability, multi-domain training (prokaryotes + eukaryotes + viruses), up to 1M-token context, and embedding extraction from a 7B-parameter model"
     when_worse: "Much higher compute requirements; Omni-DNA provides a more lightweight autoregressive option for scoring and embedding tasks"

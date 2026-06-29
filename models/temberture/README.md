@@ -147,11 +147,11 @@ predict_request = TemBERTurePredictRequest(
 
 ### Published Results
 
-<!-- TODO: Extract benchmark numbers from Rodella et al. (2024) Bioinformatics paper Table/Figure -- requires PDF access via bm r2 cat -->
+The TemBERTure classifier achieves 83% accuracy on the TemStaPro benchmark dataset (Pudžiuvelytė et al., 2024). Benchmark numbers from the primary paper (Rodella et al., 2024, Bioinformatics Advances) are available in that publication.
 
 ### SOTA Status
 
-TemBERTure advances protein thermostability prediction using deep learning with attention mechanisms (published 2024 in Bioinformatics).
+TemBERTure advances protein thermostability prediction using deep learning with attention mechanisms (published 2024 in Bioinformatics Advances).
 
 ## Implementation Verification
 
@@ -187,29 +187,30 @@ Tests cover both variants (classifier and regression) with two actions each (enc
 
 ## License
 
-- **Code**: MIT ([GitHub](https://github.com/ibmm-unibe-ch/TemBERTure))
+- **Code**: MIT — Copyright (c) 2024 Institute of Biochemistry and Molecular Medicine ([GitHub](https://github.com/ibmm-unibe-ch/TemBERTure/blob/main/LICENSE))
+- **Base model (ProtBERT-BFD)**: No explicit license found on HuggingFace (`Rostlab/prot_bert_bfd`). Verify redistribution terms before production use.
 
 ## References & Citations
 
 ### Papers
 
-1. Rodella C, Lazaro F, Lemmin T. "TemBERTure: advancing protein thermostability prediction with deep learning and attention mechanisms." *Bioinformatics* (2024). [DOI](https://doi.org/10.1093/bioinformatics/btae157)
+1. Rodella C, Lazaridi S, Lemmin T. "TemBERTure: advancing protein thermostability prediction with deep learning and attention mechanisms." *Bioinformatics Advances* (2024). [DOI](https://doi.org/10.1093/bioadv/vbae103)
 
 ### BibTeX
 
 ```bibtex
 @article{rodella2024temberture,
   title={TemBERTure: advancing protein thermostability prediction with deep learning and attention mechanisms},
-  author={Rodella, Chiara and Lazaro, Florian and Lemmin, Thomas},
-  journal={Bioinformatics},
+  author={Rodella, Chiara and Lazaridi, Symela and Lemmin, Thomas},
+  journal={Bioinformatics Advances},
   year={2024},
-  doi={10.1093/bioinformatics/btae157}
+  doi={10.1093/bioadv/vbae103}
 }
 ```
 
 ### Links
 
-- **Paper**: [Bioinformatics](https://doi.org/10.1093/bioinformatics/btae157)
+- **Paper**: [Bioinformatics Advances](https://doi.org/10.1093/bioadv/vbae103)
 - **Code**: [GitHub ibmm-unibe-ch/TemBERTure](https://github.com/ibmm-unibe-ch/TemBERTure)
 - **Base model**: [HuggingFace Rostlab/prot_bert_bfd](https://huggingface.co/Rostlab/prot_bert_bfd)
 

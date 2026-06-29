@@ -8,13 +8,16 @@ from models.commons.storage.downloads import get_model_dir_util
 from models.thermompnn_d.config import (
     PROTEIN_MPNN_CHECKPOINT,
     THERMOMPNN_D_EPISTATIC_CHECKPOINT,
-    THERMOMPNN_SINGLE_CHECKPOINT,
+    THERMOMPNN_D_SINGLE_CHECKPOINT,
+    thermompnn_d_commit_hash,
 )
 from models.thermompnn_d.schema import ThermoMPNNDParams
 
 logger = get_logger(__name__)
 
-GITHUB_BASE_URL = "https://github.com/Kuhlman-Lab/ThermoMPNN-D/raw/main/"
+GITHUB_BASE_URL = (
+    f"https://github.com/Kuhlman-Lab/ThermoMPNN-D/raw/{thermompnn_d_commit_hash}/"
+)
 
 
 def get_model_dir():
@@ -37,7 +40,7 @@ def download_model_assets(  # noqa: C901
         sub_path=sub_path,
         urls={
             THERMOMPNN_D_EPISTATIC_CHECKPOINT: f"{GITHUB_BASE_URL}model_weights/{THERMOMPNN_D_EPISTATIC_CHECKPOINT}",
-            THERMOMPNN_SINGLE_CHECKPOINT: f"{GITHUB_BASE_URL}model_weights/{THERMOMPNN_SINGLE_CHECKPOINT}",
+            THERMOMPNN_D_SINGLE_CHECKPOINT: f"{GITHUB_BASE_URL}model_weights/{THERMOMPNN_D_SINGLE_CHECKPOINT}",
             f"vanilla_model_weights/{PROTEIN_MPNN_CHECKPOINT}": f"{GITHUB_BASE_URL}vanilla_model_weights/{PROTEIN_MPNN_CHECKPOINT}",
         },
     )
@@ -110,9 +113,9 @@ def download_model_assets(  # noqa: C901
     logger.info("Verified ThermoMPNN-D epistatic checkpoint at: %s", epistatic_path)
 
     # Verify ThermoMPNN single checkpoint was downloaded
-    single_path = target_dir / THERMOMPNN_SINGLE_CHECKPOINT
+    single_path = target_dir / THERMOMPNN_D_SINGLE_CHECKPOINT
     if not single_path.exists():
-        found_files = list(target_dir.rglob(THERMOMPNN_SINGLE_CHECKPOINT))
+        found_files = list(target_dir.rglob(THERMOMPNN_D_SINGLE_CHECKPOINT))
         if found_files:
             single_path = found_files[0]
         else:

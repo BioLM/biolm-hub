@@ -7,7 +7,7 @@
 #   - alternatives, complements: 1+ entries where applicable
 #   - All referenced model slugs must exist in models/
 
-model_slug: "dna_chisel"
+model_slug: "dna-chisel"
 display_name: "DNA-Chisel"
 last_updated: "2026-03-17"
 
@@ -50,9 +50,9 @@ alternatives:
   - model: "dnabert2"
     when_better: "Provides learned DNA embeddings that capture complex regulatory patterns, supports variant effect scoring via pseudo-log-likelihood, and generalizes across species"
     when_worse: "Black-box neural network — features are not directly interpretable; requires GPU; cannot compute species-specific CAI or check restriction sites; DNA-Chisel's features have clear biological definitions"
-  - model: "nt"
-    when_better: "Learned embeddings from 850+ species capture cross-species genomic patterns; supports variant effect prediction and regulatory element classification"
-    when_worse: "Requires GPU, non-commercial license, and features are not interpretable; DNA-Chisel provides deterministic, explainable features with zero compute overhead"
+  - model: "omni_dna"
+    when_better: "Learned embeddings from multi-species training capture complex genomic patterns; supports variant effect prediction and regulatory element classification"
+    when_worse: "Requires GPU and features are not interpretable; DNA-Chisel provides deterministic, explainable features with zero compute overhead"
 
 complements:
   - model: "evo"
@@ -60,9 +60,6 @@ complements:
     example_protocol: null
   - model: "evo2"
     workflow: "Generate DNA sequences with Evo2, then use DNA-Chisel for comprehensive synthesis QC — codon optimization assessment, restriction site checking, and sequence complexity analysis before ordering synthetic DNA"
-    example_protocol: null
-  - model: "nt"
-    workflow: "Combine DNA-Chisel's interpretable deterministic features with NT's learned embeddings as a joint feature set for downstream expression prediction or regulatory element classification models"
     example_protocol: null
   - model: "dnabert2"
     workflow: "Use DNABERT-2 embeddings for complex pattern capture alongside DNA-Chisel's interpretable features in multi-feature ML pipelines, providing both learned and engineered representations for genomic analysis"

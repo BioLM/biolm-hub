@@ -28,15 +28,17 @@ def _validate_prostt5_generate(actual_output: dict, _expected_output=None):
     assert "results" in actual_output and actual_output["results"], "Missing results"
 
     sample_seq = actual_output["results"][0][0]["sequence"]
-    is_aa = sample_seq.islower()
+    # Lowercase output means the model produced 3Di tokens (AA2fold direction);
+    # uppercase output means the model produced amino acids (fold2AA direction).
+    direction_is_aa2fold = sample_seq.islower()
 
-    req_file = "aa_generate_input.json" if is_aa else "fold_input.json"
+    req_file = "aa_generate_input.json" if direction_is_aa2fold else "fold_input.json"
     req_path = f"{r2_test_data_dir}/models/{ProstT5Params.base_model_slug}/{req_file}"
     request_json = read_json_from_r2(r2_bucket_name, req_path)
 
     request = (
         ProstT5GenerateRequestAA.model_validate(request_json)
-        if is_aa
+        if direction_is_aa2fold
         else ProstT5GenerateRequestFold.model_validate(request_json)
     )
 
@@ -45,10 +47,10 @@ def _validate_prostt5_generate(actual_output: dict, _expected_output=None):
 
     for s in samples:
         seq = s["sequence"]
-        if is_aa:
-            assert seq.islower(), "AA sequences should be lowercase"
+        if direction_is_aa2fold:
+            assert seq.islower(), "AA2fold output should be lowercase 3Di tokens"
         else:
-            assert seq.isupper(), "FOLD sequences should be uppercase"
+            assert seq.isupper(), "fold2AA output should be uppercase amino acids"
         assert len(seq) == len(request.items[0].sequence), "Length mismatch"
 
 

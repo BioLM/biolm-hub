@@ -58,7 +58,14 @@ Therapeutic antibody development requires understanding how antibody variable re
 
 ## Applied Use Cases
 
-<!-- TODO: Add specific applied literature examples as they become available in sources.yaml applied_literature -->
+Chai-1 has been evaluated in several independent benchmarking studies since its release:
+
+- **Cross-docking benchmark (PoseX, 2025)**: A large-scale evaluation of 25 structure prediction methods found co-folding approaches including Chai-1 converge at approximately 60–61% success on cross-docking tasks, outperforming classical physics-based docking tools.
+- **GPCR-peptide binding (2025)**: Benchmarking on 124 GPCR ligands with 1,240 decoys compared Chai-1 against AlphaFold2, AlphaFold3, and ESMFold for peptide binding prediction.
+- **Flexible protein-ligand docking review (2025)**: A systematic review positions Chai-1 among leading deep learning methods for flexible receptor docking in drug discovery pipelines.
+- **SARS-CoV-2 Mac1 prospective evaluation (2025)**: Testing on 557 Mac1-ligand poses showed Chai-1 achieves >50% under 2 Å RMSD, comparable to AlphaFold3 and Boltz-2.
+- **FoldBench comprehensive benchmark (2025)**: Evaluation across 1,522 assemblies and 9 tasks (protein-ligand, protein-RNA, protein-DNA, antibody-antigen) demonstrates Chai-1's breadth across complex types.
+- **Protein-peptide docking (PepPCBench, 2025)**: Benchmarked on 261 protein-peptide complexes (5–30 residues) for docking accuracy and scoring alongside AlphaFold3, HelixFold3, and RFAA.
 
 Chai-1's multi-modal capability enables several practical workflows:
 

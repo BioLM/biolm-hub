@@ -1,6 +1,6 @@
 # ESM-1b
 
-> **One-line summary**: Legacy masked protein language model (652M parameters) from Meta AI/FAIR that produces sequence embeddings, masked-token predictions, and per-sequence log-probabilities for proteins up to 1022 residues. **Superseded by ESM-2 -- use ESM-2 for new work.**
+> **One-line summary**: Legacy masked protein language model (650M parameters) from Meta AI/FAIR that produces sequence embeddings, masked-token predictions, and per-sequence log-probabilities for proteins up to 1022 residues. **Superseded by ESM-2 -- use ESM-2 for new work.**
 
 ## Overview
 
@@ -8,14 +8,14 @@ ESM-1b (Evolutionary Scale Modeling 1b) is a protein language model developed by
 
 ESM-1b was the first large-scale protein language model to demonstrate that biological structure and function emerge from unsupervised learning on protein sequences. Its representations encode secondary structure, tertiary contacts, and remote homology at the fold level. This landmark finding directly motivated the development of ESM-2, ESMFold, and subsequent protein foundation models.
 
-**Legacy status**: ESM-1b has been superseded by ESM-2 (Lin et al., 2023), which provides strictly better representations at the same parameter count through improved training. ESM-1b is retained on the BioLM platform for backward compatibility and for reproducing results from published studies that specifically used this model.
+**Legacy status**: ESM-1b has been superseded by ESM-2 (Lin et al., 2023), which provides strictly better representations at the same parameter count through improved training. ESM-1b is retained in the catalog for backward compatibility and for reproducing results from published studies that specifically used this model.
 
 ## Architecture
 
 | Property | Value |
 |----------|-------|
 | Architecture | Transformer encoder (BERT-style) |
-| Parameters | 652M |
+| Parameters | 650M |
 | Layers | 33 |
 | Hidden dimensions | 1280 |
 | Attention heads | 20 |
@@ -29,7 +29,7 @@ The model uses pre-activation layer normalization (differs from standard RoBERTa
 
 ## Model Variants
 
-Single variant -- no size options. The sole deployment is the full 652M parameter model.
+Single variant -- no size options. The sole deployment is the full 650M parameter model.
 
 ## Capabilities & Limitations
 
@@ -105,13 +105,13 @@ Performs masked token prediction. Input sequences must contain one or more `<mas
     {
       "logits": [[0.1, -0.3, ...], ...],
       "sequence_tokens": ["M", "A", "<mask>", "K", ...],
-      "vocab_tokens": ["A", "R", "N", "D", ...]
+      "vocab_tokens": ["L", "A", "G", "V", ...]
     }
   ]
 }
 ```
 
-`logits` shape is `[L, V]` where L is the sequence length (excluding BOS/EOS) and V is the number of canonical amino acid tokens.
+`logits` shape is `[L, V]` where L is the sequence length (excluding BOS/EOS) and V is 20 (the 20 standard amino acid tokens in ESM vocabulary order).
 
 ### `log_prob`
 
@@ -177,16 +177,7 @@ log_prob_request = ESM1bLogProbRequest(
 
 ### Published Results
 
-ESM-1b was evaluated on secondary structure prediction, contact prediction, and remote homology detection (Rives et al., PNAS 2021):
-
-| Benchmark | ESM-1b | Notes |
-|-----------|--------|-------|
-| Contact prediction L/5 (long-range) | ~0.50 | Rives et al. 2021, Figure 3 |
-| SSP accuracy (3-state) | ~0.73 | Rives et al. 2021, Table 1 |
-
-<!-- TODO: Replace approximate values with exact numbers from Rives et al. 2021 Table 1 and Figure 3 -->
-
-Additional qualitative findings:
+ESM-1b was evaluated on secondary structure prediction, contact prediction, and remote homology detection (Rives et al., PNAS 2021). Key qualitative findings:
 
 - Representations encode secondary structure at per-residue accuracy comparable to alignment-based methods
 - Long-range contact prediction from attention weights demonstrates emergent structural knowledge
@@ -241,8 +232,8 @@ Known extremes (Option B): The BioLM implementation was verified against protein
 - **Weight loading**: Weights are downloaded from R2 (with HuggingFace Hub fallback) and loaded via HuggingFace `EsmForMaskedLM.from_pretrained()`. HF revision pinned to `7b37824baec4d3658e1df7479222a7c79b465b76`.
 - **Container image**: Built on `pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime` with `transformers==4.36.2`, `safetensors==0.5.3`, `huggingface_hub==0.26.0`.
 - **Tokenization**: Uses HuggingFace `EsmTokenizer` with padding and truncation. BOS and EOS tokens are automatically handled.
-- **Logit filtering**: Raw logits are filtered to canonical single-letter uppercase amino acids for the `logits` and `predict` outputs.
-- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
+- **Logit filtering**: Raw logits are filtered to the 20 standard (canonical) amino acids for the `logits` and `predict` outputs.
+- **Caching**: Response caching is handled by the serving infrastructure upstream of the model container.
 
 ## License
 

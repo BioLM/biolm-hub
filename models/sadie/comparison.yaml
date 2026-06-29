@@ -48,19 +48,12 @@ alternatives:
   - model: "esm2"
     when_better: "ESM-2 provides general protein embeddings and pseudo-log-likelihoods covering all proteins, not just immune proteins"
     when_worse: "ESM-2 has no concept of antibody numbering, CDR boundaries, germline genes, or species detection; these are immunoinformatics-specific annotations that only SADIE provides"
-  - model: "nanobert"
-    when_better: "NanoBERT provides nanobody-specific embeddings and scoring; more appropriate for VHH-specific downstream analysis"
-    when_worse: "NanoBERT does not provide numbering or annotation; SADIE processes nanobody sequences as H chains to provide numbering and region identification before NanoBERT analysis"
-
 complements:
   - model: "ablang2"
     workflow: "Use SADIE to number and annotate antibody variable domains, extract CDR boundaries and verify sequence quality, then pass validated paired chains to AbLang2 for embedding, scoring, and sequence restoration"
     example_protocol: null
   - model: "igbert"
     workflow: "Use SADIE to annotate sequences and identify chain types and germline origins, then use IgBERT for embedding generation and sequence scoring with appropriate paired or unpaired variant selection"
-    example_protocol: null
-  - model: "nanobert"
-    workflow: "Use SADIE to identify VHH domains in nanobody sequences, extract CDR boundaries for quality filtering, then pass annotated nanobody sequences to NanoBERT for VHH-specific embedding and scoring"
     example_protocol: null
   - model: "abodybuilder3"
     workflow: "Use SADIE to validate and annotate paired antibody sequences, confirm both heavy and light chains are present with expected germline assignments, then predict structures with AbodyBuilder3"

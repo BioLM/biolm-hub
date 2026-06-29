@@ -33,7 +33,7 @@ AbLang2 is a single-variant model with no size options.
 **CAN be used for:**
 - Generating germline-debiased sequence-level embeddings for paired antibodies (`seqcoding`)
 - Generating per-residue embeddings for paired antibodies (`rescoding`)
-- Computing per-position likelihood distributions for antibody sequences
+- Computing per-position logits (unnormalized scores) for antibody sequences
 - Restoring missing residues in antibody sequences (sequence completion)
 - Zero-shot antibody sequence scoring via log-probability (`log_prob`)
 
@@ -93,7 +93,7 @@ Generates sequence-level (`seqcoding`) or residue-level (`rescoding`) embeddings
 
 ### `predict`
 
-Returns per-position likelihood distributions over the 20 canonical amino acids for paired antibody sequences.
+Returns per-position logits over the 20 canonical amino acids for paired antibody sequences.
 
 **Request Parameters:**
 
@@ -116,7 +116,7 @@ Returns per-position likelihood distributions over the 20 canonical amino acids 
 }
 ```
 
-`likelihood` shape is `[L, 20]` where L is the total sequence length and 20 is the canonical amino acid vocabulary.
+`likelihood` shape is `[L, 20]` where L is the total paired sequence length and 20 is the canonical amino acid vocabulary. Values are raw logits (not probabilities); use `log_softmax` to obtain log-probabilities.
 
 **Schema classes**: `AbLang2PredictRequest` -> `AbLang2PredictResponse`
 
@@ -270,7 +270,7 @@ Numerical reproduction: The BioLM implementation loads official pre-trained weig
 - **Determinism**: Seeds are set (`torch.manual_seed(42)`) for reproducible outputs.
 - **Weight loading**: Weights are downloaded from R2 with library-managed fallback. A symlink is created from the ablang2 library's expected weights location to the managed weights directory.
 - **Dependencies**: `ablang2==0.2.1`, `einops==0.8.1`, `rotary-embedding-torch==0.8.9`
-- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
+- **Caching**: Response caching is handled outside the model container.
 
 ## License
 

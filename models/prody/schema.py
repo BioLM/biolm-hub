@@ -50,10 +50,6 @@ class ProDyEncodeRequestParams(RequestModel):
         default=HydrogenMethod.PDBFIXER,
         description="Method to use for adding hydrogens (openbabel or pdbfixer)",
     )
-    compute_all_interactions: bool = Field(
-        default=True,
-        description="Whether to compute all types of interactions",
-    )
     return_interaction_matrix: bool = Field(
         default=False,
         description="Whether to return the interaction matrix",
@@ -503,19 +499,16 @@ class InteractionType(EnhancedStringEnum):
 
     HYDROGEN_BOND = "hydrogen_bond"
     SALT_BRIDGE = "salt_bridge"
-    DISULFIDE_BOND = "disulfide_bond"
     HYDROPHOBIC = "hydrophobic"
     PI_STACKING = "pi_stacking"
     CATION_PI = "cation_pi"
-    VAN_DER_WAALS = "van_der_waals"
-    IONIC = "ionic"
-    COVALENT = "covalent"
+    REPULSIVE_IONIC = "repulsive_ionic"
 
 
 class Interaction(ResponseModel):
     """A single interaction between two residues/atoms."""
 
-    interaction_type: str = Field(..., description="Type of interaction")
+    interaction_type: InteractionType = Field(..., description="Type of interaction")
     chain1: str = Field(..., description="Chain ID of first residue")
     residue1: str = Field(..., description="Residue identifier (e.g., 'ALA 1')")
     atom1: Optional[str] = Field(default=None, description="Atom name in first residue")

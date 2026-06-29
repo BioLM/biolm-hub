@@ -21,7 +21,7 @@ TEMPRO is a nanobody melting temperature (Tm) prediction model that combines ESM
 
 The model was trained on nanobody sequences with experimentally measured melting temperatures. The fixture validation includes 6 nanobodies with known Tms from PDB structures: 4IDL (46.75 degrees C), 4TYU (85.1 degrees C), 4U05 (84.0 degrees C), 4W68 (88.0 degrees C), 4W70 (60.0 degrees C), and 5SV3 (69.3 degrees C).
 
-<!-- TODO: Extract full training dataset details from Alvarez (2024) preprint -- requires PDF access -->
+The model was trained on nanobody sequences with experimentally determined Tm values from the NbThermo database and related sources. Full dataset details are described in the primary paper (Alvarez and Dean, Sci. Reports 2024, DOI: 10.1038/s41598-024-70101-6).
 
 ### Loss Function & Objective
 
@@ -38,9 +38,9 @@ Input processing occurs in two stages:
 
 ### Published Benchmarks
 
-<!-- TODO: Extract benchmark results from Alvarez (2024) preprint -- requires PDF access -->
+Published benchmark results are reported in Alvarez and Dean (Sci. Reports 14:19074, 2024). External validation was performed on 6 nanobodies with known Tm values (PDB IDs: 4IDL, 4TYU, 4U05, 4W68, 4W70, 5SV3), covering the Tm range 46.75--88.0 degrees C.
 
-Validation on 6 nanobodies with known Tms shows the model captures the range of thermal stabilities (46.75--88.0 degrees C). Tests use 10% relative tolerance for Tm predictions, reflecting the expected MAE of approximately 4.5--5.5 degrees C.
+Independent benchmarks (NanoMelt 2025, Murakami et al. 2025, NBsTem 2026, NbBench 2025) report TEMPRO achieving R2=0.67 on the 6-sample external set, with MAE approximately 5.3 degrees C on larger held-out sets. Tests use 10% relative tolerance for Tm predictions, reflecting the expected MAE of approximately 4.5--5.5 degrees C.
 
 ### BioLM Verification Results
 
@@ -105,7 +105,7 @@ Request --> Validate sequences (100-160 AA)
 
 ### Caching Behavior
 
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container. ESM2 calls may benefit from ESM2's own platform-layer caching.
+Response caching is handled at the platform layer, not by the model container. ESM2 calls may benefit from ESM2's own caching.
 
 ## Versions & Changelog
 

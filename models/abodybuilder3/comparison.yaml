@@ -1,5 +1,5 @@
 model_slug: "abodybuilder3"
-display_name: "AbodyBuilder3"
+display_name: "ABodyBuilder3"
 last_updated: "2026-03-17"
 
 strengths:
@@ -54,14 +54,8 @@ alternatives:
 
 complements:
   - model: "antifold"
-    workflow: "Predict Fv structure with AbodyBuilder3, then pass the predicted structure to AntiFold for structure-conditioned CDR sequence design and library generation"
-    example_protocol: null
-  - model: "propermab"
-    workflow: "Predict Fv structure with AbodyBuilder3, then extract 34 biophysical developability features with ProperMAB using the predicted atomic coordinates"
+    workflow: "Predict Fv structure with ABodyBuilder3, then pass the predicted structure to AntiFold for structure-conditioned CDR sequence design and library generation"
     example_protocol: null
   - model: "ablang2"
-    workflow: "Use AbLang2 to score antibody sequences for evolutionary plausibility, then predict structures for top-scoring candidates with AbodyBuilder3 for structural characterization"
-    example_protocol: null
-  - model: "ablef"
-    workflow: "Use AbLEF for rapid sequence-level developability screening (HIC-RT, Fab Tm), then predict structures with AbodyBuilder3 for candidates that pass the sequence-level filter"
+    workflow: "Use AbLang2 to score antibody sequences for evolutionary plausibility, then predict structures for top-scoring candidates with ABodyBuilder3 for structural characterization"
     example_protocol: null

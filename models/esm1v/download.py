@@ -22,7 +22,7 @@ def get_model_id(model_number: str):
     if model_number == "all":
         return None  # No specific variant for "all"
     model_name_template = "esm1v_t33_650M_UR90S_{model_num}"
-    model_number_clean = model_number.strip("n")
+    model_number_clean = model_number.removeprefix("n")
     return model_name_template.format(model_num=model_number_clean)
 
 

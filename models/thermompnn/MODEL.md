@@ -89,7 +89,7 @@ Integration tests use structural validation (checking response format, mutation 
 
 - Missing residues in PDB (gaps) are flagged as "-" and handled, but may affect nearby predictions
 - PDB files with non-standard formatting may fail during parsing
-- Very large structures (>1024 residues) may exceed memory limits
+- Very large structures (beyond 1024 residues) may exceed GPU memory limits; 1024 residues is the recommended upper bound but is not enforced at the API level
 
 ## Implementation Details
 
@@ -100,10 +100,10 @@ Request --> Validate PDB + mutations
   --> Write PDB to temp file
   --> Parse PDB (alt_parse_PDB)
   --> Select chain
-  --> Build mutation objects (0-indexed internally, 1-indexed externally)
+  --> Build mutation objects (0-indexed internally, 1-indexed in chain's modeled sequence externally)
   --> [GPU] Forward pass through ThermoMPNN
   --> Extract ddG predictions
-  --> Format response (1-indexed positions)
+  --> Format response (1-indexed positions within chain's modeled sequence)
   --> Cleanup temp files
 ```
 
@@ -124,7 +124,7 @@ Request --> Validate PDB + mutations
 
 ### Caching Behavior
 
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container.
+Response caching is handled outside the model container and is not the responsibility of the inference code.
 
 ## Versions & Changelog
 

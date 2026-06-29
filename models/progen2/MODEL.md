@@ -25,7 +25,7 @@ Common across all variants:
 
 | Property | Value |
 |----------|-------|
-| Vocabulary size | 50,400 tokens (BPE tokenizer from GPT-J) |
+| Vocabulary size | 32 tokens (ProGen2 custom amino-acid tokenizer) |
 | Positional encoding | Rotary (RoPE), dim varies by variant (64/96/80) |
 | Normalization | Pre-LayerNorm |
 | Activation | GELU (gelu_new) |
@@ -66,13 +66,13 @@ ProGen2 uses special terminal tokens: `1` for N-terminal (beginning of protein) 
 
 | Property | Details |
 |----------|---------|
-| Tokenizer | BPE tokenizer (inherited from GPT-J, 50,400 tokens) |
+| Tokenizer | ProGen2 custom tokenizer (32 tokens: 20 standard amino acids + special/terminal tokens) |
 | Special tokens | `1` (N-terminal/BOS), `2` (C-terminal/EOS), `<\|pad\|>` (padding) |
 | N-terminal prepended | Yes (token `1`) |
 | C-terminal appended | Yes (token `2`, for likelihood computation) |
 | Maximum sequence length | 512 residues (BioLM implementation limit) |
 
-The BioLM implementation prepends the `1` N-terminal token to the context sequence before sampling. For likelihood computation, both `1` (N-terminal) and `2` (C-terminal) tokens are added to frame the full sequence. The tokenizer is character-level for amino acids despite being a BPE tokenizer -- each standard amino acid maps to a single token.
+The implementation prepends the `1` N-terminal token to the context sequence before sampling. For likelihood computation, both `1` (N-terminal) and `2` (C-terminal) tokens are added to frame the full sequence. The tokenizer is character-level for amino acids -- each standard amino acid maps to a single token.
 
 ## Performance & Benchmarks
 
@@ -189,7 +189,7 @@ Sources of variability:
 ### Known Failure Modes
 
 - **Very short contexts** (< 5 residues): Generation may produce highly diverse and potentially non-biological sequences due to insufficient conditioning
-- **Temperature 0.0**: Greedy decoding can produce repetitive sequences (poly-amino acid tracts)
+- **Very low temperature** (approaching 0.0): Schema requires temperature > 0.0; near-zero values can produce repetitive sequences (poly-amino acid tracts)
 - **High temperature** (> 2.0): Generated sequences become increasingly random and biologically implausible
 - **Context outside training distribution**: Sequences with non-standard amino acids or unusual compositions may produce poor completions
 - **Long generation lengths**: Quality degrades as generated length increases beyond ~200-300 residues, especially without a strong context signal
@@ -204,7 +204,7 @@ Request
   |-- 2. Set random seeds (user-provided or time-based entropy)
   |-- 3. Prepend N-terminal token "1" to context
   |-- 4. Autoregressive sampling on GPU
-  |     |-- Tokenize context with BPE tokenizer
+  |     |-- Tokenize context with the ProGen2 custom amino-acid tokenizer
   |     |-- model.generate() with temperature + top-p
   |     |-- Decode token IDs back to amino acid sequences
   |-- 5. Truncate at terminal tokens ("1" or "2")
@@ -225,7 +225,6 @@ Request
 | large | T4 | ~10 GB VRAM | ~3-8s |
 | bfd90 | T4 | ~10 GB VRAM | ~3-8s |
 
-<!-- TODO: Measure actual GPU memory usage and latency at various generation lengths -- profile on QA deployment -->
 
 Autoregressive generation scales linearly with output length (O(n) forward passes, each O(n) with KV-cache).
 
@@ -244,9 +243,7 @@ The model produces reproducible outputs when the same seed is provided. Without 
 
 ### Caching Behavior
 
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
-- **Redis (Modal Dict)**: Fast lookup, TTL-based expiration
-- **R2**: Persistent storage for cached results
+Response caching is handled outside the model container by the serving infrastructure:
 - **Cache key**: Determined by the request payload (context, params, model variant)
 - **Note**: Due to stochastic generation, caching is most useful when seeds are fixed. Without a seed, identical requests will return cached results from the first call rather than fresh samples.
 

@@ -14,7 +14,7 @@ if TYPE_CHECKING:
         ProDyPredictRequestParams,
     )
 
-from models.commons.core.error import ValidationError400
+from models.commons.core.error import ModelExecutionError, ValidationError400
 from models.commons.core.logging import get_logger
 from models.prody.schema import (
     AlignmentMethod,
@@ -81,7 +81,9 @@ def convert_cif_to_pdb(cif_path: str | Path) -> str:
         logger.info(f"Converted CIF to PDB using ProDy: {pdb_path}")
         return str(pdb_path)
     except Exception as e:
-        raise ValueError(f"Failed to convert CIF to PDB with both methods: {e}") from e
+        raise ModelExecutionError(
+            f"Failed to convert CIF to PDB with both methods: {e}"
+        ) from e
 
 
 def add_hydrogens(  # noqa: C901
@@ -157,7 +159,9 @@ def add_hydrogens(  # noqa: C901
             except Exception as fallback_e:
                 logger.error(f"Fallback to pdbfixer also failed: {fallback_e}")
 
-        raise ValueError(f"Failed to add hydrogens using {method_str}: {e}") from e
+        raise ModelExecutionError(
+            f"Failed to add hydrogens using {method_str}: {e}"
+        ) from e
 
 
 def parse_structure(
@@ -198,7 +202,7 @@ def parse_structure(
         structure = parsePDB(structure_path_str)
 
     if structure is None:
-        raise ValueError("Failed to parse structure")
+        raise ModelExecutionError("Failed to parse structure: parser returned None")
 
     return structure
 
@@ -485,7 +489,6 @@ def process_structure_for_insty(  # noqa: C901
     item: "ProDyEncodeRequestItem", params: "ProDyEncodeRequestParams"
 ) -> ProDyEncodeResponseResult:
     """Process a single structure for InSty analysis."""
-    import os
     import random
     from contextlib import redirect_stdout
     from io import StringIO
@@ -496,7 +499,6 @@ def process_structure_for_insty(  # noqa: C901
     seed = 42
     random.seed(seed)
     np.random.seed(seed)
-    os.environ["PYTHONHASHSEED"] = str(seed)
 
     structure_str, structure_format = get_structure_string_and_format(item)
     hydrogens_added = False
@@ -515,24 +517,15 @@ def process_structure_for_insty(  # noqa: C901
 
         # Parse structure
         structure = parse_structure(structure_file, structure_format)
-        try:
-            _ = structure.numAtoms()
-            _ = structure.numCoordsets()
-        except Exception:
-            import traceback
-
-            traceback.print_exc()
-            raise
 
         # Get available chains - sort for determinism
         try:
             raw_chids = structure.getChids()
             available_chains = sorted(set(raw_chids)) if raw_chids is not None else []
         except Exception as e:
-            import traceback
-
-            traceback.print_exc()
-            raise ValueError(f"Could not extract chain IDs from structure: {e}") from e
+            raise ModelExecutionError(
+                f"Could not extract chain IDs from structure: {e}"
+            ) from e
 
         # Filter chains if specified
         if item.chain_ids is not None:
@@ -584,16 +577,18 @@ def process_structure_for_insty(  # noqa: C901
                     structure, protein_atoms
                 )
                 if not is_valid:
-                    raise ValueError(
+                    raise ValidationError400(
                         f"Structure validation failed after hydrogen addition: {error_msg}"
                     )
 
                 logger.info(
                     f"Structure after H addition: {protein_atoms.numAtoms()} atoms"
                 )
+            except (ValidationError400, ModelExecutionError):
+                raise
             except Exception as e:
                 logger.error(f"Failed to add hydrogens before calculation: {e}")
-                raise ValueError(f"Hydrogen addition failed: {e}") from e
+                raise ModelExecutionError(f"Hydrogen addition failed: {e}") from e
 
         # Calculate interactions
         try:
@@ -607,7 +602,7 @@ def process_structure_for_insty(  # noqa: C901
                 interactions_obj
             )
             if not calc_succeeded:
-                raise ValueError(
+                raise ModelExecutionError(
                     "ProDy interaction calculation did not complete successfully"
                 )
 
@@ -647,7 +642,7 @@ def process_structure_for_insty(  # noqa: C901
                         structure, protein_atoms
                     )
                     if not is_valid:
-                        raise ValueError(
+                        raise ValidationError400(
                             f"Structure validation failed after hydrogen addition: {error_msg}"
                         )
 
@@ -662,18 +657,20 @@ def process_structure_for_insty(  # noqa: C901
                         interactions_obj
                     )
                     if not calc_succeeded:
-                        raise ValueError(
+                        raise ModelExecutionError(
                             "Interaction calculation did not complete successfully after adding hydrogens"
                         )
 
                     logger.info(
                         "Successfully computed interactions after adding hydrogens"
                     )
+                except (ValidationError400, ModelExecutionError):
+                    raise
                 except Exception as retry_e:
                     retry_error_msg = str(retry_e).lower()
                     logger.error(
                         f"Failed to compute interactions even after adding hydrogens: {retry_e}. "
-                        f"Structure: {protein_atoms.numAtoms()} atoms, chains: {available_chains}"
+                        f"Structure: {protein_atoms.numAtoms()} atoms"
                     )
 
                     if (
@@ -698,71 +695,52 @@ def process_structure_for_insty(  # noqa: C901
                             "This is a known ProDy issue with certain structure geometries."
                         )
                     else:
-                        error_detail = f"Unexpected error: {retry_e}"
+                        error_detail = (
+                            f"Unexpected ProDy error: {type(retry_e).__name__}"
+                        )
 
-                    raise ValueError(
+                    raise ModelExecutionError(
                         f"Failed to compute interactions: {error_detail}"
                     ) from retry_e
             elif "index" in error_msg and "out of bounds" in error_msg:
                 logger.error(
-                    f"ProDy index out of bounds error: {e}. "
-                    f"Structure has {protein_atoms.numAtoms()} atoms but ProDy is accessing higher indices. "
+                    f"ProDy index out of bounds error: {type(e).__name__}. "
                     "This is a ProDy bug that occurs when atom indices become inconsistent."
                 )
-                raise ValueError(
-                    f"ProDy index mismatch error (structure has {protein_atoms.numAtoms()} atoms): {e}. "
-                    "This structure cannot be processed with ProDy due to internal indexing issues."
+                raise ModelExecutionError(
+                    "ProDy index mismatch error: this structure cannot be processed "
+                    "due to internal ProDy indexing issues."
                 ) from e
             elif "nonetype" in error_msg or "not subscriptable" in error_msg:
                 logger.error(
-                    f"ProDy NoneType error: {e}. "
-                    "ProDy's internal functions returned None for this structure. "
-                    "This usually indicates the structure has unusual features ProDy cannot handle."
+                    f"ProDy NoneType error: {type(e).__name__}. "
+                    "ProDy's internal functions returned None for this structure."
                 )
-                raise ValueError(
-                    f"ProDy NoneType error - structure cannot be processed: {e}"
+                raise ModelExecutionError(
+                    "ProDy NoneType error: structure cannot be processed by ProDy."
                 ) from e
             elif "listofatomtocompare" in error_msg.replace(" ", "").lower():
                 logger.error(
-                    f"ProDy hydrophobic calculation error: {e}. "
+                    f"ProDy hydrophobic calculation error: {type(e).__name__}. "
                     "This is a known ProDy bug in hydrophobic interaction calculation."
                 )
-                raise ValueError(
-                    f"ProDy hydrophobic interaction calculation failed: {e}. "
-                    "This structure triggers a ProDy bug and cannot be fully analyzed."
+                raise ModelExecutionError(
+                    "ProDy hydrophobic interaction calculation failed: "
+                    "this structure triggers a known ProDy bug."
                 ) from e
             else:
                 logger.error(
-                    f"ProDy interaction calculation failed with unexpected error: {e}. "
-                    f"Structure info: {protein_atoms.numAtoms()} atoms, "
-                    f"{len(available_chains)} chains: {available_chains}"
+                    f"ProDy interaction calculation failed with unexpected error: {type(e).__name__}. "
+                    f"Structure info: {protein_atoms.numAtoms()} atoms"
                 )
-                raise
+                raise ModelExecutionError(
+                    f"ProDy interaction calculation failed: {type(e).__name__}"
+                ) from e
 
         if interactions_obj is None:
-            raise ValueError(
+            raise ModelExecutionError(
                 "Failed to create interactions object - cannot extract results"
             )
-
-        # If explicitly requested to add hydrogens but they weren't added yet
-        if params.add_hydrogens and not hydrogens_added:
-            try:
-                hydrogen_method = (
-                    params.hydrogen_method.value
-                    if params.hydrogen_method
-                    else HydrogenMethod.PDBFIXER.value
-                )
-                structure_file = add_hydrogens(structure_file_original, hydrogen_method)
-                hydrogens_added = True
-                structure, protein_atoms = (
-                    reinitialize_structure_after_hydrogen_addition(
-                        structure_file, structure_format
-                    )
-                )
-                interactions_obj = Interactions(str(structure_file))
-                interactions_obj.calcProteinInteractions(protein_atoms)
-            except Exception as e:
-                logger.warning(f"Failed to add hydrogens as requested: {e}")
 
         # Process intra-chain interactions
         intra_chain_dict = {}
@@ -1002,12 +980,16 @@ def compute_rmsd(  # noqa: C901
             else:
                 alignment_method_used = AlignmentMethod.STRUCTURAL
 
+        except (ValidationError400, ModelExecutionError):
+            raise
         except Exception as e:
-            logger.error(f"RMSD calculation failed: {e}")
-            raise ValueError(f"Failed to compute RMSD: {e}") from e
+            logger.error(f"RMSD calculation failed: {type(e).__name__}: {e}")
+            raise ModelExecutionError(
+                f"Failed to compute RMSD: {type(e).__name__}"
+            ) from e
 
         if rmsd is None:
-            raise ValueError("RMSD calculation returned None")
+            raise ModelExecutionError("RMSD calculation returned None")
 
         return ProDyPredictResponseResult(
             rmsd=float(rmsd),

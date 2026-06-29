@@ -46,7 +46,6 @@ class DSMParams(ModelParams):
     display_name = "DSM"
     base_model_slug = "dsm"
     log_identifier = "DSM"
-    batch_size = 8
     max_sequence_len = 2048
     generate_batch_size = 1  # Generate limited to 1 due to diffusion cost
     encode_batch_size = 16  # Encode/score can handle larger batches
@@ -78,22 +77,16 @@ class DSMGenerateRequestParams(RequestModel):
         le=2.0,
         description="Sampling temperature; higher values increase diversity.",
     )
-    top_k: Optional[int] = Field(
-        default=None,
-        ge=1,
-        description="Top-k sampling cutoff; only the k most likely tokens are sampled.",
-    )
-    top_p: Optional[float] = Field(
-        default=None,
-        ge=0.0,
-        le=1.0,
-        description="Nucleus (top-p) sampling threshold.",
-    )
     max_length: Optional[int] = Field(
         default=None,
         ge=10,
         le=2048,
-        description="Maximum length of the generated sequence.",
+        description=(
+            "Canvas size (number of mask tokens) for unconditional generation when "
+            "sequence is empty. Defaults to 100 if not specified. "
+            "Ignored for masked infilling and conditional modes, where generation "
+            "length is determined by the number of <mask> tokens in the input."
+        ),
     )
     step_divisor: int = Field(
         default=100,
@@ -120,7 +113,15 @@ class DSMGenerateRequestItem(RequestModel):
         Field(
             default="",
             max_length=DSMParams.max_sequence_len,
-            description="Input sequence; empty = unconditional generation, `<mask>` tokens = infilling, prefix = conditional generation.",
+            description=(
+                "Input sequence. Three modes: "
+                "(1) empty string — unconditional generation; the model creates a canvas of "
+                "`max_length` mask tokens (default 100) and denoises them; "
+                "(2) sequence containing `<mask>` tokens — masked infilling; the model fills "
+                "only the masked positions; output length equals the number of tokens in the input; "
+                "(3) plain amino-acid prefix — conditional generation from the prefix; "
+                "the model denoises any remaining context."
+            ),
         ),
     ]
 
@@ -243,10 +244,6 @@ class DSMGenerateResponse(ResponseModel):
 class DSMEncodeResponseResult(ResponseModel):
     model_config = {
         "populate_by_name": True,  # Ensures alias names work as expected
-        "json_schema_extra": {
-            "exclude_unset": True,  # Excludes unset fields from JSON output
-            "exclude_none": True,  # Ensures None fields do not appear in JSON
-        },
     }
 
     sequence_index: int = Field(

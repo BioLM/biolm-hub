@@ -118,7 +118,7 @@ request = Pro1GenerateRequest(
     ),
     items=[
         Pro1ProteinData(
-            sequence="MASGSVTTDCSTEKGSAYFAPWAPAPGWKPYQCTG...",
+            sequence="MSHHWGYGKHNGPEHWHKDFPIAKGERQSPVDIDTH",
             name="Human Carbonic Anhydrase II",
             ec_number="4.2.1.1",
             reaction=[{
@@ -171,11 +171,9 @@ First open-source protein reasoning model as of March 2025. Competitive with Pro
 
 Option B (Known Extremes): test on FGF-1 K116E — published result is +24°C Tm, maintained FGFR-1 binding. Run Pro-1 on FGF-1 sequence and verify K116E appears in top proposals with a salt bridge rationale.
 
-<!-- TODO: Run verification once implementation is deployed — input FGF-1 sequence, verify K116E is proposed with salt bridge reasoning -->
-
 ### Verification Status
 
-**PENDING** — awaiting initial deployment.
+Not yet run — requires initial deployment to execute inference.
 
 ## Resource Requirements
 
@@ -186,14 +184,14 @@ Option B (Known Extremes): test on FGF-1 K116E — published result is +24°C Tm
 | CPU | 4 cores |
 | RAM | 16 GB |
 | Storage (weights) | ~60 GB |
-| Cold start | ~60 s (snapshot restore) |
+| Cold start | ~3 min (snapshots disabled) |
 | Inference P50 | ~45 s per request |
 
 ## Implementation Notes
 
 - Weights are LoRA adapters stored on HuggingFace (`mhla/pro-1`); loaded via `unsloth.FastLanguageModel` in 4-bit quantization
-- Memory snapshot (`@modal.enter(snap=True)`) used for fast cold start — weights loaded once, LoRA applied at runtime
-- Stochastic outputs — no Redis caching
+- Memory snapshots disabled — unsloth's in-place model patching and bitsandbytes 4-bit quantization are not snapshot-compatible; cold start is ~3 min
+- Stochastic outputs — responses are not cached
 - The optional "LM sequence applier" step (applies generated mutations back to the sequence via an LLM) requires an OpenAI API key — we implement a deterministic sequence applier instead
 
 ## License

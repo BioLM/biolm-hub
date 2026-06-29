@@ -2,7 +2,7 @@ from pathlib import Path
 
 from models.commons.core.logging import get_logger
 from models.commons.storage.download_helpers import (
-    acquire_library_managed_model,
+    r2_then_library,
 )
 from models.commons.storage.downloads import (
     get_model_dir_util,
@@ -74,8 +74,9 @@ def download_model_assets(
 ) -> Path:
     """Download Pro-1 base model + LoRA adapter.
 
-    Downloads to HuggingFace cache within the model directory.
-    Uses acquire_library_managed_model since HF manages its own cache layout.
+    Downloads to HuggingFace cache within the model directory. Uses the
+    r2_then_library helper with cache_to_r2=False because the Llama base model
+    cannot be redistributed via the public bucket.
     """
     model_variant_str = (variant_config or {}).get("MODEL_VARIANT", Pro1Variant.SIZE_8B)
     model_variant = Pro1Variant(model_variant_str)
@@ -91,14 +92,14 @@ def download_model_assets(
     def init_fn(td: Path) -> Path:
         return _init_pro1_weights(td, base_model, adapter_subfolder)
 
-    result = acquire_library_managed_model(
+    result = r2_then_library(
+        base_model_slug=base_model_slug,
+        params_version=params_version,
         library_name="pro1",
-        target_dir=target_dir,
         init_fn=init_fn,
-        monitor_directories=["~/.cache/huggingface"],
         # Base = Meta Llama-3.1-8B-Instruct (Llama Community License): intentionally
-        # NOT cached to the public biolm-public bucket (would redistribute Llama
-        # weights). Re-fetched from HF per deploy — the deployer accepts Meta's terms
+        # NOT cached to the public bucket (would redistribute Llama weights).
+        # Re-fetched from HF per deploy — the deployer accepts Meta's terms
         # via their HF token. Only the Apache-2.0 LoRA adapter (mhla/pro-1) could be
         # cached; left HF-managed for simplicity. See sources.yaml / LICENSE.
         cache_to_r2=False,

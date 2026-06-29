@@ -1,3 +1,4 @@
+# Modified from oxpig/AntiFold @ c306ae6 -- BSD-3-Clause, see ../LICENSE
 import logging
 import os
 import sys

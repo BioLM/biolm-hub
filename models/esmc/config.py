@@ -38,7 +38,7 @@ ESMC_HF_REVISION_MAP = {
 ESMC_VARIANT_RESOURCE_SPECS = {
     ESMCModelSizes.SIZE_300M: ModalResourceSpec(
         cpu=2.0,
-        memory=24 * 1024,  # 8 GB
+        memory=24 * 1024,  # 24 GB
         gpu=ModalGPU.A10G,
     ),
 }
@@ -50,7 +50,7 @@ ESMC_VARIANT_RESOURCE_SPECS = {
 MODEL_FAMILY = ModelFamily(
     base_model_slug=ESMCParams.base_model_slug,
     display_name=ESMCParams.display_name,
-    # The @biolm_model_class container class in app.py (gateway routing, W8).
+    # The @biolm_model_class container class in app.py (used for gateway routing).
     modal_class_name="ESMCModel",
     tags=ModelTags(
         input_modality=[InputModality.SEQUENCE],

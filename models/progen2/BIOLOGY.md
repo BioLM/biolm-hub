@@ -56,8 +56,6 @@ Performance characteristics by protein type:
 
 ## Applied Use Cases
 
-<!-- TODO: Add applied literature entries to sources.yaml and document specific use cases -- search Google Scholar for "ProGen2 protein generation" or "ProGen2 fitness" publications from 2023-2025 -->
-
 ProGen2 and its predecessor ProGen have been used in several applied settings:
 
 - **Enzyme design**: Generating novel enzyme sequences for industrial biocatalysis, followed by experimental validation of folding and activity

@@ -22,13 +22,14 @@ from models.dummy.schema import (
 
 logger = get_logger(__name__)
 
+DEFAULT_DATA = {"hello": "world"}
+
 
 def initialize_data():
     data_file_path = "/dummy_test_data.json"
     if not os.path.exists(data_file_path):
-        test_data = {"hello": "world"}
         with open(data_file_path, "w") as f:
-            json.dump(test_data, f)
+            json.dump(DEFAULT_DATA, f)
         logger.info("Created test data at %s", data_file_path)
 
 
@@ -79,7 +80,7 @@ class DummyModel(ModelMixinSnap):
                 self.data_file_content = json.load(f)
             logger.info("Loaded data from %s", self.data_file_path)
         else:
-            self.data_file_content = {"hello": "world"}
+            self.data_file_content = DEFAULT_DATA
             logger.warning("No data file found; using default content.")
 
         logger.info(

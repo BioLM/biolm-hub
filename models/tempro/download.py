@@ -83,7 +83,7 @@ def _download_tempro_archive(target_dir: Path, **_kwargs) -> dict:
     zip_path = target_dir / "user.zip"
 
     logger.info(
-        "📥 Downloading TEMPRO user.zip from GitHub (commit: %s)...",
+        "Downloading TEMPRO user.zip from GitHub (commit: %s)...",
         TEMPRO_GIT_COMMIT[:8],
     )
 
@@ -122,12 +122,12 @@ def _extract_keras_model(target_dir: Path, *, model_variant: str) -> None:
 
     # Skip if file already exists
     if target_file.exists():
-        logger.info("✅ Model file already exists: %s", target_file)
+        logger.info("Model file already exists: %s", target_file)
         if zip_path.exists():
             zip_path.unlink()  # Clean up zip
         return
 
-    logger.info("📦 Extracting %s from zip archive...", keras_filename)
+    logger.info("Extracting %s from zip archive...", keras_filename)
 
     # For TEMPRO, we need specific file extraction rather than subtree
     # So we'll handle it directly here instead of using extract_archive_subtree
@@ -144,15 +144,13 @@ def _extract_keras_model(target_dir: Path, *, model_variant: str) -> None:
                 with open(target_file, "wb") as target:
                     target.write(source.read())
 
-        logger.info(
-            "✅ Successfully extracted %s to %s", keras_filename, saved_models_dir
-        )
+        logger.info("Successfully extracted %s to %s", keras_filename, saved_models_dir)
 
     finally:
         # Always clean up the zip file after extraction
         if zip_path.exists():
             zip_path.unlink()
-            logger.info("🧹 Cleaned up temporary zip file")
+            logger.info("Cleaned up temporary zip file")
 
 
 def _create_custom_fallback_config(
@@ -227,7 +225,7 @@ def download_model_assets(
     # Extract ESM2_SIZE from variant_config
     model_variant = extract_model_variant(variant_config, "ESM2_SIZE")
 
-    logger.info("🔧 TEMPRO: Downloading %s model variant", model_variant)
+    logger.info("TEMPRO: Downloading %s model variant", model_variant)
 
     # Get target directory
     model_dir = get_model_dir_util(
@@ -237,12 +235,12 @@ def download_model_assets(
         sub_path=sub_path,
     )
 
-    logger.info("📂 Target directory: %s", model_dir)
+    logger.info("Target directory: %s", model_dir)
     if sub_path:
-        logger.info("📁 Sub-path: %s", sub_path)
+        logger.info("Sub-path: %s", sub_path)
 
     # ---- Stage 1: Try R2 cache (fast path) ----
-    logger.info("🔍 Checking R2 cache...")
+    logger.info("Checking R2 cache...")
 
     primary_config = _create_r2_config(
         base_model_slug=base_model_slug,
@@ -271,8 +269,8 @@ def download_model_assets(
         )
 
     if result.cache_hit:
-        logger.info("✅ Downloaded from R2 cache")
+        logger.info("Downloaded from R2 cache")
     else:
-        logger.info("✅ Downloaded and extracted from GitHub (files cached to R2)")
+        logger.info("Downloaded and extracted from GitHub (files cached to R2)")
 
     return result.actual_model_path or result.target_dir

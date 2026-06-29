@@ -129,7 +129,7 @@ INPUT4_MSA = RF3PredictRequest.model_validate(
     }
 )
 
-# Fixture generation suite - only MSA test
+# Fixture generation suite — all four test cases
 fixture_generation_suite = TestSuite(
     model_family=MODEL_FAMILY,
     r2_fixture_subdir="models",
@@ -138,6 +138,24 @@ fixture_generation_suite = TestSuite(
         VariantTestMapping(
             variant_config={},  # Empty dict means single variant
             test_cases=[
+                ActionTestCase(
+                    action_name=ModelActions.FOLD,
+                    input_fixture=INPUT1,
+                    input_filename_template="rf3-predict-input1.json",
+                    expected_output_fixture="rf3-predict-input1-expected_output.json",
+                ),
+                ActionTestCase(
+                    action_name=ModelActions.FOLD,
+                    input_fixture=INPUT2,
+                    input_filename_template="rf3-predict-input2.json",
+                    expected_output_fixture="rf3-predict-input2-expected_output.json",
+                ),
+                ActionTestCase(
+                    action_name=ModelActions.FOLD,
+                    input_fixture=INPUT3,
+                    input_filename_template="rf3-predict-input3.json",
+                    expected_output_fixture="rf3-predict-input3-expected_output.json",
+                ),
                 ActionTestCase(
                     action_name=ModelActions.FOLD,
                     input_fixture=INPUT4_MSA,

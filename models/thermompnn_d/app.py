@@ -3,7 +3,6 @@ import shutil
 import tempfile
 
 import modal
-from pydantic import ValidationError
 
 from models.commons.core.decorator import modal_endpoint
 from models.commons.core.error import UserError
@@ -25,7 +24,6 @@ from models.thermompnn_d.download import get_model_dir
 from models.thermompnn_d.schema import (
     ThermoMPNNDMode,
     ThermoMPNNDParams,
-    ThermoMPNNDPredictParams,
     ThermoMPNNDPredictRequest,
     ThermoMPNNDPredictResponse,
     ThermoMPNNDPredictResponseItem,
@@ -202,13 +200,8 @@ class ThermoMPNNDModel(ModelMixinSnap):
         """
         from models.thermompnn_d.util import predict  # type: ignore
 
-        try:
-            # Validate params
-            params = ThermoMPNNDPredictParams.model_validate(
-                payload.params.model_dump(exclude_unset=True, exclude_none=True)
-            )
-        except ValidationError as e:
-            raise UserError(f"Invalid parameters: {e}") from e
+        # params already validated by the request schema
+        params = payload.params
 
         # Get PDB and mutations from request
         item = payload.items[0]
@@ -254,6 +247,11 @@ class ThermoMPNNDModel(ModelMixinSnap):
             ]
 
             return ThermoMPNNDPredictResponse(results=response_items)
+        except (ValueError, IndexError) as e:
+            # Caller mistakes (e.g. no chains in PDB, a chain/position not
+            # present) are raised as UserError (4xx) instead of propagating
+            # as HTTP 500.
+            raise UserError(str(e)) from e
         finally:
             # Clean up temporary files
             if os.path.exists(temp_dir):
@@ -265,7 +263,7 @@ if __name__ == "__main__":
     Usage:
         python models/thermompnn_d/app.py
 
-        # Force deploy to "qa" or "main" environment:
+        # To deploy to the configured environment:
         python models/thermompnn_d/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

@@ -18,7 +18,7 @@ Published in *Cell Systems* (2023), ProGen2 demonstrates that autoregressive pro
 | Training objective | Causal language modeling (next-token prediction) |
 | Training data | UniRef90, BFD90, OAS (variant-dependent) |
 | Max sequence length | 512 residues (BioLM limit; model supports 2048) |
-| Vocabulary | 50,400 tokens (BPE tokenizer) |
+| Vocabulary | 32 tokens (ProGen2 custom amino-acid tokenizer) |
 | Positional encoding | Rotary (RoPE) |
 | License | BSD-3-Clause |
 
@@ -68,7 +68,7 @@ Generates one or more protein sequences conditioned on an input context sequence
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
 | `items[].context` | str | *(required)* | 1-512 chars | Amino acid seed sequence (unambiguous AA alphabet) |
-| `params.temperature` | float | 0.8 | 0.0-8.0 | Sampling temperature; lower = more conservative, higher = more diverse |
+| `params.temperature` | float | 0.8 | >0.0-8.0 | Sampling temperature; lower = more conservative, higher = more diverse |
 | `params.top_p` | float | 0.9 | 0.0-1.0 | Nucleus sampling threshold; 1.0 = no filtering |
 | `params.num_samples` | int | 1 | 1-3 | Number of sequences to generate per input |
 | `params.max_length` | int | 128 | 12-512 | Maximum total sequence length (context + generated) |
@@ -168,8 +168,6 @@ Perplexity improves consistently with scale (unlike fitness prediction), confirm
 
 ProGen2 established strong baselines for autoregressive protein generation at time of publication (2023). For fitness prediction, masked language models (ESM-2, ESM-1v) and retrieval-augmented models (Tranception) generally outperform autoregressive models on standard benchmarks. For sequence generation quality, ProGen2 remains a competitive choice as of 2025.
 
-<!-- TODO: Verify current SOTA status on ProteinGym generation benchmarks -- check leaderboard -->
-
 ## Implementation Verification
 
 ### Verification Method
@@ -188,8 +186,6 @@ Baseline comparison (Option C): The BioLM implementation uses official pre-train
 
 **Status: VERIFIED** -- Integration tests pass for all variants (oas, medium, large, bfd90) using structural validation of generated outputs.
 
-<!-- TODO: Add verification date from most recent CI run -- check GitHub Actions history -->
-
 ## Resource Requirements
 
 | Variant | GPU | Memory | CPU | Cold Start |
@@ -198,8 +194,6 @@ Baseline comparison (Option C): The BioLM implementation uses official pre-train
 | `progen2-medium` | T4 | 8 GB | 2 cores | ~60s |
 | `progen2-large` | T4 | 16 GB | 4 cores | ~90s |
 | `progen2-bfd90` | T4 | 16 GB | 4 cores | ~90s |
-
-<!-- TODO: Measure actual cold start and P50/P99 inference latency per variant -- profile on QA deployment -->
 
 ## Implementation Notes
 
@@ -210,7 +204,7 @@ Baseline comparison (Option C): The BioLM implementation uses official pre-train
 - **Sequence truncation**: Generated sequences are truncated at the first occurrence of terminal tokens (`1` or `2`), and these tokens are stripped from the output.
 - **External code**: The `external/` directory contains model architecture code adapted from the Salesforce ProGen repository (GPT-J-based `ProGenForCausalLM`), tokenizer utilities, and sampling/likelihood functions.
 - **Weight loading**: Weights are downloaded from R2 via the declarative download system. Each variant's checkpoint is stored under `model-store/progen2/v1/checkpoints/progen2_{variant}/`, with a shared `tokenizer.json`.
-- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container. Note that stochastic generation means cached results are returned for identical requests, which may not be desirable -- use different seeds for fresh samples.
+- **Caching**: Response caching is handled outside the model container by the serving infrastructure. Note that stochastic generation means cached results are returned for identical requests, which may not be desirable -- use different seeds for fresh samples.
 
 ## License
 

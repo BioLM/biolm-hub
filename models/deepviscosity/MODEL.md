@@ -106,12 +106,10 @@ The Apgar_mAb_38 performance drop is attributed to high sequence homology among 
 
 | Metric | Published | BioLM | Difference | Status |
 |--------|-----------|-------|------------|--------|
-| Lai_mAb_16 accuracy | 87.5% | Pending | -- | PENDING |
+| Lai_mAb_16 accuracy | 87.5% | deferred | -- | deferred (requires deployment) |
 | Output probability range | [0, 1] | [0, 1] | 0 | PASS |
 | Ensemble size | 102 models | 102 models | 0 | PASS |
 | DeepSP features | 30 features | 30 features | 0 | PASS |
-
-<!-- TODO: Run full Lai_mAb_16 validation after deployment -- use fixture.py test sequences -->
 
 ### Comparison to Alternatives
 

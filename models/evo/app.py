@@ -84,8 +84,6 @@ app = modal.App(app_name, image=image)
 class EvoModel(ModelMixinSnap):
     """
     Loads the selected Evo model variant and implements:
-      - encode()
-      - predict() => per-position logits
       - log_prob() => total log-prob
       - generate() => sequence sampling
     """
@@ -197,10 +195,7 @@ class EvoModel(ModelMixinSnap):
                 verbose=False,
             )
 
-            if len(generate_result) == 2:
-                seqs, scores = generate_result
-            else:
-                seqs, scores, _ = generate_result
+            seqs, scores = generate_result
 
             generated_seq = seqs[0]
             score = scores[0]
@@ -220,7 +215,7 @@ if __name__ == "__main__":
     Usage:
         MODEL_VARIANT="v1.5-8k" python models/evo/app.py
 
-        # Force deploy in QA/prod:
+        # Force deploy to "biolm-models-dev" or "biolm-models":
         MODEL_VARIANT="v1.5-8k" python models/evo/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

@@ -43,9 +43,7 @@ The additive mode estimates double mutation ddG by summing the individual single
 
 ## Applied Use Cases
 
-No applied literature entries have been catalogued yet.
-
-<!-- TODO: Search for papers citing ThermoMPNN-D (Dieckhaus & Kuhlman, 2024) for applied use cases -- search Google Scholar/Semantic Scholar -->
+ThermoMPNN-D has been evaluated alongside related stability models in several benchmark studies. See `sources.yaml` for the catalogued applied literature entries, which include comparisons on double-mutation datasets (M1261) and large-scale site-saturation mutagenesis benchmarks.
 
 ## Related Models
 

@@ -1,4 +1,4 @@
-from typing import Annotated, Optional
+from typing import Annotated, Literal, Optional
 
 from pydantic import BeforeValidator, Field
 
@@ -108,7 +108,7 @@ class DeepViscosityPredictRequest(RequestModel):
 class DeepViscosityPredictResponseResult(ResponseModel):
     """Single result from DeepViscosity prediction."""
 
-    viscosity_class: str = Field(
+    viscosity_class: Literal["low", "high"] = Field(
         ...,
         description="Predicted viscosity class: 'low' (<=20 cP) or 'high' (>20 cP).",
     )

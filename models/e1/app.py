@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 import modal
 
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.error import ValidationError400
 from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
@@ -169,9 +170,9 @@ class E1Model(ModelMixin):
                 json.dump(config_data, f, indent=2)
             logger.info("Patched config.json with auto_map for trust_remote_code")
 
-        # Select dtype based on GPU: T4 (150m) uses float16 (native), A10G (300m/600m) uses bfloat16
+        # Select dtype based on GPU: T4 (150m) uses float16 (native), L4 (300m/600m) uses bfloat16
         if self.device.type == "cuda":
-            # T4 (Turing) lacks native bfloat16; A10G (Ampere) has native bfloat16
+            # T4 (Turing) lacks native bfloat16; L4 (Ada Lovelace) has native bfloat16
             use_bfloat16 = self.model_size != E1ModelSizes.SIZE_150M
             model_dtype = torch.bfloat16 if use_bfloat16 else torch.float16
         else:
@@ -332,12 +333,20 @@ class E1Model(ModelMixin):
             ) and batch_out.hidden_states is not None:
                 n_layers = len(batch_out.hidden_states)
 
+                # Validate that all requested layers are in range before processing
+                if not all(
+                    -n_layers <= lyr <= n_layers - 1 for lyr in requested_layers
+                ):
+                    raise ValidationError400(
+                        f"Requested representation layers are out of bounds. Ensure the "
+                        f"layer indices are between -{n_layers} and {n_layers - 1}."
+                    )
+
                 # Convert user repr_layers to positive indices
                 layers_to_use = []
                 for lyr in requested_layers:
                     pos_lyr = (lyr + n_layers) if lyr < 0 else lyr
-                    if 0 <= pos_lyr < n_layers:
-                        layers_to_use.append(pos_lyr)
+                    layers_to_use.append(pos_lyr)
 
                 # embeddings
                 if E1EncodeIncludeOptions.MEAN in include_options:
@@ -507,7 +516,7 @@ if __name__ == "__main__":
         MODEL_SIZE="300m" python models/e1/app.py
         MODEL_SIZE="600m" python models/e1/app.py
 
-        # Force deploy in QA/prod:
+        # Force deploy to the configured Modal environment:
         MODEL_SIZE="150m" python models/e1/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

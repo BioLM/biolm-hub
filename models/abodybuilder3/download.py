@@ -47,14 +47,6 @@ ZENODO_OUTPUT_TAR_URL = (
 PROTT5_HF_REPO_ID = "Rostlab/prot_t5_xl_uniref50"
 PROTT5_ALLOW_PATTERNS = ["*.json", "*.model", "pytorch_model.bin"]
 
-REQUIRED_FILES = [
-    "plddt-loss/best_second_stage.ckpt",
-    "language-loss/best_second_stage.ckpt",
-    "prott5/config.json",
-    "prott5/pytorch_model.bin",
-    "prott5/spiece.model",
-]
-
 
 def get_model_dir():
 

@@ -4,7 +4,7 @@
 
 ### Model Type & Innovation
 
-E1 is an encrypted protein language model developed by Profluent Bio and Synthyra. It is a masked language model based on a transformer encoder architecture with a novel feature: retrieval-augmented inference. E1 supports conditioning on homologous context sequences via block-causal attention, enabling improved predictions when evolutionary context is available.
+E1 is an encoder protein language model developed by Profluent Bio and Synthyra. It is a masked language model based on a transformer encoder architecture with a novel feature: retrieval-augmented inference. E1 supports conditioning on homologous context sequences via block-causal attention, enabling improved predictions when evolutionary context is available.
 
 The key innovation is the multi-sequence input format: context sequences (homologs) are prepended to the query sequence, and the model uses block-causal attention so that the query attends to both itself and the context, while context sequences only attend to themselves. This simulates the information in a multiple sequence alignment (MSA) without requiring explicit MSA construction.
 
@@ -35,7 +35,7 @@ Common across all variants:
 
 | Property | Details |
 |----------|---------|
-| Source | Protein sequence databases (details not published) |
+| Source | Profluent Protein Atlas (PPA-1) and UniRef Version 2411 (PPA-1 only for first 1.5T tokens, then 60:40 PPA-1/UniRef; 4 trillion total training tokens) |
 | Training objective | Masked language modeling with block-causal attention |
 
 ### Loss Function & Objective
@@ -51,7 +51,7 @@ Masked language modeling (MLM) with cross-entropy loss, enhanced by block-causal
 | Predict log prob sequences | 20 canonical amino acids only |
 | Context sequences | Optional list of homologs (max 50, no `?` tokens allowed) |
 | Multi-sequence format | `CONTEXT1,CONTEXT2,...,QUERY` |
-| Per-sequence tokenization | `<bos> 1 SEQUENCE 2 <eos>` (5 overhead tokens per sequence) |
+| Per-sequence tokenization | `<bos> 1 SEQUENCE 2 <eos>` (4 overhead tokens per sequence: `<bos>`, `1`, `2`, `<eos>`) |
 
 ## Performance & Benchmarks
 
@@ -79,7 +79,7 @@ E1 outperforms all ESM-2 and ESMC family models in single-sequence mode at compa
 | Test Case | Tolerance | Status |
 |-----------|-----------|--------|
 | Encode (mean, single sequence) | rel_tol 1e-4, cosine < 0.02 | PASS |
-| Encode (mean, multiple sequences) | rel_tol 1e-4, cosine < 0.02 | PASS |
+| Encode (per-token, single sequence, layer 15) | rel_tol 1e-4, cosine < 0.02 | PASS |
 | Encode (with context sequences) | rel_tol 1e-4, cosine < 0.02 | PASS |
 | Predict (masked tokens) | rel_tol 1e-4, cosine < 0.02 | PASS |
 | Predict log prob (single) | Negative finite float | PASS |
@@ -183,7 +183,7 @@ Request
 
 ### Caching Behavior
 
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container. Cache keys include context sequences when provided.
+Response caching is handled by the serving layer, not by the model container. Cache keys include context sequences when provided.
 
 ## Versions & Changelog
 

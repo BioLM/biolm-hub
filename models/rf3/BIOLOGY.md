@@ -69,8 +69,6 @@ RF3 is based on the foundry framework from RosettaCommons. Published and anticip
 - **Protein engineering**: Understanding structure-function relationships for directed evolution
 - **Nucleic acid-protein interactions**: Predicting transcription factor-DNA binding for gene regulation studies
 
-<!-- TODO: Add specific applied literature citations from post-publication studies -->
-
 ### Anticipated Use Cases
 
 - **Cryo-EM model building**: Using RF3 predictions as starting models for cryo-EM refinement

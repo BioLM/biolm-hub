@@ -43,8 +43,6 @@ applied_literature:
     recovery and refolding, demonstrating ESM-IF1 as a strong backbone for domain-specific inverse folding.
   molecule_focus: antibody
   task_focus: inverse_folding
-  pdf_r2: pending
-  md_r2: pending
 - title: Peptide binder design with inverse folding and protein structure prediction
   doi: 10.1038/s42004-023-01029-7
   year: 2023
@@ -52,8 +50,6 @@ applied_literature:
     binders for 6.5% of heteromeric interfaces versus 1.5% for ProteinMPNN.
   molecule_focus: protein-peptide
   task_focus: binder_design
-  pdf_r2: pending
-  md_r2: pending
 - title: 'ProteinBench: A Holistic Evaluation of Protein Foundation Models'
   arxiv: '2409.06744'
   year: 2024
@@ -61,8 +57,7 @@ applied_literature:
     folding and structure prediction tasks.
   molecule_focus: protein
   task_focus: benchmarking
-  pdf_r2: knowledge-base/models/esm_if1/applied/papers/unknown2024.pdf
-  md_r2: pending
+  pdf_r2: knowledge-base/models/esm_if1/applied/papers/proteinbench2024.pdf
 - title: Advancing protein evolution with inverse folding models integrating structural and evolutionary constraints
   doi: 10.1016/j.cell.2025.06.014
   year: 2025
@@ -71,8 +66,6 @@ applied_literature:
     demonstrating ESM-IF1 as a practical backbone for guided protein evolution.
   molecule_focus: protein
   task_focus: protein_engineering
-  pdf_r2: pending
-  md_r2: pending
 - title: Benchmarking and Consensus Ranking of Inverse Folding Models for Protein-Ligand Interface Design
   doi: 10.1145/3768322.3769031
   year: 2025
@@ -81,5 +74,3 @@ applied_literature:
     and structural fidelity.
   molecule_focus: protein-ligand
   task_focus: interface_design
-  pdf_r2: pending
-  md_r2: pending

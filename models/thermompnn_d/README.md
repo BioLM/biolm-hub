@@ -159,7 +159,7 @@ ssm_request = ThermoMPNNDPredictRequest(
 
 ### Published Results
 
-<!-- TODO: Extract benchmark results from Dieckhaus & Kuhlman (2024) bioRxiv 2024.10.10.617658 -- requires PDF access -->
+Benchmark details are available in Dieckhaus & Kuhlman (2024) (bioRxiv 2024.10.10.617658).
 
 ### SOTA Status
 

@@ -1,6 +1,7 @@
 import modal
 
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.error import ModelExecutionError, UnsupportedOptionError
 from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
@@ -158,8 +159,7 @@ class ESMIF1Model(ModelMixinSnap):
 
         multichain_backbone = payload.params.multichain_backbone
         if multichain_backbone:
-
-            raise NotImplementedError("Multichain backbone not supported yet.")
+            raise UnsupportedOptionError("Multichain backbone is not yet supported.")
 
         items = payload.items
 
@@ -187,14 +187,12 @@ class ESMIF1Model(ModelMixinSnap):
             except RuntimeError as e:
                 if "CUDA out of memory" in str(e):
                     logger.error(
-                        f"Failed (CUDA out of memory) on batch with sequences: {pdb_string[:500]}."
+                        "Failed (CUDA out of memory) processing input structure."
                     )
-                    empty_result = [
-                        ESMIF1GenerateResponseSample(sequence="", recovery=0.0)
-                    ]
-                    results.append(empty_result)
                     self.torch.cuda.empty_cache()
-                    continue
+                    raise ModelExecutionError(
+                        "CUDA out of memory while processing structure."
+                    ) from e
                 raise
 
         return ESMIF1GenerateResponse(results=results)
@@ -205,7 +203,7 @@ if __name__ == "__main__":
     Usage:
         python models/esm_if1/app.py
 
-        # Force deploy to "qa" or "main" environment:
+        # Force deploy to "biolm-models-dev" or "biolm-models" environment:
         python models/esm_if1/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

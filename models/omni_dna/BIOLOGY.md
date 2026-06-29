@@ -49,7 +49,7 @@ Applied use cases for Omni-DNA are pending curation as the model is newly publis
 
 ### Use Case 1: Multi-Task DNA Analysis (Published)
 
-**Source**: Li Z. "Omni-DNA: A Unified Multi-Task Framework for DNA Foundation Models." Preprint (2025).
+**Source**: Li et al. "Omni-DNA: A Unified Genomic Foundation Model for Cross-Modal and Multi-Task Learning." arXiv:2502.03499 (2025).
 
 The paper demonstrates that a unified auto-regressive framework can handle multiple DNA tasks within a single model, potentially simplifying pipelines that currently require separate models for embedding extraction and sequence scoring.
 

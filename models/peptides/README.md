@@ -183,8 +183,12 @@ Option A (Numerical Reproduction): The BioLM implementation wraps the official `
 
 ## License
 
-- **Code**: Apache-2.0 ([LICENSE](https://github.com/dosorio/Peptides.py/blob/master/LICENSE))
-- **Library**: Apache-2.0 (peptides Python package)
+- **Code**: GPL-3.0 ([LICENSE](LICENSE)) — this model carries the license of the library it wraps.
+- **Library**: the `peptides` PyPI package ([althonos/peptides.py](https://github.com/althonos/peptides.py)
+  by Martin Larralde) is **license-contradictory** upstream — its source/`COPYING` declare GPL-3.0
+  (copyleft) while its PyPI metadata says MIT. We treat it as GPL-3.0 (the conservative reading) pending
+  maintainer resolution. The scientific scales are cited to Osorio et al. (2015) below — that is the
+  science, not the wrapped code's license or author.
 
 ## References & Citations
 
@@ -210,7 +214,7 @@ Option A (Numerical Reproduction): The BioLM implementation wraps the official `
 ### Links
 
 - **Paper**: [The R Journal](https://doi.org/10.32614/RJ-2015-001)
-- **Code (Python)**: [GitHub dosorio/Peptides.py](https://github.com/dosorio/Peptides.py)
+- **Code (Python)**: [GitHub althonos/peptides.py](https://github.com/althonos/peptides.py) (the wrapped library, by Martin Larralde)
 - **PyPI**: [peptides](https://pypi.org/project/peptides/)
 
 ---

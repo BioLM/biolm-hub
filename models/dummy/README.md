@@ -1,5 +1,7 @@
 # {Model Display Name}
 
+> **Template/example model** — copy this directory as the starting point for a new model. The placeholder content below (`{Model Display Name}`, TODO blocks) is intentional.
+
 <!-- Template instructions (delete this block when populating):
      This is the standardized README template for all BioLM models.
      Every section below should be populated for production models.

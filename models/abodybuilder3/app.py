@@ -16,6 +16,7 @@ from models.abodybuilder3.schema import (
     AbodyBuilder3PredictResponseResult,
 )
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.error import UnsupportedOptionError
 from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
@@ -127,7 +128,7 @@ class AbodyBuilder3Model(ModelMixinSnap):
 
         logger.info("Loading LitABB3 %s checkpoint directly on GPU...", model_type_name)
         module = LitABB3.load_from_checkpoint(
-            f"{self.model_dir}/{model_type}-loss/best_second_stage.ckpt",
+            f"{self.model_dir}/{model_type_name}-loss/best_second_stage.ckpt",
             map_location=device,
         )
         self.model = module.model.to(device)
@@ -168,7 +169,7 @@ class AbodyBuilder3Model(ModelMixinSnap):
             self.plm = None
             self._load_litabb3_checkpoint("plddt", self.device)
         else:
-            raise ValueError(f"Unsupported model type: {model_type}")
+            raise UnsupportedOptionError(f"Unsupported model type: {model_type}")
 
         logger.info(
             "AbodyBuilder3 model %r loaded directly on %s for GPU memory snapshot!",
@@ -239,30 +240,30 @@ class AbodyBuilder3Model(ModelMixinSnap):
 
         except Exception as e:
             logger.error("Model call failed with error [%s]", e, exc_info=True)
-            raise e
+            raise
 
         return AbodyBuilder3PredictResponse(results=results)
 
     def seed_everything(self, seed: int = 42, deterministic: bool = True):
-
-        import numpy as np
-        import pytorch_lightning as pl
-        import torch
-
         """Set seed for reproducibility across random, NumPy, torch, and PyTorch Lightning.
 
         Args:
             seed (int): Seed value.
             deterministic (bool): If True, sets flags for deterministic behavior.
         """
+        import numpy as np
+        import pytorch_lightning as pl
+        import torch
+
         # Python & NumPy
         random.seed(seed)
         np.random.seed(seed)
 
         # Torch
         torch.manual_seed(seed)
-        torch.cuda.manual_seed(seed)
-        torch.cuda.manual_seed_all(seed)  # for multi-GPU
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed(seed)
+            torch.cuda.manual_seed_all(seed)  # for multi-GPU
 
         # Torch determinism
         torch.backends.cudnn.deterministic = deterministic
@@ -284,7 +285,7 @@ if __name__ == "__main__":
     Usage:
         MODEL_TYPE="plddt" python models/abodybuilder3/app.py
 
-        # Force deploy to "qa" or "main" environment:
+        # Force deploy to a target environment:
         MODEL_TYPE="plddt" python models/abodybuilder3/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

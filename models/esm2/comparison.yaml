@@ -7,20 +7,20 @@ strengths:
   - "650M single-sequence contact prediction matches MSA Transformer accuracy (long-range P@L ~0.57) while being orders of magnitude faster — no MSA computation required"
   - "Most widely benchmarked protein language model: downstream performance validated across ProteinGym DMS (87 datasets), contact prediction, and transfer learning tasks, providing reliable baseline comparisons"
   - "MIT license with no usage restrictions — suitable for commercial, academic, and clinical applications without licensing concerns"
-  - "Rich output repertoire from a single model: per-token embeddings, mean-pooled embeddings, BOS embeddings, predicted contact maps, attention matrices, logits, and pseudo-log-likelihoods"
+  - "Rich output repertoire from a single model: per-token embeddings, mean-pooled embeddings, BOS embeddings, predicted contact maps, attention matrices, logits, and per-sequence log-probabilities"
   - "Proven as a drop-in replacement for computationally expensive PSSM/MSA features in downstream pipelines (e.g., DeepRank-GNN-esm achieved equal PPI scoring accuracy with ESM2 embeddings vs. PSSM features)"
   - "Transfer learning benchmark (Nature Scientific Reports, 2025) demonstrated that the 650M variant matches the 3B variant on most downstream classification tasks, validating the mid-range variant as the practical sweet spot"
   - "Deterministic inference (fixed seed) ensures reproducible results across runs on the same hardware, critical for scientific reproducibility and regulatory submissions"
 
 weaknesses:
   - "Encoder-only architecture — cannot generate or design novel protein sequences; for sequence design tasks, use generative models like ProteinMPNN, ProGen2, or ZymCTRL"
-  - "Maximum context length is variant-dependent: ESM2-8M through ESM2-650M support 1022 effective residues (1024 tokens minus BOS/EOS), while ESM2-3B supports 2046 effective residues (2048 tokens minus BOS/EOS) — sequences exceeding these limits are truncated, losing C-terminal context"
+  - "Maximum input length is 2048 amino-acid residues for all variants (BOS/EOS tokens are added internally); sequences exceeding this limit are truncated, losing C-terminal context. The smaller variants (8M–650M) were trained with a 1024-token crop, so embeddings for very long sequences may be less reliable on those variants."
   - "No structure awareness — trained purely on sequences without 3D structural supervision; SaProt and ESM3 incorporate structural tokens and outperform ESM2 on structure-dependent tasks when structure information is available"
   - "Contact prediction derived from attention weights is approximate — not competitive with dedicated structure prediction models (ESMFold, AlphaFold2) for actual structure determination"
   - "Single-chain only — no explicit modeling of protein complexes, multi-chain interactions, or protein-ligand binding; models like Chai-1 or Boltz handle multi-chain inputs natively"
   - "Representation quality degrades for under-represented protein types: membrane proteins, intrinsically disordered proteins, fibrous proteins (collagen, keratin), and very short peptides (<10 residues)"
   - "No explicit handling of post-translational modifications (phosphorylation, glycosylation, ubiquitination) — modified residues are invisible to the model vocabulary"
-  - "Variant effect prediction (pseudo-log-likelihood) scores ~0.42 Spearman rho on ProteinGym DMS — competitive but not state-of-the-art compared to ensemble methods like ESM-1v (5-model, ~0.45) or supervised approaches"
+  - "Variant effect prediction (log-probability scoring, single unmasked forward pass) scores ~0.42 Spearman rho on ProteinGym DMS — competitive but not state-of-the-art compared to ensemble methods like ESM-1v (5-model, ~0.45) or supervised approaches"
   - "Significant quality gap across variants: 8M contact prediction P@L ~0.30 vs. 650M ~0.57, yet 3B provides only marginal gains over 650M (ProteinGym DMS: 0.43 vs 0.42 Spearman rho) at much higher compute cost (L40S GPU, reduced tokens_per_batch)"
 
 use_when:
@@ -46,23 +46,15 @@ dont_use_when:
 alternatives:
   - model: esmc
     when_better: "ESMC provides a newer, more efficient architecture with competitive embedding quality; benefits from updated training procedures and may capture more recent evolutionary patterns in its training data"
-    when_worse: "ESM2 has far more published downstream benchmarks and validated use cases; ESM2 offers 5 size variants (8M-3B) vs. fewer ESMC options, providing more deployment flexibility; ESM2's ecosystem of fine-tuned downstream models (ESMFold, ESMStabP) is unmatched"
+    when_worse: "ESM2 has far more published downstream benchmarks and validated use cases; ESM2 offers 5 size variants (8M-3B) vs. fewer ESMC options, providing more deployment flexibility; ESM2's ecosystem of downstream models built on it (e.g., ESMFold) is unmatched"
 
   - model: esm1b
     when_better: "ESM-1b is never strictly better — ESM2 at 650M parameters matches or exceeds ESM-1b on every evaluated benchmark while using the same architecture and input format"
     when_worse: "ESM2 is strictly superior to ESM-1b at all model scales; ESM-1b exists on the platform only for backward compatibility with legacy pipelines that depend on its specific embedding dimensions"
 
-  - model: saprot
-    when_better: "SaProt incorporates Foldseek 3Di structural tokens alongside sequence tokens, achieving state-of-the-art performance on structure-sensitive tasks (fold classification, remote homology detection) when predicted or experimental structures are available as input"
-    when_worse: "SaProt requires structure information as input (PDB or AlphaFold prediction), adding a preprocessing step; ESM2 accepts raw sequences directly, making it faster and simpler for large-scale analyses where structures are unavailable; ESM2 has broader downstream tooling"
-
   - model: msa_transformer
     when_better: "MSA Transformer jointly processes columns from multiple sequence alignments, explicitly capturing co-evolutionary coupling signals that ESM2 must infer from single sequences; superior contact prediction accuracy when deep MSAs are available (>100 effective sequences)"
     when_worse: "MSA Transformer requires precomputed MSAs (minutes to hours per query via JackHMMER/HHblits), making it impractical for large-scale screening; ESM2-650M achieves comparable contact prediction accuracy without any alignment step, with orders-of-magnitude faster throughput"
-
-  - model: poet
-    when_better: "PoET is specifically designed for variant effect prediction using MSA-conditioned generative modeling; achieves higher Spearman correlations than ESM2 pseudo-log-likelihoods on ProteinGym benchmarks when family-specific MSAs are provided"
-    when_worse: "PoET requires curated MSAs as input and is specialized for variant scoring — it does not produce general-purpose embeddings; ESM2 serves as a versatile backbone for embedding, contact prediction, and masked prediction tasks beyond just variant scoring"
 
   - model: esm1v
     when_better: "5-model ensemble achieves higher Spearman on variant effect prediction benchmarks"
@@ -87,10 +79,3 @@ complements:
     workflow: "Use ESM2 log_prob to score wild-type sequence fitness, then use ProteinMPNN to redesign specific regions (e.g., surface residues for stability), and finally re-score the designed sequences with ESM2 to verify evolutionary plausibility — published as part of the JACS 2024 protein design evaluation pipeline"
     example_protocol: null
 
-  - model: biolmtox2
-    workflow: "Use ESM2 encode to generate protein embeddings for candidate therapeutic proteins, then pass the sequences to BioLMTox2 for toxicity prediction — enables a two-stage filter where embedding-based clustering identifies diverse candidates and toxicity scoring eliminates safety risks"
-    example_protocol: null
-
-  - model: esmstabp
-    workflow: "ESMStabP uses ESM2 embeddings internally for protein thermostability (melting temperature) prediction — use ESM2 log_prob to identify stabilizing mutations, then validate predicted Tm changes with ESMStabP for quantitative stability engineering"
-    example_protocol: null

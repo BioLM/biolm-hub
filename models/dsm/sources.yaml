@@ -31,7 +31,7 @@ primary_papers:
 source_repos:
 - type: github
   url: https://github.com/GleghornLab/DSM
-  commit: ''
+  commit: 'ca7b5c8c4a6a50517d6d7f41026886e9812e04e4'
   snapshot_r2: pending
 - type: huggingface
   url: https://huggingface.co/GleghornLab/DSM_650

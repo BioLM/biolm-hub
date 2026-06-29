@@ -3,7 +3,7 @@ display_name: E1
 license:
   type: Apache-2.0
   url: https://huggingface.co/Synthyra/Profluent-E1-600M
-  notes: Encrypted protein embedding model by Profluent/Synthyra
+  notes: Encoder protein language model by Profluent/Synthyra
 molecule_types:
 - protein
 applicable_to:

@@ -35,7 +35,7 @@ class ProGen2ModelTypes(EnhancedStringEnum):
 class ProGen2GenerateParams(RequestModel):
     temperature: float = Field(
         default=0.8,
-        ge=0.0,
+        gt=0.0,
         le=8.0,
         description="Sampling temperature; higher values increase diversity.",
     )
@@ -78,6 +78,7 @@ class ProGen2GenerateRequestItem(RequestModel):
 
 class ProGen2GenerateRequest(RequestModel):
     params: ProGen2GenerateParams = Field(
+        default_factory=ProGen2GenerateParams,
         description="Optional parameters controlling this action (defaults are used when omitted).",
     )
     items: Annotated[
@@ -93,7 +94,7 @@ class ProGen2GenerateRequest(RequestModel):
 ### ProGen2 Response
 
 
-class ProGen2GenerateResponseGenerated(RequestModel):
+class ProGen2GenerateResponseGenerated(ResponseModel):
     sequence: str = Field(
         description="Generated protein sequence (context prefix + completion), with terminal tokens stripped.",
     )

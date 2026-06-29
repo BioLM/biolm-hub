@@ -17,7 +17,7 @@ The model is available in five size variants (8M to 3B parameters), allowing use
 | Architecture | Transformer encoder (BERT-style) |
 | Training objective | Masked language modeling (MLM) |
 | Training data | UniRef50 (UR50/D) |
-| Max sequence length | 2048 tokens (including BOS/EOS) |
+| Max sequence length | 2048 amino-acid residues (BOS/EOS added internally) |
 | Vocabulary | 33 tokens (20 standard AA + special tokens) |
 | License | MIT |
 
@@ -38,7 +38,7 @@ The default variant is **esm2-650m**. This is the recommended choice for most pr
 **CAN be used for:**
 - Generating per-residue and mean-pooled sequence embeddings for downstream ML tasks
 - Masked token prediction (fill-in-the-blank for protein sequences)
-- Zero-shot variant effect prediction via pseudo-log-likelihood scoring (`log_prob`)
+- Zero-shot variant effect prediction via log-probability scoring (`log_prob`)
 - Extracting attention maps and contact predictions
 - Feature extraction for downstream classifiers (stability, function, localization)
 
@@ -49,7 +49,7 @@ The default variant is **esm2-650m**. This is the recommended choice for most pr
 - Multi-chain / protein complex modeling
 
 **Other considerations:**
-- Sequences longer than 2048 tokens (including BOS/EOS special tokens) are truncated
+- Sequences longer than 2048 amino-acid residues are truncated (BOS/EOS are added internally)
 - The model uses GPU memory snapshots for fast cold starts
 - Batch size is capped at 8 sequences per request
 - The 3B variant uses a reduced tokens-per-batch (1024 vs 4096) to fit in GPU memory
@@ -75,19 +75,13 @@ Generates embeddings and optional auxiliary outputs (contacts, attentions, logit
   "results": [
     {
       "sequence_index": 0,
-      "embeddings": [{"layer": 33, "embedding": [0.012, -0.034, ...]}],
-      "per_token_embeddings": null,
-      "bos_embeddings": null,
-      "contacts": null,
-      "logits": null,
-      "attentions": null,
-      "vocab_tokens": null
+      "embeddings": [{"layer": 33, "embedding": [0.012, -0.034, ...]}]
     }
   ]
 }
 ```
 
-Fields are `null` (omitted from JSON) unless their corresponding `include` option is set.
+Optional fields (`per_token_embeddings`, `bos_embeddings`, `contacts`, `logits`, `attentions`, `vocab_tokens`) are omitted from the response when their corresponding `include` option is not set.
 
 ### `predict`
 
@@ -117,7 +111,7 @@ Performs masked token prediction. Input sequences must contain one or more `<mas
 
 ### `log_prob`
 
-Computes the total log-probability of an unmasked sequence under the ESM2 model. This is the sum of log P(residue_i | context) across all positions, useful for zero-shot variant effect prediction and sequence scoring.
+Computes the summed per-residue log-probability of an unmasked sequence under the ESM2 model using a single forward pass (not a masked pseudo-log-likelihood). This is the sum of log P(residue_i | full sequence) across all canonical positions, useful for zero-shot variant effect prediction and sequence scoring.
 
 **Request Parameters:**
 
@@ -213,9 +207,7 @@ The test suite covers all three actions across all five variants:
 
 ### Verification Status
 
-**Status: VERIFIED**  --  Integration tests pass for all variants (8m, 35m, 150m, 650m, 3b) with tolerances of rel_tol=1e-4 and cosine_distance_threshold=0.02.
-
-<!-- TODO: Add verification date from most recent CI run  --  check GitHub Actions history -->
+**Status: Integration tests pass for all variants (8m, 35m, 150m, 650m, 3b)** with tolerances of rel_tol=1e-4 and cosine_distance_threshold=0.02.
 
 ## Resource Requirements
 
@@ -227,7 +219,6 @@ The test suite covers all three actions across all five variants:
 | `esm2-650m` | T4 | 16 GB | 4 cores |
 | `esm2-3b` | L40S (48 GB VRAM) | 32 GB | 4 cores |
 
-<!-- TODO: Measure cold start and P50/P99 inference latency per variant  --  run benchmarks against QA deployment -->
 
 ## Implementation Notes
 
@@ -237,7 +228,7 @@ The test suite covers all three actions across all five variants:
 - **Tokenization**: Uses the built-in ESM alphabet and `FastaBatchedDataset` for efficient batching. BOS and EOS tokens are automatically prepended/appended.
 - **Logit slicing**: Raw logits are sliced `[4:-9]` to remove special tokens and return only the 20 standard amino acid positions.
 - **Tokens per batch**: The 3B model uses 1024 tokens per batch (vs 4096 for smaller variants) to fit within L40S GPU memory.
-- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
+- **Caching**: Response caching is handled by the serving infrastructure, not the model container.
 
 ## License
 
@@ -248,16 +239,16 @@ The test suite covers all three actions across all five variants:
 
 ### Papers
 
-1. Lin Z, Akin H, Rao R, Hie B, Zhu Z, Lu W, Smerity N, Verkuil R, Kabber O, Shmueli Y, dos Santos Costa A, Fazel-Zarandi M, Sercu T, Candido S, Rives A. "Evolutionary-scale prediction of atomic-level protein structure with a language model." *Science* (2023). [DOI: 10.1126/science.ade2574](https://doi.org/10.1126/science.ade2574)
+1. Lin Z, Akin H, Rao R, Hie B, Zhu Z, Lu W, Smetanin N, Verkuil R, Kabeli O, Shmueli Y, dos Santos Costa A, Fazel-Zarandi M, Sercu T, Candido S, Rives A. "Evolutionary-scale prediction of atomic-level protein structure with a language model." *Science* (2023). [DOI: 10.1126/science.ade2574](https://doi.org/10.1126/science.ade2574)
 
-2. Lin Z, Akin H, Rao R, Hie B, Zhu Z, Lu W, Smerity N, Verkuil R, Kabber O, Shmueli Y, dos Santos Costa A, Fazel-Zarandi M, Sercu T, Candido S, Rives A. "Language models of protein sequences at the scale of evolution enable accurate structure prediction." *bioRxiv* (2022). [arXiv: 2201.07338](https://arxiv.org/abs/2201.07338)
+2. Lin Z, Akin H, Rao R, Hie B, Zhu Z, Lu W, Smetanin N, Verkuil R, Kabeli O, Shmueli Y, dos Santos Costa A, Fazel-Zarandi M, Sercu T, Candido S, Rives A. "Language models of protein sequences at the scale of evolution enable accurate structure prediction." *bioRxiv* (2022). [DOI: 10.1101/2022.07.20.500902](https://doi.org/10.1101/2022.07.20.500902)
 
 ### BibTeX
 
 ```bibtex
 @article{lin2023evolutionary,
   title={Evolutionary-scale prediction of atomic-level protein structure with a language model},
-  author={Lin, Zeming and Akin, Halil and Rao, Roshan and Hie, Brian and Zhu, Zhongkai and Lu, Wenting and Smerity, Nikita and Verkuil, Robert and Kabber, Ori and Shmueli, Yaniv and dos Santos Costa, Allan and Fazel-Zarandi, Maryam and Sercu, Tom and Candido, Sal and Rives, Alexander},
+  author={Lin, Zeming and Akin, Halil and Rao, Roshan and Hie, Brian and Zhu, Zhongkai and Lu, Wenting and Smetanin, Nikita and Verkuil, Robert and Kabeli, Ori and Shmueli, Yaniv and dos Santos Costa, Allan and Fazel-Zarandi, Maryam and Sercu, Tom and Candido, Sal and Rives, Alexander},
   journal={Science},
   volume={379},
   number={6637},
@@ -269,7 +260,8 @@ The test suite covers all three actions across all five variants:
 
 ### Links
 
-- **Paper**: [arXiv 2207.09423](https://arxiv.org/abs/2207.09423)
+- **Paper (Science)**: [DOI: 10.1126/science.ade2574](https://doi.org/10.1126/science.ade2574)
+- **Preprint (bioRxiv)**: [DOI: 10.1101/2022.07.20.500902](https://doi.org/10.1101/2022.07.20.500902)
 - **Code**: [github.com/facebookresearch/esm](https://github.com/facebookresearch/esm)
 - **Model weights**: [huggingface.co/facebook/esm2_t33_650M_UR50D](https://huggingface.co/facebook/esm2_t33_650M_UR50D)
 

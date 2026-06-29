@@ -53,7 +53,6 @@ From the EvolutionaryScale blog post (2024):
 | ESM2-650M | 650M | Established baseline |
 | ESM2-3B | 3B | Previous state-of-the-art open model |
 
-<!-- TODO: Add specific benchmark numbers (contact prediction, structure prediction) once detailed results are published -- see sources.yaml -->
 
 ### BioLM Verification Results
 
@@ -96,7 +95,7 @@ From the EvolutionaryScale blog post (2024):
 ### Known Failure Modes
 
 - Sequences near or exceeding 2048 residues may be truncated
-- Negative repr_layers that exceed the number of layers will be silently clipped
+- Requesting layer indices outside the valid range raises a `ValidationError400` (HTTP 400)
 - Predict_log_prob only considers 20 canonical amino acids; sequences with non-standard residues will have those positions excluded
 - Very short sequences (<5 residues) may produce low-quality embeddings
 
@@ -163,9 +162,9 @@ Request
 
 ### Caching Behavior
 
-Response caching is handled by the BioLM platform layer (not the model container):
-- Redis (Modal Dict) caching for fast repeated lookups
-- R2 caching for persistence
+Response caching is handled outside the model container:
+- In-memory caching for fast repeated lookups within a container lifetime
+- Persistent storage caching for cross-request reuse
 - Cache keys determined by full request payload (sequences + parameters)
 
 ## Versions & Changelog

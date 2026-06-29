@@ -31,3 +31,9 @@ Note: The ProDy upstream repository uses "MIT License" with "ProDy Development
 Team" as the copyright holder. See
 https://github.com/prody/ProDy/blob/main/LICENSE.rst for the canonical upstream
 license.
+
+This model also depends on:
+- PDBFixer (MIT) by the OpenMM team — https://github.com/openmm/pdbfixer
+- OpenBabel (GPL-2.0) by the OpenBabel Development Team — https://openbabel.org
+  OpenBabel is used as an optional hydrogen-addition method. Its GPL-2.0 license
+  governs any distribution that includes it.

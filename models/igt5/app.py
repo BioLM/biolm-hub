@@ -133,16 +133,7 @@ class IgT5Model(ModelMixinSnap):
         """
         request_kind = payload.items[0]._kind  # Only check the first one
 
-        if any(item._kind != self.model_type for item in payload.items) or (
-            (
-                request_kind == IgT5ModelTypes.PAIRED
-                and self.model_type != IgT5ModelTypes.PAIRED
-            )
-            or (
-                request_kind == IgT5ModelTypes.UNPAIRED
-                and self.model_type != IgT5ModelTypes.UNPAIRED
-            )
-        ):
+        if any(item._kind != self.model_type for item in payload.items):
             raise ValidationError400(
                 f"Mismatch detected: expected '{self.model_type}' but got '{request_kind}' in request."
             )
@@ -162,7 +153,7 @@ class IgT5Model(ModelMixinSnap):
             )
         except Exception as e:
             logger.error("Model call failed with error [%s]", e, exc_info=True)
-            raise e
+            raise
 
         return results
 
@@ -201,10 +192,10 @@ class IgT5Model(ModelMixinSnap):
             result = {}
 
             if IgT5EncodeIncludeOptions.MEAN in include:
-                result["embeddings"] = sequence_embeddings[idx].cpu().tolist()
+                result["embeddings"] = sequence_embeddings[idx].tolist()
 
             if IgT5EncodeIncludeOptions.RESIDUE in include:
-                result["residue_embeddings"] = residue_embeddings[idx].cpu().tolist()
+                result["residue_embeddings"] = residue_embeddings[idx].tolist()
 
             results_list.append(IgT5EncodeResponseResult.model_validate(result))
 
@@ -216,7 +207,7 @@ if __name__ == "__main__":
     Usage:
         MODEL_TYPE="paired" python models/igt5/app.py
 
-        # Force deploy to "qa" or "main" environment:
+        # Force deploy to "biolm-models-dev" or "biolm-models" environment:
         MODEL_TYPE="paired" python models/igt5/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

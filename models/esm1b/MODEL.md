@@ -17,7 +17,7 @@ ESM-1b uses a transformer encoder with pre-activation layer normalization (diffe
 | Component | Details |
 |-----------|---------|
 | Architecture | Transformer encoder, 33 layers |
-| Parameters | 652M |
+| Parameters | 650M |
 | Hidden dimensions | 1280 |
 | Attention heads | 20 |
 | Feed-forward dimensions | 5120 |
@@ -88,7 +88,7 @@ The BioLM implementation uses official pre-trained weights from HuggingFace (`fa
 | Relative tolerance | 1e-4 | PASS |
 | Cosine distance | < 0.02 | PASS |
 
-Additional biological verification (from `verify_accuracy.py`):
+Additional biological verification:
 
 | Test | Description | Expected | Result | Status |
 |------|-------------|----------|--------|--------|
@@ -107,7 +107,7 @@ Additional biological verification (from `verify_accuracy.py`):
 | SaProt | Structure-aware LM | Incorporates 3D structure tokens | Requires structure input |
 | ESM3 | Multimodal protein LM | Handles sequence + structure + function | Newer, less widely benchmarked |
 
-**Recommendation**: Use ESM-2 instead of ESM-1b for all new work. ESM-1b is retained on the platform for backward compatibility and for reproducing results from papers that specifically used ESM-1b.
+**Recommendation**: Use ESM-2 instead of ESM-1b for all new work. ESM-1b is retained in the catalog for backward compatibility and for reproducing results from papers that specifically used ESM-1b.
 
 ## Strengths & Limitations
 
@@ -165,7 +165,6 @@ For `log_prob`, the pipeline calls `_encode_forward_pass` with `include=["logits
 | GPU | T4 (16 GB VRAM) |
 | System memory | 16 GB |
 | CPU | 4 cores |
-| tokens_per_batch | 4096 |
 | Batch size | 8 sequences |
 
 Attention computation scales as O(n^2) with sequence length. For long sequences (>500 residues), GPU memory usage increases significantly.
@@ -184,9 +183,7 @@ The model produces reproducible outputs on the same GPU architecture. Small nume
 
 ### Caching Behavior
 
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
-- **Redis (Modal Dict)**: Fast lookup, TTL-based expiration
-- **R2**: Persistent storage for cached results
+Response caching is handled by the serving infrastructure upstream of the model container, not by the model itself:
 - **Cache key**: Determined by the request payload (sequences, params, include options)
 
 ## Versions & Changelog

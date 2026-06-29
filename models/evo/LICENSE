@@ -178,6 +178,5 @@ Source: https://github.com/evo-design/evo
 License: https://github.com/evo-design/evo/blob/main/LICENSE
 
 The Evo model source code and weights are distributed under the Apache License,
-Version 2.0. The exact upstream copyright holder is listed in the upstream
-repository; if not explicitly stated there, attribution is to "The Evo Authors"
-(flag for reviewer to verify).
+Version 2.0. Copyright the Evo authors — Arc Institute, Stanford University, and
+Together Computer.

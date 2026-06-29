@@ -1,13 +1,4 @@
-# comparison.yaml — Model Comparison Metadata
-# Machine-readable guidance for model selection.
-# Generated as part of Phase 3.5 of the model-knowledge-base workflow.
-#
-# Requirements:
-#   - strengths, weaknesses, use_when, dont_use_when: 5+ entries each (min 3)
-#   - alternatives, complements: 1+ entries where applicable
-#   - All referenced model slugs must exist in models/
-
-model_slug: "esm_if1"
+model_slug: "esm-if1"
 display_name: "ESM-IF1 Inverse Fold"
 last_updated: "2026-03-17"
 

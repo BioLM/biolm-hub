@@ -54,7 +54,6 @@ MODEL_FAMILY = ModelFamily(
         task=[Task.EMBEDDING, Task.SEQUENCE_CLASSIFICATION, Task.PROPERTY_PREDICTION],
         output_modality=[
             OutputModality.EMBEDDING,
-            OutputModality.LOGITS,
             OutputModality.SCALAR,
             OutputModality.CLASS_LABEL,
         ],

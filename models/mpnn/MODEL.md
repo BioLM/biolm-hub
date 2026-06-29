@@ -155,12 +155,12 @@ Request
 | Property | Value |
 |----------|-------|
 | GPU | None (CPU-only inference) |
-| Memory | 128 MB |
-| CPU | 0.125 cores |
+| Memory | 3 GB |
+| CPU | 1 core |
 | Batch size limit | Up to 1000 sequences per batch |
 | Max batches | Up to 48 batches per request |
 
-The model is lightweight enough to run entirely on CPU, making it very cost-effective.
+The model runs entirely on CPU with no GPU requirement.
 
 ### Determinism & Reproducibility
 
@@ -171,8 +171,7 @@ The model is lightweight enough to run entirely on CPU, making it very cost-effe
 
 ### Caching Behavior
 
-- Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container
-- Redis (Modal Dict) and R2 caching are available via the billing mixin
+- Response caching is handled at the serving layer, not inside the model container
 - Cache keys are composed from request parameters including PDB content and generation parameters
 - Given the stochastic nature of sequence design, caching is most useful when a fixed seed is provided
 

@@ -198,13 +198,14 @@ class MSATransformerModel(ModelMixinSnap):
                 )
         except Exception as e:
             logger.error("Model call failed with error [%s]", e, exc_info=True)
-            raise e
+            raise
 
         # Extract outputs
         result_dict: dict = {"sequence_index": sequence_index}
         seq_len = len(msa[0])  # Length of aligned sequences
 
-        # Representations shape: [1, num_seqs, seq_len, embed_dim]
+        # Representations shape: [1, num_seqs, seq_len+1, embed_dim]
+        # (BOS prepended; no EOS for MSA Transformer)
         # We extract from query sequence (first row, index 0)
         representations = {
             layer: r.cpu() for layer, r in model_output["representations"].items()
@@ -215,7 +216,8 @@ class MSATransformerModel(ModelMixinSnap):
             result_dict["embeddings"] = [
                 LayerEmbedding(
                     layer=layer_n,
-                    # [1, num_seqs, seq_len, embed_dim] -> [seq_len, embed_dim] -> [embed_dim]
+                    # [1, num_seqs, seq_len+1, embed_dim] -> [seq_len, embed_dim] -> [embed_dim]
+                    # Slice removes the leading BOS token (index 0)
                     embedding=t[0, 0, 1 : seq_len + 1].mean(dim=0).clone().tolist(),
                 )
                 for layer_n, t in representations.items()
@@ -226,7 +228,8 @@ class MSATransformerModel(ModelMixinSnap):
             result_dict["per_token_embeddings"] = [
                 LayerPerTokenEmbeddings(
                     layer=layer_n,
-                    # Remove BOS token, keep seq_len tokens
+                    # [1, num_seqs, seq_len+1, embed_dim] -> [seq_len, embed_dim]
+                    # Slice removes the leading BOS token (index 0); no trailing EOS
                     embeddings=t[0, 0, 1 : seq_len + 1].clone().tolist(),
                 )
                 for layer_n, t in representations.items()
@@ -234,14 +237,15 @@ class MSATransformerModel(ModelMixinSnap):
 
         if "row_attention" in include and "row_attentions" in model_output:
             # Row attentions are the tied attention maps (shared across MSA rows)
-            # Actual shape from ESM: [batch, num_layers, num_heads, seq_len+2, seq_len+2]
-            # The +2 accounts for BOS and EOS tokens
+            # MSA Transformer alphabet prepends BOS but does NOT append EOS, so each
+            # tokenized row has length seq_len+1 and the attention map is [seq_len+1, seq_len+1].
+            # Actual shape from ESM: [batch, num_layers, num_heads, seq_len+1, seq_len+1]
             row_attn = model_output["row_attentions"].cpu()
-            # row_attn[0] shape: [num_layers, num_heads, seq_len+2, seq_len+2]
+            # row_attn[0] shape: [num_layers, num_heads, seq_len+1, seq_len+1]
             # Average over heads only (dim=1), keep layers separate
-            # Result: [num_layers, seq_len+2, seq_len+2]
+            # Result: [num_layers, seq_len+1, seq_len+1]
             avg_attn = row_attn[0].mean(dim=1)
-            # Remove BOS/EOS tokens (first and last positions)
+            # Remove leading BOS token (index 0); no trailing EOS to strip
             avg_attn = avg_attn[:, 1 : seq_len + 1, 1 : seq_len + 1]
             result_dict["row_attentions"] = avg_attn.clone().tolist()
 
@@ -258,7 +262,7 @@ if __name__ == "__main__":
     Usage:
         python models/msa_transformer/app.py
 
-        # Force deploy to "qa" or "main" environment:
+        # Force deploy even when the active Modal environment is a protected one:
         python models/msa_transformer/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

@@ -22,8 +22,10 @@ from models.commons.testing.fixture import FixtureGenerator
 
 logger = get_logger(__name__)
 
-# BoltzGen repository configuration for fetching example files
-# Pinned to same commit used in app.py for reproducibility
+# BoltzGen repository configuration for fetching example CIF/PDB files.
+# This commit (3eddb5a) is the knowledge-graph snapshot used for sourcing test
+# fixtures and is intentionally separate from the deployed code commit (617e549
+# in helpers.py). The example files are stable across minor commits.
 BOLTZGEN_REPO = "HannesStark/boltzgen"
 BOLTZGEN_COMMIT = "3eddb5a3c73eb466c3e787cdfacf5c1d1693e1b5"
 BOLTZGEN_BASE_URL = (

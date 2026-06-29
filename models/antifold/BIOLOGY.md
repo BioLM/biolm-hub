@@ -58,9 +58,17 @@ The model operates on 3D structures in PDB format and uses IMGT numbering to ide
 
 ## Applied Use Cases
 
-AntiFold is a relatively recent model (published 2024), and the applied literature is still emerging. The primary use cases align with the problems described above.
+Since its publication in 2024, AntiFold has been evaluated in several applied and benchmark studies:
 
-<!-- TODO: Add applied literature entries as they become available -- see sources.yaml applied_literature -->
+- **CDR benchmark (PLoS ONE 2025)** — Li et al. (BioMap Research) benchmarked AntiFold against ProteinMPNN, ESM-IF, and LM-Design on Fab and VHH CDR sequence recovery tasks, finding AntiFold superior for conventional Fab antibody design. (DOI: 10.1371/journal.pone.0324566)
+
+- **Computational antibody design pipeline (Nature 2025)** — Demonstrated in the RFdiffusion antibody paper (Bennett et al.) as part of a multi-stage pipeline where inverse folding tools including AntiFold are used for CDR sequence optimization after backbone diffusion. (DOI: 10.1038/s41586-025-09721-5)
+
+- **Binding affinity maturation benchmark (AbBiBench 2025)** — Benchmarked AntiFold alongside 14 other protein models on 184,500+ experimental antibody-antigen binding measurements. Inverse folding models as a class outperformed all other model categories, though AntiFold showed a small correlation drop versus ESM-IF in the complex-level binding prediction setting, suggesting some trade-offs from antibody-specific fine-tuning. (arXiv: 2506.04235)
+
+- **nanoFOLD comparison (bioRxiv 2025)** — A nanobody-specific inverse folding model (nanoFOLD) fine-tuned from ESM-IF was benchmarked directly against AntiFold on VHH sequence recovery and binder enrichment. nanoFOLD outperforms AntiFold on nanobody-specific tasks (75% VHH recovery vs AntiFold), while AntiFold retains superiority on Fab antibody design, quantifying the domain-specificity trade-off. (DOI: 10.1101/2025.04.29.651236)
+
+- **GPCR-peptide drug discovery benchmark (Briefings in Bioinformatics 2025)** — Contextualizes antibody-specific inverse folding tools (including AntiFold) in the broader landscape of structure prediction and sequence design for drug discovery. (DOI: 10.1093/bib/bbaf186)
 
 ## Related Models
 

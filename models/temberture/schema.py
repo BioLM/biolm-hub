@@ -61,7 +61,7 @@ class TemBERTureEncodeRequestItem(RequestModel):
 
 class TemBERTureEncodeRequest(RequestModel):
     params: TemBERTureEncodeRequestParams = Field(
-        default=TemBERTureEncodeRequestParams(),
+        default_factory=TemBERTureEncodeRequestParams,
         description="Optional parameters controlling this action (defaults are used when omitted).",
     )
     items: Annotated[

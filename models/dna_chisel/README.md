@@ -47,7 +47,7 @@ DNA-Chisel is a single-variant model with no size options.
 
 ## Features
 
-- **GC Content**: Percentage of G and C nucleotides.
+- **GC Content**: Fraction of G and C nucleotides (0–1).
 - **CAI**: Codon Adaptation Index for a specified species (default: `e_coli`).
 - **Hairpin Score**: Number of potential hairpin-forming regions.
 - **Melting Temperature**: Computed melting temperature of the sequence (using `primer3.calc_tm`).
@@ -75,7 +75,7 @@ DNA-Chisel is a single-variant model with no size options.
 
 Computes selected DNA features for a single input sequence. By default, all 20 features are computed.
 
-**Request Schema**: `DnaChiselPredictRequest`
+**Request Schema**: `DnaChiselEncodeRequest`
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
@@ -88,7 +88,7 @@ Computes selected DNA features for a single input sequence. By default, all 20 f
 
 **Batch limit**: 1 item per request.
 
-**Response Schema**: `DnaChiselPredictResponse`
+**Response Schema**: `DnaChiselEncodeResponse`
 
 ```json
 {
@@ -126,24 +126,24 @@ Fields are `null` when not included in the `include` list or when computation is
 ```python
 # Compute all features with default parameters
 from models.dna_chisel.schema import (
-    DnaChiselPredictRequest,
-    DnaChiselPredictRequestItem,
+    DnaChiselEncodeRequest,
+    DnaChiselEncodeRequestItem,
 )
 
-request = DnaChiselPredictRequest(
-    items=[DnaChiselPredictRequestItem(sequence="ATGCGTACG")]
+request = DnaChiselEncodeRequest(
+    items=[DnaChiselEncodeRequestItem(sequence="ATGCGTACG")]
 )
 
 # Compute specific features for a target species
 from models.dna_chisel.schema import (
+    DnaChiselEncodeRequest,
+    DnaChiselEncodeRequestItem,
+    DnaChiselEncodeRequestParams,
     DnaChiselFeatureOptions,
-    DnaChiselPredictRequest,
-    DnaChiselPredictRequestItem,
-    DnaChiselPredictRequestParams,
 )
 
-request = DnaChiselPredictRequest(
-    params=DnaChiselPredictRequestParams(
+request = DnaChiselEncodeRequest(
+    params=DnaChiselEncodeRequestParams(
         include=[
             DnaChiselFeatureOptions.GC_CONTENT,
             DnaChiselFeatureOptions.CAI,
@@ -152,7 +152,7 @@ request = DnaChiselPredictRequest(
         species="h_sapiens",
         restriction_enzymes=["EcoRI", "BamHI", "HindIII"],
     ),
-    items=[DnaChiselPredictRequestItem(sequence="ATGAAAGCAATTTTCGTACTG")],
+    items=[DnaChiselEncodeRequestItem(sequence="ATGAAAGCAATTTTCGTACTG")],
 )
 ```
 
@@ -191,7 +191,7 @@ Deterministic output comparison: test fixtures compare computed features against
 ## Implementation Notes
 
 - **Memory snapshots**: Uses `@modal.enter(snap=True)` to pre-load library modules (dnachisel, primer3, scipy, Biopython Restriction) for faster cold starts.
-- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
+- **Caching**: Response caching is handled by the serving layer, not the model container.
 - **Species validation**: The `SupportedSpecies` enum restricts codon table lookups to 6 validated species.
 - **Restriction enzyme validation**: Enzyme names are validated against Biopython's full enzyme database at request time.
 

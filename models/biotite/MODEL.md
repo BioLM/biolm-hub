@@ -145,7 +145,7 @@ Request
 
 ### Caching Behavior
 
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
+Response caching is handled by the platform layer, not by the model container:
 
 - Cache key derived from PDB strings, chain IDs, and action type
 - Cache hits are always valid since outputs are deterministic

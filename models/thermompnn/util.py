@@ -21,7 +21,6 @@ def load_thermompnn(
     model_dir: Path,
     device: torch.device,
     checkpoint_name: str = "thermoMPNN_default.pt",
-    protein_mpnn_checkpoint: str = "v_48_020.pt",
 ):
     """
     Load ThermoMPNN model following the base inference script pattern.
@@ -30,7 +29,6 @@ def load_thermompnn(
         model_dir: Directory containing model checkpoints
         device: Torch device to load models on
         checkpoint_name: Name of ThermoMPNN checkpoint file
-        protein_mpnn_checkpoint: Name of base ProteinMPNN checkpoint file (unused, kept for compatibility)
 
     Returns:
         Tuple of (thermompnn_model, config)
@@ -157,7 +155,8 @@ def predict(  # noqa: C901
     Args:
         model: Loaded ThermoMPNN model (should be in eval mode and on correct device)
         pdb_path: Path to PDB file
-        mutations: Optional list of mutation strings in format 'WT{position}MUT' (1-indexed PDB positions).
+        mutations: Optional list of mutation strings in format 'WT{position}MUT' (positions are
+                   1-indexed within the selected chain's modeled sequence, not PDB residue numbers).
                    If None, performs SSM scan for all positions.
         chain: Chain ID to use (if None, uses first chain)
 
@@ -185,7 +184,7 @@ def predict(  # noqa: C901
 
     # Build mutation objects (following base script pattern)
     # Note: get_ssm_mutations returns 0-indexed positions (e.g., "M0V" = position 0)
-    # User-provided mutations use 1-indexed PDB positions (e.g., "M1V" = position 1)
+    # User-provided mutations use 1-indexed chain-sequence positions (e.g., "M1V" = position 1)
     final_mutation_list = []
     for m in mutation_list:
         if m is None:
@@ -210,7 +209,7 @@ def predict(  # noqa: C901
             # SSM returns 0-indexed positions directly
             position_0_indexed = position
         else:
-            # User input uses 1-indexed PDB positions, convert to 0-indexed
+            # User input uses 1-indexed chain-sequence positions, convert to 0-indexed
             position_0_indexed = position - 1
 
         mutation_obj = Mutation(

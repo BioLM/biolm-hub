@@ -24,6 +24,7 @@ from models.ablang2.schema import (
     AbLang2SeqcodingResult,
 )
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.error import ValidationError400
 from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
@@ -36,10 +37,6 @@ from models.commons.util.config import (
 from models.commons.util.device import get_torch_device
 
 logger = get_logger(__name__)
-
-# TODOs:
-#   * Add fix so that ablang2 uses weights at self.model_dir (it might currently be downloading it)
-#   * Add support for align=True by adding pandas and installing ANARCI
 
 
 # Build Modal container image
@@ -191,9 +188,13 @@ class AbLang2Model(ModelMixinSnap):
         input_batch = [(item.heavy_chain, item.light_chain) for item in payload.items]
         include = payload.params.include  # "seqcoding" or "rescoding"
 
-        align = (
-            payload.params.align if include == AbLang2EncodeOptions.SEQCODING else False
-        )
+        if payload.params.align:
+            raise ValidationError400(
+                "align=True is not yet supported; it requires ANARCI which is not installed. "
+                "Set align=False (the default)."
+            )
+
+        align = False
 
         if include == AbLang2EncodeOptions.SEQCODING:
             raw_output = self.model(
@@ -250,7 +251,8 @@ class AbLang2Model(ModelMixinSnap):
     @modal_endpoint(app_name=app_name)
     def predict(self, payload: AbLang2PredictRequest) -> AbLang2PredictResponse:
         """
-        Uses ablang2's "lilelihood" mode, which computs the logits
+        Uses ablang2's "likelihood" mode, which computes the per-position logits.
+        Note: _predict_logits is an internal ablang2 API (pinned to ==0.2.1).
         """
         input_batch = [(item.heavy_chain, item.light_chain) for item in payload.items]
 
@@ -352,7 +354,7 @@ if __name__ == "__main__":
     Usage:
         python models/ablang2/app.py
 
-        # Force deploy to "qa" or "main" environment:
+        # Force deploy to "biolm-models-dev" or "biolm-models" environment:
         python models/ablang2/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

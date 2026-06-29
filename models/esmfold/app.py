@@ -3,6 +3,7 @@ from collections.abc import Generator
 import modal
 
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.error import ModelExecutionError
 from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
@@ -88,7 +89,6 @@ app = modal.App(app_name, image=image)
 class ESMFoldModel(ModelMixinSnap):
     app_username: str = modal.parameter(default="default_user")
 
-    batch_size = ESMFoldParams.batch_size
     chunk_size = ESMFoldParams.max_sequence_len
 
     @modal.enter(snap=True)
@@ -134,16 +134,16 @@ class ESMFoldModel(ModelMixinSnap):
         payload: ESMFoldPredictRequest,
     ) -> ESMFoldPredictResponse:
         """
-        Performs prediction using the ESMFold model.
+        Performs structure prediction (folding) using the ESMFold model.
 
         Parameters:
         - payload (ESMFoldPredictRequest): The request object containing sequences.
 
         Returns:
-        - ESMFoldPredictResponse: The response containing prediction results.
+        - ESMFoldPredictResponse: The response containing folding results.
         """
         sequences = [item.sequence for item in payload.items]
-        max_tokens_per_batch = 1024  # Adjust as needed
+        max_tokens_per_batch = ESMFoldParams.max_tokens_per_batch
 
         batched_sequences_gen = self.create_batched_sequences(
             sequences, max_tokens_per_batch
@@ -174,15 +174,12 @@ class ESMFoldModel(ModelMixinSnap):
             except RuntimeError as e:
                 if "CUDA out of memory" in str(e):
                     logger.error(
-                        f"Failed (CUDA out of memory) on batch with sequences: {headers}."
+                        "CUDA out of memory on batch of %d sequences.", len(headers)
                     )
-                    empty_result = ESMFoldPredictResponseResult(
-                        pdb="",
-                        mean_plddt=0.0,
-                        ptm=0.0,
-                    )
-                    results.extend([empty_result] * len(headers))
-                    continue
+                    raise ModelExecutionError(
+                        "CUDA out of memory: the requested batch exceeds available GPU memory. "
+                        "Try reducing batch size or sequence length."
+                    ) from e
                 raise
 
         return ESMFoldPredictResponse(results=results)
@@ -212,7 +209,7 @@ if __name__ == "__main__":
     Usage:
         python models/esmfold/app.py
 
-        # Force deploy to "qa" or "main" environment:
+        # Force deploy to the dev (biolm-models-dev) or prod (biolm-models) environment:
         python models/esmfold/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

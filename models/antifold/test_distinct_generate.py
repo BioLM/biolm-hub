@@ -1,8 +1,8 @@
 """
-Integration tests for sequence diversity in AntiFold generate() endpoint.
+Integration tests for sequence diversity and reproducibility in the AntiFold generate() endpoint.
 
-Validates that the RNG seed fix creates diverse outputs across multiple
-invocations, even when using the same input and container (Modal snapshots).
+Validates that time-based seeding produces diverse outputs across multiple invocations
+(even with Modal memory snapshots) and that an explicit seed yields reproducible results.
 """
 
 import pytest
@@ -80,13 +80,14 @@ def extract_sequences_from_response(response: dict) -> list[str]:
         (1.0, 10, 70.0),  # High temp: expect ≥70% unique sequences
     ],
 )
-def test_generate_diversity_with_rng_seed_fix(
+def test_generate_diversity(
     temperature: float, num_calls: int, min_diversity_pct: float
 ):
     """
     Test that generate() produces diverse sequences across multiple calls.
 
-    Validates the RNG seed fix works correctly with Modal memory snapshots.
+    Validates that time-based seeding yields diverse outputs even across
+    repeated calls with the same input (including Modal memory snapshots).
     """
     model_class = app.registered_classes.get("AntiFoldModel")
     assert model_class is not None, "AntiFoldModel not found in app"
@@ -117,8 +118,7 @@ def test_generate_diversity_with_rng_seed_fix(
 
         assert diversity_pct >= min_diversity_pct, (
             f"Diversity {diversity_pct:.1f}% is below threshold {min_diversity_pct}%. "
-            f"Found {len(unique_sequences)} unique sequences out of {len(all_sequences)} total. "
-            f"RNG seed fix may not be working correctly."
+            f"Found {len(unique_sequences)} unique sequences out of {len(all_sequences)} total."
         )
 
 
@@ -191,6 +191,5 @@ def test_generate_default_is_diverse():
         unique_sequences = set(all_sequences)
         assert len(unique_sequences) >= 5, (
             f"Expected at least 5 unique sequences at temp=1.0, "
-            f"but got {len(unique_sequences)} out of {len(all_sequences)}. "
-            f"Time-based seed may not be working."
+            f"but got {len(unique_sequences)} out of {len(all_sequences)}."
         )

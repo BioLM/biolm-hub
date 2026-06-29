@@ -35,7 +35,7 @@ dont_use_when:
   - "You need structure prediction rather than sequence-level mutation proposals -- use Boltz, ESMFold, or RoseTTAFold"
   - "You are working with metalloproteins where metal coordination is critical to stability -- Rosetta REF2015 reward does not capture this"
   - "You need binding affinity optimization rather than thermostability -- Pro-1 v1 has no affinity signal in its reward"
-  - "You need deterministic, reproducible outputs for regulatory or production workflows -- outputs are stochastic even with seed"
+  - "You need deterministic, reproducible outputs for regulatory or production workflows -- outputs vary between runs even with the same seed (GPU kernel nondeterminism means exact reproducibility is not guaranteed)"
   - "You are working with membrane proteins or intrinsically disordered regions"
   - "You need high-throughput saturating mutagenesis scans across all positions -- per-residue DeltaDeltaG tools like ThermoMPNN are more appropriate for systematic screening"
   - "Citation-accurate scientific reasoning is required -- the model hallucinating paper references is a known limitation that cannot be mitigated"

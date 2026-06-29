@@ -4,7 +4,7 @@
 
 ### Model Type & Innovation
 
-SPURS (Structure Prediction Using Residue-level and Secondary structure information) is a structure-aware protein stability prediction model that predicts the change in free energy upon mutation (ddG). It combines ESM2-650M sequence embeddings with 3D structural features through a graph neural network architecture.
+SPURS is a structure-aware protein stability prediction model that predicts the change in free energy upon mutation (ddG). It combines ESM2-650M sequence embeddings with 3D structural features through a graph neural network architecture.
 
 The model provides two inference modes: a single-mutation model (SPURS) for predicting individual point mutations and generating full deep mutational scanning (DMS) matrices, and a multi-mutation model (SPURSMulti) for predicting the combined effect of multiple simultaneous mutations.
 
@@ -29,7 +29,7 @@ The model loads SPURS weights from HuggingFace (`cyclization9/SPURS`) at a pinne
 | Structure input | PDB structures for structural context |
 | Sequence features | ESM2-650M embeddings |
 
-<!-- TODO: Document specific training datasets (e.g., ProTherm, Megascale) and training set sizes from the SPURS paper/repository -->
+Training datasets (e.g., ProTherm, Megascale) and set sizes are described in the primary paper (Nature Communications, 2025).
 
 ### Loss Function & Objective
 
@@ -50,7 +50,7 @@ The model is trained to predict ddG values (change in folding free energy upon m
 
 ### Published Benchmarks
 
-<!-- TODO: Extract specific benchmark numbers (Spearman correlation, RMSE on ProTherm/Megascale/S669) from SPURS paper or repository -->
+Quantitative benchmark results (Spearman correlation, RMSE on ProTherm/Megascale/S669) are reported in the primary paper (Nature Communications, 2025) and are not reproduced here.
 
 ### BioLM Verification Results
 
@@ -138,15 +138,15 @@ Request
 
 ### Caching Behavior
 
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container. GPU memory snapshots are enabled for fast cold starts.
+Response caching is handled externally by the serving infrastructure, not by the model container. GPU memory snapshots are enabled for fast cold starts.
 
 ## Versions & Changelog
 
 | Version | Date | Changes |
 |---------|------|---------|
 | v1 | 2025-09-16 | Initial implementation with predict action (single, multi, full DMS) |
-| v1 (updated) | 2026-01-12 | Added variant_sequence auto-calculation mode |
 | v1 (updated) | 2025-09-24 | Added CIF support via biotite conversion |
+| v1 (updated) | 2026-01-12 | Added variant_sequence auto-calculation mode |
 
 ---
 

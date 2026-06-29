@@ -36,9 +36,15 @@ TemBERTure's regression variant predicts the Tm in degrees Celsius from sequence
 
 ## Applied Use Cases
 
-No applied literature entries have been catalogued yet.
+- **TemStaPro (Pudžiuvelytė et al., 2024)** — Concurrent thermostability prediction method using protein language model embeddings; TemBERTure achieves 83% accuracy on the TemStaPro benchmark dataset, providing a direct performance comparison. DOI: 10.1093/bioinformatics/btae157.
 
-<!-- TODO: Search for papers citing TemBERTure (Rodella et al., 2024) for applied use cases -- search Google Scholar/Semantic Scholar -->
+- **ESMStabP (Ramos et al., 2025)** — Incorporates TemBERTure thermophilic classifications as an input feature alongside ESM2 embeddings for melting temperature regression (R² = 0.95, PCC = 0.97); directly validates TemBERTure's classification outputs as informative features for quantitative Tm prediction. DOI: 10.1101/2025.02.18.638450.
+
+- **Computation of Protein Thermostability and Epistasis (2025)** — Comprehensive WIREs review covering computational strategies for protein stability prediction including TemBERTure and other deep learning approaches, contextualising their strengths and limitations for protein engineering. DOI: 10.1002/wcms.70045.
+
+- **iCASE strategy for industrial enzyme engineering (2025)** — Applies machine learning-based strategies for industrial enzyme thermostability engineering, representing the practical downstream application domain that TemBERTure predictions support. DOI: 10.1038/s41467-025-55944-5.
+
+- **Click, Compute, Create — enzyme engineering web tools review (Tripp et al., 2024)** — Comprehensive review of web-based enzyme engineering tools including TemBERTure, cataloguing it as a key thermostability prediction resource for computational enzyme design workflows. DOI: 10.1002/cbic.202400092.
 
 ## Related Models
 

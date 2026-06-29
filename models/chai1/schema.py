@@ -109,6 +109,10 @@ class Chai1Molecule(RequestModel):
     def validate_smiles_field(cls, v, info: ValidationInfo):
         """Validate the explicit smiles field when provided."""
         if v is not None:
+            if len(v) > Chai1Params.max_ligand_len:
+                raise ValueError(
+                    f"Ligand SMILES exceeds maximum length of {Chai1Params.max_ligand_len}"
+                )
             v = validate_smiles(v)
         return v
 
@@ -120,18 +124,6 @@ class Chai1Molecule(RequestModel):
                 raise ValueError("Alignment can only be set for protein molecules")
         return v
 
-
-### Chai-1 Validator
-
-ALLOWED_ENTITY_TYPES = {
-    "protein",
-    "RNA",
-    "DNA",
-    "ligand",
-    "polymer_hybrid",
-    "water",
-    "unknown",
-}
 
 ### Chai-1 Predict Request
 
@@ -168,15 +160,19 @@ class Chai1PredictRequestParams(RequestModel):
         default=42,
         description="Random seed for reproducible sampling.",
     )
-    # TODO: Disabled for now due to large size of PAE/PLDDT scores in response
     include: list[Chai1ScoreOptions] = Field(
         default_factory=list,
-        description="Confidence-score outputs to include in the response (currently forced to empty; pae/plddt are disabled).",
-    )  # Will be forced to empty list by validator
+        description="Confidence-score outputs to include in the response. Currently disabled — pae/plddt are not returned due to large payload size. Pass an empty list or omit this field.",
+    )
 
     @field_validator("include")
     def force_empty_include(cls, v):
-        return []  # Always return empty list regardless of input
+        if v:
+            raise ValueError(
+                "pae/plddt scoring outputs are currently disabled. "
+                "Omit the 'include' parameter or pass an empty list."
+            )
+        return []
 
 
 class Chai1PredictRequestInput(RequestModel):

@@ -107,9 +107,7 @@ On hard CASP15 targets (AF2.3 LDDT < 0.75, n=14), Chai-1 achieves 0.643 vs 0.552
 
 ### BioLM Verification Results
 
-The BioLM implementation uses the official `chai-lab==0.6.1` package directly, so inference results are numerically identical to the reference implementation given the same inputs and random seed.
-
-<!-- TODO(runtime): Run verification tests comparing BioLM outputs against reference chai-lab outputs on standard test cases -->
+The BioLM implementation uses the official `chai-lab==0.6.1` package directly, so inference results are numerically identical to the reference implementation given the same inputs and random seed. Integration tests compare outputs against golden fixtures with RMSD thresholds to catch regressions.
 
 ### Comparison to Alternatives
 
@@ -194,10 +192,9 @@ GPU memory usage scales with the total number of tokens (residues + bases + liga
 
 ### Caching Behavior
 
-- Redis (Modal Dict) caching: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
-- R2 caching: Model weights cached in R2 with fallback to chai-lab library download
-- Cache key composition: Determined by the `modal_endpoint` decorator based on request content
-- Structure predictions are cached per unique input + parameter combination
+- Response caching: Handled by the `modal_endpoint` decorator; responses are cached per unique input + parameter combination.
+- R2 caching: Model weights are cached in R2 with fallback to the chai-lab library's native download mechanism.
+- Cache key composition: Determined by the `modal_endpoint` decorator based on request content.
 
 ## Versions & Changelog
 

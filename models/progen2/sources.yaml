@@ -15,7 +15,7 @@ tasks:
 primary_papers:
 - title: 'ProGen2: Exploring the Boundaries of Protein Language Models'
   arxiv: '2206.13517'
-  doi: ''
+  doi: '10.1016/j.cels.2023.10.002'
   venue: Cell Systems, 2023
   year: 2023
   authors:

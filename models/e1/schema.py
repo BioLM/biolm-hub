@@ -36,6 +36,37 @@ class E1ModelSizes(EnhancedStringEnum):
     SIZE_600M = "600m"
 
 
+def _validate_context_list(
+    v: list[str] | None,
+    *,
+    residue_validator,
+    forbid_mask: bool = False,
+) -> list[str] | None:
+    """Shared validation logic for all context_sequences field_validators.
+
+    Args:
+        v: The list of context sequences (or None).
+        residue_validator: Callable that validates a single sequence string.
+        forbid_mask: If True, raise if any sequence contains a '?' mask token.
+    """
+    if v is None:
+        return v
+    for i, seq in enumerate(v):
+        if len(seq) < 1:
+            raise ValueError(f"Context sequence {i} is empty")
+        if len(seq) > E1Params.max_sequence_len:
+            raise ValueError(
+                f"Context sequence {i} exceeds max length {E1Params.max_sequence_len}"
+            )
+        if forbid_mask and "?" in seq:
+            raise ValueError(
+                f"Context sequence {i} contains '?' mask token; "
+                "only the query sequence may contain masks"
+            )
+        residue_validator(seq)
+    return v
+
+
 ### E1 Requests
 
 
@@ -91,17 +122,7 @@ class E1EncodeRequestItem(RequestModel):
     @classmethod
     def validate_context_sequences(cls, v: list[str] | None) -> list[str] | None:
         """Validate each context sequence for AA content and length."""
-        if v is None:
-            return v
-        for i, seq in enumerate(v):
-            if len(seq) < 1:
-                raise ValueError(f"Context sequence {i} is empty")
-            if len(seq) > E1Params.max_sequence_len:
-                raise ValueError(
-                    f"Context sequence {i} exceeds max length {E1Params.max_sequence_len}"
-                )
-            validate_aa_extended(seq)
-        return v
+        return _validate_context_list(v, residue_validator=validate_aa_extended)
 
 
 class E1EncodeRequest(RequestModel):
@@ -150,22 +171,9 @@ class E1PredictRequestItem(RequestModel):
     @classmethod
     def validate_context_sequences(cls, v: list[str] | None) -> list[str] | None:
         """Validate context sequences: AA content, length, and no mask tokens."""
-        if v is None:
-            return v
-        for i, seq in enumerate(v):
-            if len(seq) < 1:
-                raise ValueError(f"Context sequence {i} is empty")
-            if len(seq) > E1Params.max_sequence_len:
-                raise ValueError(
-                    f"Context sequence {i} exceeds max length {E1Params.max_sequence_len}"
-                )
-            if "?" in seq:
-                raise ValueError(
-                    f"Context sequence {i} contains '?' mask token; "
-                    "only the query sequence may contain masks"
-                )
-            validate_aa_extended(seq)
-        return v
+        return _validate_context_list(
+            v, residue_validator=validate_aa_extended, forbid_mask=True
+        )
 
 
 class E1PredictRequest(RequestModel):
@@ -211,17 +219,7 @@ class E1PredictLogProbRequestItem(RequestModel):
     @classmethod
     def validate_context_sequences(cls, v: list[str] | None) -> list[str] | None:
         """Validate context sequences: canonical AAs only, length constraints."""
-        if v is None:
-            return v
-        for i, seq in enumerate(v):
-            if len(seq) < 1:
-                raise ValueError(f"Context sequence {i} is empty")
-            if len(seq) > E1Params.max_sequence_len:
-                raise ValueError(
-                    f"Context sequence {i} exceeds max length {E1Params.max_sequence_len}"
-                )
-            validate_aa_unambiguous(seq)
-        return v
+        return _validate_context_list(v, residue_validator=validate_aa_unambiguous)
 
 
 class E1PredictLogProbRequest(RequestModel):

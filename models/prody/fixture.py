@@ -72,7 +72,6 @@ def generate():
                 params=ProDyEncodeRequestParams(
                     add_hydrogens=True,
                     hydrogen_method=HydrogenMethod.OPENBABEL,
-                    compute_all_interactions=True,
                 ),
                 items=[
                     ProDyEncodeRequestItem(
@@ -92,7 +91,6 @@ def generate():
                 params=ProDyEncodeRequestParams(
                     add_hydrogens=True,
                     hydrogen_method=HydrogenMethod.OPENBABEL,
-                    compute_all_interactions=True,
                 ),
                 items=[
                     ProDyEncodeRequestItem(

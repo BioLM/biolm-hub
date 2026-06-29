@@ -70,8 +70,7 @@ Anticipated (not yet published) use cases:
 ### Complementary Models
 
 - **ESM2** (this platform): SPURS uses ESM2-650M embeddings internally for sequence features. ESM2's `log_prob` action provides an orthogonal (evolutionary) signal for mutation impact.
-- **Pro4S** (this platform): Pro4S predicts expression solubility while SPURS predicts thermodynamic stability -- different but related properties.
-- **Boltz / Chai-1** (this platform): Structure prediction models that generate the 3D structures SPURS needs as input.
+- **Chai-1** (this platform): Structure prediction model that generates the 3D structures SPURS needs as input.
 
 ### Alternative Models
 

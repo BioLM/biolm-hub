@@ -27,7 +27,7 @@ model_slug: "dummy"
   # The base_model_slug from config.py / ModelFamily.
   # Must match the directory name under models/.
 
-display_name: "Dummy Model"
+display_name: "Dummy"
   # The display_name from config.py / ModelFamily.
   # Human-readable name used in documentation and UI.
 

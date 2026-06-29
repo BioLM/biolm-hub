@@ -3,7 +3,7 @@ display_name: "ESM1v"
 last_updated: "2026-03-17"
 
 strengths:
-  - "Purpose-built for variant effect prediction — trained on UniRef90 (larger, less redundancy-reduced than UniRef50) specifically to optimize zero-shot mutation scoring, achieving ~0.45 Spearman rho on DMS benchmarks"
+  - "Purpose-built for variant effect prediction — trained on UniRef90 (larger, less redundancy-reduced than UniRef50) specifically to optimize zero-shot mutation scoring, achieving 0.47 Spearman rho (41-DMS average, Meier et al. 2021)"
   - "Five-model ensemble (n1-n5) reduces prediction variance and improves calibration compared to single-model approaches — each model is independently initialized, providing partially orthogonal learned representations"
   - "Individual model variants (n1-n5) run on CPU with only 8GB RAM, making ESM1v the most cost-effective option for variant scoring at scale without GPU infrastructure"
   - "Validated in genome-wide variant effect prediction — ESM1b (closely related) was used to predict all ~450 million possible missense variants in the human genome, outperforming existing methods on ClinVar/HGMD"
@@ -13,7 +13,7 @@ strengths:
 
 weaknesses:
   - "Single-task model — only variant scoring via masked prediction; no encode action for general-purpose embeddings and no log-probability scoring for full-sequence fitness assessment"
-  - "Maximum sequence length of only 512 residues — shorter than ESM-1b (1022), ESM2 (2046), and ESMC (2048), excluding many larger proteins from analysis"
+  - "Maximum sequence length of 1022 residues — shorter than ESM2 (2046) and ESMC (2048), though matching ESM-1b's architectural limit; large proteins approaching this limit may see degraded predictions"
   - "Requires exactly one mask token per sequence — cannot score multiple positions simultaneously or perform multi-site variant assessment in a single call"
   - "No structure awareness — purely sequence-based scoring misses structural context that can distinguish surface mutations from buried core disruptions"
   - "The 'all' variant loads all 5 models simultaneously, requiring T4 GPU and 28GB RAM — individual models are cheap but the full ensemble has higher resource requirements"
@@ -30,10 +30,10 @@ use_when:
 
 dont_use_when:
   - "You need general-purpose protein embeddings for downstream ML tasks — use ESM2 or ESMC, which provide rich embed/encode actions alongside variant scoring"
-  - "You need to score protein sequences longer than 512 residues — use ESM2 (up to 2046 residues), ESMC (up to 2048 residues), or SaProt (up to 1024 residues)"
+  - "You need to score protein sequences longer than 1022 residues — use ESM2 (up to 2046 residues) or ESMC (up to 2048 residues)"
   - "You need to score insertions or deletions (indels) — use PoET, which is the only model in this group that natively handles variable-length variants"
-  - "You need structure-aware variant scoring — use SaProt, which integrates Foldseek 3Di tokens and outperforms sequence-only methods on ProteinGym (0.457 vs ~0.45 Spearman)"
-  - "You need MSA-conditioned variant scoring for maximum accuracy on proteins with deep evolutionary alignments — use PoET or MSA Transformer"
+  - "You need structure-aware variant scoring — structure-integrated models outperform sequence-only methods; ESM1v has no structural awareness"
+  - "You need MSA-conditioned variant scoring for maximum accuracy on proteins with deep evolutionary alignments — use MSA Transformer"
   - "You want the latest-generation model for new projects — use ESM2 log_prob or ESMC log_prob, which provide comparable or better variant scoring with broader functionality"
   - "You need multimodal protein analysis combining sequence, structure, and function — use ESM3"
 
@@ -46,27 +46,11 @@ alternatives:
     when_better: "ESMC provides updated architecture with better parameter efficiency, broader action repertoire (encode, predict, log_prob), and longer context (2048 residues)"
     when_worse: "ESMC does not offer a multi-model ensemble for variance reduction; ESM1v's focused design and CPU-friendly individual models are more cost-effective for high-throughput variant screening"
 
-  - model: saprot
-    when_better: "SaProt integrates structural context via 3Di tokens, achieving higher Spearman correlation (0.457) on ProteinGym and AUC 0.909 on ClinVar pathogenicity classification"
-    when_worse: "SaProt requires structure input (PDB or AlphaFold prediction) and has CC-BY-NC-SA license; ESM1v accepts raw sequences with MIT license and runs on CPU"
-
-  - model: poet
-    when_better: "PoET scores both substitutions and indels using MSA-conditioned generative modeling, achieving higher accuracy (Spearman 0.484) on ProteinGym when deep MSAs are available"
-    when_worse: "PoET requires curated MSAs and is slower than ESM1v's single-forward-pass inference; ESM1v is faster and simpler for single-site substitution screening"
-
   - model: esm1b
     when_better: "ESM-1b provides general-purpose embeddings (encode action) and longer context (1022 residues) in addition to variant scoring; broader functionality for non-variant tasks"
     when_worse: "ESM-1b uses a single model rather than ESM1v's 5-model ensemble, and was trained on the smaller UniRef50 dataset; ESM1v has better variant-specific optimization"
 
 complements:
-  - model: boltz
-    workflow: "Use ESM1v to score all possible single-site mutations and identify top candidate variants, then predict 3D structures of promising variants with Boltz to assess structural consequences before experimental validation"
-    example_protocol: null
-
-  - model: esmstabp
-    workflow: "Use ESM1v to identify evolutionarily tolerated mutations, then check predicted thermostability changes with ESMStabP to ensure variant candidates maintain structural stability — combines evolutionary plausibility with quantitative stability prediction"
-    example_protocol: null
-
   - model: esm2
     workflow: "Use ESM2 encode to generate embeddings for sequence-level characterization and clustering, then use ESM1v's ensemble scoring for focused variant effect prediction on proteins of interest — combining general representation with specialized variant analysis"
     example_protocol: null

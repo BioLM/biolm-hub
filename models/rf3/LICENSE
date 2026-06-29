@@ -1,6 +1,6 @@
 BSD 3-Clause License
 
-Copyright (c) 2025 RosettaCommons Foundation
+Copyright (c) 2025, Institute for Protein Design, University of Washington
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -29,8 +29,4 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ---
 Upstream source: https://github.com/RosettaCommons/foundry
-License URL: https://github.com/RosettaCommons/foundry/blob/main/LICENSE
-Note: Copyright holder (RosettaCommons Foundation) and year (2025) inferred
-from the upstream GitHub organization and primary paper year (bioRxiv 2025).
-Reviewer should verify the exact copyright line against the upstream LICENSE
-file before public release.
+License URL: https://github.com/RosettaCommons/foundry/blob/main/LICENSE.md

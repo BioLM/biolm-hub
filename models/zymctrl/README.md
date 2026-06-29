@@ -61,7 +61,7 @@ Generate novel enzyme sequences conditioned on an EC number. Returns sequences s
 |-----------|------|---------|-------|-------------|
 | `items[].ec_number` | str | - | Valid EC format (X.X.X.X or partial) | EC number specifying desired catalytic function |
 | `params.seed` | int | null | - | Random seed for reproducibility (null = time-based) |
-| `params.temperature` | float | 0.8 | 0.0-2.0 | Sampling temperature (higher = more diverse) |
+| `params.temperature` | float | 0.8 | (0, 2.0] | Sampling temperature (higher = more diverse) |
 | `params.top_k` | int | 9 | 1-50 | Top-k sampling parameter |
 | `params.repetition_penalty` | float | 1.2 | 1.0-2.0 | Penalty for repeated tokens |
 | `params.num_samples` | int | 5 | 1-20 | Number of sequences to generate per EC number |
@@ -231,7 +231,7 @@ Combined Option A (Published Values) + Option B (Known Extremes): Tested EC numb
 - **Generate action**: Builds prompt as `<ec_number><sep><start>`, generates via top-k sampling, computes perplexity on amino acid tokens only (excluding EC/control tokens), sorts results by perplexity ascending
 - **Encode action**: Wraps sequences in training-format boundary tokens (`<start>`, `<end>`, optionally `<ec><sep>` prefix). Supports mean, last-token, and per-token pooling from any of the 36 hidden layers.
 - **Determinism**: Generate is stochastic (use `seed` param for reproducibility). Encode is deterministic.
-- **Caching**: Standard BioLM two-tier caching (Redis + R2). Most useful for encode (deterministic); less useful for generate (stochastic outputs).
+- **Caching**: Response caching is most useful for encode (deterministic outputs); less useful for generate (stochastic outputs).
 
 ## Confidence Metrics
 

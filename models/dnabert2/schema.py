@@ -15,8 +15,11 @@ class DNABERT2Params(ModelParams):
     log_identifier = "DNABERT2"
     params_version = "v1"
     batch_size = 10
-    # TODO: test how long sequences can be, based on tokenization
+    # Character (nucleotide) cap enforced by the request schema — 2,048 nt ≈ 2 kbp
     max_sequence_len = 2048
+    # Token truncation limit passed to the HuggingFace tokenizer; BPE always yields
+    # fewer tokens than characters so this bound never binds in practice.
+    max_token_len = 2048
 
 
 ### DNABERT2 Requests

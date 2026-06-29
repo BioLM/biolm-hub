@@ -56,7 +56,7 @@ fixture_generation_suite = TestSuite(
                     input_fixture=BiotiteExtractChainsRequest(
                         items=[
                             BiotiteExtractChainsRequestItem(
-                                pdb_string=_SAMPLE_PDB_MULTI_CHAIN,
+                                pdb=_SAMPLE_PDB_MULTI_CHAIN,
                                 chain_ids=["A", "B"],
                             )
                         ]
@@ -72,7 +72,8 @@ fixture_generation_suite = TestSuite(
                             BiotiteRMSDRequestItem(
                                 pdb_a=_SAMPLE_PDB_SINGLE_CHAIN,
                                 pdb_b=_SAMPLE_PDB_SINGLE_CHAIN,
-                                chain_ids={"a": ["A"], "b": ["A"]},
+                                chain_a=["A"],
+                                chain_b=["A"],
                             )
                         ]
                     ),

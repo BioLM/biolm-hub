@@ -13,7 +13,7 @@ Trained on multi-species genomic data, DNABERT-2 has broad coverage of:
 - **Structural genomic elements**: splice sites, polyadenylation signals, CpG islands, TATA boxes
 - **Epigenetic signal regions**: sequences associated with histone modifications (though the model does not directly predict modifications)
 
-The effective context window of approximately 4--8 kbp (depending on BPE compression) covers most gene-proximal regulatory features and short gene bodies.
+The API accepts sequences up to 2,048 nucleotides (~2 kbp) per request. This covers most gene-proximal regulatory features and short gene bodies. The underlying model's BPE tokenizer compresses variable-length subwords, so the model's theoretical capacity per 2,048 BPE tokens could span more nucleotides — but the request schema enforces the 2,048-nucleotide character cap.
 
 ### Cross-Applicability
 
@@ -66,13 +66,17 @@ The GUE benchmark demonstrates that DNABERT-2 embeddings achieve strong performa
 
 ## Applied Use Cases
 
-Applied literature entries for DNABERT-2 are pending curation. The model has been referenced in studies on:
+DNABERT-2 has been applied in the following published studies:
 
-- Benchmarking genomic foundation models on standardized evaluation suites
-- Transfer learning for regulatory element prediction across species
-- Variant pathogenicity scoring in non-coding regions
+- **Benchmarking DNA foundation models** (Nature Communications, 2025; DOI: 10.1038/s41467-025-65823-8): Benchmarks DNABERT-2 against NT v2, HyenaDNA, Caduceus, and GROVER across classification, variant effect prediction, and gene expression tasks.
 
-<!-- TODO: Add specific applied literature entries as they are curated into sources.yaml -->
+- **Colorectal enhancer classification** (arXiv 2509.25274, 2025): First application of DNABERT-2 with BPE tokenization to enhancer classification in colorectal cancer, achieving ROC-AUC 0.743 on 2.34 million sequences.
+
+- **Gene-LLMs survey** (Frontiers in Genetics, 2025; DOI: 10.3389/fgene.2025.1634882): A comprehensive survey of transformer-based genomic language models covering DNABERT-2 and other genomic LLMs, analyzing tokenization strategies and downstream regulatory genomics applications.
+
+- **DeepVRegulome** (arXiv 2511.09026, 2025): Combines 700 DNABERT fine-tuned models trained on ENCODE gene regulatory regions with variant scoring and motif analysis. Applied to TCGA glioblastoma WGS dataset, identifying 572 splice-disrupting and 9,837 TFBS-altering mutations.
+
+- **TFBS-Finder** (arXiv 2502.01311, 2025): Uses pre-trained DNABERT embeddings combined with CNN and attention modules for transcription factor binding site prediction, trained and tested on 165 ENCODE ChIP-seq datasets.
 
 ## Related Models
 
@@ -83,7 +87,7 @@ Applied literature entries for DNABERT-2 are pending curation. The model has bee
 ### Complementary Models
 
 - **ESM-2** (protein embeddings): For analyses spanning both DNA and protein, DNABERT-2 embeddings can characterize regulatory DNA while ESM-2 characterizes the encoded protein. This is useful for studying how non-coding variants affect protein function through regulatory mechanisms.
-- **Nucleotide Transformers**: For tasks requiring longer genomic context (>8 kbp), NT's 12 kbp context window complements DNABERT-2's shorter but finer-grained representations.
+- **Nucleotide Transformers**: For tasks requiring longer genomic context (>2 kbp), NT's 12 kbp context window complements DNABERT-2's shorter but finer-grained representations.
 
 ### Alternative Models
 
@@ -98,7 +102,7 @@ When to choose DNABERT-2:
 - **Lightweight deployments** where compute cost matters (117M params, T4 GPU)
 - **Fine-grained tokenization** where BPE resolution matters more than long context
 - **Multi-species analyses** leveraging DNABERT-2's strong cross-species generalization on the GUE benchmark
-- **Regulatory element tasks** within the ~4-8 kbp context window (promoters, enhancers, splice sites)
+- **Regulatory element tasks** within the 2,048-nucleotide API limit (promoters, enhancers, splice sites)
 
 ## Biological Background
 
@@ -125,7 +129,7 @@ When to choose DNABERT-2:
 - **Promoter**: A DNA region upstream of a gene that initiates transcription.
 - **Enhancer**: A distal regulatory element that increases gene expression, often in a cell-type-specific manner.
 - **Splice site**: The boundary between an exon (retained in mRNA) and an intron (removed during RNA processing).
-- **GUE (Genome Understanding Evaluation)**: A standardized benchmark introduced alongside DNABERT-2, comprising 36 datasets across 9 genomic task categories for evaluating DNA language models.
+- **GUE (Genome Understanding Evaluation)**: A standardized benchmark introduced alongside DNABERT-2, comprising 28 datasets across 7 genomic task categories for evaluating DNA language models.
 
 ---
 

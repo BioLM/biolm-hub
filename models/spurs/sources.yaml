@@ -21,7 +21,6 @@ primary_papers:
   authors:
   - Luo Group
   pdf_r2: knowledge-base/models/spurs/primary/papers/luo2025.pdf
-  md_r2: pending
   figures_of_note: []
 source_repos:
 - type: github

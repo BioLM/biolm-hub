@@ -67,7 +67,10 @@ The model does not directly handle nucleic acids, small molecules, or multi-chai
 - **Metagenomic annotation**: Rapidly annotate structural families for millions of metagenomic sequences
 - **Evolutionary analysis**: Use structural embeddings to detect remote homology in protein family studies
 
-<!-- TODO: Add citations for applied studies using ProstT5 embeddings for specific tasks -->
+Published applications include: CATHe2 (Mouret & Abbass, 2025, Biology Methods and Protocols) using ProstT5
+3Di embeddings for remote homology detection across ~1700 CATH superfamilies; GraphPBSP (2024, International
+Journal of Biological Macromolecules) for protein binding site prediction; and Phold (2026, Nucleic Acids
+Research) for phage genome annotation via 3Di-based Foldseek search of 1.36M phage proteins.
 
 ## Related Models
 

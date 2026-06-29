@@ -38,7 +38,6 @@ Common across all variants:
 | Composition | Prokaryotic, eukaryotic, and viral genomes |
 | Preprocessing | Byte-level tokenization; single nucleotide per token |
 
-<!-- TODO: Extract exact dataset size and composition from Brixi et al. 2025 when full paper is published -->
 
 ### Loss Function & Objective
 
@@ -66,7 +65,6 @@ This yields both generative capability (sampling new sequences) and scoring capa
 
 From Brixi et al. "Genome modeling and design across all domains of life with Evo 2" (bioRxiv, 2025):
 
-<!-- TODO: Extract specific numerical benchmarks from Brixi et al. when full paper is available -->
 
 Key reported findings:
 - Evo 2 outperforms Evo 1 on DNA fitness prediction benchmarks
@@ -167,7 +165,7 @@ When a seed is provided for `generate`:
 
 ### Caching Behavior
 
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
+Response caching is handled outside the model container at the platform level:
 - Cache key derived from full request payload including parameters
 - For `generate` with no seed, cache misses are expected on repeated calls
 

@@ -15,7 +15,7 @@ from models.deepviscosity.schema import (
     DeepViscosityPredictRequestParams,
 )
 
-# Test input/output filenames (stored in R2 at r2://biolm-modal/test-data/deepviscosity/)
+# Test input/output filenames (stored in the model test-data bucket under models/deepviscosity/)
 SINGLE_AB_INPUT = "single_ab_input.json"
 SINGLE_PREDICT_OUTPUT = "single_predict_expected_output.json"
 MULTIPLE_AB_INPUT = "multiple_ab_input.json"

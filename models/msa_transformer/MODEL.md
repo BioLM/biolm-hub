@@ -181,7 +181,7 @@ All outputs are deterministic on the same hardware. Verified with max_diff=0.0 a
 
 ### Caching Behavior
 
-- Response caching (Redis + R2 two-tier) is handled by the BioLM platform layer, not the model container
+- Response caching is handled outside the model container at the serving layer
 - GPU memory snapshots enabled (`enable_memory_snapshot=True`, `enable_gpu_snapshot=True`)
 - Cache key includes MSA sequences, params, and include options
 

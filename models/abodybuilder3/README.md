@@ -1,4 +1,4 @@
-# AbodyBuilder3
+# ABodyBuilder3
 
 > **One-line summary**: Antibody structure prediction model that predicts 3D Fv region coordinates from paired heavy/light chain sequences using a GNN architecture with optional ProtT5 language model embeddings.
 
@@ -63,14 +63,14 @@ Predict 3D structure of an antibody Fv region from paired sequences.
   "results": [
     {
       "pdb": "ATOM      1  N   GLU H   1      ...",
-      "plddt": [[0.85, 0.92, ...], [0.78, 0.88, ...]]
+      "plddt": [85.2, 92.1, 78.4, 88.3, ...]
     }
   ]
 }
 ```
 
 - `pdb`: Full PDB-format structure string with predicted atom coordinates
-- `plddt`: Per-residue pLDDT confidence scores (only present when `params.plddt=true`). Nested list: one list per chain, each containing float scores (0--1 scale)
+- `plddt`: Per-residue pLDDT confidence scores (only present when `params.plddt=true`). Flat list of floats (0--100 scale, higher is more confident), one value per residue of the combined Fv sequence (heavy chain followed by light chain)
 
 ## Usage Examples
 
@@ -122,7 +122,7 @@ From Kenlay et al., *Bioinformatics* (2024):
 
 AbodyBuilder3 achieves improved and scalable antibody structure predictions compared to prior methods, with particular strengths in CDR loop modeling accuracy and inference speed.
 
-<!-- TODO: Add specific RMSD numbers from the paper once PDF is available in R2 -- see sources.yaml pdf_r2 -->
+See `sources.yaml` applied_literature for benchmark results from published comparisons, including per-CDR backbone RMSD reported in Dreyer et al. (mAbs, 2025).
 
 ### SOTA Status
 
@@ -157,7 +157,7 @@ Option A -- Numerical Reproduction: outputs from the BioLM implementation are co
 ## Implementation Notes
 
 - **Memory snapshots**: Uses `@modal.enter(snap=True)` with GPU memory snapshot enabled (`enable_gpu_snapshot=True`) for fast cold starts. Models are loaded directly on GPU during snapshot.
-- **Container image**: Uses `modal.Image.micromamba(python_version="3.9")` with OpenMM 8.1.1 from conda-forge and the AbodyBuilder3 repository cloned at commit `18e4058`.
+- **Container image**: Uses `modal.Image.micromamba(python_version="3.10")` with OpenMM 8.1.1 from conda-forge and the AbodyBuilder3 repository cloned at commit `18e4058`.
 - **External code**: The full AbodyBuilder3 repository is cloned and installed as an editable package (`pip install -e ".[dev]"`). The container's working directory is set to the cloned repo for relative imports.
 - **Determinism**: Comprehensive seeding across Python random, NumPy, PyTorch, and PyTorch Lightning. cuDNN deterministic mode enabled with benchmarking disabled.
 - **ProtT5 (language variant)**: The ProtT5 language model is loaded from local weights at `{model_dir}/prott5/` and produces per-residue embeddings that augment the GNN input.

@@ -23,9 +23,7 @@ ThermoMPNN-D extends ThermoMPNN to predict stability changes (ddG) for both sing
 
 ### Training Data
 
-<!-- TODO: Extract training dataset details from Dieckhaus & Kuhlman (2024) bioRxiv preprint -- requires PDF access -->
-
-The model was trained on experimental stability measurements including both single and double mutation data, with the epistatic model specifically trained on paired mutation datasets.
+The model was trained on experimental stability measurements including both single and double mutation data, with the epistatic model specifically trained on paired mutation datasets. Full training dataset details are described in Dieckhaus & Kuhlman (2024).
 
 ### Loss Function & Objective
 
@@ -44,7 +42,7 @@ Input processing follows the same pattern as ThermoMPNN:
 
 ### Published Benchmarks
 
-<!-- TODO: Extract benchmark results from Dieckhaus & Kuhlman (2024) bioRxiv 2024.10.10.617658 -- requires PDF access -->
+Benchmark results are described in Dieckhaus & Kuhlman (2024) (bioRxiv 2024.10.10.617658).
 
 ### BioLM Verification Results
 
@@ -118,7 +116,7 @@ Request --> Validate PDB + mutations + mode
 
 ### Caching Behavior
 
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container.
+Response caching is not performed by the model container; callers may add a caching layer at the infrastructure level.
 
 ## Versions & Changelog
 

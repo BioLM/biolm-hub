@@ -34,7 +34,6 @@ variant_config = parse_variant(
     env_var_name="MODEL_TYPE",
     allowed_values=ImmuneBuilderModelTypes,
     default=ImmuneBuilderModelTypes.TCRBUILDER2,
-    # var_is_required=True,
 )
 model_type = variant_config["MODEL_TYPE"]
 
@@ -55,7 +54,7 @@ def prebuild_immunebuilder_models():
     )
     logger.info("Model directory: %s", model_dir)
     logger.info("Loading ONLY %s model (not all variants!)", model_type)
-    logger.info(f"Start time: {time.strftime('%H:%M:%S')}")
+    logger.info("Start time: %s", time.strftime("%H:%M:%S"))
 
     start_time = time.time()
 
@@ -90,9 +89,11 @@ def prebuild_immunebuilder_models():
         end_time = time.time()
         duration = end_time - start_time
         logger.info(
-            f"Successfully pre-built ImmuneBuilder model '{model_type}' in {duration:.2f}s"
+            "Successfully pre-built ImmuneBuilder model '%s' in %.2fs",
+            model_type,
+            duration,
         )
-        logger.info(f"End time: {time.strftime('%H:%M:%S')}")
+        logger.info("End time: %s", time.strftime("%H:%M:%S"))
 
         # Check if weights were loaded from R2 or downloaded from library remote
         if model_dir.exists() and any(model_dir.iterdir()):
@@ -106,7 +107,7 @@ def prebuild_immunebuilder_models():
     except Exception as e:
         end_time = time.time()
         duration = end_time - start_time
-        logger.warning(f"Error during model pre-build after {duration:.2f}s: {e}")
+        logger.warning("Error during model pre-build after %.2fs: %s", duration, e)
         logger.warning("Model will be downloaded during runtime instead")
         # Don't fail the build, just log the issue
 
@@ -174,10 +175,8 @@ class ImmuneBuilderModel(ModelMixinSnap):
         logger.info("Loading %s with weights_dir: %s", self.model_type, weights_dir)
 
         # Check if we're using R2 cache or library remote
-        if weights_dir.exists() and any(weights_dir.glob(f"{self.model_type}/*")):
-            logger.info(
-                "Using R2 cached weights from: %s/%s/", weights_dir, self.model_type
-            )
+        if weights_dir.exists() and any(weights_dir.iterdir()):
+            logger.info("Using R2 cached weights from: %s", weights_dir)
             source = "R2 cache"
         else:
             logger.info("No R2 cache found, will download from library remote")
@@ -199,7 +198,7 @@ class ImmuneBuilderModel(ModelMixinSnap):
             raise ValueError(f"Invalid ImmuneBuilder Model Type: {self.model_type}")
 
         load_duration = time.time() - load_start
-        logger.info(f"Model loaded from {source} in {load_duration:.2f}s")
+        logger.info("Model loaded from %s in %.2fs", source, load_duration)
         return model
 
     @modal.enter(snap=True)
@@ -212,7 +211,7 @@ class ImmuneBuilderModel(ModelMixinSnap):
         logger.info(
             "Loading ImmuneBuilder model directly on GPU for GPU memory snapshot..."
         )
-        logger.info(f"Load start time: {time.strftime('%H:%M:%S')}")
+        logger.info("Load start time: %s", time.strftime("%H:%M:%S"))
 
         load_start_time = time.time()
 
@@ -221,7 +220,6 @@ class ImmuneBuilderModel(ModelMixinSnap):
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(42)
 
-        self.torch = torch
         self.model_dir = get_model_dir(self.model_type)
 
         # Get device and setup for GPU inference
@@ -250,19 +248,11 @@ class ImmuneBuilderModel(ModelMixinSnap):
             self.model = self._load_model_by_type(self.model_dir)
             model_load_duration = time.time() - model_load_start
 
-            logger.info(f"Model loading took {model_load_duration:.2f}s")
+            logger.info("Model loading took %.2fs", model_load_duration)
 
-        except Exception as e:
-            logger.error("Error loading model: %s", e, exc_info=True)
-            logger.warning(
-                "Attempting to resolve by allowing ImmuneBuilder to download models..."
-            )
-
-            # Since weights_dir is now required, we can't retry without it
-            logger.error(
-                "Failed to load model from %s: %s", self.model_dir, e, exc_info=True
-            )
-            raise e
+        except Exception:
+            logger.error("Failed to load model from %s", self.model_dir, exc_info=True)
+            raise
 
         load_end_time = time.time()
         total_duration = load_end_time - load_start_time
@@ -271,8 +261,8 @@ class ImmuneBuilderModel(ModelMixinSnap):
             self.model_type,
             self.device,
         )
-        logger.info(f"Total load time: {total_duration:.2f}s")
-        logger.info(f"Load end time: {time.strftime('%H:%M:%S')}")
+        logger.info("Total load time: %.2fs", total_duration)
+        logger.info("Load end time: %s", time.strftime("%H:%M:%S"))
 
     def _pre_process_payload(
         self, payload: ImmuneBuilderPredictRequest
@@ -347,23 +337,36 @@ class ImmuneBuilderModel(ModelMixinSnap):
                     if os.path.exists(output_file):
                         os.remove(output_file)
 
+        except ValidationError400:
+            raise
         except Exception as e:
-            logger.error("Model call failed with error [%s]", e, exc_info=True)
-            raise e
+            # ANARCI numbering failures are a documented failure mode for unusual
+            # sequences that pass extended-AA validation but fail immune-region
+            # identification — these are caller-input mistakes, not server faults.
+            err_str = str(e).lower()
+            if any(
+                kw in err_str
+                for kw in ("anarci", "numbering", "no sequence", "not a valid")
+            ):
+                raise ValidationError400(
+                    "Sequence failed ANARCI immune-region numbering. "
+                    "Ensure the input is a valid antibody, nanobody, or TCR sequence."
+                ) from e
+            logger.error("Model call failed", exc_info=True)
+            raise
 
         return ImmuneBuilderPredictResponse(results=results)
 
     def seed_everything(self, seed: int = 42, deterministic: bool = True):
-
-        import numpy as np
-        import torch
-
         """Set seed for reproducibility across random, NumPy, and torch.
 
         Args:
             seed (int): Seed value.
             deterministic (bool): If True, sets flags for deterministic behavior.
         """
+        import numpy as np
+        import torch
+
         # Python & NumPy
         random.seed(seed)
         np.random.seed(seed)
@@ -378,9 +381,6 @@ class ImmuneBuilderModel(ModelMixinSnap):
         torch.backends.cudnn.deterministic = deterministic
         torch.backends.cudnn.benchmark = not deterministic
 
-        # OS-level (hash-based randomness in Python)
-        os.environ["PYTHONHASHSEED"] = str(seed)
-
         logger.info(
             "Seeding everything with seed %s. Deterministic: %s", seed, deterministic
         )
@@ -391,7 +391,7 @@ if __name__ == "__main__":
     Usage:
         MODEL_TYPE="abodybuilder2" python models/immunebuilder/app.py
 
-        # Force deploy to "qa" or "main" environment:
+        # Deploy to your configured Modal environment:
         MODEL_TYPE="abodybuilder2" python models/immunebuilder/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

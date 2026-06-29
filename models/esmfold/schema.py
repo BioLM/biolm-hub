@@ -20,6 +20,9 @@ class ESMFoldParams(ModelParams):
     batch_size = 2
     max_sequence_len = 768
     max_n_multimers = 4  # Maximum number of chains in a sequence
+    max_tokens_per_batch = (
+        1024  # Maximum total residue tokens across sequences in one GPU forward pass
+    )
 
 
 ### ESMFold Request
@@ -62,7 +65,7 @@ class ESMFoldPredictRequest(RequestModel):
 class ESMFoldPredictResponseResult(ResponseModel):
     pdb: str = Field(description="Predicted structure in PDB format.")
     mean_plddt: float = Field(
-        description="Mean per-residue pLDDT confidence score (0–1); higher values indicate more confident predictions."
+        description="Mean per-residue pLDDT confidence score (0–100); higher values indicate more confident predictions."
     )
     ptm: float = Field(
         description="Predicted TM-score (pTM) for the overall structure (0–1)."

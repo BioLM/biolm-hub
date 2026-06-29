@@ -6,7 +6,7 @@
 
 ProDy is not a neural network -- it is an algorithmic protein structure analysis library that computes molecular interactions and structural comparisons using physics-based distance and angle cutoffs. The BioLM implementation wraps ProDy's InSty (Interactions by Structural Topology) module and RMSD calculation into a serving endpoint.
 
-The key utility is that ProDy computes **non-covalent interactions** (hydrogen bonds, salt bridges, hydrophobic contacts, pi-stacking, cation-pi) between residues using standardized geometric criteria, and **RMSD** between protein structures using structural or sequence-based alignment.
+The key utility is that ProDy computes **non-covalent interactions** (hydrogen bonds, salt bridges, hydrophobic contacts, pi-stacking, cation-pi, repulsive ionic) between residues using standardized geometric criteria, and **RMSD** between protein structures using structural or sequence-based alignment.
 
 ### Parameters & Layers
 
@@ -143,13 +143,12 @@ Request
 |---------|-------|
 | `random.seed` | 42 |
 | `numpy.random.seed` | 42 |
-| `PYTHONHASHSEED` | "42" |
 | Hydrogen bonds | +/-1 non-determinism |
 | All other interactions | Fully deterministic |
 
 ### Caching Behavior
 
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container. Memory snapshots are disabled (`enable_memory_snapshot=False`) to ensure fresh code execution on each container start.
+Response caching is handled at the platform layer, not by the model container. Memory snapshots are disabled (`enable_memory_snapshot=False`) to ensure fresh code execution on each container start.
 
 ## Versions & Changelog
 

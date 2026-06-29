@@ -31,7 +31,7 @@ Performance characteristics by structure type:
 
 **Problem**: Understanding which residues mediate protein-protein interactions is essential for drug design, antibody engineering, and understanding disease mechanisms. Crystallographic structures show the 3D arrangement but do not directly enumerate the non-covalent interactions that stabilize the interface.
 
-**How ProDy helps**: The `encode` action with `chain_pairs` specified computes all inter-chain interactions between two protein chains. It returns hydrogen bonds, salt bridges, hydrophobic contacts, pi-stacking, and cation-pi interactions with residue-level resolution, distances, and optional energy estimates.
+**How ProDy helps**: The `encode` action with `chain_pairs` specified computes all inter-chain interactions between two protein chains. It returns hydrogen bonds, salt bridges, hydrophobic contacts, pi-stacking, cation-pi, and repulsive ionic interactions with residue-level resolution, distances, and optional energy estimates.
 
 **Biological meaning**: The interaction profile reveals the chemical nature of the binding interface. A salt-bridge-rich interface suggests electrostatic complementarity; a hydrophobic-dominated interface indicates burial of non-polar surface area. Frequent interactor analysis identifies "hotspot" residues that make many contacts -- these are often critical for binding and are prime targets for mutagenesis.
 
@@ -97,6 +97,8 @@ ProDy is an established bioinformatics tool (published 2011, >2500 citations). A
 - **Pi-stacking**: Interactions between aromatic rings (Phe, Tyr, Trp, His). Can be face-to-face (sandwich), edge-to-face (T-shaped), or offset stacked. Important in protein-ligand and protein-protein interfaces.
 
 - **Cation-pi**: Interactions between positively charged residues (Lys, Arg) and aromatic rings. Energetically significant (1-5 kcal/mol) and common in protein-protein interfaces.
+
+- **Repulsive ionic**: Repulsive interactions between like-charged residues (e.g., two Asp or two Lys nearby). These destabilize local structure and are relevant for understanding charge-charge repulsion in protein design.
 
 **RMSD (Root Mean Square Deviation)**: The standard metric for quantifying structural similarity between two protein conformations. Calculated as the square root of the mean squared distance between corresponding atom positions after optimal superposition. Lower RMSD indicates more similar structures.
 

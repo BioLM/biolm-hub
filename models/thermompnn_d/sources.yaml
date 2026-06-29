@@ -37,8 +37,6 @@ applied_literature:
     which forms the foundation that ThermoMPNN-D extends to double-mutant predictions.
   molecule_focus: protein
   task_focus: stability_prediction
-  pdf_r2: pending
-  md_r2: pending
 - title: Protein stability models fail to capture epistatic interactions of double point mutations
   doi: 10.1002/pro.70003
   year: 2025
@@ -46,8 +44,6 @@ applied_literature:
     to capture epistatic interactions, with additive models performing comparably except on stabilizing double mutations.
   molecule_focus: protein
   task_focus: stability_prediction
-  pdf_r2: pending
-  md_r2: pending
 - title: Computation of Protein Thermostability and Epistasis
   doi: 10.1002/wcms.70045
   year: 2025
@@ -55,8 +51,6 @@ applied_literature:
     contextualizing the challenge of multi-mutation epistasis that ThermoMPNN-D addresses.
   molecule_focus: protein
   task_focus: stability_prediction
-  pdf_r2: pending
-  md_r2: pending
 - title: Predicting protein stability changes upon mutations with dual-view ensemble learning from single sequence
   doi: 10.1093/bib/bbaf319
   venue: Briefings in Bioinformatics, 2025
@@ -69,8 +63,6 @@ applied_literature:
     task
   molecule_focus: protein
   task_focus: stability_prediction
-  pdf_r2: pending
-  md_r2: pending
 - title: Site-saturation mutagenesis of 500 human protein domains
   doi: 10.1038/s41586-024-08370-4
   venue: Nature, 2025
@@ -85,5 +77,3 @@ applied_literature:
     ThermoMPNN-D extends to double mutations
   molecule_focus: protein
   task_focus: stability_prediction
-  pdf_r2: pending
-  md_r2: pending

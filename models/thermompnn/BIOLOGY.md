@@ -40,9 +40,13 @@ When no specific mutations are provided, ThermoMPNN performs a complete SSM scan
 
 ## Applied Use Cases
 
-No applied literature entries have been catalogued yet.
+ThermoMPNN has been applied in several published studies:
 
-<!-- TODO: Search for papers citing ThermoMPNN (Dieckhaus et al., 2023) for applied use cases -- search Google Scholar/Semantic Scholar -->
+- **Epistatic double mutations (ThermoMPNN-D)**: Dieckhaus & Kuhlman (2025, *Protein Science*) extended ThermoMPNN to double-mutant predictions and demonstrated that stability models fail to capture epistatic interactions, motivating the ThermoMPNN-D variant.
+- **Thermostable protein design**: Ertelt et al. (2024, *bioRxiv*) built on the ProteinMPNN backbone (shared with ThermoMPNN) in HyperMPNN to design thermostable proteins from hyperthermophilic data, achieving designs stable at 95°C from a 65°C starting point.
+- **PNAS peer-reviewed benchmark**: The peer-reviewed PNAS (2024) publication of ThermoMPNN established state-of-the-art single-mutation ddG prediction (PCC ~0.75, RMSE ~0.71 kcal/mol) on the Megascale dataset.
+- **Human Domainome benchmarking**: Beltran et al. (2025, *Nature*) benchmarked ThermoMPNN on 500K+ missense variants across 500 human protein domains and found it to be the best stability predictor overall (median rho = 0.50, 0.57 excluding zinc-fingers), outperforming all other dedicated stability predictors.
+- **SPURS comparison**: Li & Luo (2025, *Nature Communications*) introduced SPURS and benchmarked it against ThermoMPNN on the Megascale test set, with ThermoMPNN achieving Spearman correlation of 0.77 (SPURS: 0.83).
 
 ## Related Models
 

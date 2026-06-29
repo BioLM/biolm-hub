@@ -7,7 +7,7 @@
 ESM1v is designed for **proteins** broadly. It was trained on the UniRef90 database, which represents the full diversity of known protein sequences. The model is particularly suited for predicting the effects of single amino acid mutations on protein function, using a zero-shot approach that requires no task-specific training data.
 
 **Important coverage notes:**
-- Works with any protein sequence up to 512 residues
+- Works with any protein sequence up to 1022 residues
 - Requires exactly one `<mask>` token per sequence (single-site analysis)
 - Trained on UniRef90, covering all protein families with known sequences
 - Does not handle nucleic acid sequences or non-standard amino acids
@@ -50,7 +50,15 @@ ESM1v is designed for **proteins** broadly. It was trained on the UniRef90 datab
 
 ESM1v has been used in several published studies since its release in 2021, particularly for benchmarking variant effect prediction methods and interpreting clinical variants.
 
-<!-- TODO: Add specific applied literature entries from sources.yaml as they are populated -->
+**Genome-wide missense variant effect prediction** (Brandes et al., *Nature Genetics* 2023, DOI: 10.1038/s41588-023-01465-0): Extended ESM-1b (same architecture as ESM-1v) to predict all ~450 million possible missense variant effects in the human genome, outperforming existing methods on ~150,000 ClinVar/HGMD variants and 28 DMS datasets. Demonstrates the scalability of masked language model scoring to clinical genomics.
+
+**VariPred — combining embeddings and log-likelihood ratios** (DOI: 10.1038/s41598-024-51489-7, 2024): Benchmarks ESM-1v alongside ESM-1b and ESM-2 for missense pathogenicity prediction. Combining masked log-likelihood ratios with residue embeddings achieves MCC of 0.714 without structural features or MSAs, showing ESM-1v embeddings carry complementary signal to its scoring output.
+
+**Fine-tuning on DMS data improves variant effect prediction** (arXiv: 2405.06729, 2024): Fine-tuning ESM-1v on deep mutational scanning data with a Normalised Log-odds Ratio head consistently improves variant effect prediction across ProteinGym and ClinVar benchmarks, demonstrating that task-specific adaptation can substantially boost the zero-shot baseline.
+
+**ESM-Scan — in silico deep mutational scanning tool** (DOI: 10.1002/pro.5221, 2024): Builds ESM-Scan on ESM-1v zero-shot predictions for genome-wide in silico deep mutational scanning, enabling prediction of preferential amino acid substitutions for protein engineering at scale.
+
+**Rep2Mut-V2 — variant effect prediction from ESM-1v representations** (DOI: 10.1016/j.csbj.2023.11.017, 2023): Uses ESM-1v 33rd-layer representations to predict variant effects across 38 proteins (118,933 variants), achieving Spearman 0.7 and surpassing six state-of-the-art methods, illustrating that ESM-1v's learned representations are effective features beyond direct masked scoring.
 
 ## Related Models
 
@@ -60,11 +68,10 @@ ESM1v has been used in several published studies since its release in 2021, part
 
 ### Complementary Models
 
-ESM1v works well in combination with other models on the BioLM platform:
+ESM1v works well in combination with other models in the catalog:
 
 - **ESM2 / ESMC**: For general protein embeddings and representation. ESM1v focuses on variant effect prediction, while ESM2/ESMC provide richer embeddings for downstream tasks.
-- **Structure prediction models** (Boltz, ESMFold): For understanding the structural context of mutations. Pipeline: predict structure to visualize mutation location, use ESM1v for functional effect prediction.
-- **ESMStabP**: For stability-specific predictions. ESM1v predicts general fitness, while ESMStabP specifically predicts thermostability effects.
+- **ESMFold**: For understanding the structural context of mutations. Pipeline: predict structure to visualize mutation location, use ESM1v for functional effect prediction.
 
 ### Alternative Models
 

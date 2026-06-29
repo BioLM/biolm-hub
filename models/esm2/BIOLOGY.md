@@ -4,7 +4,7 @@
 
 ### Primary Molecule Type(s)
 
-ESM-2 is trained on UniRef50, which covers protein sequences from all domains of life  --  bacteria, archaea, eukaryota, and viruses. The model accepts single-chain protein sequences of up to ~2046 residues (2048 tokens including special tokens).
+ESM-2 is trained on UniRef50, which covers protein sequences from all domains of life  --  bacteria, archaea, eukaryota, and viruses. The model accepts single-chain protein sequences of up to 2048 amino-acid residues (BOS/EOS tokens are added internally).
 
 ESM-2 handles **globular proteins** best, as these are the most abundant in training data. Performance characteristics vary by protein type:
 
@@ -37,7 +37,7 @@ ESM-2 handles **globular proteins** best, as these are the most abundant in trai
 
 **Problem**: Predicting the functional impact of amino acid substitutions (missense mutations) is critical for clinical genetics, protein engineering, and understanding disease mechanisms. Experimental methods (deep mutational scanning) are expensive and limited to one protein at a time.
 
-**How ESM-2 helps**: The `log_prob` action computes the pseudo-log-likelihood of a full sequence. By comparing log P(wildtype) vs log P(mutant), researchers can estimate variant effects without any task-specific training. The masked language model naturally assigns higher likelihood to residues that are evolutionarily conserved at a given position.
+**How ESM-2 helps**: The `log_prob` action computes the summed per-residue log-probability of a full sequence using a single unmasked forward pass. By comparing log P(wildtype) vs log P(mutant), researchers can estimate variant effects without any task-specific training. The model naturally assigns higher probability to residues that are evolutionarily conserved at a given position. Note: this is a "wt-marginal" score (the model sees the full sequence), not a masked pseudo-log-likelihood (which would mask each position independently).
 
 **Biological meaning**: A large negative delta-log-probability (mutant much less likely than wildtype) suggests the mutation disrupts an evolutionarily conserved position and is likely deleterious. This correlates with experimental measures of protein fitness (stability, activity, binding affinity) as benchmarked on datasets like ProteinGym.
 
@@ -125,7 +125,7 @@ Proteins are linear chains of amino acids (typically 50-2000 residues long) that
 **Key terminology**:
 - **Embedding**: A dense numerical vector representing a protein (or a position within it) in a high-dimensional space. Similar proteins have similar embeddings.
 - **Masked language modeling (MLM)**: Training objective where random positions are hidden and the model must predict the original amino acid from context.
-- **Log-likelihood / pseudo-log-likelihood**: A score measuring how "expected" a sequence is under the model. Higher (less negative) scores indicate the sequence is more consistent with evolutionary patterns.
+- **Log-probability / log-likelihood**: A score measuring how "expected" a sequence is under the model. Higher (less negative) scores indicate the sequence is more consistent with evolutionary patterns. ESM-2's `log_prob` action uses a single unmasked forward pass (wt-marginal scoring), not masked pseudo-log-likelihood.
 - **Contact map**: A symmetric matrix indicating which residue pairs are physically close in 3D space. Long-range contacts (residues far apart in sequence but close in space) are particularly informative for structure.
 - **UniRef50**: A clustered version of the UniProt Reference Clusters database where sequences are grouped at 50% sequence identity, reducing redundancy while preserving diversity.
 

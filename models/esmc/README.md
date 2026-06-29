@@ -1,6 +1,6 @@
 # ESM C
 
-> **One-line summary**: Next-generation protein representation model from EvolutionaryScale providing high-quality embeddings, masked token prediction, and sequence log-probability scoring in a 300M parameter variant.
+> **One-line summary**: Protein representation model from EvolutionaryScale (ESM Cambrian) providing high-quality embeddings, masked token prediction, and sequence log-probability scoring in a 300M parameter variant.
 
 ## Overview
 
@@ -281,13 +281,13 @@ Option A -- Numerical Reproduction: embeddings, logits, and log-probabilities fr
 
 ### Papers
 
-1. EvolutionaryScale Team. "ESM Cambrian: Next-generation protein representation models." EvolutionaryScale blog post (2024). [Blog](https://www.evolutionaryscale.ai/blog/esm-cambrian)
+1. EvolutionaryScale Team. "ESM Cambrian: Revealing the mysteries of proteins with unsupervised learning." EvolutionaryScale blog post (2024). [Blog](https://www.evolutionaryscale.ai/blog/esm-cambrian)
 
 ### BibTeX
 
 ```bibtex
 @misc{esmc2024,
-  title={ESM Cambrian: Next-generation protein representation models},
+  title={ESM Cambrian: Revealing the mysteries of proteins with unsupervised learning},
   author={EvolutionaryScale Team},
   year={2024},
   url={https://www.evolutionaryscale.ai/blog/esm-cambrian}

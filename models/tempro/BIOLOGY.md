@@ -31,9 +31,15 @@ Experimental Tm determination requires expression, purification, and biophysical
 
 ## Applied Use Cases
 
-No applied literature entries have been catalogued yet.
+TEMPRO has been benchmarked and used as a baseline in several independent studies:
 
-<!-- TODO: Search for papers citing or using TEMPRO (Alvarez, 2024) -- search Google Scholar/Semantic Scholar -->
+- **NanoMelt (Ramon et al., 2025, MAbs)** directly benchmarks against TEMPRO for nanobody Tm prediction. NanoMelt, trained on 640 nanobodies using ESM-1b + SVR, achieves Pearson 0.751 on an external test set of 83 samples vs TEMPRO's R2=0.67 on a 6-sample external set. The comparison validates TEMPRO's problem formulation while demonstrating room for improvement with larger datasets.
+
+- **Murakami et al. (2025, bioRxiv)** performs mechanistic interpretability analysis of fine-tuned protein language models for nanobody thermostability and directly benchmarks against TEMPRO. A smaller fine-tuned ESM-2 8M model achieves RMSE=5.402 degrees C, outperforming TEMPRO's best ESM-2 15B-backed configuration (RMSE=5.661 degrees C). Uses Sparse Autoencoders to interpret the learned thermostability features.
+
+- **NBsTem (ACS Applied Materials & Interfaces, 2026)** benchmarks against TEMPRO on the Tm-118 external test set. NBsTem achieves MAE=2.30 degrees C and R=0.83, significantly outperforming TEMPRO (MAE=5.29 degrees C, R=0.66). NBsTem combines experimental Tm data with MD-simulation-derived theoretical indicators.
+
+- **NbBench (Zhang and Tsuda, 2025, arXiv:2505.02022)** — the first comprehensive nanobody benchmark suite — collects thermostability data from NbThermo, TEMPRO, and NanoMelt datasets. Evaluates 11 protein language models on thermostability regression, finding best Spearman correlation ~0.59 (AntiBERTa2). TEMPRO's dataset is used as a core data source in the benchmark.
 
 ## Related Models
 
@@ -52,7 +58,7 @@ TEMPRO builds on ESM2 (Lin et al., 2023) as its embedding backbone. The ESM2 pro
 | Alternative | Advantage over TEMPRO | Disadvantage |
 |-------------|----------------------|--------------|
 | TemBERTure | Works on any protein, not just nanobodies | Not specialized for nanobodies; different Tm accuracy |
-| Nano-HKU (if available) | Anticipated: may offer nanobody-specific features | Not available on BioLM platform |
+| Nano-HKU (if available) | Anticipated: may offer nanobody-specific features | Not available in the catalog |
 
 ## Biological Background
 

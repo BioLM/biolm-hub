@@ -9,7 +9,7 @@ ESMFold is designed for **protein structure prediction** from amino acid sequenc
 The model is trained on structures from the Protein Data Bank (PDB) and AlphaFold2 distillation data, covering proteins from all domains of life. Performance characteristics vary by protein type:
 
 - **Globular, soluble proteins**: Best performance. These represent the majority of PDB training data, and the ESM-2 backbone has strong representations for this category.
-- **Single-domain proteins**: Excellent accuracy when the protein has detectable homologs in UniRef50. For well-covered families, pLDDT > 0.7 typically corresponds to TM-score > 0.8 relative to experimental structures.
+- **Single-domain proteins**: Excellent accuracy when the protein has detectable homologs in UniRef50. For well-covered families, pLDDT > 70 typically corresponds to TM-score > 0.8 relative to experimental structures.
 - **Multi-domain proteins**: Each domain may be predicted well individually, but relative domain orientations can be unreliable, especially for flexible linker regions.
 - **Multi-chain complexes**: Supported but with degraded accuracy compared to single chains. Performance decreases with the number of chains.
 - **Membrane proteins**: Under-represented in training data. Transmembrane regions may be poorly predicted, especially for multi-pass helical bundles.
@@ -34,7 +34,7 @@ The model is trained on structures from the Protein Data Bank (PDB) and AlphaFol
 
 **How ESMFold helps**: ESMFold predicts protein structure from a single amino acid sequence in seconds, bypassing the MSA computation entirely. The ESM-2 language model backbone has already learned structural patterns from evolutionary data during pre-training, so explicit MSA signals are not needed for many proteins.
 
-**Biological meaning**: The output is a full-atom 3D structure in PDB format, with per-residue confidence scores (pLDDT) indicating which parts of the structure are reliable. A mean pLDDT above 0.7 generally indicates a usable fold. The predicted TM-score (pTM) provides a global assessment of whether the overall fold topology is correct.
+**Biological meaning**: The output is a full-atom 3D structure in PDB format, with per-residue confidence scores (pLDDT) indicating which parts of the structure are reliable. A mean pLDDT above 70 generally indicates a usable fold. The predicted TM-score (pTM) provides a global assessment of whether the overall fold topology is correct.
 
 **Practical considerations**: ESMFold trades some accuracy relative to AlphaFold2 for dramatically faster inference. This makes it ideal for screening large protein sets where rapid structure assessment is more important than maximum accuracy.
 
@@ -44,7 +44,7 @@ The model is trained on structures from the Protein Data Bank (PDB) and AlphaFol
 
 **How ESMFold helps**: The speed of ESMFold (seconds per prediction) makes it feasible to predict structures for entire proteomes or metagenomes. The authors of the ESMFold paper used it to predict structures for over 600 million metagenomic protein sequences, demonstrating the scalability of the approach.
 
-**Biological meaning**: Even low-confidence predictions (pLDDT 0.5-0.7) can reveal fold-level similarity to known structures, enabling functional annotation of previously uncharacterized proteins. High-confidence predictions (pLDDT > 0.7) can be used as starting points for more accurate methods or experimental validation.
+**Biological meaning**: Even low-confidence predictions (pLDDT 50–70) can reveal fold-level similarity to known structures, enabling functional annotation of previously uncharacterized proteins. High-confidence predictions (pLDDT > 70) can be used as starting points for more accurate methods or experimental validation.
 
 ### Structure-Guided Protein Engineering
 
@@ -56,14 +56,13 @@ The model is trained on structures from the Protein Data Bank (PDB) and AlphaFol
 
 ## Applied Use Cases
 
-<!-- TODO: Add applied literature entries to sources.yaml and document specific published use cases -- search Google Scholar for "ESMFold" publications from 2023-2025 -->
+ESMFold has been widely adopted for rapid structure prediction workflows. Selected published applications:
 
-ESMFold has been widely adopted for rapid structure prediction workflows. Common applied patterns include:
-
-- **Anticipated use case -- Metagenomic protein annotation**: Predicting structures for novel protein families discovered in environmental sequencing projects, using fold-level matches to assign putative function
-- **Anticipated use case -- Drug target triage**: Rapidly assessing the "foldability" of potential drug targets before investing in AlphaFold2 or experimental structure determination
-- **Anticipated use case -- Variant impact screening**: Predicting structures for disease-associated protein variants to assess whether mutations disrupt the native fold
-- **Anticipated use case -- Protein design validation**: Quick structural checks for computationally designed protein sequences before experimental characterization
+- **Protein-peptide docking** (Zalewski et al., 2025): ESMFold-predicted structures used for protein-peptide docking without MSAs, achieving 20–28% acceptable-quality poses using an efficient polyglycine linker approach.
+- **Binding-site prediction** (DeepProSite, Fang et al., 2023): ESMFold-predicted structures fed into a topology-aware graph transformer for protein binding-site prediction, outperforming sequence-only baselines.
+- **Protein-engineering ranking** (APPRAISE, Ding et al., 2024): ESMFold structures used to rapidly rank engineered protein variants (AAVs, nanobodies, miniproteins) by target-binding propensity before wet-lab testing.
+- **Antimicrobial peptide classification** (Cordoves-Delgado et al., 2024): ESMFold-predicted structures as graph representations for antimicrobial peptide classification, outperforming 20 state-of-the-art methods on a 67,058-peptide dataset.
+- **Joint structure and fitness prediction** (SPIRED-Fitness, 2024): ESMFold used as a benchmark for a new end-to-end structure-and-fitness prediction framework, demonstrating 5-fold inference acceleration while maintaining comparable accuracy.
 
 ## Related Models
 
@@ -88,7 +87,7 @@ Typical multi-model workflows:
 
 | Alternative | Advantage Over ESMFold | Disadvantage vs ESMFold |
 |-------------|----------------------|------------------------|
-| AlphaFold2 (AF2 NIM) | Higher accuracy, especially for multi-domain proteins | Requires MSA, much slower inference |
+| AlphaFold2 | Higher accuracy, especially for multi-domain proteins | Requires MSA, much slower inference |
 | Boltz | Handles ligands, nucleic acids, and diverse complexes; higher accuracy for multi-chain | Slower inference, more resource-intensive |
 | Chai-1 | Similar capability to Boltz for diverse complexes | Slower inference, more resource-intensive |
 
@@ -105,7 +104,7 @@ Typical multi-model workflows:
 **Single-sequence structure prediction**: ESMFold demonstrated that protein language models trained on evolutionary sequence data already learn enough structural information to predict 3D structure without explicit MSA input. The language model's internal representations capture the same co-evolutionary signals that MSAs provide, but compressed into a single forward pass. This is analogous to how a human expert who has studied thousands of protein structures can make reasonable fold predictions from sequence alone.
 
 **Key terminology**:
-- **pLDDT (predicted Local Distance Difference Test)**: A per-residue confidence score (0-1 or 0-100) estimating how accurately the local structure around each residue is predicted. Values above 0.7 generally indicate reliable predictions.
+- **pLDDT (predicted Local Distance Difference Test)**: A per-residue confidence score (0-100) estimating how accurately the local structure around each residue is predicted. Values above 70 generally indicate reliable predictions.
 - **pTM (predicted TM-score)**: A global score (0-1) estimating the overall fold correctness. Values above 0.5 indicate a broadly correct fold topology; values above 0.8 indicate high-confidence predictions.
 - **PDB format**: The standard text format for representing 3D molecular structures, specifying atomic coordinates, chain identifiers, and metadata.
 - **MSA (Multiple Sequence Alignment)**: An alignment of a query protein against evolutionarily related sequences from databases like UniRef. Co-varying positions in the MSA reveal structural contacts.

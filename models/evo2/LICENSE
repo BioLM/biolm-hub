@@ -177,7 +177,7 @@ Michael Poli, Brian L. Hie, Patrick D. Hsu, and colleagues).
 Source: https://github.com/ArcInstitute/evo2
 Model weights: https://huggingface.co/arcinstitute/evo2_1b_base (and related)
 Paper: "Genome modeling and design across all domains of life with Evo 2"
-(bioRxiv, 2025; arXiv:2503.11265)
+(bioRxiv, 2025; doi:10.1101/2025.02.18.638918)
 
 The Evo 2 source code and model weights are distributed under the Apache License,
 Version 2.0 (see https://github.com/ArcInstitute/evo2/blob/main/LICENSE). Evo 2

@@ -54,6 +54,7 @@ image = setup_download_layer(
     base_model_slug=TemBERTureParams.base_model_slug,
     params_version=TemBERTureParams.params_version,
     variant_config=variant_config,
+    extra_pip_packages=["huggingface_hub==0.16.4"],
 )
 # Add Python dependencies and packages
 image = (
@@ -219,7 +220,7 @@ class TemBERTureModel(ModelMixinSnap):
                 e,
                 exc_info=True,
             )
-            raise e
+            raise
 
         return TemBERTureEncodeResponse(results=results)
 
@@ -248,7 +249,7 @@ class TemBERTureModel(ModelMixinSnap):
                 e,
                 exc_info=True,
             )
-            raise e
+            raise
 
         return TemBERTurePredictResponse(results=results)
 
@@ -401,7 +402,7 @@ class TemBERTureModel(ModelMixinSnap):
             for j, pred in enumerate(logits):
                 result_dict = {"prediction": float(pred)}
 
-                if self.model_type == "classifier":
+                if self.model_type == TemBERTureModelTypes.CLASSIFIER:
                     # Apply sigmoid and convert to classification
                     prob = 1 / (1 + np.exp(-pred))
                     classification = (
@@ -410,9 +411,11 @@ class TemBERTureModel(ModelMixinSnap):
                     result_dict["classification"] = classification
                     # Return probability instead of logit
                     result_dict["prediction"] = float(prob)
-                    logger.info(f"Sequence {j+1}: {classification} (prob: {prob:.4f})")
+                    logger.info(
+                        "Sequence %s: %s (prob: %.4f)", j + 1, classification, prob
+                    )
                 else:
-                    logger.info(f"Sequence {j+1}: Tm = {pred:.2f}°C")
+                    logger.info("Sequence %s: Tm = %.2f deg C", j + 1, pred)
 
                 result = TemBERTurePredictResponseResult.model_validate(result_dict)
                 results.append(result)
@@ -427,7 +430,7 @@ if __name__ == "__main__":
         MODEL_TYPE="classifier" python models/temberture/app.py
         MODEL_TYPE="regression" python models/temberture/app.py
 
-        # Force deploy to "qa" or "main" environment:
+        # Force deploy to "biolm-models-dev" (dev) or "biolm-models" (prod) environment:
         MODEL_TYPE="classifier" python models/temberture/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

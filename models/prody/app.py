@@ -70,7 +70,6 @@ class ProDyModel(ModelMixin):
     @modal.enter()
     def load_model(self):
         """Load ProDy and set seeds for determinism."""
-        import os
         import random
 
         import prody  # noqa: F401  # Pre-import for faster first request
@@ -78,7 +77,6 @@ class ProDyModel(ModelMixin):
         seed = 42
         random.seed(seed)
         np.random.seed(seed)
-        os.environ["PYTHONHASHSEED"] = str(seed)
 
         logger.info("ProDy model loaded successfully")
 
@@ -95,13 +93,9 @@ class ProDyModel(ModelMixin):
         logger.info(f"Processing {num_items} items sequentially")
 
         results = []
-        for idx, item in enumerate(payload.items):
-            try:
-                result_obj = process_structure_for_insty(item, payload.params)
-                results.append(result_obj)
-            except Exception as e:
-                logger.error(f"Error processing item {idx}: {e}", exc_info=True)
-                raise
+        for item in payload.items:
+            result_obj = process_structure_for_insty(item, payload.params)
+            results.append(result_obj)
 
         return ProDyEncodeResponse(results=results)
 
@@ -123,7 +117,7 @@ if __name__ == "__main__":
     Usage:
         python models/prody/app.py
 
-        # Force deploy to "qa" or "main" environment:
+        # Force deploy to "biolm-models-dev" or "biolm-models" environment:
         python models/prody/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

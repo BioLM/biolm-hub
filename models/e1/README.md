@@ -1,6 +1,6 @@
 # E1
 
-> **One-line summary**: Encrypted protein language model with retrieval-augmented inference that produces embeddings, masked predictions, and log-probability scores, optionally conditioned on homologous context sequences.
+> **One-line summary**: Retrieval-augmented protein encoder language model that produces embeddings, masked predictions, and log-probability scores, optionally conditioned on homologous context sequences.
 
 ## Overview
 
@@ -196,7 +196,7 @@ Golden output comparison: Test fixtures compare outputs against reference values
 | Test Case | Action | Input | Verification |
 |-----------|--------|-------|--------------|
 | Single sequence encode | `encode` | 1 protein, mean pooling | Cosine similarity to golden output |
-| Multi-sequence encode | `encode` | Multiple proteins | Cosine similarity to golden output |
+| Encode (per-token, single sequence, layer 15) | `encode` | 1 protein, per-token, layer 15 | Cosine similarity to golden output |
 | Context-augmented encode | `encode` | Query + 2 context sequences | Cosine similarity to golden output |
 | Masked prediction | `predict` | Sequence with `?` tokens | Logit comparison to golden output |
 | Log probability (single) | `log_prob` | Unmasked sequence | Negative finite float |
@@ -221,7 +221,7 @@ Golden output comparison: Test fixtures compare outputs against reference values
 - **Dtype selection**: E1-150M uses float16 (T4 native); E1-300M/600M use bfloat16 (L4 Ada Lovelace native).
 - **config.json patching**: auto_map is injected at runtime for trust_remote_code support.
 - **Logit slicing**: Only 20 canonical amino acid logits are returned; non-canonical tokens are excluded.
-- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
+- **Caching**: Response caching is handled by the serving layer, not the model container itself.
 
 ## License
 

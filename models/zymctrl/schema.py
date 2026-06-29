@@ -61,7 +61,7 @@ class ZymCTRLGenerateParams(RequestModel):
     )
     temperature: float = Field(
         default=0.8,
-        ge=0.0,
+        gt=0.0,
         le=2.0,
         description="Sampling temperature; higher values increase diversity.",
     )

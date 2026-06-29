@@ -137,18 +137,8 @@ class IgBertModel(ModelMixinSnap):
     def _pre_process_payload(
         self, payload: Union[IgBertEncodeRequest, IgBertLogProbRequest]
     ) -> list[str]:
-        request_kind = payload.items[0]._kind  # Just check the first one
-
-        if any(item._kind != self.model_type for item in payload.items) or (
-            (
-                request_kind == IgBertModelTypes.PAIRED
-                and self.model_type != IgBertModelTypes.PAIRED
-            )
-            or (
-                request_kind == IgBertModelTypes.UNPAIRED
-                and self.model_type != IgBertModelTypes.UNPAIRED
-            )
-        ):
+        if any(item._kind != self.model_type for item in payload.items):
+            request_kind = payload.items[0]._kind
             raise ValidationError400(
                 f"Mismatch detected: expected '{self.model_type}' but got '{request_kind}' in request."
             )
@@ -186,7 +176,7 @@ class IgBertModel(ModelMixinSnap):
             )
         except Exception as e:
             logger.error("Model call failed with error [%s]", e, exc_info=True)
-            raise e
+            raise
 
         return results
 
@@ -249,10 +239,6 @@ class IgBertModel(ModelMixinSnap):
 
         return IgBertEncodeResponse(results=results_list)
 
-    # TODO:
-    # * Implement predict() method that returns logits for each residue, INCLUDING <mask> residues
-    # * See ESMC's predict() method and schemas for inspiration
-
     @modal.method()
     @modal_endpoint(app_name=app_name)
     def generate(self, payload: IgBertGenerateRequest) -> IgBertGenerateResponse:
@@ -260,6 +246,12 @@ class IgBertModel(ModelMixinSnap):
         Restore missing residues: `'*'` -> `[MASK]`. We pick the top prediction
         at each [MASK] position to fill.
         """
+
+        if any(item._kind != self.model_type for item in payload.items):
+            request_kind = payload.items[0]._kind
+            raise ValidationError400(
+                f"Mismatch detected: expected '{self.model_type}' but got '{request_kind}' in request."
+            )
 
         # 1) Build the masked input for each item
         masked_input_texts = []
@@ -424,7 +416,7 @@ if __name__ == "__main__":
     Usage:
         MODEL_TYPE="paired" python models/igbert/app.py
 
-        # Force deploy to "qa" or "main" environment:
+        # Force deploy to the target Modal environment:
         MODEL_TYPE="paired" python models/igbert/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

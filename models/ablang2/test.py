@@ -8,6 +8,7 @@ from models.ablang2.fixture import (
     GENERATE_OUTPUT,
     PREDICT_INPUT,
     PREDICT_OUTPUT,
+    SEQ_1,
 )
 from models.ablang2.schema import AbLang2LogProbRequest
 from models.commons.model.schema import ModelActions
@@ -52,14 +53,7 @@ test_suite = TestSuite(
                 # log_prob (programmatic)
                 ActionTestCase(
                     action_name=ModelActions.LOG_PROB,
-                    input_fixture=AbLang2LogProbRequest(
-                        items=[
-                            {
-                                "heavy_chain": "QVQLVQSGGQMKKPGSSVRVSCKASGYTFTNYGMNWVRQAPGQGLEWMGRI",
-                                "light_chain": "DIQMTQSPSSLSASVGDRVTITCKASQDVSTAVA",
-                            }
-                        ]
-                    ),
+                    input_fixture=AbLang2LogProbRequest(items=[SEQ_1]),
                     request_schema=AbLang2LogProbRequest,
                     validator=_validate_log_prob,
                 ),

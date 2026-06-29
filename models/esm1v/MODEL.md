@@ -18,7 +18,7 @@ The model uses a standard Transformer encoder (BERT-style) architecture with mas
 | Layers | 33 Transformer layers |
 | Training objective | Masked Language Modeling (MLM) |
 | Input | Protein sequence with `<mask>` token at position of interest |
-| Output | Per-position logits over 20 standard amino acids |
+| Output | Per-position amino acid probabilities over 20 standard amino acids |
 
 ### Training Data
 
@@ -48,7 +48,7 @@ score(X->Y, i) = log P(Y | context_masked_at_i) - log P(X | context_masked_at_i)
 - **Input format**: Amino acid sequence string with exactly one `<mask>` token at the position of interest
 - **Validation**: Extended amino acid alphabet plus `<mask>` special token
 - **Single mask requirement**: Exactly one `<mask>` token must be present in each sequence
-- **Maximum length**: 512 residues (including the mask token)
+- **Maximum length**: 1022 residues (1024 tokens - 2 for BOS/EOS; matches ESM-1b's architectural limit)
 - **Tokenization**: Uses the ESM tokenizer from HuggingFace Transformers (`EsmTokenizer`)
 - **Inference**: HuggingFace `fill-mask` pipeline, filtered to 20 standard amino acids only
 
@@ -102,14 +102,14 @@ Evaluated across 41 deep mutational scanning (DMS) datasets.
 ### Cons
 
 - Limited to single-site mutations (one `<mask>` per sequence)
-- Maximum sequence length of 512 residues
+- Maximum sequence length of 1022 residues
 - Does not capture epistatic effects between multiple mutations
 - CPU-based inference for individual models (GPU only for "all" variant)
-- Returns raw logits, not directly interpretable fitness scores
+- Returns probabilities at masked positions, not directly interpretable absolute fitness scores
 
 ### Known Failure Modes
 
-- Sequences near or exceeding 512 residues may be truncated
+- Sequences near or exceeding 1022 residues may be truncated
 - Multi-site mutations require separate queries per position
 - Proteins with few homologs in UniRef90 may have less reliable predictions
 - Active site residues under strong functional selection may not be well-predicted by sequence-only models
@@ -148,10 +148,7 @@ Request
 
 ### Caching Behavior
 
-Response caching is handled by the BioLM platform layer (not the model container):
-- Redis (Modal Dict) caching for fast repeated lookups
-- R2 caching for persistence
-- Cache keys determined by full request payload (sequence + mask position)
+Model weights are cached in R2 and loaded from the container image snapshot on warm starts. Response-level caching is not performed in the model container; operators may layer a cache in front of the endpoint if desired.
 
 ## Versions & Changelog
 

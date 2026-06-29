@@ -31,7 +31,7 @@ use_when:
   - "You are studying antibody-antigen interactions and need to predict epitope-paratope contacts for therapeutic antibody development"
 
 dont_use_when:
-  - "You only need single-chain protein structure prediction -- ESMFold is orders of magnitude faster for single proteins, and AF2 NIM is more accurate for protein-only targets"
+  - "You only need single-chain protein structure prediction -- ESMFold is orders of magnitude faster for single proteins"
   - "You need binding affinity predictions alongside structure -- use Boltz-2, which combines structure prediction with log10 IC50 affinity estimation"
   - "You need de novo protein design or sequence generation -- Chai-1 is prediction-only; use RFdiffusion3 or BoltzGen for generative design tasks"
   - "Your sequences exceed 1024 residues per protein chain or 3072 bases per nucleic acid -- consider RF3 or breaking the problem into subunits"
@@ -40,15 +40,9 @@ dont_use_when:
   - "GPU resources are limited (no A100 80GB available) -- use ESMFold for single-chain proteins or Boltz on A100 40GB for multi-molecule targets"
 
 alternatives:
-  - model: boltz
-    when_better: "Boltz-2 adds binding affinity prediction (log10 IC50), pocket-constrained docking, and ipSAE interface confidence metrics; runs on A100 40GB (lower resource requirement); MIT license"
-    when_worse: "Chai-1 has explicitly optimized multi-entity handling (up to 5 entities) and may perform differently on specific protein-ligand targets; Chai Discovery provides commercial support"
   - model: rf3
     when_better: "RF3 supports template conditioning, cyclic peptides, and CCD codes for non-canonical residues; newest architecture with potentially highest accuracy on multi-molecule benchmarks"
     when_worse: "Chai-1 has more published cross-docking benchmarks; different training data may favor different target classes; Chai-1's ESM embedding integration is a unique feature"
-  - model: af2_nim
-    when_better: "AlphaFold2 is the most validated protein structure predictor with thousands of published benchmarks; higher accuracy on well-characterized single-chain protein targets"
-    when_worse: "AF2 is protein-only -- cannot model ligands, DNA, or RNA; no diffusion-based sampling; limited to 512 residues per chain in this deployment"
   - model: esmfold
     when_better: "100-1000x faster single-sequence inference (seconds vs minutes) on A10G GPU; no MSA required; dramatically lower cost per prediction"
     when_worse: "Protein-only with lower accuracy; no multi-molecule support; 768 residue limit; cannot model binding interactions with non-protein molecules"

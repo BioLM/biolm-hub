@@ -19,7 +19,6 @@ from models.commons.util.config import (
 from models.commons.util.device import get_torch_device
 from models.thermompnn.config import (
     MODEL_FAMILY,
-    PROTEIN_MPNN_CHECKPOINT,
     THERMOMPNN_MODEL_CHECKPOINT,
     thermompnn_commit_hash,
 )
@@ -127,6 +126,10 @@ class ThermoMPNNModel(ModelMixinSnap):
     def load_model(self):
         """
         Loads the ThermoMPNN model on CPU for memory snapshot.
+
+        CPU-snapshot approach (rather than GPU-snapshot): the model is loaded on CPU
+        so the snapshot is device-agnostic; setup_model() then transfers to GPU after
+        the snapshot is restored. This avoids GPU-state serialization issues.
         """
         import torch
 
@@ -145,11 +148,10 @@ class ThermoMPNNModel(ModelMixinSnap):
             self.model_dir,
         )
 
-        # Load model on CPU first
-        self.model, self.config = load_thermompnn(
+        # Load model on CPU first (snapshot is device-agnostic)
+        self.model, _ = load_thermompnn(
             model_dir=self.model_dir,
             checkpoint_name=THERMOMPNN_MODEL_CHECKPOINT,
-            protein_mpnn_checkpoint=PROTEIN_MPNN_CHECKPOINT,
             device=torch.device("cpu"),  # Force CPU loading for snapshot
         )
 
@@ -227,6 +229,10 @@ class ThermoMPNNModel(ModelMixinSnap):
             ]
 
             return ThermoMPNNPredictResponse(results=response_items)
+        except (ValueError, IndexError) as e:
+            # Caller-mistake conditions (bad chain, invalid position, missing residues)
+            # are raised as UserError (4xx) instead of propagating as HTTP 500.
+            raise UserError(str(e)) from e
         finally:
             # Clean up temporary files
             if os.path.exists(temp_dir):
@@ -238,7 +244,7 @@ if __name__ == "__main__":
     Usage:
         python models/thermompnn/app.py
 
-        # Force deploy to "qa" or "main" environment:
+        # Force deploy to the target Modal environment:
         python models/thermompnn/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

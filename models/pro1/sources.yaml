@@ -78,11 +78,10 @@ source_repos:
 # ---------------------------------------------------------------------------
 # Coverage note: Pro-1 was released March 2025 as a blog post + GitHub repo
 # (no arXiv preprint) and has not yet been cited by name in peer-reviewed
-# literature. Entries 2-4 below are paradigm-adjacent works (same RL+CoT or
+# literature. Only one direct Pro-1 application exists (the Adaptyv Bio wet-lab
+# validation); entries 2-4 are paradigm-adjacent works (same RL+CoT or
 # reasoning-LLM-for-protein-design approach) that contextualise Pro-1's
-# methodology even though they do not use Pro-1 directly. The skill's
-# minimum-5-entry target is documented as relaxed for this model pending
-# broader academic uptake.
+# methodology even though they do not use Pro-1 directly.
 applied_literature:
   - title: "Protein Designer Spotlight: Can a language model reason about protein design? (Pro-1 wet-lab validation)"
     arxiv: ""

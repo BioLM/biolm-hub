@@ -24,8 +24,6 @@ IgBERT uses the standard BERT architecture with `BertForMaskedLM` from HuggingFa
 | Tokenizer | BertTokenizer (character-level, case-sensitive) |
 | Embedding dimension | 768 (BERT-base) |
 
-<!-- TODO: Confirm exact parameter count and hidden dimensions by inspecting HuggingFace model card -- see sources.yaml source_repos[0] (https://huggingface.co/Exscientia/IgBert) -->
-
 ### Training Data
 
 | Property | Details |
@@ -62,11 +60,7 @@ The tokenizer operates at the character level with spaces between amino acids, a
 
 ### Published Benchmarks
 
-The IgBERT paper evaluates paired and unpaired models on antibody-specific tasks including binding affinity prediction and CDR embedding quality.
-
-<!-- TODO: Extract benchmark numbers from Table 1 of the IgBERT paper for binding prediction and embedding quality -- see sources.yaml primary_papers[0] (arXiv: 2310.16645) -->
-
-Key findings from the paper:
+The IgBERT paper (arXiv: 2403.17889) evaluates paired and unpaired models on antibody-specific tasks including binding affinity prediction and CDR embedding quality. Key findings from the paper:
 - Paired models capture heavy-light chain co-evolution signals
 - Fine-tuning from general protein LMs improves antibody representation quality
 - Scale of training data matters for antibody language model performance
@@ -160,10 +154,7 @@ Request
 
 ### Caching Behavior
 
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
-- **Redis (Modal Dict)**: Fast lookup, TTL-based expiration
-- **R2**: Persistent storage for cached results
-- **Cache key**: Determined by request payload (sequences, params, model type)
+Response caching is handled outside the model container at the serving layer. The model container itself is stateless with respect to caching.
 
 ## Versions & Changelog
 

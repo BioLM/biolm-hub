@@ -72,11 +72,10 @@ DSM_VARIANT_RESOURCE_SPECS = {
 
 # DSM configuration:
 # - Axes: MODEL_SIZE (150m, 650m, 3b) × VARIANT (base, ppi)
-# - Actions: predict (generate), encode, score
+# - Actions: generate, encode, score
 MODEL_FAMILY = ModelFamily(
     base_model_slug=DSMParams.base_model_slug,
     display_name=DSMParams.display_name,
-    # The @biolm_model_class container class in app.py (gateway routing, W8).
     modal_class_name="DSMModel",
     tags=ModelTags(
         input_modality=[InputModality.SEQUENCE],

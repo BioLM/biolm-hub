@@ -121,8 +121,6 @@ encode_unpaired = IgT5EncodeRequest(
 
 IgT5 is evaluated alongside IgBERT, comparing T5 and BERT architectures for antibody representation learning.
 
-<!-- TODO: Extract IgT5-specific benchmark numbers from Kenlay et al. 2024 -- see sources.yaml primary_papers[0] (arXiv: 2403.17889) -->
-
 ### SOTA Status
 
 IgT5 provides a strong baseline for antibody embedding quality, particularly with its T5-based relative position encoding. It complements IgBERT by offering an alternative architectural approach for antibody representation.
@@ -159,7 +157,7 @@ Numerical reproduction: The BioLM implementation loads official pre-trained weig
 - **Dependencies**: `transformers==4.48.1`, `sentencepiece==0.2.0`, `safetensors==0.5.3`
 - **Variant dispatch**: The model type (paired/unpaired) is set at deployment time via the `MODEL_TYPE` environment variable.
 - **Embedding computation**: Special tokens are masked out before mean pooling. Per-residue embeddings include padding positions which are zeroed out.
-- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
+- **Caching**: Response caching is handled outside the model container by the serving layer.
 
 ## License
 
@@ -186,7 +184,7 @@ Numerical reproduction: The BioLM implementation loads official pre-trained weig
 
 - **Paper**: [arXiv: 2403.17889](https://arxiv.org/abs/2403.17889)
 - **Model weights (paired)**: [huggingface.co/Exscientia/IgT5](https://huggingface.co/Exscientia/IgT5)
-- **Model weights (unpaired)**: [huggingface.co/Exscientia/IgT5_unpaired](https://huggingface.co/Exscientia/IgT5)
+- **Model weights (unpaired)**: [huggingface.co/Exscientia/IgT5_unpaired](https://huggingface.co/Exscientia/IgT5_unpaired)
 
 ---
 

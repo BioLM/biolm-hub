@@ -20,7 +20,7 @@ Additional variants defined but not currently deployed: 20M, 60M, 116M, 300M, 70
 |----------|-------|
 | Architecture | OLMo Transformer (AutoModelForCausalLM) |
 | Tokenization | BPE (byte-pair encoding), vocabulary size 4096 |
-| Max sequence length | 2,048 tokens (BPE tokens, not nucleotides) |
+| Max sequence length | 2,048 nucleotides (characters); BPE tokenizer cap is 2,048 tokens but is never reached given the character limit |
 | Positional encoding | As per OLMo architecture |
 
 ### Training Data
@@ -30,7 +30,7 @@ Additional variants defined but not currently deployed: 20M, 60M, 116M, 300M, 70
 | Dataset | DNA sequences (multi-species) |
 | Preprocessing | BPE tokenization with vocabulary of 4096 tokens |
 
-<!-- TODO: Extract specific training data details from Li et al. 2025 paper when available -->
+Training data details are described in Li et al. 2025 (arXiv:2502.03499).
 
 ### Loss Function & Objective
 
@@ -50,17 +50,17 @@ The model predicts the next BPE token given all preceding tokens, learning the s
 | Vocabulary size | 4,096 tokens |
 | Token examples | "A", "AA", "TG", "ACGT", etc. |
 | Input alphabet | A, C, G, T only (unambiguous DNA) |
-| Max length | 2,048 BPE tokens |
+| Max length | 2,048 nucleotides input cap (BPE token limit unreachable) |
 | Special tokens | BOS, PAD |
 | Batch size | 2 sequences per request |
 
-Note: Due to BPE tokenization, the number of nucleotides per token varies. A 2,048-token input may represent roughly 4,000--8,000 nucleotides depending on sequence composition.
+Note: Input is capped at 2,048 nucleotides. Due to BPE tokenization, the number of nucleotides per token varies, but the character cap ensures the BPE token limit is never reached.
 
 ## Performance & Benchmarks
 
 ### Published Benchmarks
 
-<!-- TODO: Extract benchmarks from Li et al. "Omni-DNA: A Unified Multi-Task Framework for DNA Foundation Models" when available -->
+See Li et al. "Omni-DNA: A Unified Genomic Foundation Model for Cross-Modal and Multi-Task Learning" (arXiv:2502.03499) for published benchmark results.
 
 ### BioLM Verification Results
 
@@ -78,7 +78,7 @@ Tests cover the 1B variant only.
 | **Omni-DNA (this)** | BPE tokenization; unified multi-task framework | Newer, less validated than established models |
 | Evo 2 | Multi-domain training; generation capability | Much larger; no BPE tokenization |
 | Nucleotide Transformer | 6-mer tokenization; extensive benchmarks | No generation; masked LM only |
-| DNABERT-2 | Established; BPE tokenization | Shorter context; no BioLM integration |
+| DNABERT-2 | Established; BPE tokenization | Shorter context; masked LM only |
 
 ### Error Bars & Confidence
 
@@ -114,7 +114,7 @@ Tests cover the 1B variant only.
 
 ```
 Request
-  |-- 1. Validate input (A/C/G/T only, length <= 2048 BPE tokens)
+  |-- 1. Validate input (A/C/G/T only, length <= 2048 nucleotides)
   |-- 2. Route to action:
   |
   |-- [encode]
@@ -152,7 +152,7 @@ Results are reproducible on the same GPU architecture. GPU memory snapshot is en
 
 ### Caching Behavior
 
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
+Response caching is handled upstream of the model container; the container itself is stateless:
 - GPU memory snapshots enabled (`enable_memory_snapshot=True`, `enable_gpu_snapshot=True`)
 - Cache key derived from action name, input payload, and model variant
 

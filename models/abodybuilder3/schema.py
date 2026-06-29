@@ -14,16 +14,15 @@ from models.commons.model.pydantic import (
     RequestModel,
     ResponseModel,
 )
-from models.commons.model.schema import ModalGPU, ModalResourceSpec
 
 ### AbodyBuilder3 Params
 
 
 class AbodyBuilder3Params(ModelParams):
     params_version = "v1"
-    display_name = "AbodyBuilder3"
+    display_name = "ABodyBuilder3"
     base_model_slug = "abodybuilder3"
-    log_identifier = "AbodyBuilder3"
+    log_identifier = "ABodyBuilder3"
     batch_size = 4
     max_sequence_len = 2048
 
@@ -34,18 +33,6 @@ class AbodyBuilder3Params(ModelParams):
 class AbodyBuilder3ModelTypes(EnhancedStringEnum):
     LANGUAGE = "language"
     PLDDT = "plddt"
-
-
-### AbodyBuilder3 Modal Resource Specs
-
-ABODYBUILDER3_VARIANT_RESOURCE_SPECS = {
-    AbodyBuilder3ModelTypes.PLDDT: ModalResourceSpec(
-        cpu=2.0, memory=8 * 1024, gpu=None  # 8GB RAM
-    ),
-    AbodyBuilder3ModelTypes.LANGUAGE: ModalResourceSpec(
-        cpu=4.0, memory=12 * 1024, gpu=ModalGPU.L40S  # 48GB RAM
-    ),
-}
 
 
 ### AbodyBuilder3 Request
@@ -68,11 +55,9 @@ class AbodyBuilder3PredictRequestItem(RequestModel):
 
     heavy_chain: Annotated[
         str,
-        BeforeValidator(
-            validate_aa_extended
-        ),  # TODO: check if extended or unambiguous should be validated
+        BeforeValidator(validate_aa_extended),
         Field(
-            None,
+            ...,
             min_length=1,
             max_length=AbodyBuilder3Params.max_sequence_len,
             validation_alias=AliasChoices("heavy_chain", "H"),
@@ -84,7 +69,7 @@ class AbodyBuilder3PredictRequestItem(RequestModel):
         str,
         BeforeValidator(validate_aa_extended),
         Field(
-            None,
+            ...,
             min_length=1,
             max_length=AbodyBuilder3Params.max_sequence_len,
             validation_alias=AliasChoices("light_chain", "L"),

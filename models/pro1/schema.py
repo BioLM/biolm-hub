@@ -154,6 +154,7 @@ class Pro1GenerateRequest(RequestModel):
     """Request for Pro-1 generate action."""
 
     params: Pro1GenerateParams = Field(
+        default_factory=Pro1GenerateParams,
         description="Optional parameters controlling this action (defaults are used when omitted).",
     )
     items: Annotated[

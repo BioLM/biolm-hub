@@ -66,7 +66,7 @@ Performance characteristics by protein type:
 
 ## Applied Use Cases
 
-DSM is a recent model (2024). Applied use cases include:
+DSM is a recent model (2025). Applied use cases include:
 
 - **De novo protein design**: Generating novel protein sequences for functional screening
 - **Masked region design**: Designing specific regions (loops, linkers, binding sites) while preserving scaffold

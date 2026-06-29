@@ -174,7 +174,7 @@ Numerical reproduction: BioLM outputs compared against golden outputs with tight
 | Memory | 16 GB RAM |
 | CPU | 3.0 cores |
 | Max batch size | 32 |
-| Max sequence length | 256 per chain (512 unpaired) |
+| Max sequence length | 256 per chain |
 | Memory snapshot | Enabled with GPU snapshot |
 
 ## Implementation Notes
@@ -183,7 +183,7 @@ Numerical reproduction: BioLM outputs compared against golden outputs with tight
 - **Container image**: Based on micromamba; clones ImmuneFold from GitHub at commit `b6d916f`.
 - **External dependencies**: ESM-2 3B model (`fair-esm` package), Hydra config system, OmegaConf.
 - **External modifications**: `models/immunefold/external/inference.py` replaces the original inference script for API compatibility.
-- **Dependencies**: Pinned to specific conda environment (`environment.yml`), plus `fair-esm`, Hydra, OmegaConf.
+- **Dependencies**: Pinned pip packages (see `app.py` image build): `torch==2.1.2` + CUDA 12, `fair-esm`, Hydra, OmegaConf, plus bioconda tools (hmmer, hhsuite, kalign2, anarci) via micromamba.
 - **Model weights**: Two checkpoints downloaded from R2: `immunefold-ab.ckpt` (antibody) and `immunefold-tcr.ckpt` (TCR), plus `esm2_t36_3B_UR50D.pt`.
 - **Config system**: Hydra configs loaded from `immunefold/config/` with runtime overrides for model paths and parameters.
 

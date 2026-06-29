@@ -104,15 +104,13 @@ class ESM1bModel(ModelMixinSnap):
         self.num_layers = self.model.config.num_hidden_layers
         self.max_sequence_len = ESM1bParams.max_sequence_len
 
-        # Tokens per batch for batching
-        self.toks_per_batch = 4096
-
-        # Get amino acid vocabulary tokens (standard 20 amino acids)
-        # ESM tokenizer vocab: special tokens + standard AAs
+        # Get amino acid vocabulary tokens — restrict to the 20 standard (canonical) AAs
+        # to match the sibling esm2 model and keep logit columns and log_prob normalization consistent.
+        _canonical_aa = frozenset("ACDEFGHIKLMNPQRSTVWY")
         self.vocab_tokens = [
             tok
             for tok in self.tokenizer.get_vocab().keys()
-            if len(tok) == 1 and tok.isupper()
+            if len(tok) == 1 and tok in _canonical_aa
         ]
 
         logger.info(
@@ -143,7 +141,7 @@ class ESM1bModel(ModelMixinSnap):
             )
         except Exception as e:
             logger.error("Model call failed with error [%s]", e, exc_info=True)
-            raise e
+            raise
 
         return ESM1bEncodeResponse(results=results)
 
@@ -165,7 +163,7 @@ class ESM1bModel(ModelMixinSnap):
             results = self._predict_forward_pass(sequences=sequences)
         except Exception as e:
             logger.error("Model call failed with error [%s]", e, exc_info=True)
-            raise e
+            raise
 
         return ESM1bPredictResponse(results=results)
 
@@ -416,7 +414,7 @@ if __name__ == "__main__":
     Usage:
         python models/esm1b/app.py
 
-        # Force deploy to "qa" or "main" environment:
+        # Force deploy to "biolm-models-dev" or "biolm-models" environment:
         python models/esm1b/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

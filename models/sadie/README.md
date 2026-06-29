@@ -4,7 +4,7 @@
 
 ## Overview
 
-SADIE (Sequence Analysis and Domain Identification Engine) is an antibody sequence analysis and annotation tool developed by Willis. Unlike the language models on this platform, SADIE is an algorithmic tool that uses HMM-based alignment to identify immunoglobulin and TCR domains, assign standardized residue numbering, annotate framework and CDR regions, and identify germline V and J gene segments.
+SADIE (Sequencing Analysis and Data Library for Immunoinformatics Exploration) is an antibody sequence analysis and annotation tool developed by Willis. Unlike the language models on this platform, SADIE is an algorithmic tool that uses HMM-based alignment to identify immunoglobulin and TCR domains, assign standardized residue numbering, annotate framework and CDR regions, and identify germline V and J gene segments.
 
 SADIE serves as a critical preprocessing step in antibody engineering pipelines. It supports multiple numbering schemes (IMGT, Kabat, Chothia) and region definitions (IMGT, Kabat, Chothia, AbM, Contact, SCDR), handles antibody heavy chains, kappa and lambda light chains, all four TCR chain types, and single-chain variable fragments (scFv).
 
@@ -212,12 +212,12 @@ Output comparison: The BioLM implementation uses the `sadie-antibody` PyPI packa
 
 ## Implementation Notes
 
-- **Memory snapshots**: SADIE uses `@modal.enter(snap=True)` to pre-load the `Renumbering` class and `@modal.enter(snap=False)` for the ready state.
+- **Memory snapshots**: SADIE uses `@modal.enter(snap=True)` to import the `Renumbering` class into the memory snapshot (the HMM databases are loaded on first request, not snapshotted); `@modal.enter(snap=False)` logs the ready state.
 - **Determinism**: SADIE is fully deterministic -- HMM alignment is not stochastic.
 - **Dependencies**: `sadie-antibody==1.0.6` (requires Pydantic v1 internally; accommodated in schema design).
 - **Sequence hashing**: Sequences are hashed with SHA-256 for internal tracking.
 - **No GPU**: SADIE runs entirely on CPU with minimal resource allocation.
-- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
+- **Caching**: Response caching is handled outside the model container.
 
 ## License
 
@@ -228,14 +228,14 @@ Output comparison: The BioLM implementation uses the `sadie-antibody` PyPI packa
 
 ### Papers
 
-1. Willis JR. "SADIE: Antibody sequence analysis, numbering, and annotation." (2022).
+1. Willis JR. "SADIE: Sequencing Analysis and Data Library for Immunoinformatics Exploration." (2022). Software tool — no peer-reviewed paper published. Available via GitHub and PyPI.
 
 ### BibTeX
 
 ```bibtex
 @software{willis2022sadie,
-  title={SADIE: Antibody sequence analysis, numbering, and annotation},
-  author={Willis, Jordan R},
+  title={SADIE: Sequencing Analysis and Data Library for Immunoinformatics Exploration},
+  author={Willis, Jordan R and Sincomb, Troy M and Kibet, Caleb K},
   year={2022},
   url={https://github.com/jwillis0720/sadie}
 }

@@ -215,9 +215,7 @@ log_prob_request = IgBertLogProbRequest(
 
 ### Published Results
 
-IgBERT was evaluated on antibody embedding quality and paired chain modeling in the context of large-scale antibody language models.
-
-<!-- TODO: Extract benchmark numbers from Kenlay et al. 2024 -- see sources.yaml primary_papers[0] (arXiv: 2403.17889) -->
+IgBERT was evaluated on antibody embedding quality and paired chain modeling in the context of large-scale antibody language models. See Kenlay et al. (2024) (arXiv: 2403.17889) for binding affinity prediction benchmarks and CDR sequence recovery results.
 
 ### SOTA Status
 
@@ -258,7 +256,7 @@ Numerical reproduction: The BioLM implementation loads official pre-trained weig
 - **Weight loading**: Weights are downloaded from R2 and loaded via HuggingFace `BertForMaskedLM.from_pretrained()`.
 - **Dependencies**: `transformers==4.48.1`, `sentencepiece==0.2.0`, `safetensors==0.5.3`
 - **Variant dispatch**: The model type (paired/unpaired) is set at deployment time via the `MODEL_TYPE` environment variable.
-- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
+- **Caching**: Response caching is handled outside the model container at the serving layer.
 
 ## License
 
@@ -285,7 +283,7 @@ Numerical reproduction: The BioLM implementation loads official pre-trained weig
 
 - **Paper**: [arXiv: 2403.17889](https://arxiv.org/abs/2403.17889)
 - **Model weights (paired)**: [huggingface.co/Exscientia/IgBert](https://huggingface.co/Exscientia/IgBert)
-- **Model weights (unpaired)**: [huggingface.co/Exscientia/IgBert_unpaired](https://huggingface.co/Exscientia/IgBert)
+- **Model weights (unpaired)**: [huggingface.co/Exscientia/IgBert_unpaired](https://huggingface.co/Exscientia/IgBert_unpaired)
 
 ---
 

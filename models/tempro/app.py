@@ -1,5 +1,4 @@
 import os
-from functools import lru_cache
 from typing import TYPE_CHECKING
 
 import modal
@@ -8,6 +7,7 @@ if TYPE_CHECKING:
     import numpy as np
 
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.error import ModelExecutionError
 from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
@@ -74,16 +74,6 @@ logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
-@lru_cache(maxsize=128)
-def get_esm2_modal_class(esm_app_name: str, app_username: str):
-    """Get cached user-specific ESM2 Modal class instance for request attribution."""
-    try:
-        ESM2Model = modal.Cls.from_name(esm_app_name, "ESM2Model")
-        return ESM2Model(app_username=app_username)
-    except Exception as e:
-        raise RuntimeError(f"Cannot reach ESM2 model '{esm_app_name}': {e}") from e
-
-
 @app.cls(
     image=image,
     secrets=[cloudflare_r2_secret],
@@ -106,7 +96,7 @@ class TemproModel(ModelMixinSnap):
         os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"  # 0=all, 1=info, 2=warning, 3=error
         tf.get_logger().setLevel("ERROR")
 
-        logger.info("🔧 Loading TEMPRO %s model for snapshot...", self.esm2_size)
+        logger.info("Loading TEMPRO %s model for snapshot...", self.esm2_size)
 
         # Set deterministic behavior for consistent results
         tf.random.set_seed(42)
@@ -115,21 +105,24 @@ class TemproModel(ModelMixinSnap):
         model_dir = get_model_dir(self.esm2_size)
         model_path = model_dir / "saved_models" / f"ESM_{self.esm2_size.upper()}.keras"
 
-        logger.info("📂 Loading Keras model from: %s", model_path)
+        logger.info("Loading Keras model from: %s", model_path)
         self.keras_model = keras.models.load_model(model_path)
 
         # ESM2 configuration - layer to extract embeddings from
         self.esm_layer = TEMPRO_ESM_LAYER_MAPPING[TemproESM2Sizes(self.esm2_size)]
 
-        logger.info("✅ TEMPRO %s model loaded into memory snapshot", self.esm2_size)
+        logger.info("TEMPRO %s model loaded into memory snapshot", self.esm2_size)
 
     @modal.enter(snap=False)
     def setup_model(self):
-        """Post-snapshot setup."""
-        logger.info(
-            "✅ TEMPRO %s ready for inference from memory snapshot!", self.esm2_size
-        )
-        logger.info("🎯 Using ESM2 layer %s for embeddings", self.esm_layer)
+        """Post-snapshot setup: initialize cross-model ESM2 reference."""
+        esm_app_name = f"esm2-{self.esm2_size}"
+        try:
+            ESM2Model = modal.Cls.from_name(esm_app_name, "ESM2Model")
+            self.esm2_model_instance = ESM2Model(app_username=self.app_username)
+        except Exception as e:
+            raise RuntimeError(f"Cannot reach ESM2 model '{esm_app_name}': {e}") from e
+        logger.info("TEMPRO %s ready (ESM2 layer %s)", self.esm2_size, self.esm_layer)
 
     def get_esm2_embeddings(self, sequences: list[str]) -> "np.ndarray":
         """
@@ -141,7 +134,7 @@ class TemproModel(ModelMixinSnap):
         Returns:
             numpy array of mean-pooled embeddings, shape (batch_size, embedding_dim)
         """
-        logger.info("🔗 Calling ESM2 for %s sequences...", len(sequences))
+        logger.info("Calling ESM2 for %s sequences...", len(sequences))
 
         # Prepare request for ESM2
         request_payload = ESM2EncodeRequest(
@@ -151,27 +144,14 @@ class TemproModel(ModelMixinSnap):
             items=[ESM2EncodeRequestItem(sequence=seq) for seq in sequences],
         )
 
-        # Get ESM2 model using Modal function lookup with username for attribution
-        esm_app_name = f"esm2-{self.esm2_size}"
-        logger.info(
-            "📞 Looking up ESM2 app: %s for user: %s", esm_app_name, self.app_username
-        )
-
         try:
-            # Get cached ESM2 Modal class instance with proper username attribution
-            model_instance = get_esm2_modal_class(esm_app_name, self.app_username)
-
-            # Call ESM2 remotely
+            # Call ESM2 remotely using the pre-initialized instance from setup_model
             with modal.enable_output():
-                response = model_instance.encode.remote(request_payload)
+                response = self.esm2_model_instance.encode.remote(request_payload)
 
-            # # If response is a Pydantic v2 object, convert to dict
-            # if hasattr(response, "model_dump"):
-            #     response = response.model_dump()
-
-            # Everything is now a dict
+            # response is a dict (serialized by the modal_endpoint decorator)
             results = response["results"]
-            logger.info("✅ ESM2 call successful, got %s results", len(results))
+            logger.info("ESM2 call successful, got %s results", len(results))
 
             # Extract embeddings - results is a list of dicts
             embeddings = []
@@ -179,7 +159,9 @@ class TemproModel(ModelMixinSnap):
                 # result is a dict, embeddings is a list of dicts
                 embeddings_data = result["embeddings"]
                 if not embeddings_data:
-                    raise ValueError(f"No embeddings returned for sequence index {i}")
+                    raise ModelExecutionError(
+                        f"No embeddings returned for sequence index {i}"
+                    )
 
                 # Get the first (and only) layer's embedding
                 layer_embedding = embeddings_data[0]
@@ -189,8 +171,10 @@ class TemproModel(ModelMixinSnap):
 
             return np.array(embeddings, dtype=np.float32)
 
+        except ModelExecutionError:
+            raise
         except Exception as e:
-            logger.error("❌ Error calling ESM2: %s", e, exc_info=True)
+            logger.error("Error calling ESM2: %s", e, exc_info=True)
             raise RuntimeError(f"Failed to get ESM2 embeddings: {e}") from e
 
     @modal.method()
@@ -202,45 +186,40 @@ class TemproModel(ModelMixinSnap):
         sequences = [item.sequence for item in payload.items]
 
         logger.info(
-            "🌡️ Predicting Tm for %s sequences using TEMPRO %s",
+            "Predicting Tm for %s sequences using TEMPRO %s",
             len(sequences),
             self.esm2_size,
         )
 
-        try:
-            import numpy as np
+        import numpy as np
 
-            # Step 1: Get ESM2 embeddings
-            embeddings = self.get_esm2_embeddings(sequences)
-            logger.debug("📊 Got embeddings shape: %s", embeddings.shape)
+        # Step 1: Get ESM2 embeddings
+        embeddings = self.get_esm2_embeddings(sequences)
+        logger.debug("Got embeddings shape: %s", embeddings.shape)
 
-            # Step 2: Predict using Keras model
-            logger.info("🧠 Running Keras model prediction...")
-            predictions = self.keras_model.predict(embeddings, verbose=0)
+        # Step 2: Predict using Keras model
+        logger.info("Running Keras model prediction...")
+        predictions = self.keras_model.predict(embeddings, verbose=0)
 
-            # Step 3: Build response
-            results = []
-            for i, (_sequence, tm_pred) in enumerate(
-                zip(sequences, predictions, strict=False)
-            ):
-                # Extract scalar prediction (predictions come as [[value]] from Keras)
-                tm_value = (
-                    float(tm_pred[0])
-                    if isinstance(tm_pred, list | np.ndarray)
-                    else float(tm_pred)
-                )
+        # Step 3: Build response
+        results = []
+        for i, (_sequence, tm_pred) in enumerate(
+            zip(sequences, predictions, strict=False)
+        ):
+            # Extract scalar prediction (predictions come as [[value]] from Keras)
+            tm_value = (
+                float(tm_pred[0])
+                if isinstance(tm_pred, list | np.ndarray)
+                else float(tm_pred)
+            )
 
-                result = TemproPredictResponseResult(tm=tm_value)
-                results.append(result)
+            result = TemproPredictResponseResult(tm=tm_value)
+            results.append(result)
 
-                logger.debug(f"  Sequence {i+1}: Tm = {tm_value:.2f}°C")
+            logger.debug("Sequence %s: Tm = %.2f C", i + 1, tm_value)
 
-            logger.info("✅ TEMPRO prediction complete for %s sequences", len(results))
-            return TemproPredictResponse(results=results)
-
-        except Exception as e:
-            logger.error("❌ TEMPRO prediction failed: %s", e, exc_info=True)
-            raise e
+        logger.info("TEMPRO prediction complete for %s sequences", len(results))
+        return TemproPredictResponse(results=results)
 
 
 if __name__ == "__main__":
@@ -249,7 +228,7 @@ if __name__ == "__main__":
         ESM2_SIZE="650m" python models/tempro/app.py
         ESM2_SIZE="3b" python models/tempro/app.py
 
-        # Force deploy to QA or production:
+        # Force deploy to biolm-models-dev or biolm-models:
         ESM2_SIZE="650m" python models/tempro/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

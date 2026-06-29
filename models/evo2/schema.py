@@ -210,7 +210,7 @@ class Evo2EncodeResponse(ResponseModel):
 
 class Evo2PredictLogProbResponseResult(ResponseModel):
     log_prob: float = Field(
-        description="Pseudo-log-likelihood of the sequence under the model."
+        description="Log-likelihood of the sequence under the model."
     )
 
 

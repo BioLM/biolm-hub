@@ -20,7 +20,7 @@ The key innovation of DNABERT-2 over its predecessor (DNABERT) and other DNA lan
 | Tokenization | Byte Pair Encoding (BPE), ~4,096 tokens |
 | Training data | Multi-species genomic DNA |
 | Training objective | Masked language modeling (MLM) |
-| Max sequence length | 2,048 tokens (BioLM API) |
+| Max sequence length | 2,048 nucleotides |
 
 See [MODEL.md](MODEL.md) for detailed architecture specifications and tokenization comparison.
 
@@ -45,7 +45,7 @@ Single variant -- no size options. The model slug is `dnabert2`.
 - Tasks requiring very long genomic context (>8 kbp) -- consider Nucleotide Transformers or Evo
 
 **Other considerations:**
-- BPE tokens have variable nucleotide lengths, so the effective genomic span covered by 2,048 tokens depends on sequence composition (typically 4--8 kbp)
+- The request schema enforces a 2,048-nucleotide character limit (~2 kbp); BPE tokens are variable-length so the token count is always fewer than the nucleotide count
 - The `log_prob` action requires N forward passes (one per non-special token) and is significantly slower than `encode`
 - Uses GPU memory snapshots for reduced cold start times
 
@@ -159,7 +159,7 @@ variant_request = DNABERT2PredictLogProbRequest(
 
 ### Published Results
 
-DNABERT-2 was evaluated on the Genome Understanding Evaluation (GUE) benchmark (28 datasets, 7 task categories):
+DNABERT-2 was evaluated on the Genome Understanding Evaluation (GUE) benchmark (28 datasets across 7 task categories):
 
 | Model | Parameters | GUE Aggregate | Notes |
 |-------|-----------|--------------|-------|
@@ -167,8 +167,6 @@ DNABERT-2 was evaluated on the Genome Understanding Evaluation (GUE) benchmark (
 | NT-v2-500M | 500M | Second best | 4.3x larger |
 | HyenaDNA | 1.6M-6.6M | Competitive on some tasks | Much smaller |
 | DNABERT v1 (6-mer) | ~117M | Baseline | Original k-mer approach |
-
-<!-- TODO: Extract exact GUE numerical scores per task category from Zhou et al. 2023 Table 2  --  requires paper PDF from R2 -->
 
 ### SOTA Status
 
@@ -205,7 +203,7 @@ Numerical reproduction (Option A): Integration tests compare model outputs again
 ## Implementation Notes
 
 - **Memory snapshots**: Uses `@modal.enter(snap=True)` with GPU snapshot enabled (`enable_memory_snapshot=True`, `enable_gpu_snapshot=True`). The model loads directly on GPU during snapshot creation.
-- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
+- **Caching**: Response caching is handled outside the model container by the serving layer.
 - **Tokenizer**: BPE tokenizer loaded from HuggingFace with `trust_remote_code=True`. Configured with padding and truncation up to `max_sequence_len=2048`.
 - **Container image**: Built from `pytorch/pytorch:2.3.1-cuda11.8-cudnn8-runtime`. The `triton` package is uninstalled to avoid conflicts.
 - **Determinism**: `torch.manual_seed(42)` and `torch.cuda.manual_seed_all(42)` set at model load time. Model runs in `eval()` mode with `torch.no_grad()`.

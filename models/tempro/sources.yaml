@@ -1,9 +1,14 @@
 model_slug: tempro
 display_name: TEMPRO
 license:
-  type: MIT
+  type: no-license-found
   url: https://github.com/Jerome-Alvarez/TEMPRO
-  notes: ''
+  notes: 'Upstream GitHub repository has no LICENSE file (GitHub API confirms license:
+    null). Under default copyright law all rights are reserved by the original authors.
+    The model code and weights (user.zip) are not open-source. The published paper
+    (Sci. Reports 14:19074, 2024) is CC-BY 4.0, which does not extend to the model
+    code or weights. An explicit license grant from the authors is required for any
+    redistribution or commercial use.'
 molecule_types:
 - protein
 applicable_to:

@@ -34,7 +34,7 @@ Not applicable (algorithmic tool).
 |----------|---------|
 | Input type | Raw DNA sequence (string) |
 | Alphabet | A, C, G, T (unambiguous DNA only) |
-| Preprocessing | Uppercased before feature computation |
+| Preprocessing | Input must be uppercase A/C/G/T; validation rejects lowercase |
 | Max length | No hard limit (practical limit depends on feature) |
 | Batch size | 1 sequence per request |
 
@@ -101,14 +101,14 @@ Request
   |-- 3. For each feature in params.include:
   |     |-- Dispatch to compute_* method
   |     |-- GC content: dnachisel.biotools.gc_content
-  |     |-- CAI: python_codon_tables lookup + geometric mean
+  |     |-- CAI: python_codon_tables lookup + arithmetic mean of relative adaptiveness (naive approximation)
   |     |-- Hairpin: AvoidHairpins specification scoring
   |     |-- Melting temp: primer3.calc_tm
   |     |-- Restriction sites: DnaNotationPattern matching
   |     |-- Entropy features: scipy.stats.entropy
   |     |-- Others: custom algorithms on raw sequence
-  |-- 4. Assemble DnaChiselPredictResponseResult
-  |-- 5. Return DnaChiselPredictResponse
+  |-- 4. Assemble DnaChiselEncodeResponseResult
+  |-- 5. Return DnaChiselEncodeResponse
 ```
 
 ### Memory & Compute Profile
@@ -132,7 +132,7 @@ All features are computed using exact arithmetic or well-defined numerical algor
 
 ### Caching Behavior
 
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
+Response caching is handled by the serving layer, not by the model container:
 - Cache key derived from input sequence and parameters (include list, species, restriction enzymes)
 - Cache hits are always valid since outputs are deterministic
 

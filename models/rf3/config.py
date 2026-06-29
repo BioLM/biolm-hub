@@ -23,10 +23,8 @@ from models.rf3.schema import (
 
 RF3ResourceSpec = ModalResourceSpec(
     cpu=8.0,
-    memory=64 * 1024,  # 64GB
-    # Try A100_40GB first - can fall back to A100_80GB if needed
-    # With reduced batch sizes, 40GB may be sufficient
-    gpu=ModalGPU.A100_40GB,  # RF3 requires substantial GPU memory (40GB may work with optimizations)
+    memory=64 * 1024,  # 64 GB system RAM
+    gpu=ModalGPU.A100_40GB,
 )
 
 # RF3 configuration:

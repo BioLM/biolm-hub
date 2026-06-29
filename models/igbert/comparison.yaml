@@ -1,5 +1,5 @@
 model_slug: "igbert"
-display_name: "IgBERT"
+display_name: "IgBert"
 last_updated: "2026-03-17"
 
 strengths:
@@ -44,16 +44,9 @@ alternatives:
   - model: "igt5"
     when_better: "IgT5 is the companion T5-architecture model from the same paper; its relative position biases may better capture long-range dependencies for some downstream tasks"
     when_worse: "IgT5 is embedding-only (encode action) with no sequence generation or log-probability scoring; IgBERT provides generate and log_prob actions for more complete analysis"
-  - model: "nanobert"
-    when_better: "NanoBERT is specifically trained on nanobody sequences and captures VHH-specific hallmark residues, extended CDR3 diversity, and single-domain structural constraints"
-    when_worse: "NanoBERT cannot process paired antibody sequences and is limited to nanobodies; IgBERT handles both paired and unpaired conventional antibodies"
   - model: "esm2"
     when_better: "ESM-2 covers all proteins, offers 5 size variants, and has the broadest downstream ecosystem; better for cross-protein-family comparisons"
     when_worse: "ESM-2 is not antibody-specialized, cannot model paired heavy-light chains, and underperforms antibody-specific models on CDR recovery and antibody property prediction tasks"
-  - model: "ablef"
-    when_better: "AbLEF directly predicts HIC-RT and Fab Tm developability properties from sequence, providing actionable property values rather than general embeddings"
-    when_worse: "AbLEF is limited to two specific properties; IgBERT provides versatile embeddings, generation, and scoring capabilities applicable to many downstream tasks"
-
 complements:
   - model: "sadie"
     workflow: "Use SADIE to annotate, number, and extract variable domains from raw antibody sequences, then pass them to IgBERT for embedding generation, masked residue prediction, or log-probability scoring"

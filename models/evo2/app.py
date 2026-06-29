@@ -53,12 +53,14 @@ build_gpu = get_build_gpu(model_variant)
 # Build Modal container image
 # Pinned: flash-attn+transformer-engine ABI mismatch
 image = modal.Image.from_registry("pytorch/pytorch:2.4.1-cuda12.4-cudnn9-devel")
+# Note: huggingface_hub needed in download layer for HF fallback when R2 cache is empty
 # Setup download layer with model weights
 image = setup_download_layer(
     image,
     base_model_slug=Evo2Params.base_model_slug,
     params_version=Evo2Params.params_version,
     variant_config=variant_config,
+    extra_pip_packages=["huggingface_hub==0.26.0"],
 )
 # Add dependencies and packages
 image = (
@@ -91,15 +93,15 @@ logger.info("App name: %s", app_name)
 app = modal.App(app_name, image=image)
 
 
-# NOTE: We do not use Modal GPU memory snapshots for this model (CPU-only two-phase instead).
-# Reason: GPU snapshots fail to create (transformer_engine/flash-attn don't support it).
+# Note: GPU snapshots are not used (transformer_engine/flash-attn prevent them).
+# Instead, the CPU two-phase snapshot pattern is used: snap=True loads on CPU,
+# snap=False moves the model to GPU after snapshot restore.
 
 
 @app.cls(
     image=image,
     secrets=[cloudflare_r2_secret],
     enable_memory_snapshot=True,
-    experimental_options={"enable_gpu_snapshot": True},
     **modal_resource_spec.to_modal_options(),
 )
 @biolm_model_class
@@ -175,7 +177,7 @@ class Evo2Model(ModelMixinSnap):
         """
         sequences = [item.sequence for item in payload.items]
         includes = payload.params.include
-        requested_layers = payload.params.embedding_layers or [-1]
+        requested_layers = payload.params.embedding_layers
         mlpl = payload.params.mlp_layer  # 3 by default
 
         batch_size = len(sequences)
@@ -227,6 +229,11 @@ class Evo2Model(ModelMixinSnap):
 
             for i, layer_idx in enumerate(actual_layer_indexes):
                 layer_key = layer_names[i]  # e.g. "blocks.24.mlp.l3"
+                if layer_key not in emb_dict:
+                    raise ValidationError400(
+                        f"MLP sublayer index {mlpl} is not valid for model {self.model_variant}. "
+                        f"Layer key '{layer_key}' was not found in the model output."
+                    )
                 row_emb_3d = emb_dict[layer_key][b, :seq_len, :]  # [L, hidden_dim]
 
                 # Prepare the output record for this layer
@@ -322,7 +329,7 @@ if __name__ == "__main__":
         MODEL_VARIANT="1b-base" python models/evo2/app.py
         MODEL_VARIANT="7b-base" python models/evo2/app.py
 
-        # Force deploy in QA/prod:
+        # Force deploy:
         MODEL_VARIANT="1b-base" python models/evo2/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

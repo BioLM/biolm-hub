@@ -39,11 +39,14 @@ SPECIAL_TOKENS = [START_TOKEN, END_TOKEN, EOS_TOKEN, "<pad>", " "]
 
 # Build Modal container image
 image = modal.Image.from_registry("pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime")
-# Setup download layer with model weights (R2 primary, HuggingFace fallback)
+# Setup download layer with model weights (R2 primary, HuggingFace fallback).
+# huggingface_hub must be in the download layer so the HF fallback works at
+# image-build time when R2 is cold (see commons/storage/acquisition.py).
 image = setup_download_layer(
     image,
     base_model_slug=ZymCTRLParams.base_model_slug,
     params_version=ZymCTRLParams.params_version,
+    extra_pip_packages=["huggingface_hub==0.26.0"],
 )
 # Add dependencies and packages
 image = (
@@ -52,7 +55,7 @@ image = (
     .uv_pip_install(
         "transformers==4.48.1",
         "safetensors==0.5.3",
-        "huggingface_hub==0.26.0",  # Required for HF fallback in download.py
+        "huggingface_hub==0.26.0",
     )
 )
 # Add all model files
@@ -85,6 +88,7 @@ def calculate_sequence_perplexity(
     model,
     device,
     sequence_start_idx: int,
+    stop_token_ids: set | None = None,
 ) -> float:
     """Calculate perplexity for the generated amino acid sequence only.
 
@@ -97,6 +101,10 @@ def calculate_sequence_perplexity(
         model: The language model
         device: Torch device
         sequence_start_idx: Index where the amino acid sequence starts (after <start>)
+        stop_token_ids: Set of token IDs that terminate the amino-acid region
+            (<end>, EOS, PAD). Positions at and after the first occurrence are
+            excluded from the loss so that padding and control tokens do not
+            distort the mean.
 
     Returns:
         Perplexity of the amino acid sequence portion only
@@ -120,8 +128,18 @@ def calculate_sequence_perplexity(
             shift_logits = logits[:, :-1, :]
             shift_labels = input_ids[:, 1:]
 
-        # Flatten for cross entropy
-        loss_fct = torch.nn.CrossEntropyLoss(reduction="mean")
+        # Mask out stop tokens (<end>, EOS, PAD) and everything after the first
+        # occurrence, so only amino-acid positions contribute to the mean loss.
+        if stop_token_ids:
+            labels = shift_labels.clone()
+            for b in range(labels.shape[0]):
+                for t in range(labels.shape[1]):
+                    if labels[b, t].item() in stop_token_ids:
+                        labels[b, t:] = -100
+                        break
+            shift_labels = labels
+
+        loss_fct = torch.nn.CrossEntropyLoss(reduction="mean", ignore_index=-100)
         loss = loss_fct(
             shift_logits.reshape(-1, shift_logits.size(-1)),
             shift_labels.reshape(-1),
@@ -246,15 +264,24 @@ class ZymCTRLModel(ModelMixinSnap):
                     num_return_sequences=num_samples,
                 )
 
+            # Token IDs that terminate the amino-acid region; computed once per item.
+            stop_token_ids = {
+                self.tokenizer.convert_tokens_to_ids(END_TOKEN),
+                self.tokenizer.eos_token_id,
+                self.tokenizer.pad_token_id or 0,
+            }
+
             # Process each generated sequence
             results = []
             for output in outputs:
-                # Calculate perplexity on amino acid sequence only (after prompt)
+                # Calculate perplexity on amino acid tokens only (after prompt),
+                # masking <end>/EOS/PAD so they don't dilute the mean loss.
                 perplexity = calculate_sequence_perplexity(
                     output.unsqueeze(0),
                     self.model,
                     self.device,
                     sequence_start_idx=prompt_length,
+                    stop_token_ids=stop_token_ids,
                 )
 
                 # Decode and clean sequence
@@ -360,7 +387,7 @@ if __name__ == "__main__":
     Usage:
         python models/zymctrl/app.py
 
-        # Force deploy to "qa" or "main" environment:
+        # Optionally deploy after running:
         python models/zymctrl/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

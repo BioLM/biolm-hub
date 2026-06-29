@@ -12,6 +12,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+from models.commons.core.error import ServerError, ValidationError400
 from models.commons.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -21,9 +22,11 @@ logger = get_logger(__name__)
 # =============================================================================
 
 # Embedded StandardScaler parameters extracted from DeepViscosity_scaler.joblib
-# Source: https://github.com/Lailabcode/DeepViscosity
+# Source: https://github.com/Lailabcode/DeepViscosity (commit pinned in download.py)
 # These are the mean_, var_, and scale_ arrays for a StandardScaler trained on 229 samples
 # with 30 DeepSP features. Embedding directly avoids sklearn version compatibility issues.
+# IMPORTANT: If PINNED_COMMIT in download.py is bumped (upstream retrain), re-extract
+# these arrays from the new DeepViscosity_scaler.joblib and update the values below.
 SCALER_PARAMS = {
     "n_features_in_": 30,
     "n_samples_seen_": 229,
@@ -258,14 +261,13 @@ def run_anarci(
             capture_output=True,
             timeout=60,
         )
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(
-            f"ANARCI heavy chain alignment failed: {e.stderr.decode()}"
-        ) from e
-    except FileNotFoundError:
-        raise RuntimeError(
-            "ANARCI not found. Please ensure ANARCI is installed."
+    except subprocess.CalledProcessError:
+        raise ValidationError400(
+            "Could not IMGT-align the heavy chain; ensure it is an antibody "
+            "variable-region (Fv) sequence."
         ) from None
+    except FileNotFoundError:
+        raise ServerError("ANARCI is not installed in this container.") from None
 
     # Run ANARCI for light chain
     l_output = temp_dir / "seq_aligned"
@@ -287,27 +289,40 @@ def run_anarci(
             capture_output=True,
             timeout=60,
         )
-    except subprocess.CalledProcessError as e:
-        raise RuntimeError(
-            f"ANARCI light chain alignment failed: {e.stderr.decode()}"
-        ) from e
+    except subprocess.CalledProcessError:
+        raise ValidationError400(
+            "Could not IMGT-align the light chain; ensure it is an antibody "
+            "variable-region (Fv) sequence."
+        ) from None
 
     # Parse aligned CSV files
     h_csv = temp_dir / "seq_aligned_H.csv"
     l_csv = temp_dir / "seq_aligned_KL.csv"
 
     if not h_csv.exists():
-        raise RuntimeError(f"ANARCI heavy chain output not found: {h_csv}")
+        raise ValidationError400(
+            "Could not IMGT-align the heavy chain; ensure it is an antibody "
+            "variable-region (Fv) sequence."
+        )
     if not l_csv.exists():
-        raise RuntimeError(f"ANARCI light chain output not found: {l_csv}")
+        raise ValidationError400(
+            "Could not IMGT-align the light chain; ensure it is an antibody "
+            "variable-region (Fv) sequence."
+        )
 
     h_df = pd.read_csv(h_csv)
     l_df = pd.read_csv(l_csv)
 
     if len(h_df) == 0:
-        raise RuntimeError("ANARCI failed to align heavy chain sequence")
+        raise ValidationError400(
+            "Could not IMGT-align the heavy chain; ensure it is an antibody "
+            "variable-region (Fv) sequence."
+        )
     if len(l_df) == 0:
-        raise RuntimeError("ANARCI failed to align light chain sequence")
+        raise ValidationError400(
+            "Could not IMGT-align the light chain; ensure it is an antibody "
+            "variable-region (Fv) sequence."
+        )
 
     # Extract first row (we only process one sequence at a time)
     h_row = h_df.iloc[0]
@@ -375,8 +390,9 @@ def one_hot_encode(sequence: str):
     import numpy as np
 
     if len(sequence) != TOTAL_LENGTH:
-        raise ValueError(
-            f"Expected sequence length {TOTAL_LENGTH}, got {len(sequence)}"
+        raise ServerError(
+            f"Preprocessing produced unexpected sequence length "
+            f"(expected {TOTAL_LENGTH}, got {len(sequence)})."
         )
 
     # Create one-hot matrix

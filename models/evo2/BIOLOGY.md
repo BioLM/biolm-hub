@@ -61,7 +61,7 @@ Performance considerations:
 
 ### Use Case 1: Multi-Domain Genome Modeling (Published)
 
-**Source**: Brixi et al. "Genome modeling and design across all domains of life with Evo 2." bioRxiv (2025). [arXiv: 2503.11265](https://arxiv.org/abs/2503.11265)
+**Source**: Brixi et al. "Genome modeling and design across all domains of life with Evo 2." bioRxiv (2025). [doi:10.1101/2025.02.18.638918](https://doi.org/10.1101/2025.02.18.638918)
 
 Evo 2 demonstrates improved genome modeling across prokaryotic, eukaryotic, and viral domains compared to Evo 1, establishing the benefit of multi-domain training for genomic foundation models.
 

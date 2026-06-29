@@ -62,7 +62,12 @@ applied_literature:
   arxiv: '2410.03634'
   venue: arXiv preprint, 2024
   year: 2024
-  pdf_r2: knowledge-base/models/zymctrl/applied/papers/unknown2024.pdf
+  authors:
+  - Jason Yang
+  - Aadyot Bhatnagar
+  - Jeffrey A. Ruffolo
+  - Ali Madani
+  pdf_r2: knowledge-base/models/zymctrl/applied/papers/yang2024.pdf
   md_r2: pending
   relevance: ProCALM extends ProGen2 with conditional adapters for EC-conditioned generation, directly compared to ZymCTRL;
     matches performance at 200x less training compute
@@ -78,7 +83,14 @@ applied_literature:
   arxiv: '2412.12979'
   venue: arXiv preprint, 2024
   year: 2024
-  pdf_r2: knowledge-base/models/zymctrl/applied/papers/unknown2024b.pdf
+  authors:
+  - Filippo Stocco
+  - Maria Artigues-Lleixa
+  - Andrea Hunklinger
+  - Talal Widatalla
+  - Marc Guell
+  - Noelia Ferruz
+  pdf_r2: knowledge-base/models/zymctrl/applied/papers/stocco2024.pdf
   md_r2: pending
   relevance: ProtRL applies reinforcement learning to ZymCTRL for directed enzyme design, achieving 26-fold increase in EGFR
     binding affinity and progressive carbonic anhydrase fold adaptation over RL iterations
@@ -86,7 +98,18 @@ applied_literature:
   arxiv: '2411.16694'
   venue: arXiv preprint, 2024
   year: 2024
-  pdf_r2: knowledge-base/models/zymctrl/applied/papers/unknown2024c.pdf
+  authors:
+  - Chenqing Hua
+  - Jiarui Lu
+  - Yong Liu
+  - Odin Zhang
+  - Jian Tang
+  - Rex Ying
+  - Wengong Jin
+  - Guy Wolf
+  - Doina Precup
+  - Shuangjia Zheng
+  pdf_r2: knowledge-base/models/zymctrl/applied/papers/hua2024.pdf
   md_r2: pending
   relevance: Benchmarks ZymCTRL+ESMFold as a baseline for reaction-conditioned enzyme design, comparing EC-conditioned generation
     against structure-aware de novo approaches

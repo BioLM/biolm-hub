@@ -17,7 +17,7 @@ The model provides two actions: **embedding extraction** (mean or last-token poo
 | Architecture | OLMo Transformer (AutoModelForCausalLM) |
 | Tokenization | BPE, vocabulary size 4096 |
 | Training objective | Autoregressive (causal language modeling) |
-| Max sequence length | 2,048 BPE tokens |
+| Max sequence length | 2,048 nucleotides (characters) |
 | Input alphabet | A, C, G, T only |
 | License | Apache-2.0 |
 
@@ -52,7 +52,7 @@ The default variant is **1B** (`zehui127/Omni-DNA-1B`).
 
 **Other considerations:**
 - BPE tokenization means sequence length in tokens does not directly map to nucleotide count
-- Sequences are truncated at 2,048 BPE tokens (approximately 4,000--8,000 nucleotides)
+- Input is capped at 2,048 nucleotides (characters); the BPE tokenizer truncates at 2,048 tokens, but that bound is never reached given the character cap
 - DNA sequences are tokenized using a BPE tokenizer that may split a sequence into sub-tokens (e.g., "A", "AA", "TG", etc.)
 
 ## Actions / Endpoints
@@ -142,11 +142,9 @@ logprob_request = OmniDNAPredictLogProbRequest(
 
 ### Published Results
 
-From Li (2025):
+From Li et al. (2025):
 - Omni-DNA demonstrates competitive performance on multi-task DNA benchmarks
 - Unified framework handles embedding extraction and sequence scoring within a single model
-
-<!-- TODO: Extract specific benchmark numbers from Li 2025 paper -->
 
 ### SOTA Status
 
@@ -184,9 +182,9 @@ Numerical reproduction: integration tests compare model outputs against golden f
 ## Implementation Notes
 
 - **Memory snapshots**: Uses `@modal.enter(snap=True)` to load model directly on GPU for GPU memory snapshot.
-- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
+- **Caching**: Response caching is handled upstream of the model container; the container itself is stateless.
 - **GPU snapshots**: Enabled via `experimental_options={"enable_gpu_snapshot": True}`.
-- **Container image**: Built from `pytorch/pytorch:2.3.1-cuda11.8-cudnn8-runtime`.
+- **Container image**: Built from `pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime`.
 - **Weight loading**: Model weights loaded from `.safetensors` file via HuggingFace `AutoModelForCausalLM`.
 - **Determinism**: Seeds set to 42 (`torch.manual_seed(42)`, `torch.cuda.manual_seed_all(42)`).
 - **BPE tokenization**: Uses `AutoTokenizer.from_pretrained()` with `trust_remote_code=True`.
@@ -194,7 +192,7 @@ Numerical reproduction: integration tests compare model outputs against golden f
 ## Notes
 
 1. **BPE Encoding & Context:**
-   DNA sequences are segmented into BPE tokens (e.g., "A", "C", "AA", "TG", etc.). Although the model is trained on sequences of up to about 250 BPE tokens, it can handle sequences of roughly 512 tokens.
+   DNA sequences are segmented into BPE tokens (e.g., "A", "C", "AA", "TG", etc.). Input sequences are accepted up to 2,048 nucleotides; longer sequences must be split before submission.
 
 2. **DNA-only Validation:**
    Input sequences must contain only the unambiguous nucleotide characters: A, C, G, and T.
@@ -214,7 +212,7 @@ Numerical reproduction: integration tests compare model outputs against golden f
 
 ### Papers
 
-1. Li Z. "Omni-DNA: A Unified Multi-Task Framework for DNA Foundation Models." Preprint (2025).
+1. Li et al. "Omni-DNA: A Unified Genomic Foundation Model for Cross-Modal and Multi-Task Learning." arXiv:2502.03499 (2025).
 
 ### Links
 

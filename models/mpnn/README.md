@@ -36,7 +36,7 @@ All variants share the same GNN architecture but use different checkpoint weight
 | `per-residue-label-membrane-mpnn` | `per_residue_label_membrane_mpnn_v_48_020.pt` | Per-residue membrane labels | Membrane protein design (fine-grained) |
 | `hyper-mpnn` | `v48_020_epoch300_hyper.pt` | HyperMPNN retrained variant | Improved sampling diversity |
 
-All variants run on CPU (no GPU required) with 128 MB memory.
+All variants run on CPU (no GPU required) with 3 GB memory.
 
 ## Capabilities & Limitations
 
@@ -262,8 +262,8 @@ Integration tests validate all 6 active variants (protein, ligand, soluble, glob
 | Resource | Value |
 |----------|-------|
 | GPU | None (CPU-only) |
-| Memory | 128 MB |
-| CPU | 0.125 cores |
+| Memory | 3 GB |
+| CPU | 1 core |
 | Cold start | Fast (memory snapshot enabled) |
 | Max batch size | 1000 sequences per batch |
 | Max batches | 48 per request |

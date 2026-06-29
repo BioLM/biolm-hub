@@ -88,7 +88,7 @@ class IgT5EncodeRequestItem(RequestModel):
     _kind: Optional[str] = PrivateAttr()
 
     @model_validator(mode="after")
-    def validate_and_infer_type(cls, instance):
+    def validate_and_infer_type(self) -> "IgT5EncodeRequestItem":
         """
         Infer request type and ensure valid field combos:
           - If `heavy` and `light` => "paired"
@@ -98,9 +98,9 @@ class IgT5EncodeRequestItem(RequestModel):
         from models.igt5.config import IgT5ModelTypes
 
         heavy, light, sequence = (
-            instance.heavy_chain,
-            instance.light_chain,
-            instance.sequence,
+            self.heavy_chain,
+            self.light_chain,
+            self.sequence,
         )
 
         if sequence and (heavy or light):
@@ -110,20 +110,16 @@ class IgT5EncodeRequestItem(RequestModel):
             )
 
         if heavy and light:
-            instance._kind = IgT5ModelTypes.PAIRED
+            self._kind = IgT5ModelTypes.PAIRED
         elif sequence:
-            instance._kind = IgT5ModelTypes.UNPAIRED
+            self._kind = IgT5ModelTypes.UNPAIRED
         else:
             raise ValueError(
                 "Must provide either (`heavy_chain`, `light_chain`) OR `sequence`, "
                 "but not both."
             )
 
-        return instance
-
-    @property
-    def kind(self) -> str:
-        return self._kind
+        return self
 
 
 class IgT5EncodeRequest(RequestModel):
@@ -145,8 +141,6 @@ class IgT5EncodeResponseResult(ResponseModel):
     model_config = ConfigDict(
         populate_by_name=True,
         extra="forbid",
-        exclude_unset=True,
-        exclude_none=True,
     )
 
     embeddings: Optional[list[float]] = Field(

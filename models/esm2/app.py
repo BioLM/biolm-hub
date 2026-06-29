@@ -61,7 +61,6 @@ image = (
     .uv_pip_install(
         # Install fair-esm 2.0.1 from GitHub ZIP archive (latest version from pip is 2.0.0)
         "https://github.com/facebookresearch/esm/archive/2b369911bb5b4b0dda914521b9475cad1656b2ac.zip",
-        "sentence-transformers==2.2.2",
     )
 )
 # Finally, add all model files
@@ -164,7 +163,7 @@ class ESM2Model(ModelMixinSnap):
             )
         except Exception as e:
             logger.error("Model call failed with error [%s]", e, exc_info=True)
-            raise e
+            raise
 
         return ESM2EncodeResponse(results=results)
 
@@ -188,7 +187,7 @@ class ESM2Model(ModelMixinSnap):
             )
         except Exception as e:
             logger.error("Model call failed with error [%s]", e, exc_info=True)
-            raise e
+            raise
 
         return ESM2PredictResponse(results=results)
 
@@ -364,9 +363,11 @@ class ESM2Model(ModelMixinSnap):
                     )
                     result_dict["vocab_tokens"] = self.vocab_tokens
                 if "attentions" in include and attentions is not None:
-                    # The indices below remove <cls> and <eos> tokens
-                    # Attentions shape: (batch_size, num_layers, num_heads, seq_len+2, seq_len+2)
-                    # Averaging over layers and heads
+                    # Attentions[i] shape: (num_layers, num_heads, seq_len+2, seq_len+2)
+                    # .mean(dim=1): average over heads → (num_layers, seq_len+2, seq_len+2)
+                    # .mean(dim=1): average over query positions → (num_layers, seq_len+2)
+                    # [:, 1:truncate_len+1]: remove BOS/EOS, keep key positions → (num_layers, seq_len)
+                    # Result: per-layer mean attention received per residue position
                     avg_attentions = (
                         attentions[i]
                         .clone()
@@ -481,7 +482,7 @@ if __name__ == "__main__":
     Usage:
         MODEL_SIZE="650m" python models/esm2/app.py
 
-        # Force deploy to "qa" or "main" environment:
+        # Force deploy to "biolm-models-dev" or "biolm-models" environment:
         MODEL_SIZE="650m" python models/esm2/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

@@ -69,8 +69,6 @@ The byte-level approach preserves single-nucleotide resolution, which is essenti
 
 From the primary paper (Nguyen et al., Science 2024):
 
-<!-- TODO: Extract exact numerical values from Nguyen et al. Science 2024 Figures 2-4  --  requires PDF viewing -->
-
 #### Zero-Shot Fitness Prediction
 
 Evo was evaluated on zero-shot prediction of variant fitness across multiple experimental datasets, using per-sequence log-probabilities as the fitness proxy.
@@ -194,7 +192,7 @@ When a seed is provided, the implementation sets:
 
 ### Caching Behavior
 
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
+Response caching is handled outside the model container by the serving infrastructure:
 - Cache key is derived from the full request payload (including parameters)
 - For `generate` with no seed (stochastic), cache misses are expected on repeated calls since the time-based seed differs
 

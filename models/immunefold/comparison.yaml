@@ -25,7 +25,7 @@ use_when:
   - "You need to predict antibody-antigen complex structures when you have the antigen PDB structure available, to model the binding interface without experimental co-crystallization"
   - "You need TCR-pMHC complex modeling for immunotherapy applications, with full four-chain structural prediction including peptide and MHC context"
   - "You want per-residue confidence scores (pLDDT) and global structural confidence (pTM) to assess prediction reliability before using structures for downstream design"
-  - "You are generating input structures for ProperMAB feature extraction or AntiFold inverse folding and want the most accurate predicted structures available"
+  - "You are generating input structures for AntiFold inverse folding and want the most accurate predicted structures available"
   - "You need nanobody structure prediction and prefer PLM-enhanced accuracy over the dedicated but non-PLM NanoBodyBuilder2 in ImmuneBuilder"
 
 dont_use_when:
@@ -52,9 +52,6 @@ alternatives:
     when_worse: "ProteinMPNN solves the inverse problem (designing sequences for structures); ImmuneFold solves the forward problem (predicting structures from sequences)"
 
 complements:
-  - model: "propermab"
-    workflow: "Predict antibody Fv structure with ImmuneFold's highest-accuracy predictions, then extract 34 biophysical developability features with ProperMAB using the predicted atomic coordinates"
-    example_protocol: null
   - model: "antifold"
     workflow: "Predict antibody or nanobody structure with ImmuneFold, then use AntiFold for structure-conditioned CDR sequence design and variant library generation on the predicted structures"
     example_protocol: null

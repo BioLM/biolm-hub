@@ -24,8 +24,6 @@ IgT5 uses the T5 architecture from HuggingFace Transformers with a SentencePiece
 | Tokenizer | T5Tokenizer (SentencePiece-based) |
 | Positional encoding | Relative position biases |
 
-<!-- TODO: Confirm exact parameter count and embedding dimensions by inspecting HuggingFace model card -- see sources.yaml source_repos[0] (https://huggingface.co/Exscientia/IgT5) -->
-
 ### Training Data
 
 | Property | Details |
@@ -56,9 +54,7 @@ T5-style span corruption objective adapted for antibody sequences. During pre-tr
 
 IgT5 is evaluated alongside IgBERT in the same paper, comparing BERT and T5 architectures for antibody representation learning.
 
-<!-- TODO: Extract IgT5-specific benchmark numbers from Kenlay et al. 2023 -- see sources.yaml primary_papers[0] (arXiv: 2310.16645) -->
-
-Key findings from the paper:
+Key findings from the paper (Kenlay et al. 2024, arXiv: 2403.17889):
 - T5 encoder produces competitive or superior embeddings compared to BERT for some downstream tasks
 - Relative position biases may better capture long-range dependencies in antibody sequences
 - Both paired and unpaired variants benefit from large-scale training
@@ -99,7 +95,7 @@ IgT5 is deterministic when seeds are set. The same input produces the same outpu
 ### Cons
 
 - Encode-only (no generate or log_prob actions)
-- License terms not fully specified for original weights
+- CC-BY-4.0 per Zenodo (canonical); HuggingFace metadata says MIT but Zenodo takes precedence
 - Smaller batch size (8 vs 32 for IgBERT) due to larger model footprint
 - Higher memory requirements than IgBERT (16 GB vs 6 GB)
 
@@ -148,9 +144,7 @@ Request
 
 ### Caching Behavior
 
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
-- **Redis (Modal Dict)**: Fast lookup, TTL-based expiration
-- **R2**: Persistent storage for cached results
+Response caching is handled outside the model container by the serving layer.
 
 ## Versions & Changelog
 

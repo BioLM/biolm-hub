@@ -1,4 +1,3 @@
-import os
 import re
 
 import modal
@@ -169,18 +168,11 @@ class ProstT5Model(ModelMixinSnap):
             else ProstT5EncodeRequestFold
         ),
     ) -> ProstT5EncodeResponse:
-        # Read environment variables at runtime
-        current_direction = os.environ["MODEL_DIRECTION"]
-        if current_direction != model_direction:
-            raise ValueError(
-                f"Direction mismatch: expected {model_direction} but got {current_direction}"
-            )
-
         sequences = [item.sequence for item in payload.items]
 
         embeddings = self.prostt5_compute_embeddings(
             sequences,
-            model_direction=current_direction,
+            model_direction=self.model_direction,
         )
         return ProstT5EncodeResponse(results=embeddings)
 
@@ -212,13 +204,6 @@ class ProstT5Model(ModelMixinSnap):
         if self.torch.cuda.is_available():
             self.torch.cuda.manual_seed_all(seed)
 
-        # Read environment variables at runtime
-        current_direction = os.environ["MODEL_DIRECTION"]
-        if current_direction != model_direction:
-            raise ValueError(
-                f"Direction mismatch: expected {model_direction} but got {current_direction}"
-            )
-
         sequences = [item.sequence for item in payload.items]
 
         # Extract params and exclude 'seed' (already applied above, not needed by prostt5_translate)
@@ -227,7 +212,7 @@ class ProstT5Model(ModelMixinSnap):
 
         translations = self.prostt5_translate(
             sequences,
-            model_direction=current_direction,
+            model_direction=self.model_direction,
             **params_dict,
         )
         return translations
@@ -244,7 +229,9 @@ class ProstT5Model(ModelMixinSnap):
         # Amino acid sequences are expected to be upper-case ("PRTEINO" below)
         # while 3Di-sequences need to be lower-case ("strctr" below).
 
-        max_seq_len = len(max(sequences, key=len)) + 1
+        # Store real sequence lengths before any modification — used for per-sequence mean-pooling.
+        seq_lens = [len(s) for s in sequences]
+
         # replace all rare/ambiguous amino acids by X (3Di sequences do not have those) and introduce white-space between all sequences (AAs and 3Di)
         sequences = [
             " ".join(list(re.sub(r"[UZOB]", "X", sequence))) for sequence in sequences
@@ -272,15 +259,19 @@ class ProstT5Model(ModelMixinSnap):
                 ids.input_ids, attention_mask=ids.attention_mask
             )
 
-        # extract residue embeddings for the first ([0,:]) sequence in the batch and remove padded & special tokens, incl. prefix ([0,1:8])
-        embs = embedding_repr.last_hidden_state[
-            :, 1:max_seq_len
-        ]  # shape (seq_len x 1024)
-
-        # if you want to derive a single representation (per-protein embedding) for the whole protein
-        embs_per_protein = (
-            embs.mean(dim=1).detach().cpu().numpy().tolist()
-        )  # shape (1024)
+        # Mean-pool per sequence over real residue tokens only (skip direction prefix at
+        # position 0, skip EOS and padding).  Using per-sequence length avoids averaging
+        # over padding tokens for shorter sequences in a mixed-length batch.
+        all_hidden = embedding_repr.last_hidden_state  # (batch, seq_len, 1024)
+        embs_per_protein = [
+            all_hidden[i, 1 : seq_lens[i] + 1]
+            .mean(dim=0)
+            .detach()
+            .cpu()
+            .numpy()
+            .tolist()
+            for i in range(len(seq_lens))
+        ]
         return [
             ProstT5EncodeResponseResult(mean_representation=embedding)
             for embedding in embs_per_protein
@@ -290,7 +281,7 @@ class ProstT5Model(ModelMixinSnap):
         self,
         sequences: list[str],
         top_p: float = 0.95,
-        top_k: float = 6,
+        top_k: int = 6,
         temperature: float = 1.2,
         repetition_penalty: float = 1.2,
         num_samples: int = 1,
@@ -342,9 +333,7 @@ class ProstT5Model(ModelMixinSnap):
             noGood = "ARNDBCEQZGHILKMFPSTWYVXOU"
             gen_kwargs["num_beams"] = num_beams
             if num_beams > 1:
-                gen_kwargs["early_stopping"] = (
-                    True  # TODO: UserWarning: `num_beams` is set to 1. However, `early_stopping` is set to `True` -- this flag is only used in beam-based generation modes. You should set `num_beams>1` or unset `early_stopping`.
-                )
+                gen_kwargs["early_stopping"] = True
             sequences = ["<AA2fold>" + " " + s for s in sequences]
 
         bad_words = self.tokenizer(
@@ -369,7 +358,7 @@ class ProstT5Model(ModelMixinSnap):
                     num_return_sequences=num_return_sequences,  # return only a single sequence
                     **gen_kwargs,
                 )
-        except RuntimeError as e:
+        except RuntimeError:
             # rare cases trigger the following error (seemed to depend on generation config):
             # RuntimeError: probability tensor contains either `inf`, `nan` or element < 0
             logger.warning(
@@ -377,7 +366,7 @@ class ProstT5Model(ModelMixinSnap):
                 "(if OOM, lower num_return_sequences and/or max_batch)",
                 exc_info=True,
             )
-            raise e
+            raise
 
         # Decode and remove white-spaces between tokens
         t_strings = self.tokenizer.batch_decode(translations, skip_special_tokens=True)
@@ -404,10 +393,11 @@ class ProstT5Model(ModelMixinSnap):
                     logger.warning("source length=%s vs target length=%s", s_len, t_len)
                     if t_len > s_len:  # truncate if target longer than groundtruth
                         t_seq = t_seq[:s_len]
-                    elif s_len < t_len:
-                        while t_len < s_len:
-                            t_seq += "d"  # append d's in case of too short
-                            t_len = len(t_seq)
+                    elif s_len > t_len:
+                        # pad short generations with an alphabet-appropriate token:
+                        # amino acid "A" for fold2AA output, 3Di "d" for AA2fold output.
+                        pad_char = "A" if model_direction == "fold2AA" else "d"
+                        t_seq += pad_char * (s_len - t_len)
                 sub_results.append(ProstT5GenerateResponseGenerated(sequence=t_seq))
             results.append(sub_results)
 
@@ -419,7 +409,7 @@ if __name__ == "__main__":
     Usage:
         MODEL_ACTION=encode MODEL_DIRECTION=fold2AA python models/prostt5/app.py
 
-        # Force deploy to "qa" or "main" environment:
+        # Force deploy to "biolm-models-dev" or "biolm-models" environment:
         MODEL_ACTION=encode MODEL_DIRECTION=fold2AA python models/prostt5/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

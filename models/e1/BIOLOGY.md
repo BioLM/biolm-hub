@@ -63,7 +63,7 @@ Performance characteristics by protein type:
 
 ## Applied Use Cases
 
-E1 is a recent model (2024). Anticipated use cases include:
+E1 is a recent model (2025). Anticipated use cases include:
 
 - **Variant effect prediction**: Scoring mutations using log_prob with context sequences for improved accuracy
 - **Sequence design**: Using masked prediction to explore compatible amino acids at design positions

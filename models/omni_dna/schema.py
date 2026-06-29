@@ -20,7 +20,6 @@ class OmniDNAParams(ModelParams):
     base_model_slug = "omni-dna"
     log_identifier = "Omni-DNA"
     batch_size = 2
-    # TODO: test how long sequences can be, based on tokenization
     max_sequence_len = 2048
 
 

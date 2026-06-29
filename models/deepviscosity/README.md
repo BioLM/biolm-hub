@@ -187,7 +187,7 @@ From the paper (Table 2):
 
 ```bash
 # Run schema validation tests (no Modal required)
-uv run pytest models/deepviscosity/test.py::TestDeepViscositySchemaValidation -v
+uv run pytest models/deepviscosity/test_unit.py::TestDeepViscositySchemaValidation -v
 
 # Run integration tests (requires Modal deployment)
 uv run pytest models/deepviscosity/test.py -m integration -v -s
@@ -198,7 +198,7 @@ python models/deepviscosity/fixture.py
 
 ### Verification Status
 
-**Status: PARTIALLY VERIFIED** (2025-03) -- Schema validation tests pass. Full numerical verification against Lai_mAb_16 published results pending deployment.
+**Status:** Schema validation tests pass (7/7). Numerical verification against the Lai_mAb_16 published results is deferred to deployment (Milestone A/B).
 
 ## Resource Requirements
 

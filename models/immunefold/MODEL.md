@@ -105,7 +105,7 @@ From Wu et al., *bioRxiv* (2024):
 
 - Requires GPU (T4) due to ESM-2 3B model -- larger resource footprint than ImmuneBuilder
 - Minimum sequence lengths enforced (VH >= 90, VL >= 85 AA) for IMGT numbering
-- Maximum sequence length of 256 AA per chain (512 for unpaired)
+- Maximum sequence length of 256 AA per chain
 - Relies on external Hydra config system and cloned GitHub repository
 - Domain numbering failures on unusual sequences produce assertion errors
 
@@ -153,9 +153,7 @@ Request
 
 ### Caching Behavior
 
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
-- Redis (Modal Dict) caching for fast repeated lookups
-- R2 caching for persistence
+Response caching is handled at the service layer, not by the model container.
 
 ## Versions & Changelog
 

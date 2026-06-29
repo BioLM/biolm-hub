@@ -22,7 +22,6 @@ tasks:
 - structure_prediction
 primary_papers:
 - title: 'BoltzGen: Toward Universal Binder Design'
-  arxiv: 2025.11.20.689494
   doi: 10.1101/2025.11.20.689494
   venue: bioRxiv preprint, 2025
   year: 2025
@@ -43,6 +42,8 @@ source_repos:
   commit: 3eddb5a
   snapshot_r2: knowledge-base/models/boltzgen/primary/repos/boltzgen-3eddb5a.tar.gz
   readme_md_r2: knowledge-base/models/boltzgen/primary/pages/gh-boltzgen-readme.md
+  notes: 'commit is the knowledge-graph snapshot (matches snapshot_r2); the deployed
+    container pins a later code commit (617e549, see helpers.py BOLTZGEN_COMMIT).'
 - type: huggingface
   url: https://huggingface.co/boltzgen/boltzgen-1
   notes: 'Model checkpoints: design (diverse/adherence), inverse folding, folding, affinity'
@@ -59,23 +60,18 @@ applied_literature:
   - Bruno E. Correia
   - Sergey Ovchinnikov
   pdf_r2: knowledge-base/models/boltzgen/applied/papers/cho2025.pdf
-  md_r2: pending
   relevance: Alternative binder design method inverting Boltz-1 structure prediction; directly comparable to BoltzGen's unified
     design-and-folding approach
 - title: 'BoltzGen: Validated de novo binder design for diverse targets'
   doi: ''
   venue: Tamarind Bio blog, 2025
   year: 2025
-  pdf_r2: pending
-  md_r2: pending
   relevance: Independent analysis of BoltzGen experimental validation across 26 targets, 66% nanomolar binder success rate,
     and comparison with RFDiffusion/EvoDiff baselines
 - title: 'Behind the Model: Building BoltzGen with Hannes Stark'
   doi: ''
   venue: Benchling Blog, 2025
   year: 2025
-  pdf_r2: pending
-  md_r2: pending
   relevance: Technical interview covering BoltzGen design decisions, geometry-based residue representation, and practical
     guidance for binder design campaigns
 - title: 'Boltz-2: Towards Accurate and Efficient Binding Affinity Prediction'
@@ -90,7 +86,6 @@ applied_literature:
   - Tommi Jaakkola
   - Regina Barzilay et al.
   pdf_r2: knowledge-base/models/boltzgen/applied/papers/passaro2025.pdf
-  md_r2: pending
   relevance: Successor foundation model from the same team; jointly predicts structures and binding affinities, approaching
     FEP accuracy at 1000x lower cost; directly extends the Boltz-1 backbone that BoltzGen builds upon and provides affinity
     scoring for BoltzGen-designed binders.
@@ -102,7 +97,5 @@ applied_literature:
   - Martin Pacesa
   - Lennart Nickel
   - Bruno E. Correia et al.
-  pdf_r2: pending
-  md_r2: pending
   relevance: Competing AF2-based binder design pipeline achieving 10-100% experimental success rates on 12 diverse targets;
     provides key comparison baseline for BoltzGen's unified design-and-folding approach vs iterative AF2 hallucination.

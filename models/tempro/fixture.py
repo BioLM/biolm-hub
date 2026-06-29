@@ -16,7 +16,7 @@ PREDICT_BATCH_OUTPUT_TPL = "{variant.name}_predict_batch_output.json"
 PREDICT_VALIDATION_OUTPUT_TPL = "{variant.name}_predict_validation_output.json"
 
 # Validation sequences from TEMPRO paper's external validation with known Tms
-# Sequences cleaned from experimentals.fasta (His tags and extra residues removed)
+# Sequences taken verbatim from the paper's external-validation set (experimentals.fasta)
 VALIDATION_SEQUENCES = {
     "4IDL": {
         "sequence": "MAKVQLQQSGGGAVQTGGSLKLTCLASGNTASIRAMGWYRRAPGKQREWVASLTTTGTADYGDFVKGRFTISRDNANNAATLQMDSLKPEDTAVYYCNADGRRFDGARWREYESWGQGTQVTISS",

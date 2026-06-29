@@ -37,7 +37,7 @@ Single variant -- no size options.
 - Membrane protein stability in lipid bilayer context
 
 **Other considerations:**
-- Mutations use 1-indexed PDB numbering in format `WT{position}MUT` (e.g., `A100V`)
+- Mutations use 1-indexed positions within the selected chain's modeled sequence (not PDB residue numbers) in format `WT{position}MUT` (e.g., `A100V` means the 100th residue in the parsed chain sequence)
 - When `mutations` is `null`, a full SSM scan is performed (20 substitutions x N positions)
 - Chain ID can be specified; defaults to first chain if not provided
 
@@ -147,7 +147,7 @@ Structural validation (Option B). Tests verify response format, presence of requ
 - Uses Modal memory snapshots: model loaded on CPU during snap (`@modal.enter(snap=True)`), then transferred to GPU (`@modal.enter(snap=False)`)
 - ThermoMPNN repository is cloned at image build time (`git checkout` pinned to commit `11a1c5b`)
 - PDB files are written to temporary directories per request to avoid race conditions, and cleaned up after prediction
-- Mutation positions are 1-indexed in API (matching PDB numbering) but converted to 0-indexed internally for the model
+- Mutation positions are 1-indexed within the selected chain's modeled sequence (not PDB residue numbers) and converted to 0-indexed internally for the model
 - The ProteinMPNN backbone weights are frozen; only the prediction head is trained
 - PyTorch Lightning checkpoint loading is used with `TransferModelPL.load_from_checkpoint`
 

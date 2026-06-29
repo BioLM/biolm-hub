@@ -64,7 +64,7 @@ applied_literature:
     improves variant effect prediction across ProteinGym and ClinVar benchmarks.
   molecule_focus: protein
   task_focus: variant_effect_prediction
-  pdf_r2: knowledge-base/models/esm1v/applied/papers/unknown2024b.pdf
+  pdf_r2: knowledge-base/models/esm1v/applied/papers/arxiv2405.06729.pdf
   md_r2: pending
 - title: "ESM-scan \u2014 A tool to guide amino acid substitutions"
   doi: 10.1002/pro.5221

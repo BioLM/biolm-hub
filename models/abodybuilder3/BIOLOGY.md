@@ -48,9 +48,12 @@ The most challenging aspect of antibody structure prediction is the CDR-H3 loop,
 
 ## Applied Use Cases
 
-AbodyBuilder3 was published in 2024 and the applied literature is still emerging.
+AbodyBuilder3 was published in 2024. The following applied literature benchmarks or builds on this model:
 
-<!-- TODO: Add applied literature entries as they become available -- see sources.yaml applied_literature -->
+- **Dreyer et al. (mAbs, 2025)** — Ibex (Prescient Design/Genentech) benchmarks ABodyBuilder3 head-to-head on the ImmuneBuilder test set; reports CDR H3 backbone RMSD of 2.86 Å, CDR L3 RMSD of 1.13 Å for ABodyBuilder3.
+- **BioGeometry Team (bioRxiv, 2025)** — GeoFlow-V2-ab benchmarks ABodyBuilder3 alongside AlphaFold-Multimer V2.3 on 205 antibody test structures; ABodyBuilder3 serves as the antibody-specific baseline.
+- **Ali et al. (bioRxiv, 2025)** — Adopts the ABodyBuilder3 architecture as the foundation for nanobody-specific structure predictors via self-distillation from unlabelled VHH sequences.
+- **Ali et al. (bioRxiv, 2026)** — NbForge, a nanobody folding model with blueprint- and disulphide-aware inductive biases, is explicitly described as "derived from ABodyBuilder3/AlphaFold2."
 
 ## Related Models
 

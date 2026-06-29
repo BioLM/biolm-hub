@@ -5,7 +5,7 @@ last_updated: "2026-03-17"
 strengths:
   - "T5 architecture with relative position biases (rather than absolute positional embeddings), which may better capture long-range dependencies between distant framework residues and CDR loops in variable-length antibody sequences"
   - "Both paired and unpaired variants in a single model family, enabling analysis of matched heavy-light chain pairs and individual chains depending on data availability"
-  - "From the same large-scale paired antibody training dataset as IgBERT (Exscientia/Kenlay et al. 2023), providing a direct architecture comparison (T5 encoder vs BERT) on identical training data"
+  - "From the same large-scale paired antibody training dataset as IgBERT (Exscientia/Kenlay et al. 2024), providing a direct architecture comparison (T5 encoder vs BERT) on identical training data"
   - "Published benchmarks show IgT5 Paired achieves 91.63% VH accuracy on paired sequence recovery, establishing it as a competitive baseline for antibody language models"
   - "HuggingFace Transformers-compatible model weights, making integration with standard ML ecosystems and transfer learning pipelines straightforward"
   - "Permissively licensed (CC-BY-4.0 per the authoritative Zenodo deposit; permits commercial use with attribution), suitable for therapeutic antibody development"
@@ -23,7 +23,7 @@ weaknesses:
 use_when:
   - "You specifically want T5-architecture embeddings for antibody sequences, either for architectural comparison against BERT-based models or because T5 relative position biases better suit your downstream task"
   - "You need paired or unpaired antibody embeddings from a well-benchmarked model and your downstream task requires only embedding features, not generation or scoring"
-  - "You are comparing T5 vs BERT representation architectures for antibody property prediction and want models trained on the same dataset (IgT5 vs IgBERT from Kenlay et al. 2023)"
+  - "You are comparing T5 vs BERT representation architectures for antibody property prediction and want models trained on the same dataset (IgT5 vs IgBERT from Kenlay et al. 2024)"
   - "You need embeddings as input features for training custom downstream ML models for antibody properties (binding affinity, expression, stability) and want a strong antibody-specific baseline"
   - "You are building a multi-model ensemble combining IgT5, IgBERT, and AbLang2 embeddings for improved downstream prediction through representation diversity"
 
@@ -43,15 +43,9 @@ alternatives:
   - model: "ablang2"
     when_better: "AbLang2 provides four actions (encode, predict, generate, log_prob) with germline debiasing on CPU-only -- more functionality at lower compute cost"
     when_worse: "AbLang2 requires paired input only and uses a custom library; IgT5 offers both paired and unpaired variants with HuggingFace compatibility for fine-tuning"
-  - model: "nanobert"
-    when_better: "NanoBERT is specifically trained on nanobody sequences and captures VHH-specific hallmark residues and extended CDR3 patterns on CPU-only"
-    when_worse: "NanoBERT is limited to nanobodies and cannot process paired conventional antibodies; IgT5 handles both paired and unpaired conventional antibody sequences"
   - model: "esm2"
     when_better: "ESM-2 covers all proteins with 5 size variants and the broadest downstream ecosystem; better for cross-protein-family analyses and when antibody-specific training is not critical"
     when_worse: "ESM-2 is not antibody-specialized and cannot model paired heavy-light chains; IgT5's antibody-specific training produces more informative representations for antibody tasks"
-  - model: "ablef"
-    when_better: "AbLEF directly predicts HIC-RT and Fab Tm developability properties from sequence using AbLang embeddings plus trained MLP heads"
-    when_worse: "AbLEF is limited to two specific property predictions; IgT5 provides general-purpose embeddings for training custom models on any antibody property"
 
 complements:
   - model: "sadie"

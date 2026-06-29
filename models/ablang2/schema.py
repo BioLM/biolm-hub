@@ -1,4 +1,4 @@
-from typing import Annotated, Optional, Union
+from typing import Annotated, Optional
 
 from pydantic import (
     AliasChoices,
@@ -64,68 +64,6 @@ class AbLang2SequenceItem(RequestModel):
     ]
 
 
-### AbLang2 Seqcoding Request
-
-
-class AbLang2SeqcodingOptions(EnhancedStringEnum):
-    SEQCODING = "seqcoding"
-
-
-class AbLang2SeqcodingParams(RequestModel):
-    include: AbLang2SeqcodingOptions = Field(
-        default=AbLang2SeqcodingOptions.SEQCODING,
-        description='Output type to compute; "seqcoding" requests germline-debiased sequence-level embeddings for each antibody pair.',
-    )
-
-
-class AbLang2SeqcodingRequest(RequestModel):
-    params: AbLang2SeqcodingParams = Field(
-        default_factory=AbLang2SeqcodingParams,
-        description="Optional parameters controlling this action (defaults are used when omitted).",
-    )
-    items: Annotated[
-        list[AbLang2SequenceItem],
-        Field(
-            min_length=1,
-            max_length=AbLang2Params.batch_size,
-            description="Batch of inputs to process in a single request. Up to 32 sequences per request.",
-        ),
-    ]
-
-
-### AbLang2 Rescoding Request
-
-
-class AbLang2RescodingOptions(EnhancedStringEnum):
-    RESCODING = "rescoding"
-
-
-class AbLang2RescodingParams(RequestModel):
-    include: AbLang2RescodingOptions = Field(
-        default=AbLang2RescodingOptions.RESCODING,
-        description='Output type to compute; "rescoding" requests per-residue (position-level) embeddings for each antibody pair.',
-    )
-    align: bool = Field(
-        default=False,
-        description="If true, align residue embeddings to a standard antibody numbering scheme (not yet supported; must remain false).",
-    )
-
-
-class AbLang2RescodingRequest(RequestModel):
-    params: AbLang2RescodingParams = Field(
-        default_factory=AbLang2RescodingParams,
-        description="Optional parameters controlling this action (defaults are used when omitted).",
-    )
-    items: Annotated[
-        list[AbLang2SequenceItem],
-        Field(
-            min_length=1,
-            max_length=AbLang2Params.batch_size,
-            description="Batch of inputs to process in a single request. Up to 32 sequences per request.",
-        ),
-    ]
-
-
 ### AbLang2 Encode Request (specialized for handling seqcoding and rescoding)
 
 
@@ -163,22 +101,7 @@ class AbLang2EncodeRequest(RequestModel):
 ### AbLang2 Likelihood Request
 
 
-class AbLang2LikelihoodOptions(EnhancedStringEnum):
-    LIKELIHOOD = "likelihood"
-
-
-class AbLang2LikelihoodParams(RequestModel):
-    include: AbLang2LikelihoodOptions = Field(
-        default=AbLang2LikelihoodOptions.LIKELIHOOD,
-        description='Output type to compute; "likelihood" requests per-position amino-acid likelihood distributions.',
-    )
-
-
 class _AbLang2LikelihoodRequest(RequestModel):
-    params: AbLang2LikelihoodParams = Field(
-        default_factory=AbLang2LikelihoodParams,
-        description="Optional parameters controlling this action (defaults are used when omitted).",
-    )
     items: Annotated[
         list[AbLang2SequenceItem],
         Field(
@@ -194,15 +117,7 @@ AbLang2PredictRequest = _AbLang2LikelihoodRequest  # Alias to conform to ModelAc
 ### AbLang2 Restore Request
 
 
-class AbLang2RestoreOptions(EnhancedStringEnum):
-    RESTORE = "restore"
-
-
 class AbLang2RestoreParams(RequestModel):
-    include: AbLang2RestoreOptions = Field(
-        default=AbLang2RestoreOptions.RESTORE,
-        description='Output type to compute; "restore" fills masked positions marked with "*" in the input sequences.',
-    )
     align: bool = Field(
         default=False,
         description="If true, return restored sequences using a standard antibody numbering scheme (not yet supported; must remain false).",
@@ -284,10 +199,8 @@ class AbLang2LogProbRequest(RequestModel):
 
 
 class AbLang2RescodingResult(ResponseModel):
-    rescoding: list[list[Union[float, str]]] = (
-        Field(  # e.g. shape [num_positions, embed-dims or tokens]
-            description="Per-residue embedding matrix of shape [num_positions, embed_dim], one row per residue in the paired sequence."
-        )
+    rescoding: list[list[float]] = Field(
+        description="Per-residue embedding matrix of shape [num_positions, embed_dim], one row per residue in the paired sequence."
     )
 
 
@@ -321,7 +234,7 @@ class AbLang2SeqcodingResponse(ResponseModel):
 
 class AbLang2LikelihoodResult(ResponseModel):
     likelihood: list[list[float]] = Field(
-        description="Per-position amino-acid likelihood matrix of shape [L, 20], where L is the total sequence length."
+        description="Per-position logits over the model vocabulary (20 canonical amino acids); shape [L, 20] where L is the total paired sequence length."
     )
     sequence_tokens: list[str] = Field(
         description="Per-position input tokens, aligned with the logits."

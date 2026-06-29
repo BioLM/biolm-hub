@@ -33,7 +33,7 @@ dont_use_when:
   - "You need to evaluate double or multiple simultaneous mutations -- use ThermoMPNN-D (epistatic mode) for paired mutations or SPURS for multi-mutation ddG prediction"
   - "You need whole-protein melting temperature (Tm) rather than per-mutation ddG values -- use ESMStabP or TemBERTure for global Tm prediction"
   - "You are working with membrane proteins where stability depends on the lipid bilayer environment -- structure-based ddG models do not capture this context"
-  - "You need variant effect prediction driven by evolutionary conservation rather than structural features -- use GEMME (MSA-based) for evolution-informed scoring"
+  - "You need variant effect prediction driven by evolutionary conservation rather than structural features -- use an MSA-based evolutionary conservation method for evolution-informed scoring"
   - "You want a sequence-only tool for rapid screening of millions of sequences without requiring structure prediction as a preprocessing step"
 
 alternatives:
@@ -49,9 +49,6 @@ alternatives:
   - model: esmstabp
     when_better: "ESMStabP predicts melting temperature from sequence alone using ESM2 embeddings, achieving R-squared 0.94 on test data; no structure required"
     when_worse: "ESMStabP predicts global Tm, not per-mutation ddG; cannot identify specific stabilizing mutations or generate saturation mutagenesis landscapes"
-  - model: gemme
-    when_better: "GEMME uses MSA-based evolutionary analysis to predict variant effects without requiring structure, and captures evolutionary constraint signals that structure-based models may miss"
-    when_worse: "GEMME predicts relative fitness effects rather than thermodynamic ddG in kcal/mol; requires a deep MSA; no structural context for interpreting spatial proximity of mutations"
 
 complements:
   - model: boltz
@@ -62,7 +59,4 @@ complements:
     example_protocol: null
   - model: esm2
     workflow: "Use ESM2 log_prob for fast sequence-based variant scoring to identify evolutionarily plausible mutations, then validate the top candidates with ThermoMPNN's structure-based ddG prediction for a two-layer screening approach"
-    example_protocol: null
-  - model: camsol
-    workflow: "Use ThermoMPNN to identify stabilizing mutations, then screen the mutant sequences with CamSol to ensure the engineered variants maintain acceptable solubility -- optimizing both stability and solubility simultaneously"
     example_protocol: null

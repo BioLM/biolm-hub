@@ -52,7 +52,7 @@ From Kenlay et al., *Bioinformatics* (2024):
 | IgFold | Moderate | Moderate | Moderate |
 | ABlooper | CDR-only | N/A | Fast |
 
-<!-- TODO: Add specific numerical RMSD values from the AbodyBuilder3 paper Table 1 once PDF is available in R2 -- see sources.yaml pdf_r2 -->
+See `sources.yaml` applied_literature for per-CDR backbone RMSD from published head-to-head benchmarks (e.g. Dreyer et al. mAbs 2025, BioGeometry GeoFlow-V2 2025).
 
 ### BioLM Verification Results
 
@@ -135,10 +135,9 @@ Request
 
 ### Caching Behavior
 
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
-- Redis (Modal Dict) caching for fast repeated lookups
-- R2 caching for persistence
-- Cache keys determined by full request payload (sequences + parameters)
+Response caching is handled by the serving layer, not within the model container itself:
+- Cloudflare R2 caching for persistence across requests
+- Cache keys determined by the full request payload (sequences + parameters)
 
 ## Versions & Changelog
 

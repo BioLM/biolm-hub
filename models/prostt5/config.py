@@ -51,7 +51,6 @@ PROSTT5_VARIANT_RESOURCE_SPECS = {
 MODEL_FAMILY = ModelFamily(
     base_model_slug=ProstT5Params.base_model_slug,
     display_name=ProstT5Params.display_name,
-    # The @biolm_model_class container class in app.py (gateway routing, W8).
     modal_class_name="ProstT5Model",
     tags=ModelTags(
         input_modality=[InputModality.SEQUENCE],
@@ -60,20 +59,18 @@ MODEL_FAMILY = ModelFamily(
         output_modality=[OutputModality.EMBEDDING, OutputModality.SEQUENCE],
         architecture=[Architecture.TRANSFORMER, Architecture.T5],
     ),
-    # Two actions: encode and generate
-    # Note: The actual request/response schemas vary by direction
+    # Two actions: encode and generate.
+    # Each action has two direction-specific request schemas (AA2fold and fold2AA);
+    # the AA schema is listed here as the representative for docs/registry purposes.
     action_schemas=[
         ActionSchemaMap(
             name=ModelActions.ENCODE,
-            # For encode, we'll use a union type that gets resolved at runtime
-            # This is a limitation we'll need to address in the next stage
-            request_schema=ProstT5EncodeRequestAA,  # Default to AA, runtime will handle direction
+            request_schema=ProstT5EncodeRequestAA,
             response_schema=ProstT5EncodeResponse,
         ),
         ActionSchemaMap(
             name=ModelActions.GENERATE,
-            # For generate, we'll use a union type that gets resolved at runtime
-            request_schema=ProstT5GenerateRequestAA,  # Default to AA, runtime will handle direction
+            request_schema=ProstT5GenerateRequestAA,
             response_schema=ProstT5GenerateResponse,
         ),
     ],

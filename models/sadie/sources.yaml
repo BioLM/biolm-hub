@@ -26,17 +26,17 @@ primary_papers:
   - Jordan R. Willis
   - Troy M. Sincomb
   - Caleb K. Kibet
-  pdf_r2: pending
-  md_r2: pending
+  pdf_r2: ''
+  md_r2: ''
   figures_of_note: []
 source_repos:
 - type: github
   url: https://github.com/jwillis0720/sadie
   commit: ''
-  snapshot_r2: pending
+  snapshot_r2: ''
   readme_md_r2: knowledge-base/models/sadie/primary/pages/gh-sadie-readme.md
 - type: pypi
   url: https://pypi.org/project/sadie-antibody/
   commit: ''
-  snapshot_r2: pending
+  snapshot_r2: ''
 applied_literature: []

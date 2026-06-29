@@ -23,18 +23,30 @@ primary_papers:
   - Konstantin Weissenow
   - Joaquin Gomez Sanchez
   - Adrian Hartmann
-  - Maria Steinegger
+  - Martin Steinegger
   - Burkhard Rost
   pdf_r2: knowledge-base/models/prostt5/primary/papers/heinzinger2023.pdf
   md_r2: knowledge-base/models/prostt5/primary/papers-md/heinzinger2023.md
   figures_of_note:
   - "Figure 1: ProstT5 architecture \u2014 structure-sequence translation via T5"
   - 'Figure 2: 3Di token vocabulary and Foldseek encoding'
+- title: Bilingual language model for protein sequence and structure
+  doi: 10.1093/nargab/lqae150
+  venue: NAR Genomics and Bioinformatics, 2024
+  year: 2024
+  authors:
+  - Michael Heinzinger
+  - Konstantin Weissenow
+  - Joaquin Gomez Sanchez
+  - Adrian Hartmann
+  - Martin Steinegger
+  - Burkhard Rost
+  pdf_r2: pending
+  md_r2: pending
+  notes: Peer-reviewed journal version of the bioRxiv preprint (arXiv:2310.07083)
 source_repos:
 - type: github
   url: https://github.com/mheinzinger/ProstT5
-  commit: ''
-  snapshot_r2: pending
   readme_md_r2: knowledge-base/models/prostt5/primary/pages/gh-prostt5-readme.md
 - type: huggingface
   url: https://huggingface.co/Rostlab/ProstT5
@@ -60,21 +72,6 @@ applied_literature:
   md_r2: pending
   relevance: First use of ProstT5 sequence embeddings for protein-protein/peptide binding site prediction, outperforming state-of-the-art
     methods across multiple test sets
-- title: Bilingual language model for protein sequence and structure
-  doi: 10.1093/nargab/lqae150
-  venue: NAR Genomics and Bioinformatics, 2024
-  year: 2024
-  authors:
-  - Michael Heinzinger
-  - Konstantin Weissenow
-  - Joaquin Gomez Sanchez
-  - Adrian Hartmann
-  - Maria Steinegger
-  - Burkhard Rost
-  pdf_r2: pending
-  md_r2: pending
-  relevance: Peer-reviewed publication of ProstT5, demonstrating three orders of magnitude speedup for 3Di derivation and
-    improved structure-related prediction tasks
 - title: Protein structure-informed bacteriophage genome annotation with Phold
   doi: 10.1093/nar/gkaf1448
   venue: Nucleic Acids Research, 2026

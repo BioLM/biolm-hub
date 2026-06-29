@@ -50,11 +50,11 @@ Single variant -- no size options. ESMFold uses the ESM-2 3B backbone exclusivel
 - Performance degrades for proteins with few homologs in UniRef50
 - The model uses GPU memory snapshots for fast cold starts
 - Batch size is capped at 2 sequences per request
-- CUDA out-of-memory errors for long sequences return empty results (pdb="", mean_plddt=0.0, ptm=0.0) rather than crashing
+- CUDA out-of-memory errors for long sequences raise a server error rather than returning a silent empty result
 
 ## Actions / Endpoints
 
-### `predict`
+### `fold`
 
 Predicts the 3D structure of one or more protein sequences. Returns PDB-formatted coordinates with confidence scores.
 
@@ -74,7 +74,7 @@ Predicts the 3D structure of one or more protein sequences. Returns PDB-formatte
   "results": [
     {
       "pdb": "ATOM      1  N   MET A   1      ...",
-      "mean_plddt": 0.85,
+      "mean_plddt": 85.0,
       "ptm": 0.78
     }
   ]
@@ -84,14 +84,14 @@ Predicts the 3D structure of one or more protein sequences. Returns PDB-formatte
 | Field | Type | Description |
 |-------|------|-------------|
 | `pdb` | str | Full-atom 3D structure in PDB format |
-| `mean_plddt` | float | Mean predicted Local Distance Difference Test score (0-1). Higher indicates more confident per-residue predictions. |
+| `mean_plddt` | float | Mean predicted Local Distance Difference Test score (0-100). Higher indicates more confident per-residue predictions. |
 | `ptm` | float | Predicted TM-score (0-1). Higher indicates more confident overall fold topology. |
 
 ## Confidence Metrics
 
 | Metric | Range | Interpretation |
 |--------|-------|----------------|
-| pLDDT (per-residue, reported as mean_plddt) | 0-1 | > 0.9: very high confidence; 0.7-0.9: confident; 0.5-0.7: low confidence; < 0.5: likely disordered or misfolded |
+| pLDDT (per-residue, reported as mean_plddt) | 0-100 | > 90: very high confidence; 70-90: confident; 50-70: low confidence; < 50: likely disordered or misfolded |
 | pTM | 0-1 | > 0.8: high confidence in overall fold; 0.5-0.8: moderate confidence; < 0.5: fold topology may be incorrect |
 
 ## Usage Examples
@@ -133,18 +133,14 @@ ESMFold was benchmarked on CAMEO targets and CASP14, comparing single-sequence p
 | AlphaFold2 | MSA-based | Highest overall accuracy | Minutes to hours (MSA search) |
 | RoseTTAFold | MSA-based | Similar to ESMFold on many targets | Minutes to hours (MSA search) |
 
-<!-- TODO: Extract exact GDT-TS and TM-score benchmark numbers from paper Figures 3-4 and supplementary tables -- see sources.yaml primary_papers[0] -->
-
 Key quantitative findings from the paper:
-- ESMFold predictions with pLDDT > 0.7 have median TM-score > 0.8 relative to experimental structures
+- ESMFold predictions with pLDDT > 70 have median TM-score > 0.8 relative to experimental structures
 - For proteins with high evolutionary coverage in UniRef50, ESMFold approaches AlphaFold2 accuracy
 - Accuracy drops significantly for orphan proteins with few detected homologs
 
 ### SOTA Status
 
 ESMFold was state-of-the-art for single-sequence (MSA-free) protein structure prediction at time of publication (2023). As of 2025, newer methods (ESM3, Boltz-2 in single-sequence mode) may provide improved accuracy, though ESMFold remains the fastest option for pure protein structure prediction.
-
-<!-- TODO: Verify current SOTA status against newer single-sequence structure predictors -- check CAMEO leaderboard -->
 
 ## Implementation Verification
 
@@ -165,8 +161,6 @@ Numerical reproduction (Option A): The BioLM implementation loads official pre-t
 
 **Status: VERIFIED** -- Integration tests pass for both single-chain and multi-chain predictions with PDB RMSD < 0.5 Angstroms and numerical tolerances of rel_tol=1e-1.
 
-<!-- TODO: Add verification date from most recent CI run -- check GitHub Actions history -->
-
 ## Resource Requirements
 
 | Resource | Value |
@@ -185,8 +179,8 @@ Numerical reproduction (Option A): The BioLM implementation loads official pre-t
 - **Chunk size**: Set to 768 (`ESMFoldParams.max_sequence_len`) for memory-efficient attention computation.
 - **Recycling**: Fixed at 4 recycles (`num_recycles=4`) per prediction for accuracy/speed balance.
 - **Batching**: Sequences are batched by total token count (max 1024 tokens per batch) to optimize GPU utilization while staying within memory limits.
-- **OOM handling**: CUDA out-of-memory errors during inference are caught and return empty results (`pdb=""`, `mean_plddt=0.0`, `ptm=0.0`) for the affected batch, allowing the remaining batches to complete.
-- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
+- **OOM handling**: CUDA out-of-memory errors during inference raise a `ModelExecutionError` (typed server error) so the failure is observable to the caller rather than silently returning empty results.
+- **Caching**: Response caching is handled by the serving infrastructure outside the model container.
 - **Container image**: Built from `pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime` with OpenFold installed from source (requires `--no-build-isolation` for setup.py that imports torch).
 
 ## License

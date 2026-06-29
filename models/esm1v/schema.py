@@ -22,7 +22,9 @@ class ESM1vParams(ModelParams):
     base_model_slug = "esm1v"
     log_identifier = "ESM-1v"
     batch_size = 5
-    max_sequence_len = 512
+    max_sequence_len = (
+        1022  # 1024 tokens - 2 for BOS/EOS (ESM-1v shares ESM-1b's architecture)
+    )
 
 
 class ESM1vModelNumbers(EnhancedStringEnum):
@@ -65,7 +67,7 @@ class ESM1vPredictRequest(RequestModel):
 ### ESM1v Response
 
 
-class ESM1vPredictResponseLabel(RequestModel):
+class ESM1vPredictResponseLabel(ResponseModel):
     token: int = Field(
         description="Tokenizer vocabulary ID for the predicted amino acid."
     )

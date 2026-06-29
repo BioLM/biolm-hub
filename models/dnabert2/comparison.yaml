@@ -14,7 +14,7 @@ last_updated: "2026-03-17"
 strengths:
   - "BPE tokenization provides finer-grained resolution than fixed k-mer approaches (NT), capturing variable-length motifs that can represent regulatory grammar at multiple scales simultaneously"
   - "Lightweight at 117M parameters on a T4 GPU, making it one of the cheapest DNA foundation models to deploy — suitable for high-throughput screening and resource-constrained environments"
-  - "Strong multi-species generalization demonstrated on the GUE benchmark (36 datasets across 9 task categories), outperforming larger models on many regulatory element classification tasks"
+  - "Strong multi-species generalization demonstrated on the GUE benchmark (28 datasets across 7 task categories), outperforming larger models on many regulatory element classification tasks"
   - "Apache-2.0 license permits unrestricted commercial and academic use, unlike NT's CC-BY-NC-SA-4.0 non-commercial license"
   - "Zero-shot variant effect prediction via pseudo-log-likelihood scoring requires no task-specific fine-tuning and benefits from BPE's ability to detect disruptions at multiple sequence scales"
   - "Dual-action API (encode + log_prob) covers both embedding extraction and sequence fitness scoring in a single model deployment"
@@ -22,7 +22,7 @@ strengths:
   - "Well-validated in independent benchmarks (Nature Communications 2025, Frontiers in Genetics 2025) alongside NT, HyenaDNA, Caduceus, and GROVER"
 
 weaknesses:
-  - "Effective context window of approximately 4-8 kbp is shorter than NT (~12 kbp) and much shorter than Evo/Evo2 (8-131+ kbp), limiting analysis of extended genomic regions"
+  - "Input limit of 2,048 nucleotides (~2 kbp) is shorter than Nucleotide Transformers (~12 kbp) and much shorter than Evo/Evo2 (8-131+ kbp), limiting analysis of extended genomic regions"
   - "No generative capability — cannot design or sample novel DNA sequences; limited to scoring and embedding existing sequences"
   - "Masked language model architecture (BERT-style) provides pseudo-log-likelihood only, not true autoregressive log-probabilities for sequence fitness scoring"
   - "Single model size (117M parameters) offers no size-accuracy tradeoff — unlike NT (250M/500M) or Omni-DNA (multiple sizes up to 1B)"
@@ -31,27 +31,24 @@ weaknesses:
   - "BPE tokenization may fragment sequences differently for closely related variants, making direct position-level comparison across variant alleles less straightforward than byte-level models"
 
 use_when:
-  - "You need lightweight, cost-effective DNA embeddings for regulatory element classification (promoters, enhancers, splice sites) where the analysis region fits within ~4-8 kbp"
+  - "You need lightweight, cost-effective DNA embeddings for regulatory element classification (promoters, enhancers, splice sites) where the analysis region fits within 2,048 nucleotides (~2 kbp)"
   - "You need a permissively licensed (Apache-2.0) DNA foundation model for commercial applications without license restrictions"
   - "You want fine-grained BPE tokenization that captures motif-level patterns, rather than fixed 6-mer tokens (NT) or single-nucleotide tokens (Evo)"
   - "You are running high-throughput variant effect screening and need a fast, lightweight model that can score thousands of variants on a T4 GPU"
-  - "You need DNA embeddings as input features for downstream classifiers and want a model validated on the comprehensive GUE benchmark"
+  - "You need DNA embeddings as input features for downstream classifiers and want a model validated on the GUE benchmark (28 datasets, 7 task categories)"
   - "You are performing multi-species genomic analyses and need embeddings with demonstrated cross-species generalization"
   - "You are comparing DNA foundation model approaches and need a BPE-tokenized baseline alongside k-mer (NT) and byte-level (Evo) models"
 
 dont_use_when:
-  - "You need to analyze genomic regions longer than ~8 kbp, such as full gene loci or long-range regulatory interactions (use nt for ~12 kbp or evo/evo2 for 8-131+ kbp contexts)"
+  - "You need to analyze genomic regions longer than 2,048 nucleotides (~2 kbp), such as full gene loci or long-range regulatory interactions (use Nucleotide Transformers for ~12 kbp or evo/evo2 for 8-131+ kbp contexts)"
   - "You need to generate or design novel DNA sequences for synthetic biology (use evo or evo2, which have autoregressive generation capability)"
-  - "You need the highest-capacity DNA embedding model available and compute cost is not a concern (use nt-v2-500m or omni_dna-1b for larger representation capacity)"
+  - "You need the highest-capacity DNA embedding model available and compute cost is not a concern (use omni_dna for larger representation capacity)"
   - "You are working with RNA sequences or need RNA-specific features (use an RNA-specific model instead)"
   - "You need codon optimization or synthesis constraint checking for gene design (use dna_chisel, which is purpose-built for these tasks)"
   - "You need protein-level analysis from coding DNA (translate and use esm2 for protein embeddings directly)"
   - "You need long-range variant effect prediction across entire gene loci or enhancer-promoter distances exceeding 10 kbp (use evo2 instead)"
 
 alternatives:
-  - model: "nt"
-    when_better: "Longer context window (~12 kbp vs ~4-8 kbp), two size variants (250M/500M) for speed-accuracy tradeoff, and more extensive multi-species pretraining across 850+ genomes"
-    when_worse: "Non-commercial license (CC-BY-NC-SA-4.0), coarser 6-mer tokenization with lower single-nucleotide resolution, and higher compute requirements than DNABERT-2's 117M parameters on T4"
   - model: "omni_dna"
     when_better: "Larger model capacity (1B parameters), autoregressive architecture for true log-probability scoring, and designed for cross-modal multi-task DNA understanding"
     when_worse: "Very recent model (2025) with limited independent benchmarking; DNABERT-2 has extensive validation on the GUE benchmark and in multiple independent studies"
@@ -71,7 +68,4 @@ complements:
     example_protocol: null
   - model: "dna_chisel"
     workflow: "Use DNABERT-2 to score and analyze coding DNA sequences for functional plausibility, then use DNA-Chisel to optimize codon usage, check for restriction sites, and apply synthesis constraints"
-    example_protocol: null
-  - model: "nt"
-    workflow: "Use DNABERT-2's BPE-resolution scoring for fine-grained regulatory motif analysis, complemented by NT's longer-context embeddings for broader gene-scale characterization of the same genomic region"
     example_protocol: null

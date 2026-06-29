@@ -46,14 +46,6 @@ alternatives:
     when_better: "ESMC provides state-of-the-art single-sequence embeddings with no MSA dependency, broader actions, and longer context length — simpler, faster, and more practical for most use cases"
     when_worse: "ESMC cannot leverage evolutionary covariation from alignments; when MSAs are available and co-evolutionary signal is important, MSA Transformer embeddings are more informative"
 
-  - model: poet
-    when_better: "PoET also uses MSA context but provides dedicated variant scoring (substitutions and indels) with published ProteinGym benchmarks, plus the ability to score variable-length variants"
-    when_worse: "PoET is focused on variant scoring only; MSA Transformer provides general-purpose MSA-aware embeddings and unsupervised contact prediction for broader structural analysis tasks"
-
-  - model: saprot
-    when_better: "SaProt provides structure-aware variant scoring and embeddings without requiring MSA construction — just sequence + structure input, with stronger published variant effect benchmarks"
-    when_worse: "SaProt requires structure input and focuses on individual protein analysis; MSA Transformer captures family-level evolutionary patterns across multiple sequences"
-
   - model: esm1b
     when_better: "ESM-1b provides single-sequence embeddings instantly with no MSA dependency and includes predict and log_prob actions for variant analysis"
     when_worse: "ESM-1b cannot capture co-evolutionary information; MSA Transformer's evolutionary covariation signal improves predictions for well-studied protein families with deep alignments"
@@ -67,6 +59,3 @@ complements:
     workflow: "Use MSA Transformer for quick unsupervised contact prediction to assess protein foldability, then run Boltz on promising candidates for full atomic-level structure prediction — MSA Transformer as a fast structural pre-screen"
     example_protocol: null
 
-  - model: poet
-    workflow: "Use MSA Transformer encode for evolutionary-context-aware embeddings and contact prediction, then use PoET score on the same MSA for quantitative variant effect prediction — complementary MSA-based analyses from the same alignment"
-    example_protocol: null

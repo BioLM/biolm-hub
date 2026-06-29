@@ -4,7 +4,7 @@
 
 ## Overview
 
-SPURS (Structure Prediction Using Residue-level and Secondary structure information) is a protein stability prediction model developed by the Luo Group. It combines ESM2-650M sequence embeddings with 3D structural features to predict the change in free energy (ddG) upon amino acid substitution.
+SPURS is a structure-aware protein stability prediction model developed by the Luo Group. It combines ESM2-650M sequence embeddings with 3D structural features to predict the change in free energy (ddG) upon amino acid substitution.
 
 SPURS supports three prediction modes: single-mutation ddG prediction, multi-mutation combined ddG with per-mutation contributions, and full saturation mutagenesis (DMS) matrix generation covering all possible single-residue substitutions.
 
@@ -154,9 +154,7 @@ request_variant = SpursPredictRequest(
 
 ### SOTA Status
 
-SPURS provides structure-aware ddG prediction with multi-mutation support. Benchmarks against standard stability prediction datasets are pending.
-
-<!-- TODO: Add specific benchmark numbers from SPURS paper when published -->
+SPURS provides structure-aware ddG prediction with multi-mutation support. Quantitative benchmarks (Spearman correlation, RMSE on ProTherm/Megascale/S669) are not reproduced here; see the primary paper (Nature Communications, 2025) for reported results.
 
 ## Implementation Verification
 
@@ -190,7 +188,7 @@ Golden output comparison: Test fixtures compare outputs against reference values
 - **SPURS repository**: Cloned at pinned commit (`2bae5fed`) into `/opt/spurs`
 - **Structure handling**: CIF files converted to PDB via biotite before SPURS processing
 - **Determinism**: Seeds set via SPURS `seed_everything(42)` utility
-- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container
+- **Caching**: Response caching is handled externally by the serving infrastructure, not by the model container
 
 ## License
 

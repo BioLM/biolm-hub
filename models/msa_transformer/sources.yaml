@@ -12,7 +12,6 @@ applicable_to:
 - antibody
 tasks:
 - embedding
-- structure_prediction
 primary_papers:
 - title: MSA Transformer
   arxiv: ''
@@ -36,8 +35,8 @@ primary_papers:
 source_repos:
 - type: github
   url: https://github.com/facebookresearch/esm
-  commit: ''
-  snapshot_r2: pending
+  commit: 2b369911bb5b4b0dda914521b9475cad1656b2ac
+  snapshot_r2: knowledge-base/models/esm2/primary/repos/esm-2b369911.tar.gz
   notes: MSA Transformer is part of the fair-esm library (esm.pretrained.esm_msa1b_t12_100M_UR50S)
   readme_md_r2: knowledge-base/models/msa_transformer/primary/pages/gh-esm-readme.md
 applied_literature:

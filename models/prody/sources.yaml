@@ -36,7 +36,20 @@ source_repos:
   readme_md_r2: knowledge-base/models/prody/primary/pages/gh-prody-readme.md
 - type: pypi
   url: https://pypi.org/project/ProDy/
-  notes: Protein dynamics and structure analysis library
+  notes: Protein dynamics and structure analysis library (MIT)
+- type: github
+  url: https://github.com/openmm/pdbfixer
+  commit: v1.8.1
+  notes: >
+    PDBFixer (MIT) — used for hydrogen addition (primary method). Installed at runtime
+    from git tag v1.8.1.
+- type: github
+  url: https://github.com/openbabel/openbabel
+  notes: >
+    OpenBabel (GPL-2.0) — optional alternative method for hydrogen addition. Installed
+    via apt openbabel + openbabel-wheel==3.1.1.22. The GPL-2.0 license of OpenBabel
+    applies when this dependency is used. Maintainers should confirm this is acceptable
+    for their distribution scenario.
 applied_literature:
 - title: 'ProDy 2.0: increased scale and scope after 10 years of protein dynamics modelling with Python'
   doi: 10.1093/bioinformatics/btab187

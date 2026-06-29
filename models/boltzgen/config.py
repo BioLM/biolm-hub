@@ -44,7 +44,7 @@ MODEL_FAMILY = ModelFamily(
             InputMolecule.LIGAND,
             InputMolecule.COMPLEX,
         ],
-        task=[Task.SEQUENCE_GENERATION, Task.STRUCTURE_PREDICTION],
+        task=[Task.SEQUENCE_GENERATION],
         output_modality=[OutputModality.STRUCTURE, OutputModality.SEQUENCE],
         architecture=[Architecture.DIFFUSION, Architecture.TRANSFORMER],
     ),

@@ -3,10 +3,10 @@ from models.commons.testing.config import ActionTestCase, TestSuite, VariantTest
 from models.commons.testing.fixture import FixtureGenerator
 from models.dna_chisel.config import MODEL_FAMILY
 from models.dna_chisel.schema import (
+    DnaChiselEncodeRequest,
+    DnaChiselEncodeRequestItem,
+    DnaChiselEncodeRequestParams,
     DnaChiselFeatureOptions,
-    DnaChiselPredictRequest,
-    DnaChiselPredictRequestItem,
-    DnaChiselPredictRequestParams,
 )
 
 EXPLICIT_INPUT = "encode_input_explicit.json"
@@ -27,8 +27,8 @@ fixture_generation_suite = TestSuite(
                     action_name=ModelActions.ENCODE,
                     input_filename_template=EXPLICIT_INPUT,
                     # Programmatic input with explicit parameters
-                    input_fixture=DnaChiselPredictRequest(
-                        params=DnaChiselPredictRequestParams(
+                    input_fixture=DnaChiselEncodeRequest(
+                        params=DnaChiselEncodeRequestParams(
                             include=[
                                 DnaChiselFeatureOptions.GC_CONTENT,
                                 DnaChiselFeatureOptions.SEQUENCE_LENGTH,
@@ -37,7 +37,7 @@ fixture_generation_suite = TestSuite(
                             species="e_coli",
                             restriction_enzymes=["EcoRI"],
                         ),
-                        items=[DnaChiselPredictRequestItem(sequence="ATGCGTACG")],
+                        items=[DnaChiselEncodeRequestItem(sequence="ATGCGTACG")],
                     ),
                     expected_output_fixture=EXPLICIT_OUTPUT,
                 ),
@@ -45,8 +45,8 @@ fixture_generation_suite = TestSuite(
                     action_name=ModelActions.ENCODE,
                     input_filename_template=DEFAULT_INPUT,
                     # Programmatic input with default parameters
-                    input_fixture=DnaChiselPredictRequest(
-                        items=[DnaChiselPredictRequestItem(sequence="ATGCGTACG")]
+                    input_fixture=DnaChiselEncodeRequest(
+                        items=[DnaChiselEncodeRequestItem(sequence="ATGCGTACG")]
                     ),
                     expected_output_fixture=DEFAULT_OUTPUT,
                 ),

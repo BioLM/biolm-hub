@@ -8,7 +8,7 @@ ESM-2 is a masked protein language model based on the BERT (bidirectional transf
 
 The key innovation of ESM-2 over its predecessor ESM-1b is scaling. The authors systematically trained models from 8M to 15B parameters and demonstrated that representation quality improves log-linearly with model scale  --  larger models produce embeddings that better capture protein structure and function. ESM-2 at 650M parameters matches or exceeds the performance of MSA-based methods (e.g., MSA Transformer) using only single sequences as input, eliminating the costly multiple sequence alignment step.
 
-ESM-2 uses a standard transformer encoder with pre-layer normalization, GELU activations, and learned positional embeddings. Unlike some newer protein language models, it does not use rotary position embeddings or structural supervision during training.
+ESM-2 uses a standard transformer encoder with pre-layer normalization, GELU activations, and rotary position embeddings (RoPE). Unlike some newer protein language models, it does not use structural supervision during training. The switch from learned absolute positional embeddings (used in ESM-1b) to RoPE is the key architectural change in ESM-2, and it is what allows a uniform 2048-residue context cap across all model sizes.
 
 ### Parameters & Layers
 
@@ -25,10 +25,10 @@ Common across all variants:
 | Property | Value |
 |----------|-------|
 | Vocabulary size | 33 tokens (20 standard AA + special tokens) |
-| Positional encoding | Learned |
+| Positional encoding | Rotary (RoPE) |
 | Normalization | Pre-LayerNorm |
 | Activation | GELU |
-| Max input length | 2048 tokens (including BOS + EOS) |
+| Max input length | 2048 amino-acid residues (BOS/EOS added internally) |
 
 The attention head count is 20 for all variants except the 3B model which uses 40 heads. The feed-forward dimension is consistently 4x the hidden dimension across all variants. These values are confirmed from the ESM-2 model architecture (standard transformer encoder with 4x FFN expansion ratio).
 
@@ -72,7 +72,7 @@ This is the standard BERT masking strategy applied to protein sequences.
 | EOS appended | Yes |
 | Extra tokens per sequence | 2 (BOS + EOS) |
 
-The effective maximum sequence length is 2046 residues (2048 total minus 2 special tokens). In the BioLM implementation, `max_sequence_len` is set to 2048 in `ESM2Params`, which refers to the total token count including special tokens.
+The maximum input length is 2048 amino-acid residues. BOS and EOS tokens are added internally, so a 2048-residue sequence produces a 2050-token sequence inside the model. `max_sequence_len` in `ESM2Params` refers to the residue count, not the token count. Note that during training, smaller variants (8M–650M) used a 1024-token crop, so embeddings for sequences longer than ~1022 residues may be less reliable for those variants.
 
 Input sequences are validated against the extended amino acid alphabet (20 standard + B, J, O, U, X, Z) plus the `-` gap character for the `encode` action and the `<mask>` token for the `predict` action.
 
@@ -107,7 +107,7 @@ ESMFold produces structures in a single forward pass (~1-2 seconds) compared to 
 
 #### Variant Effect Prediction
 
-ESM-2 pseudo-log-likelihood scores correlate with experimentally measured protein fitness. On the ProteinGym DMS benchmarks, ESM-2 achieves approximately:
+ESM-2 log-probability scores (`log_prob`, a single unmasked forward pass / wt-marginal scoring, not a masked pseudo-log-likelihood) correlate with experimentally measured protein fitness. On the ProteinGym DMS benchmarks, ESM-2 achieves approximately:
 
 | Model | Avg Spearman rho (ProteinGym DMS) |
 |-------|-----------------------------------|
@@ -193,7 +193,7 @@ Request
   |     |-- bos: return BOS (CLS) token embedding
   |     |-- contacts: return predicted contact map
   |     |-- logits: slice to 20 AA vocab [4:-9]
-  |     |-- attentions: average over layers and heads
+  |     |-- attentions: average over heads then queries → (num_layers, seq_len)
   |-- 6. Sort results by sequence_index
   |-- 7. Return ESM2EncodeResponse
 ```
@@ -212,7 +212,6 @@ For `log_prob`, the pipeline calls `_encode_forward_pass` with `include=["logits
 
 Attention computation scales as O(n^2) with sequence length. For the 650M model on a T4 (16 GB VRAM), batches of long sequences (>1000 residues) may need smaller batch sizes.
 
-<!-- TODO: Measure actual GPU memory usage and latency at various sequence lengths  --  profile on QA deployment -->
 
 ### Determinism & Reproducibility
 
@@ -228,10 +227,7 @@ The model produces reproducible outputs on the same GPU architecture. Small nume
 
 ### Caching Behavior
 
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
-- **Redis (Modal Dict)**: Fast lookup, TTL-based expiration
-- **R2**: Persistent storage for cached results
-- **Cache key**: Determined by the request payload (sequences, params, include options, model variant)
+Response caching is handled by the serving infrastructure, not by the model container. The cache key is determined by the request payload (sequences, params, include options, and model variant).
 
 ## Versions & Changelog
 

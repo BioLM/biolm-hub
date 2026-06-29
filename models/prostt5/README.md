@@ -261,7 +261,7 @@ Encode outputs compared against golden embeddings with cosine distance threshold
 ## Implementation Notes
 
 - **Memory snapshots**: Uses `@modal.enter(snap=True)` with `ModelMixinSnap` and GPU snapshot.
-- **Container image**: Based on `pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime`.
+- **Container image**: Based on `pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime`.
 - **Model loading**: `T5EncoderModel` for encode action; `AutoModelForSeq2SeqLM` for generate action.
 - **Half precision**: Skipped with memory snapshots for CPU compatibility.
 - **Bad words filtering**: Prevents generating tokens from the wrong vocabulary (no 3Di tokens when outputting AA, and vice versa).
@@ -284,7 +284,7 @@ Encode outputs compared against golden embeddings with cosine distance threshold
 ```bibtex
 @article{heinzinger2023prostt5,
   title={ProstT5: Bilingual Language Model for Protein Sequence and Structure},
-  author={Heinzinger, Michael and Weissenow, Konstantin and Gomez Sanchez, Joaquin and Hartmann, Adrian and Steinegger, Maria and Rost, Burkhard},
+  author={Heinzinger, Michael and Weissenow, Konstantin and Gomez Sanchez, Joaquin and Hartmann, Adrian and Steinegger, Martin and Rost, Burkhard},
   journal={bioRxiv},
   year={2023},
   eprint={2310.07083},

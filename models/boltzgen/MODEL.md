@@ -31,8 +31,6 @@ BoltzGen orchestrates five distinct neural network checkpoints in a seven-stage 
 | Max sequence length | 2048 residues |
 | Molecule dictionary | `mols.zip` from `boltzgen/inference-data` (CCD reference data) |
 
-<!-- TODO: Extract exact parameter counts per checkpoint from the BoltzGen paper -- not stated explicitly in the repository or preprint -->
-
 ### Training Data
 
 | Property | Details |
@@ -203,7 +201,7 @@ Request (BoltzGenDesignRequest)
 |-------|-----|-----------------|--------------|-------|
 | Simple protein-ligand (num_designs=3, budget=2) | A100 40GB | 64 GB | ~10-20 min | Minimal test configuration |
 | Nanobody redesign (num_designs=3, budget=2) | A100 40GB | 64 GB | ~20-40 min | File entity + scaffold processing |
-| Production campaign (num_designs=10000, budget=100) | A100 40GB | 64 GB | ~2-8 hours | Full design campaign |
+| Production campaign (num_designs=500, budget=100) | A100 40GB | 64 GB | ~2-8 hours | Full design campaign (max per-request limit) |
 | Cyclic peptide (num_designs=3, budget=2) | A100 40GB | 64 GB | ~15-30 min | With cyclization constraints |
 
 The BioLM deployment allocates 8 CPU cores and 64 GB system memory alongside the A100 40GB GPU. 24-hour maximum timeout accommodates large design campaigns.
@@ -217,7 +215,7 @@ The BioLM deployment allocates 8 CPU cores and 64 GB system memory alongside the
 
 ### Caching Behavior
 
-- **Redis (Modal Dict) caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container. Due to the stochastic nature of generative design, cache hits are meaningful only for identical requests (same entities, same parameters).
+- **Response caching**: Due to the stochastic nature of generative design, cache hits are meaningful only for identical requests (same entities, same parameters).
 - **R2 caching**: Model checkpoints cached in R2 (`model-store/boltzgen/v1/`). HuggingFace fallback for first container builds.
 - **Memory snapshots**: `enable_memory_snapshot=True` for faster cold starts. GPU snapshots disabled (`enable_gpu_snapshot: False`) due to the large combined model size.
 - **Molecule dictionary**: `mols.zip` extracted once during container setup and persisted for the container lifetime.

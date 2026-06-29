@@ -67,7 +67,7 @@ def list_supported_restriction_enzymes() -> list[str]:
     return [enzyme.__name__ for enzyme in AllEnzymes]
 
 
-class DnaChiselPredictRequestParams(RequestModel):
+class DnaChiselEncodeRequestParams(RequestModel):
     include: list[DnaChiselFeatureOptions] = Field(
         default_factory=lambda: list(DnaChiselFeatureOptions),
         description="Optional outputs to compute and include in the response.",
@@ -101,21 +101,23 @@ class DnaChiselPredictRequestParams(RequestModel):
         return enzymes
 
 
-class DnaChiselPredictRequestItem(RequestModel):
+class DnaChiselEncodeRequestItem(RequestModel):
     sequence: Annotated[
         str,
         BeforeValidator(validate_dna_unambiguous),
-        Field(..., min_length=1, description="A DNA sequence (A/C/G/T)."),
+        Field(
+            ..., min_length=1, description="A DNA sequence (A/C/G/T, uppercase only)."
+        ),
     ]
 
 
-class DnaChiselPredictRequest(RequestModel):
-    params: DnaChiselPredictRequestParams = Field(
-        default_factory=DnaChiselPredictRequestParams,
+class DnaChiselEncodeRequest(RequestModel):
+    params: DnaChiselEncodeRequestParams = Field(
+        default_factory=DnaChiselEncodeRequestParams,
         description="Optional parameters controlling this action (defaults are used when omitted).",
     )
     items: Annotated[
-        list[DnaChiselPredictRequestItem],
+        list[DnaChiselEncodeRequestItem],
         Field(
             min_length=1,
             max_length=DnaChiselParams.batch_size,
@@ -127,14 +129,14 @@ class DnaChiselPredictRequest(RequestModel):
 ### DNA-Chisel Response
 
 
-class DnaChiselPredictResponseResult(ResponseModel):
+class DnaChiselEncodeResponseResult(ResponseModel):
     gc_content: Optional[float] = Field(
         default=None,
         description="GC content of the sequence as a fraction (0–1).",
     )
     cai: Optional[float] = Field(
         default=None,
-        description="Codon Adaptation Index (CAI) for the selected species; higher values indicate better codon optimization.",
+        description="Naive CAI approximation for the selected species: arithmetic mean of per-codon relative adaptiveness weights. Higher values indicate better codon optimization. Note: this is an arithmetic-mean approximation, not the classical geometric-mean CAI; values will differ from published CAI calculators.",
     )
     hairpin_score: Optional[float] = Field(
         default=None,
@@ -210,7 +212,7 @@ class DnaChiselPredictResponseResult(ResponseModel):
     )
 
 
-class DnaChiselPredictResponse(ResponseModel):
-    results: list[DnaChiselPredictResponseResult] = Field(
+class DnaChiselEncodeResponse(ResponseModel):
+    results: list[DnaChiselEncodeResponseResult] = Field(
         description="Per-input results, returned in the same order as the request items.",
     )

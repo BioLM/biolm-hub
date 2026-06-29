@@ -54,7 +54,6 @@ ImmuneBuilder addresses computational structure prediction for immune proteins. 
 - **TCR-pMHC interaction modeling**: Predicting TCR structures for docking studies with peptide-MHC complexes
 - **Nanobody engineering**: Structural assessment of nanobody libraries for CDR loop optimization
 
-<!-- TODO: Add specific applied literature citations as they become available -->
 
 ## Related Models
 

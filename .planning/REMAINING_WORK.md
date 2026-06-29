@@ -48,6 +48,23 @@ debt is application-level. **Modal-free fix campaign IN PROGRESS** (grouped/tria
    the otherwise-permissive catalog.
 4. **Knowledge-base PDF policy** — `sources.yaml` `*_r2` paths point at third-party paper PDFs; confirm
    none of those raw PDFs land in public `biolm-public` (W-sec).
+5. **peptides license — NEW INFO may flip the decision.** The review found the wrapped `peptides==0.3.4`
+   (althonos/peptides.py) is *self-contradictory*: its source + `COPYING` say **GPL-3.0** but its PyPI
+   metadata says **MIT**. Per your "relicense it" call I set the model to GPL-3.0 (conservative) with the
+   contradiction documented in its sources.yaml/README/LICENSE. **If the maintainer confirms upstream is
+   really MIT, peptides can ship permissively instead** (no copyleft). Needs a maintainer/legal ping to
+   althonos. Also: vendor the full GPL-3.0 text into `models/peptides/LICENSE` once the license is confirmed
+   (currently a GPL-3.0 notice + canonical-URL pointer, to stay filter-safe and not presume the resolution).
+
+### Fix campaign Phase B — DONE (2026-06-30; one agent content-filtered, recovered in-context)
+Per-model fan-out applied each model's review findings + cross-cutting decisions (39 SHIP + dummy, 298
+model files). **peptides** recovered by hand (license/attribution → GPL-3.0 + althonos/Larralde, `557`→~140,
+dangling camsol/biolmtox2/esmstabp slugs removed, display_name). 3 residual `qa` deploy comments swept.
+**Verified:** `biolm-modal`=0 + `qa`=0 across shipped dirs; schema guard ✓40; ruff clean; `mkdocs build
+--strict` green (39); unit tests 6 fail = ONLY the pre-existing pandas (boltzgen/test_unit) + R2-creds
+(test_cache) env issues (Phase A fixed the 14 cli/test_kb). **Deferred (not done) → see
+`.planning/reviews/round-1/PHASE_B_DEFERRED.md`:** response-shape renames (Milestone B deploy-verify),
+cross-model coordinated renames, commons-scope lifts (W3b), R2-artifact-dependent items (Milestone B).
 
 ### Fix campaign Phase A — DONE (2026-06-30; one agent failed, recovered in-context)
 Foundational shared-file fixes landed + verified (ruff/black clean, commons imports, `mkdocs build

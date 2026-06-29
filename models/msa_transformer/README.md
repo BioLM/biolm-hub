@@ -51,7 +51,7 @@ MSA Transformer is a single-variant model.
 **Other considerations:**
 - Requires pre-computed MSA as input (does not perform sequence search)
 - Maximum sequence length: 1,024 residues
-- Maximum MSA depth: 256 sequences (recommended)
+- Maximum MSA depth: 256 sequences (hard limit enforced by schema validation)
 - Performance degrades significantly with very shallow MSAs (< 16 sequences)
 - Not suitable for orphan proteins without homologs
 - First sequence in MSA must be the query/reference sequence
@@ -207,7 +207,7 @@ Baseline comparison against paper specifications combined with architectural con
 - **Weight loading**: Uses `esm.pretrained.esm_msa1b_t12_100M_UR50S()` with `torch.hub.set_dir()` for caching.
 - **Determinism**: Seeds set to 42 at model load time.
 - **Contact prediction**: Contacts are computed by the ESM library's internal `return_contacts=True` mechanism, which applies symmetrization and APC correction to attention weights.
-- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
+- **Caching**: Response caching is handled outside the model container at the serving layer.
 
 ## License
 

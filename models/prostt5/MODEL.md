@@ -172,11 +172,8 @@ Request
 
 ### Caching Behavior
 
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
-- Redis (Modal Dict) caching for fast repeated lookups
-- R2 caching for persistence
-- Encode results are deterministic and benefit strongly from caching
-- Generate results vary by seed and are typically not cached
+Encode results are fully deterministic (eval mode, no random sampling) and benefit strongly from
+response caching. Generate results vary by seed and are typically not cached.
 
 ## Versions & Changelog
 

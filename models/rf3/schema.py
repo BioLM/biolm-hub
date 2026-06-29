@@ -6,7 +6,7 @@ Based on RosettaCommons/foundry implementation (BSD 3-Clause License).
 
 from typing import Annotated, Optional
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from models.commons.model.base import ModelParams
 from models.commons.model.pydantic import (
@@ -56,7 +56,7 @@ class RF3Component(RequestModel):
 
     name: str = Field(
         ...,
-        description="Optional human-readable label for this input, echoed back in the response.",
+        description="Human-readable label for this component; used as an identifier within the prediction job.",
     )
     type: RF3EntityType = Field(
         ...,
@@ -64,7 +64,8 @@ class RF3Component(RequestModel):
     )
     sequence: Optional[str] = Field(
         None,
-        description="A protein, DNA, or RNA sequence in single-letter codes.",
+        max_length=RF3Params.max_sequence_len,
+        description="A protein, DNA, or RNA sequence in single-letter codes (maximum 2048 characters).",
     )
     smiles: Optional[str] = Field(
         None, description="Ligand structure as a SMILES string."
@@ -73,15 +74,26 @@ class RF3Component(RequestModel):
         None, description="Chemical Component Dictionary code for a ligand."
     )
     structure_path: Optional[str] = Field(
-        None, description="Path to a template structure file (CIF/PDB/SDF)."
+        None,
+        description=(
+            "Container-local path to a template structure file (CIF/PDB/SDF). "
+            "Not usable by external callers; prefer structure_cif instead."
+        ),
     )
     structure_cif: Optional[str] = Field(
-        None, description="Input structure in mmCIF format."
+        None,
+        description="Template structure in mmCIF format (inline text). Use this to supply a structure template.",
     )
     chain_id: Optional[str] = Field(
         None, description='Chain identifier to operate on (e.g. "A").'
     )
-    msa_path: Optional[str] = Field(None, description="Path to an MSA file (.a3m).")
+    msa_path: Optional[str] = Field(
+        None,
+        description=(
+            "Container-local path to an MSA file (.a3m). "
+            "Not usable by external callers; prefer msa_content or alignment instead."
+        ),
+    )
     msa_content: Optional[str] = Field(
         None,
         description="Multiple-sequence alignment for the query sequence, in A3M format.",
@@ -89,6 +101,15 @@ class RF3Component(RequestModel):
     alignment: Optional[dict[RF3AlignmentDatabase, str]] = Field(
         None, description="MSA alignments keyed by sequence database."
     )
+
+    @model_validator(mode="after")
+    def check_at_least_one_payload_field(self) -> "RF3Component":
+        """Require at least one of sequence, smiles, or ccd_code."""
+        if self.sequence is None and self.smiles is None and self.ccd_code is None:
+            raise ValueError(
+                "Each component must provide at least one of: sequence, smiles, or ccd_code."
+            )
+        return self
 
 
 class RF3PredictParams(RequestModel):
@@ -132,7 +153,10 @@ class RF3PredictParams(RequestModel):
         default=0.5,
         ge=0.0,
         le=1.0,
-        description="pLDDT threshold below which sampling is stopped early.",
+        description=(
+            "Early-stopping threshold as a fraction in [0, 1] (note: output pLDDT scores use a "
+            "0–100 scale). Sampling stops early when the pLDDT fraction falls below this value."
+        ),
     )
 
     # Output control
@@ -161,7 +185,7 @@ class RF3PredictRequestInput(RequestModel):
 
     name: str = Field(
         ...,
-        description="Optional human-readable label for this input, echoed back in the response.",
+        description="Human-readable label for this prediction job; used as the output directory name.",
     )
     components: list[RF3Component] = Field(
         ...,

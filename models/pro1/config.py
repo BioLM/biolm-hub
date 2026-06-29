@@ -75,7 +75,7 @@ _DEFAULT_VARIANT = Pro1Variant.SIZE_8B.value
 MODEL_FAMILY = ModelFamily(
     base_model_slug=Pro1Params.base_model_slug,
     display_name=Pro1Params.display_name,
-    # The @biolm_model_class container class in app.py (gateway routing, W8).
+    # The @biolm_model_class container class in app.py (gateway routing).
     modal_class_name="Pro1Model",
     tags=ModelTags(
         input_modality=[InputModality.SEQUENCE, InputModality.TEXT],

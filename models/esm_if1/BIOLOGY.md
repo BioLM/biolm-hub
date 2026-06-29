@@ -55,9 +55,13 @@ ESM-IF1 is designed for **proteins** broadly. It performs inverse folding: given
 
 ## Applied Use Cases
 
-ESM-IF1 has been used in several published protein design studies since its release in 2022. The model has been applied to antibody design (leading to the development of AntiFold), enzyme engineering, and general protein design workflows.
+ESM-IF1 has been used in several published protein design studies since its release in 2022. Selected examples:
 
-<!-- TODO: Add specific applied literature entries from sources.yaml as they are populated -->
+- **AntiFold** (Høie et al., 2025): Fine-tunes ESM-IF1 on solved and predicted antibody structures to achieve state-of-the-art antibody sequence recovery and refolding, demonstrating ESM-IF1 as a strong backbone for domain-specific inverse folding. (DOI: 10.1093/bioadv/vbae202)
+- **Peptide binder design** (Johansson-Åkhe & Wallner, 2023): Combines ESM-IF1 with Foldseek and AlphaFold2 for de novo peptide binder design, showing ESM-IF1 designs successful binders for 6.5% of heteromeric interfaces versus 1.5% for ProteinMPNN. (DOI: 10.1038/s42004-023-01029-7)
+- **ProteinBench** (Gao et al., 2024): Comprehensive benchmark evaluating multiple protein design models including ESM-IF1 and ProteinMPNN across inverse folding and structure prediction tasks. (arXiv: 2409.06744)
+- **AiCE** (2025): Samples mutations from inverse folding models (including ESM-IF1) with structural and evolutionary constraints; outperforms other AI methods by 36–90% across 60 deep mutational scanning datasets. (DOI: 10.1016/j.cell.2025.06.014)
+- **Inverse folding consensus ranking** (2025): Evaluates ESM-IF1 alongside ProteinMPNN, LigandMPNN, CARBonAra, and ProRefiner on 25,716 protein-ligand complexes; consensus-ranked sequences outperform individual models in stability, binding affinity, and structural fidelity. (DOI: 10.1145/3768322.3769031)
 
 ## Related Models
 

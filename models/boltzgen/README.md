@@ -167,8 +167,8 @@ Design novel protein or peptide binders using the BoltzGen 7-stage pipeline. Tak
 |-----------|------|---------|-------|-------------|
 | `protocol` | str | `protein-anything` | `protein-anything`, `peptide-anything`, `protein-small_molecule`, `nanobody-anything` | Design protocol controlling pipeline parameters |
 | `steps` | list[str] | all 7 stages | `design`, `inverse_folding`, `folding`, `design_folding`, `affinity`, `analysis`, `filtering` | Pipeline steps to run (null = all) |
-| `num_designs` | int | 10000 | 1-100000 | Number of candidate designs to generate |
-| `budget` | int | 100 | 1-10000 | Number of designs in the final diversity-optimized set |
+| `num_designs` | int | 100 | 1-500 | Number of candidate designs to generate |
+| `budget` | int | 100 | 1-500 | Number of designs in the final diversity-optimized set |
 | `diffusion_batch_size` | int | protocol-dependent | 1-100 | Diffusion samples per trunk run |
 | `step_scale` | float | protocol-dependent | 0.1-10.0 | Fixed step scale for diffusion |
 | `noise_scale` | float | protocol-dependent | 0.0-1.0 | Fixed noise scale for diffusion |
@@ -207,8 +207,7 @@ Design novel protein or peptide binders using the BoltzGen 7-stage pipeline. Tak
     {
       "cif": "mmCIF string of designed structure",
       "sequence": "MKLLVVVQVW...",
-      "metrics": {"plddt": 85.5, "iptm": 0.75, "scrmsd": 1.2, ...},
-      "output_zip": "base64-encoded zip of full output directory (optional)"
+      "metrics": {"plddt": 85.5, "ptm": 0.72, "affinity": -8.3, "scrmsd": 1.2, ...}
     }
   ]
 }
@@ -285,8 +284,8 @@ from models.boltzgen.schema import (
 request = BoltzGenDesignRequest(
     params=BoltzGenDesignParams(
         protocol=BoltzGenProtocol.PROTEIN_ANYTHING,
-        num_designs=10000,
-        budget=100,
+        num_designs=200,
+        budget=50,
     ),
     items=[
         BoltzGenDesignRequestItem(
@@ -459,7 +458,7 @@ The remaining validated fixtures (`cyclic_hiv_9d3d`, `streptavidin_cyclic`,
 | CPU | 8 cores |
 | Cold start | ~5-10 minutes (model loading + mols.zip extraction) |
 | Inference (minimal test) | ~10-40 minutes per design specification |
-| Inference (production) | ~2-8 hours for full campaign (num_designs=10000) |
+| Inference (production) | ~2-8 hours for full campaign (num_designs=500) |
 | Timeout | 24 hours maximum |
 
 ## Implementation Notes

@@ -6,7 +6,7 @@ strengths:
   - "Fastest structure prediction on the platform -- single-sequence inference in seconds without any MSA computation, enabling proteome-scale structural screening of millions of sequences"
   - "No external database dependencies -- the ESM-2 3B language model backbone has already internalized co-evolutionary signals from UniRef50, eliminating the MSA bottleneck entirely"
   - "Runs on a single A10G GPU with 16GB RAM, making it the most cost-effective structure prediction model on the platform -- roughly 10-50x cheaper per prediction than diffusion-based methods"
-  - "Per-residue pLDDT confidence scores reliably triage prediction quality: pLDDT > 0.7 correlates with TM-score > 0.8 for well-represented protein families, enabling automated quality filtering"
+  - "Per-residue pLDDT confidence scores reliably triage prediction quality: pLDDT > 70 correlates with TM-score > 0.8 for well-represented protein families, enabling automated quality filtering"
   - "Supports multi-chain complexes (up to 4 chains via colon separator) with a combined 768-residue limit, covering many biologically relevant homo- and hetero-dimers"
   - "MIT license with no usage restrictions -- suitable for commercial pipelines, clinical applications, and large-scale academic studies"
   - "Deterministic inference with fixed recycling (4 recycles by default) ensures reproducible results across runs, critical for screening campaigns and benchmarking"
@@ -32,18 +32,15 @@ use_when:
   - "You need a cost-effective structure prediction that runs on modest GPU hardware (A10G) without specialized infrastructure for MSA databases"
 
 dont_use_when:
-  - "You need the highest possible structural accuracy for a specific target -- use AlphaFold2 (AF2 NIM) for MSA-based protein prediction or Boltz/Chai-1 for multi-molecule complexes"
+  - "You need the highest possible structural accuracy for a specific target -- use AlphaFold2 for MSA-based protein prediction or Boltz/Chai-1 for multi-molecule complexes"
   - "You need to predict protein-ligand, protein-DNA, or protein-RNA complex structures -- ESMFold is protein-only; use Chai-1, Boltz, or RF3 for multi-molecule complexes"
   - "Your protein exceeds 768 total residues or has multiple large domains with flexible interdomain linkers -- ESMFold cannot handle the length and inter-domain orientation will be unreliable"
   - "You are studying intrinsically disordered proteins or conformational ensembles -- ESMFold produces a single static structure that is not biologically meaningful for disordered regions"
   - "You need membrane protein structure with lipid bilayer context -- ESMFold under-represents membrane proteins and cannot model the membrane environment"
-  - "You need high-accuracy protein-protein interface prediction -- dedicated complex predictors (Boltz, Chai-1, AF2 Multimer) are substantially more reliable for interface geometry"
+  - "You need high-accuracy protein-protein interface prediction -- dedicated complex predictors (Boltz, Chai-1) are substantially more reliable for interface geometry"
   - "You need binding pose prediction for drug discovery -- ESMFold cannot dock ligands; use Boltz, Chai-1, or RF3 instead"
 
 alternatives:
-  - model: af2_nim
-    when_better: "AlphaFold2 achieves near-experimental accuracy (median GDT-TS ~92.4 at CASP14) using MSA information, substantially outperforming ESMFold on proteins with distant homologs, multi-domain proteins, and protein complexes via AF2-Multimer"
-    when_worse: "Requires MSA computation (minutes to hours per query) and A100 80GB GPU, making it 100-1000x slower and significantly more expensive than ESMFold's single-sequence, seconds-per-prediction inference on A10G"
   - model: boltz
     when_better: "Handles all biomolecule types (protein, DNA, RNA, ligands) in a single model with diffusion-based sampling; higher accuracy on complex targets; includes binding affinity prediction in Boltz-2"
     when_worse: "Requires A100 40GB GPU and is much slower per prediction; no advantage over ESMFold for rapid single-chain protein screening where throughput matters more than maximum accuracy"
@@ -56,7 +53,7 @@ alternatives:
 
 complements:
   - model: boltz
-    workflow: "Use ESMFold for rapid structural screening of large candidate sets (thousands of sequences), then run Boltz on the top candidates (pLDDT > 0.7) for high-accuracy complex structure prediction and affinity estimation"
+    workflow: "Use ESMFold for rapid structural screening of large candidate sets (thousands of sequences), then run Boltz on the top candidates (pLDDT > 70) for high-accuracy complex structure prediction and affinity estimation"
     example_protocol: null
   - model: esm2
     workflow: "Use ESM2 log_prob to score variant effects at the sequence level, then use ESMFold to assess structural impact of top-ranked variants -- combining sequence fitness with structural stability assessment"

@@ -53,9 +53,7 @@ class ImmuneBuilderPredictRequestItem(RequestModel):
     heavy_chain: Optional[
         Annotated[
             str,
-            BeforeValidator(
-                validate_aa_extended
-            ),  # TODO: check if extended or unambiguous should be validated
+            BeforeValidator(validate_aa_extended),
         ]
     ] = Field(
         default=None,
@@ -152,7 +150,7 @@ class ImmuneBuilderPredictRequest(RequestModel):
         description="Batch of inputs to process in a single request. Up to 8 sequences per request.",
     )
     params: Optional[ImmuneBuilderPredictParams] = Field(
-        default=ImmuneBuilderPredictParams(),
+        default_factory=ImmuneBuilderPredictParams,
         description="Optional parameters controlling this action (defaults are used when omitted).",
     )
 

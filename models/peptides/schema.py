@@ -15,7 +15,7 @@ from models.commons.model.pydantic import (
 
 class PeptidesParams(ModelParams):
     params_version = "v1"
-    display_name = "peptides"
+    display_name = "Peptides"
     base_model_slug = "peptides"
     log_identifier = "peptides"
     batch_size = 10

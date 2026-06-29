@@ -22,21 +22,19 @@ tasks:
 - structure_prediction
 primary_papers:
 - title: Accelerating Biomolecular Modeling with AtomWorks and RF3
-  arxiv: 2025.08.14.670328
   doi: 10.1101/2025.08.14.670328
   venue: bioRxiv preprint, 2025
   year: 2025
   authors:
   - Nathaniel Corley
-  - Simon Mathis et al.
+  - Simon Mathis
   pdf_r2: knowledge-base/models/rf3/primary/papers/corley2025.pdf
   md_r2: knowledge-base/models/rf3/primary/papers-md/corley2025.md
   figures_of_note: []
 source_repos:
 - type: github
   url: https://github.com/RosettaCommons/foundry
-  commit: ''
-  snapshot_r2: pending
+  commit: '6866d610a9d5e485ef4bf601adb40c4928b8321f'
 applied_literature:
 - title: Generalized biomolecular modeling and design with RoseTTAFold All-Atom
   doi: 10.1126/science.adl2528
@@ -45,8 +43,6 @@ applied_literature:
     protein binders around small molecules.
   molecule_focus: protein-ligand
   task_focus: structure_prediction
-  pdf_r2: pending
-  md_r2: pending
 - title: De novo Design of All-atom Biomolecular Interactions with RFdiffusion3
   doi: 10.1101/2025.09.18.676967
   year: 2025
@@ -54,8 +50,6 @@ applied_literature:
     enzymes.
   molecule_focus: protein
   task_focus: protein_design
-  pdf_r2: knowledge-base/models/rf3/applied/papers/unknown2025.pdf
-  md_r2: pending
 - title: Atom-level enzyme active site scaffolding using RFdiffusion2
   doi: 10.1038/s41592-025-02975-x
   year: 2025
@@ -63,8 +57,6 @@ applied_literature:
     41 diverse active sites.
   molecule_focus: protein
   task_focus: enzyme_design
-  pdf_r2: pending
-  md_r2: pending
 - title: Benchmarking all-atom biomolecular structure prediction with FoldBench
   doi: 10.1038/s41467-025-67127-3
   year: 2025
@@ -73,8 +65,6 @@ applied_literature:
     acid structure prediction tasks.
   molecule_focus: complex
   task_focus: structure_prediction
-  pdf_r2: pending
-  md_r2: pending
 - title: A comprehensive benchmarking of the AlphaFold3 for predicting biomacromolecules and their interactions
   doi: 10.1093/bib/bbaf616
   year: 2025
@@ -83,5 +73,3 @@ applied_literature:
     same prediction tasks.
   molecule_focus: complex
   task_focus: structure_prediction
-  pdf_r2: pending
-  md_r2: pending

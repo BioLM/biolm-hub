@@ -6,7 +6,6 @@ to force CPU loading by default. This is required for Modal's memory snapshot fe
 which creates snapshots during the build phase when no GPU is available.
 """
 
-import logging
 import sys
 from functools import wraps
 from pathlib import Path
@@ -16,7 +15,9 @@ import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 
-logger = logging.getLogger(__name__)
+from models.commons.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 # Monkey-patch PyTorch Lightning to load checkpoints on CPU by default.
 # Required for Modal memory snapshots (no GPU available at build time).
@@ -390,7 +391,7 @@ def predict_epistatic(  # noqa: C901
                 if mut_distance > max_distance_needed:
                     max_distance_needed = mut_distance
         except Exception as e:
-            logger.warning(f"Skipping invalid mutation '{mut_str}': {e}")
+            logger.warning("Skipping invalid mutation '%s': %s", mut_str, e)
             continue
 
     # Run with very permissive settings to ensure all requested mutations are included

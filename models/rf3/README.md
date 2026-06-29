@@ -38,13 +38,7 @@ This implementation wraps the RosettaFold3 model from the [RosettaCommons/foundr
 
 ### Available Checkpoints
 
-Three checkpoint versions are available:
-
-1. **Latest** (default) - Most recent with bugfixes
-2. **Preprint** - Original preprint model
-3. **Benchmark** - For benchmarking with 09/21 cutoff
-
-This implementation uses the "latest" checkpoint by default.
+The "latest" checkpoint is used by default (most recent release with bugfixes). The upstream IPD server also hosts `preprint` and `benchmark` checkpoint variants, but only the `latest` checkpoint is exposed through this API.
 
 ## Model Variants
 
@@ -73,9 +67,9 @@ RF3 is a single-variant model with no variant axes. All requests are served by a
 
 ## Actions / Endpoints
 
-### `predict`
+### `fold`
 
-Predicts biomolecular structures from sequences, SMILES strings, and/or template structures.
+Predicts all-atom biomolecular structures from sequences, SMILES strings, and/or template structures.
 
 **Request Parameters:**
 
@@ -262,7 +256,7 @@ request = RF3PredictRequest(
 
 ### Endpoint Performance
 
-- **Predict**: Depends on sequence length, diffusion steps, and batch size
+- **Fold**: Depends on sequence length, diffusion steps, and batch size
 - **Max sequence length**: 2048 residues
 
 ### Model Parameters
@@ -291,7 +285,7 @@ python models/rf3/test.py
 
 | Variant | GPU | Memory | CPU |
 |---------|-----|--------|-----|
-| `rf3` | A100 80GB | 64 GB | 8 cores |
+| `rf3` | A100 40GB | 64 GB | 8 cores |
 
 ## Implementation Notes
 

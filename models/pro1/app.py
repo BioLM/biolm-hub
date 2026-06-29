@@ -281,7 +281,7 @@ class Pro1Model(ModelMixin):
 
     @modal.enter()
     def setup_model(self) -> None:
-        """Load Pro-1 model + LoRA adapter into GPU memory (snapshotted)."""
+        """Load Pro-1 model + LoRA adapter into GPU memory."""
         import os
         import time
         from pathlib import Path
@@ -386,6 +386,16 @@ class Pro1Model(ModelMixin):
                             invalid_aa,
                         )
                         modified_seq = None
+                    elif (
+                        len(modified_seq) < 10
+                        or len(modified_seq) < len(item.sequence) // 2
+                    ):
+                        logger.warning(
+                            "Extracted sequence implausibly short (%d AA vs original %d AA) — discarding",
+                            len(modified_seq),
+                            len(item.sequence),
+                        )
+                        modified_seq = None
 
                 mutation_proposals = [
                     Pro1MutationProposal(
@@ -427,7 +437,7 @@ if __name__ == "__main__":
     Usage:
         MODEL_VARIANT="8b" python models/pro1/app.py
 
-        # Force deploy to "qa" or "main" environment:
+        # Force deploy to your target environment:
         MODEL_VARIANT="8b" python models/pro1/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

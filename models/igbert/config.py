@@ -39,7 +39,7 @@ IGBERT_HF_REVISION_MAP = {
 
 ### IgBert Modal Resource Specs
 
-IgBert_VARIANT_RESOURCE_SPECS = {
+IGBERT_VARIANT_RESOURCE_SPECS = {
     IgBertModelTypes.PAIRED: ModalResourceSpec(
         cpu=3.0, memory=6 * 1024, gpu=ModalGPU.T4  # 6GB RAM
     ),
@@ -91,7 +91,7 @@ MODEL_FAMILY = ModelFamily(
         "MODEL_TYPE": list(IgBertModelTypes),
     },
     # Resource function looks up the correct spec from the schema
-    resource_function=lambda cfg: IgBert_VARIANT_RESOURCE_SPECS[
+    resource_function=lambda cfg: IGBERT_VARIANT_RESOURCE_SPECS[
         IgBertModelTypes(cfg["MODEL_TYPE"])
     ],
     # Explicit naming function: returns (modal_app_name, public_api_slug)

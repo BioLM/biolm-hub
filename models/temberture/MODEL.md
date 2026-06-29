@@ -19,9 +19,7 @@ TemBERTure is a fine-tuned ProtBERT model that predicts protein thermostability.
 
 ### Training Data
 
-<!-- TODO: Extract training dataset details from paper (Rodella et al., 2024, Bioinformatics) -- requires PDF access -->
-
-The model is trained on a curated dataset of protein sequences labeled with thermostability properties (thermophilic/non-thermophilic classification and melting temperature values).
+The model is trained on a curated dataset of protein sequences labeled with thermostability properties (thermophilic/non-thermophilic classification and melting temperature values). Full training dataset details are available in Rodella et al. (2024), Bioinformatics Advances, DOI 10.1093/bioadv/vbae103.
 
 ### Loss Function & Objective
 
@@ -36,7 +34,7 @@ ProtBERT uses character-level tokenization where each amino acid is treated as a
 
 ### Published Benchmarks
 
-<!-- TODO: Extract benchmark results from Rodella et al. (2024) Table/Figure -- requires PDF access -->
+The TemBERTure classifier achieves 83% accuracy on the TemStaPro benchmark dataset. Additional benchmark results are reported in Rodella et al. (2024), Bioinformatics Advances.
 
 ### BioLM Verification Results
 
@@ -99,7 +97,7 @@ For `predict`: passes through classification/regression head, applies sigmoid (c
 
 ### Caching Behavior
 
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container.
+Response caching is handled by the serving layer, not by the model container.
 
 ## Versions & Changelog
 

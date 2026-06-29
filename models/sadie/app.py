@@ -89,22 +89,26 @@ class SADIEModel(ModelMixinSnap):
         try:
             results = [
                 self._compute_sadie(
+                    idx=idx,
                     seq=seq,
                     scheme=scheme,
                     region=region,
                     scfv=scfv,
                     allowed_chain=allowed_chain,
                 )
-                for seq in sequences
+                for idx, seq in enumerate(sequences)
             ]
-        except Exception as e:
+        except ValidationError400:
+            raise
+        except Exception:
             logger.error("SADIE call failed", exc_info=True)
-            raise e
+            raise
 
         return SADIEPredictResponse(results=results)
 
     def _compute_sadie(
         self,
+        idx: int,
         seq: str,
         scheme: SADIENumbering,
         region: SADIERegion,
@@ -114,19 +118,20 @@ class SADIEModel(ModelMixinSnap):
         renumbering_api = self.Renumbering(
             scheme=scheme,
             region_assign=region,
-            run_multiproc=True,
+            run_multiproc=False,  # No multiprocessing benefit for single-sequence path
             scfv=scfv,
             allowed_chain=allowed_chain,
         )
         seq_id = hashlib.sha256(seq.encode()).hexdigest()
-        try:
-            r = renumbering_api.run_single(seq_id=seq_id, seq=seq).to_dict(
-                orient="records"
-            )[0]
-            r["e_value"] = r["e-value"]
-        except Exception as e:
-            raise ValidationError400(f"Error processing sequence {seq}: {e}") from e
-
+        result_rows = renumbering_api.run_single(seq_id=seq_id, seq=seq).to_dict(
+            orient="records"
+        )
+        if not result_rows:
+            raise ValidationError400(
+                f"Could not annotate item {idx}: no antibody or TCR variable domain detected."
+            )
+        r = result_rows[0]
+        r["e_value"] = r["e-value"]
         return SADIEPredictResponseResult(**r)
 
 
@@ -135,7 +140,7 @@ if __name__ == "__main__":
     Usage:
         python models/sadie/app.py
 
-        # Force deploy to "qa" or "main" environment:
+        # Force deploy to "biolm-models-dev" or "biolm-models" environment:
         python models/sadie/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

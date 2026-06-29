@@ -170,14 +170,15 @@
 
 NOTICE
 
+Copyright 2023 The DNABERT-2 Authors (Zhihan Zhou, Yanrong Ji, Weijian Li,
+Pratik Dutta, Ramana Davuluri, and Han Liu — MAGICS Lab, Northwestern
+University / University of Illinois Chicago).
+
 This model wrapper integrates DNABERT-2, a genomic foundation model developed
-by Zhihan Zhou, Yanrong Ji, Weijian Li, Pratik Dutta, Ramana Davuluri, and
-Han Liu (MAGICS Lab, Northwestern University / University of Illinois Chicago).
+by the above authors.
 
 Source: https://github.com/MAGICS-LAB/DNABERT_2
 Model weights: https://huggingface.co/zhihan1996/DNABERT-2-117M
 
 The DNABERT-2 source code and model weights are distributed under the Apache
-License, Version 2.0. The exact upstream copyright holder is listed in the
-upstream repository; if not explicitly stated there, attribution is to
-"The DNABERT-2 Authors" (flag for reviewer to verify).
+License, Version 2.0.

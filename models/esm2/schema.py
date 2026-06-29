@@ -1,4 +1,3 @@
-from functools import partial
 from typing import Annotated, Optional
 
 from pydantic import BeforeValidator, Field
@@ -50,11 +49,11 @@ class ESM2EncodeIncludeOptions(EnhancedStringEnum):
 
 class ESM2EncodeRequestParams(RequestModel):
     repr_layers: list[int] = Field(
-        default_factory=partial(list, [-1]),
+        default_factory=lambda: [-1],
         description="Hidden layers whose representations to return (negative indexes count from the last layer).",
     )
     include: list[ESM2EncodeIncludeOptions] = Field(
-        default_factory=partial(list, [ESM2EncodeIncludeOptions.MEAN]),
+        default_factory=lambda: [ESM2EncodeIncludeOptions.MEAN],
         description="Optional outputs to compute and include in the response.",
     )
 
@@ -126,14 +125,14 @@ class ESM2LogProbRequest(RequestModel):
 ### ESM2 Responses
 
 
-class LayerEmbedding(RequestModel):
+class LayerEmbedding(ResponseModel):
     layer: int = Field(description="Model layer this representation was taken from.")
     embedding: list[float] = Field(
         description="Embedding vector for the sequence at this layer."
     )
 
 
-class LayerPerTokenEmbeddings(RequestModel):
+class LayerPerTokenEmbeddings(ResponseModel):
     layer: int = Field(description="Model layer this representation was taken from.")
     embeddings: list[list[float]] = Field(
         description="Per-residue embedding matrix for this layer, shape [sequence_length, hidden_dim]."
@@ -143,10 +142,6 @@ class LayerPerTokenEmbeddings(RequestModel):
 class ESM2EncodeResponseResult(ResponseModel):
     model_config = {
         "populate_by_name": True,  # Ensures alias names work
-        "json_schema_extra": {
-            "exclude_unset": True,  # Excludes unset (None) fields from the output
-            "exclude_none": True,  # Ensures that None fields do not appear in JSON
-        },
     }
 
     sequence_index: int = Field(
@@ -170,7 +165,10 @@ class ESM2EncodeResponseResult(ResponseModel):
     )
     attentions: Optional[list[list[float]]] = Field(
         default=None,
-        description="Self-attention weights from the model, averaged over attention heads.",
+        description=(
+            "Per-layer mean attention received per residue position, averaged over all attention "
+            "heads and query positions. Shape: [num_layers, sequence_length]."
+        ),
     )
     logits: Optional[list[list[float]]] = Field(
         default=None,
@@ -208,7 +206,7 @@ class ESM2PredictResponse(ResponseModel):
 
 class ESM2LogProbResponseResult(ResponseModel):
     log_prob: float = Field(
-        description="Pseudo-log-likelihood of the sequence under the model."
+        description="Log-likelihood of the sequence under the model."
     )
 
 

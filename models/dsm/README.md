@@ -8,7 +8,7 @@ DSM is a novel Protein Language Model (pLM) developed by [Gleghorn Lab](https://
 
 ### Capabilities
 
-- **Generate** (`predict`): Generate protein sequences via masked diffusion - supports unconditional generation (empty input), masked sequence filling (`<mask>` tokens), and conditional generation from a prefix
+- **Generate** (`generate`): Generate protein sequences via masked diffusion - supports unconditional generation (empty input), masked sequence filling (`<mask>` tokens), and conditional generation from a prefix
 - **Encode** (`encode`): Extract embeddings (mean-pooled, per-residue, or CLS token) for similarity search, clustering, or downstream ML tasks
 - **Score** (`score`): Calculate log probabilities and perplexity for sequence quality assessment, filtering, and confidence scoring
 
@@ -57,12 +57,10 @@ Variant axes: `MODEL_SIZE` (150m, 650m) x `VARIANT` (base, ppi). Excluded combin
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
-| `items[].sequence` | str | "" | 0-2048 | Input sequence (empty=unconditional, `<mask>`=infilling, text=conditional) |
+| `items[].sequence` | str | "" | 0-2048 | Input sequence: empty=unconditional (canvas of `max_length` masks), `<mask>` tokens=infilling, plain AA=conditional |
 | `params.num_sequences` | int | 1 | 1-32 | Number of sequences to generate |
 | `params.temperature` | float | 1.0 | 0.1-2.0 | Sampling temperature |
-| `params.top_k` | int | None | >=1 | Top-k sampling (None=disabled) |
-| `params.top_p` | float | None | 0.0-1.0 | Nucleus sampling (None=disabled) |
-| `params.max_length` | int | None | 10-2048 | Max output length |
+| `params.max_length` | int | None | 10-2048 | Canvas size (mask tokens) for unconditional generation; default 100; ignored for infilling/conditional modes |
 | `params.step_divisor` | int | 100 | 1-1000 | Diffusion steps (lower=slower but better) |
 | `params.remasking` | str | "random" | "low_confidence", "random", "low_logit", "dual" | Remasking strategy |
 | `params.seed` | int | None | -- | Random seed (None=time-based) |
@@ -88,6 +86,9 @@ Variant axes: `MODEL_SIZE` (150m, 650m) x `VARIANT` (base, ppi). Excluded combin
 
 ### Generate Sequences (Unconditional)
 
+Pass an empty string and set `max_length` to control the number of residues generated.
+The model creates a canvas of that many `<mask>` tokens and denoises them.
+
 ```python
 from models.dsm.schema import (
     DSMGenerateRequest,
@@ -100,12 +101,12 @@ request = DSMGenerateRequest(
     params=DSMGenerateRequestParams(
         num_sequences=5,
         temperature=1.0,
-        max_length=100,
+        max_length=100,  # Generate sequences of ~100 residues
         remasking=DSMRemaskingStrategy.RANDOM,
         seed=42,
     ),
     items=[
-        DSMGenerateRequestItem(sequence=""),  # Empty for unconditional generation
+        DSMGenerateRequestItem(sequence=""),  # Empty triggers unconditional generation
     ],
 )
 ```
@@ -172,7 +173,7 @@ request = DSMScoreRequest(
 |-------|-----------|-----|--------|----------------|
 | DSM_150 | 150M | A10G | 16GB | ~500ms/seq |
 | DSM_650 | 650M | A10G | 32GB | ~1-2s/seq |
-| DSM_3B | 3B | A100 | 64GB | ~5-10s/seq |
+| DSM_3B | 3B | A100 | 64GB | ~5-10s/seq (not yet released) |
 
 ### Endpoint Performance
 
@@ -192,7 +193,7 @@ python models/dsm/app.py --force-deploy
 python models/dsm/fixture.py
 
 # Run tests
-make test MODEL=dsm
+python -m pytest models/dsm/test.py -m integration -n auto --no-cov -v -s
 ```
 
 ## Resource Requirements
@@ -209,7 +210,7 @@ make test MODEL=dsm
 - **DSM repository**: Cloned at pinned commit (`ca7b5c8c`) with submodules
 - **ESM backbone**: Dynamic import from `/root/DSM/models/modeling_dsm.py`
 - **PPI variant**: Uses `decode_dual_input` with `<eos>` separator for dual sequences
-- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
+- **Caching**: Response caching is handled externally (e.g., by a caching proxy), not inside the model container.
 
 ## License
 
@@ -220,11 +221,12 @@ make test MODEL=dsm
 ### BibTeX
 
 ```bibtex
-@article{dsm2024,
-  title={DSM: Diffusion Models for Protein Sequence Generation},
-  author={Gleghorn Lab and Synthyra},
+@article{hallee2025dsm,
+  title={Diffusion Sequence Models for Enhanced Protein Representation and Generation},
+  author={Hallee, Logan and Rafailidis, Nikolaos and Bichara, David B. and Gleghorn, Jason P.},
   journal={arXiv preprint},
-  year={2024}
+  eprint={2506.08293},
+  year={2025}
 }
 ```
 

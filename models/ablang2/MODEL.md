@@ -129,7 +129,7 @@ Request
   |-- 2. Format as paired input: (heavy, light) tuples
   |-- 3. Forward pass via ablang2 library
   |     |-- encode: seqcoding or rescoding mode
-  |     |-- predict: likelihood mode (logits)
+  |     |-- predict: likelihood mode (returns raw logits)
   |     |-- generate: restore mode (fill masked positions)
   |     |-- log_prob: logits -> log_softmax -> sum
   |-- 4. Post-process outputs to response schema
@@ -158,10 +158,7 @@ The model runs entirely on CPU, making it cost-effective for high-throughput ant
 
 ### Caching Behavior
 
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
-- **Redis (Modal Dict)**: Fast lookup, TTL-based expiration
-- **R2**: Persistent storage for cached results
-- **Cache key**: Determined by the request payload (sequences, params, mode)
+Response caching is handled outside the model container. The model itself is stateless with respect to caching; the same request always produces the same output given the same weights.
 
 ## Versions & Changelog
 

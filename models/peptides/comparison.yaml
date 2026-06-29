@@ -3,12 +3,12 @@ display_name: Peptides
 last_updated: "2026-03-17"
 
 strengths:
-  - "Computes 557 physicochemical descriptors from amino acid sequence alone, providing the most comprehensive feature set for peptide and protein characterization on the platform"
+  - "Computes ~140 physicochemical descriptors from amino acid sequence alone, providing a comprehensive feature set for peptide and protein characterization on the platform"
   - "Extremely lightweight deployment (0.125 CPU, 1 GB RAM, no GPU) -- the cheapest and fastest model on the platform, enabling screening of millions of sequences"
   - "Features are interpretable with direct physical meaning: molecular weight, isoelectric point, hydrophobicity, charge, instability index, Boman index -- each has established biological significance"
   - "Specifically designed for antimicrobial peptide (AMP) discovery with features validated for AMP classification (amphipathicity, cationicity, hydrophobic moment)"
   - "Profile-based features (hydrophobicity profile, hydrophobic moment profile, linker preference profile) provide per-residue resolution for identifying functional regions"
-  - "Apache-2.0 license permits unrestricted use in academic, commercial, and clinical applications"
+  - "No model weights to download -- a pure-Python computation, so cold starts are instant and deployment is trivial"
   - "Standard feature set widely used in published peptide ML literature (AI4AMP, structure-aware AMP classifiers), ensuring compatibility with community methods"
   - "Supports extended amino acid alphabet including ambiguous codes (B, Z, X), handling real-world sequence data with non-standard residues"
 
@@ -40,23 +40,8 @@ alternatives:
   - model: esm2
     when_better: "ESM2 provides learned embeddings that capture evolutionary relationships, structural context, and functional patterns not accessible from physicochemical properties alone; more powerful for complex downstream tasks"
     when_worse: "ESM2 embeddings are opaque high-dimensional vectors without direct physical interpretability; require GPU for the larger variants; peptides features are interpretable, cheap, and computed instantly on CPU"
-  - model: camsol
-    when_better: "CamSol provides ready-to-use solubility prediction with per-residue profiles and pH-dependent analysis, rather than raw features requiring separate model building"
-    when_worse: "CamSol predicts only solubility; peptides module provides 557 features spanning many physicochemical properties useful for any downstream task"
-  - model: biolmtox2
-    when_better: "BioLMTox2 provides ready-to-use toxicity classification directly, without needing to build a separate classifier from physicochemical features"
-    when_worse: "BioLMTox2 is a black-box classifier; peptides features enable building interpretable toxicity models where feature contributions can be examined and explained"
 
 complements:
   - model: esm2
     workflow: "Concatenate peptides physicochemical features with ESM2 learned embeddings to create a combined feature representation that captures both interpretable physical properties and deep contextual patterns for downstream ML models"
-    example_protocol: null
-  - model: biolmtox2
-    workflow: "Use peptides encode for interpretable physicochemical features and BioLMTox2 predict for toxicity classification -- when BioLMTox2 flags a peptide as toxic, examine the physicochemical features to understand which properties (charge, hydrophobicity, Boman index) are driving the toxicity signal"
-    example_protocol: null
-  - model: camsol
-    workflow: "Use peptides encode for comprehensive physicochemical profiling and CamSol predict for per-residue solubility analysis -- combining global descriptor statistics with detailed aggregation hotspot identification"
-    example_protocol: null
-  - model: esmstabp
-    workflow: "Compute peptides features (instability index, aliphatic index) alongside ESMStabP Tm prediction for complementary stability assessment -- physicochemical stability indicators combined with ESM2-based melting temperature prediction"
     example_protocol: null

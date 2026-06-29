@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 import modal
 
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.error import ValidationError400
 from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
@@ -51,21 +52,22 @@ model_size = variant_config["MODEL_SIZE"]
 
 # Build Modal container image
 image = modal.Image.from_registry("pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime")
-# Setup download layer with model weights
+# Setup download layer with model weights.
+# Include huggingface_hub so the r2_then_hf fallback can import it at build time
+# (the download layer runs before the main dependency install below).
 image = setup_download_layer(
     image,
     base_model_slug=ESMCParams.base_model_slug,
     params_version=ESMCParams.params_version,
     variant_config=variant_config,
+    extra_pip_packages=["huggingface_hub==0.36.2"],
 )
 # Add dependencies and packages
 image = (
     image.apt_install("procps")  # Critical for computing container uptime
     .uv_pip_install(common_requirements)
     .uv_pip_install("esm==3.1.3")
-    .uv_pip_install(
-        "huggingface_hub==0.36.2"
-    )  # Required for HF fallback in download.py
+    .uv_pip_install("huggingface_hub==0.36.2")
 )
 # Finally, add all model files
 image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
@@ -197,12 +199,21 @@ class ESMCModel(ModelMixinSnap):
             ) and batch_out.hidden_states is not None:
                 n_layers = batch_out.hidden_states.shape[0]
 
+                # Validate repr_layers before use; raise a typed error for any out-of-range index
+                # (matches the esm2 house pattern; mirrors models/esm2/app.py:244-248).
+                if not all(
+                    -(n_layers) <= lyr <= n_layers - 1 for lyr in requested_layers
+                ):
+                    raise ValidationError400(
+                        f"Requested representation layers are out of bounds. "
+                        f"ESM C has {n_layers} layers; valid indices are "
+                        f"-{n_layers} to {n_layers - 1}."
+                    )
+
                 # Convert user repr_layers to positive indices
-                layers_to_use = []
-                for lyr in requested_layers:
-                    pos_lyr = (lyr + n_layers) if lyr < 0 else lyr
-                    if 0 <= pos_lyr < n_layers:
-                        layers_to_use.append(pos_lyr)
+                layers_to_use = [
+                    (lyr + n_layers) if lyr < 0 else lyr for lyr in requested_layers
+                ]
 
                 # embeddings
                 if ESMCEncodeIncludeOptions.MEAN in include_options:
@@ -334,7 +345,7 @@ if __name__ == "__main__":
     Usage:
         MODEL_SIZE="300m" python models/esmc/app.py
 
-        # Force deploy in QA/prod:
+        # Force deploy to "biolm-models-dev" or "biolm-models" environment:
         MODEL_SIZE="300m" python models/esmc/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

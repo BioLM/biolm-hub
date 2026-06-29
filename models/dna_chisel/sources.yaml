@@ -10,7 +10,6 @@ applicable_to:
 - dna
 - synthetic_biology
 tasks:
-- sequence_optimization
 - feature_extraction
 primary_papers:
 - title: DNA Chisel, a versatile sequence optimizer
@@ -75,5 +74,5 @@ applied_literature:
     variants for PET degradation activity
   molecule_focus: dna
   task_focus: heterologous gene expression optimization
-  pdf_r2: knowledge-base/models/dna_chisel/applied/papers/unknown2025c.pdf
+  pdf_r2: pending
   md_r2: pending

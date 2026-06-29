@@ -63,7 +63,7 @@ class ESM1bEncodeRequestItem(RequestModel):
 
 class ESM1bEncodeRequest(RequestModel):
     params: ESM1bEncodeRequestParams = Field(
-        default=ESM1bEncodeRequestParams(),
+        default_factory=ESM1bEncodeRequestParams,
         description="Optional parameters controlling this action (defaults are used when omitted).",
     )
     items: Annotated[
@@ -205,7 +205,7 @@ class ESM1bPredictResponse(ResponseModel):
 
 class ESM1bLogProbResponseResult(ResponseModel):
     log_prob: float = Field(
-        description="Pseudo-log-likelihood of the sequence under the model.",
+        description="Log-likelihood of the sequence under the model.",
     )
 
 

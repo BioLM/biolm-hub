@@ -32,7 +32,7 @@ ThermoMPNNDResourceSpec = ModalResourceSpec(
 ### ThermoMPNN-D Model Checkpoints
 
 THERMOMPNN_D_EPISTATIC_CHECKPOINT = "ThermoMPNN-D-ens1.ckpt"
-THERMOMPNN_SINGLE_CHECKPOINT = "ThermoMPNN-ens1.ckpt"
+THERMOMPNN_D_SINGLE_CHECKPOINT = "ThermoMPNN-ens1.ckpt"
 PROTEIN_MPNN_CHECKPOINT = "v_48_020.pt"  # Base ProteinMPNN model
 
 # ThermoMPNN-D configuration:

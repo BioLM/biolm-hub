@@ -204,7 +204,4 @@ def extract_sequence_from_cif(cif_content: str) -> Optional[str]:  # noqa: C901
         return None
     except Exception as e:
         logger.warning("Failed to extract sequence from CIF: %s", e, exc_info=True)
-        import traceback
-
-        traceback.print_exc()
         return None

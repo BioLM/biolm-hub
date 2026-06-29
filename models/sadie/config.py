@@ -18,7 +18,7 @@ from models.sadie.schema import (
 
 SADIEResourceSpec = ModalResourceSpec(
     cpu=0.125,
-    memory=1024,  # 1MB RAM
+    memory=1024,  # 1024 MB (1 GB) RAM
     gpu=None,
 )
 

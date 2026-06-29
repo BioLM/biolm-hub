@@ -2,6 +2,7 @@ import modal
 import numpy as np
 
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.error import ServerError
 from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
@@ -137,10 +138,7 @@ class DeepViscosityModel(ModelMixinSnap):
             with open(json_path) as f:
                 model = model_from_json(f.read())
             model.load_weights(str(h5_path))
-            # Compile without optimizer for inference
-            model.compile(
-                optimizer=tf.keras.optimizers.Adam(0.0001), metrics=["accuracy"]
-            )
+            # No compile needed for inference-only use
             self.ensemble_models.append(model)
 
         logger.info("  Loaded %s ensemble models", len(self.ensemble_models))
@@ -211,7 +209,7 @@ class DeepViscosityModel(ModelMixinSnap):
             # Include DeepSP features if requested
             if include_features:
                 if len(DEEPSP_FEATURE_NAMES) != len(deepsp_features):
-                    raise RuntimeError(
+                    raise ServerError(
                         "DeepSP feature count mismatch: "
                         f"expected {len(DEEPSP_FEATURE_NAMES)}, "
                         f"got {len(deepsp_features)}"
@@ -234,7 +232,7 @@ if __name__ == "__main__":
     Usage:
         python models/deepviscosity/app.py
 
-        # Force deploy to QA or main:
+        # Force deploy to biolm-models-dev or biolm-models:
         python models/deepviscosity/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

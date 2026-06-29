@@ -183,9 +183,9 @@ class ProGen2Model(ModelMixinSnap):
                     context=context,
                     tokenizer=self.tokenizer,
                 )
-            except Exception as e:
+            except Exception:
                 logger.error("Model call failed", exc_info=True)
-                raise e
+                raise
 
             try:
                 likelihoods = [
@@ -197,9 +197,9 @@ class ProGen2Model(ModelMixinSnap):
                     )
                     for sequence in generated_sequences
                 ]
-            except Exception as e:
+            except Exception:
                 logger.error("Likelihood computation failed", exc_info=True)
-                raise e
+                raise
 
             result = [
                 ProGen2GenerateResponseGenerated.model_validate(
@@ -221,7 +221,7 @@ if __name__ == "__main__":
     Usage:
         MODEL_TYPE="medium" python models/progen2/app.py
 
-        # Force deploy to "qa" or "main" environment:
+        # Force deploy to "biolm-models-dev" or "biolm-models" environment:
         MODEL_TYPE="medium" python models/progen2/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

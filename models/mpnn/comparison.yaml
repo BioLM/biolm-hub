@@ -10,7 +10,7 @@ strengths:
   - "Highest experimental success rate of any inverse folding method: 70-100% of designs express as soluble monomers with sub-angstrom structural accuracy (Dauparas et al., Science 2022)"
   - "Six context-aware variants (protein, ligand, soluble, global-membrane, residue-membrane, side-chain) cover virtually every protein design scenario without retraining"
   - "LigandMPNN variant designs sequences in the context of bound small molecules, metal ions, cofactors, and nucleic acids, enabling active-site-aware enzyme engineering"
-  - "CPU-only inference (no GPU required) with 128 MB memory footprint makes it the cheapest and fastest model to run on the platform"
+  - "CPU-only inference (no GPU required) with a lightweight memory footprint makes it one of the most cost-effective inverse folding models available"
   - "Autoregressive sampling with temperature control enables generation of diverse sequence libraries from a single backbone, tunable from conservative (low T) to exploratory (high T)"
   - "Most experimentally validated deep-learning inverse folding model: tested across 8+ diverse topologies including beta-barrels, TIM barrels, NTF2-like folds, and de novo antibodies"
   - "Accepts multi-chain complexes and supports fixed-residue constraints, enabling selective redesign of specific positions while preserving catalytic or binding residues"

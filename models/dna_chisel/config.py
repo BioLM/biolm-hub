@@ -9,9 +9,9 @@ from models.commons.model.tag import (
     Task,
 )
 from models.dna_chisel.schema import (
+    DnaChiselEncodeRequest,
+    DnaChiselEncodeResponse,
     DnaChiselParams,
-    DnaChiselPredictRequest,
-    DnaChiselPredictResponse,
 )
 
 ### DNA-Chisel Modal Resource Specs
@@ -33,16 +33,16 @@ MODEL_FAMILY = ModelFamily(
     tags=ModelTags(
         input_modality=[InputModality.SEQUENCE],
         input_molecule=[InputMolecule.DNA],
-        task=[Task.SEQUENCE_OPTIMIZATION, Task.FEATURE_EXTRACTION],
+        task=[Task.FEATURE_EXTRACTION],
         output_modality=[OutputModality.SCALAR, OutputModality.DICTIONARY],
         architecture=[Architecture.ALGORITHMIC],
     ),
-    # Single action: encode (note: action name is encode, not predict)
+    # Single action: encode
     action_schemas=[
         ActionSchemaMap(
             name=ModelActions.ENCODE,
-            request_schema=DnaChiselPredictRequest,
-            response_schema=DnaChiselPredictResponse,
+            request_schema=DnaChiselEncodeRequest,
+            response_schema=DnaChiselEncodeResponse,
         )
     ],
     # No variant axes - single variant model

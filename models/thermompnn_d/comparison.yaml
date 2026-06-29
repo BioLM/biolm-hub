@@ -33,7 +33,7 @@ dont_use_when:
   - "You need to evaluate combinations of three or more simultaneous mutations -- ThermoMPNN-D is limited to pairs; consider SPURS for multi-mutation ddG"
   - "You need global melting temperature (Tm) rather than per-mutation ddG -- use ESMStabP or TemBERTure"
   - "You are working with very long proteins where quadratic double-mutation scanning is impractical -- consider prioritizing candidate pairs using single-mutation scans first"
-  - "You need evolution-based variant effect scores rather than structure-based stability predictions -- use GEMME"
+  - "You need evolution-based variant effect scores from multiple sequence alignments rather than structure-based stability predictions"
 
 alternatives:
   - model: thermompnn
@@ -45,9 +45,6 @@ alternatives:
   - model: temberture
     when_better: "TemBERTure requires only sequence input and provides global thermostability classification or Tm prediction without needing a structure"
     when_worse: "No per-mutation ddG, no double-mutation support, no epistasis modeling -- fundamentally different (global vs per-mutation) prediction task"
-  - model: gemme
-    when_better: "GEMME captures evolutionary constraint patterns from MSAs that may reveal epistatic relationships not captured by structure-based methods; no structure required"
-    when_worse: "GEMME does not model explicit pairwise epistasis between specific mutation pairs; predicts relative fitness rather than thermodynamic ddG in kcal/mol"
 
 complements:
   - model: thermompnn

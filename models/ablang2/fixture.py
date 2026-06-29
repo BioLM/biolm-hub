@@ -22,6 +22,12 @@ PREDICT_OUTPUT = "predict_expected_output.json"
 GENERATE_INPUT = "generate_input.json"
 GENERATE_OUTPUT = "generate_expected_output.json"
 
+# Canonical test antibody pair — shared across tests to prevent drift
+SEQ_1 = AbLang2SequenceItem(
+    heavy_chain="QVQLVQSGGQMKKPGSSVRVSCKASGYTFTNYGMNWVRQAPGQGLEWMGRI",
+    light_chain="DIQMTQSPSSLSASVGDRVTITCKASQDVSTAVA",
+)
+
 
 # Create TestSuite for fixture generation with programmatic inputs
 fixture_generation_suite = TestSuite(
@@ -43,11 +49,8 @@ def generate():
     """Configures and runs the fixture generator"""
     generator = FixtureGenerator(fixture_generation_suite)
 
-    # Define common input data
-    seq_1 = AbLang2SequenceItem(
-        heavy_chain="QVQLVQSGGQMKKPGSSVRVSCKASGYTFTNYGMNWVRQAPGQGLEWMGRI",
-        light_chain="DIQMTQSPSSLSASVGDRVTITCKASQDVSTAVA",
-    )
+    # Define common input data (seq_1 is the module-level SEQ_1 constant)
+    seq_1 = SEQ_1
     seq_2 = AbLang2SequenceItem(
         heavy_chain="EVQLVESGGGLVKPGGSLKLSCAASGFTFSSYAMNWVRQAPGKGLEWVASIL",
         light_chain="DVVMTQTPLSLPVSLGDQASISCRSSQSLVHSNGNTYLHW",

@@ -67,7 +67,7 @@ Extracts specified chains from PDB structures, returning amino acid sequences an
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
-| `items[].pdb_string` | str | (required) | valid PDB | PDB structure as string |
+| `items[].pdb` | str | (required) | valid PDB | PDB structure as string |
 | `items[].chain_ids` | list[str] | (required) | 1--10 IDs | Chain identifiers to extract |
 
 **Batch limit**: 1--8 items per request.
@@ -101,9 +101,10 @@ Computes C-alpha RMSD between two PDB structures after optimal Kabsch superimpos
 |-----------|------|---------|-------|-------------|
 | `items[].pdb_a` | str | (required) | valid PDB | First PDB structure |
 | `items[].pdb_b` | str | (required) | valid PDB | Second PDB structure |
-| `items[].chain_ids` | dict | (required) | -- | Chain mapping: `{"a": ["A"], "b": ["A"]}` |
+| `items[].chain_a` | list[str] | (required) | 1+ IDs | Chain IDs from `pdb_a` to compare |
+| `items[].chain_b` | list[str] | (required) | 1+ IDs | Chain IDs from `pdb_b` to compare |
 
-The `chain_ids` parameter maps chains between the two structures. `"a"` lists chain IDs from `pdb_a` and `"b"` lists corresponding chain IDs from `pdb_b`. The lists must have equal length.
+`chain_a` and `chain_b` are paired lists: `chain_a[i]` in `pdb_a` is compared against `chain_b[i]` in `pdb_b`. Both lists must have equal length.
 
 **Batch limit**: 1--8 items per request.
 
@@ -133,7 +134,7 @@ from models.biotite.schema import (
 extract_request = BiotiteExtractChainsRequest(
     items=[
         BiotiteExtractChainsRequestItem(
-            pdb_string="ATOM      1  N   ALA A   1 ...\nATOM      6  N   GLY B   1 ...\nEND",
+            pdb="ATOM      1  N   ALA A   1 ...\nATOM      6  N   GLY B   1 ...\nEND",
             chain_ids=["A", "B"],
         )
     ]
@@ -150,7 +151,8 @@ rmsd_request = BiotiteRMSDRequest(
         BiotiteRMSDRequestItem(
             pdb_a="ATOM  ... (predicted structure) ... END",
             pdb_b="ATOM  ... (reference structure) ... END",
-            chain_ids={"a": ["A"], "b": ["A"]},
+            chain_a=["A"],
+            chain_b=["A"],
         )
     ]
 )
@@ -186,7 +188,7 @@ Deterministic output comparison: test fixtures verify chain extraction and RMSD 
 | CPU | 2 cores |
 | Cold start | Fast (memory snapshot enabled) |
 | Batch size | 8 items max per request |
-| Dependencies | `biotite==1.3.0`, `numpy>=1.21.0`, `pandas>=1.3.0` |
+| Dependencies | `biotite==1.3.0`, `numpy==2.4.3` |
 
 ## Implementation Notes
 
@@ -196,7 +198,7 @@ Deterministic output comparison: test fixtures verify chain extraction and RMSD 
 - **Superimposition**: Uses `biotite.structure.superimpose()` which implements the Kabsch algorithm for optimal rigid-body alignment.
 - **RMSD calculation**: Uses `biotite.structure.rmsd()` on C-alpha atoms after superimposition.
 - **Sequence extraction**: Converts 3-letter amino acid codes to 1-letter codes using a fixed mapping (25 residue types including non-standard). Unknown residues map to "X".
-- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
+- **Caching**: Response caching is handled by the platform layer, not the model container.
 
 ## License
 

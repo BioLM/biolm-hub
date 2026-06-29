@@ -4,7 +4,7 @@
 
 ### Model Type & Innovation
 
-SADIE (Sequence Analysis and Domain Identification Engine) is an algorithmic antibody sequence analysis tool -- not a neural network model. It performs antibody numbering, domain identification, germline gene assignment, and region annotation using hidden Markov model (HMM) based alignment to reference databases.
+SADIE (Sequencing Analysis and Data Library for Immunoinformatics Exploration) is an algorithmic antibody sequence analysis tool -- not a neural network model. It performs antibody numbering, domain identification, germline gene assignment, and region annotation using hidden Markov model (HMM) based alignment to reference databases.
 
 The key innovation of SADIE is its unified interface for antibody and TCR sequence annotation, combining multiple numbering schemes (IMGT, Kabat, Chothia) and region definitions (IMGT, Kabat, Chothia, AbM, Contact, SCDR) into a single analysis pipeline. SADIE processes sequences through HMM alignment to identify domains, assign numbering, and extract framework and CDR region boundaries.
 
@@ -125,10 +125,7 @@ SADIE is fully deterministic -- the same input always produces the same output. 
 
 ### Caching Behavior
 
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
-- **Redis (Modal Dict)**: Fast lookup, TTL-based expiration
-- **R2**: Persistent storage for cached results
-- **Cache key**: Determined by request payload (sequence, scheme, region, scfv, allowed_chain)
+Response caching is handled outside the model container. The cache key is determined by the request payload (sequence, scheme, region, scfv, allowed_chain).
 
 ## Versions & Changelog
 

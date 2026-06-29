@@ -78,10 +78,10 @@ Abanades et al., *Communications Biology* (2023). Table values are approximate f
 
 | Variant | Action | Tolerance | Status |
 |---------|--------|-----------|--------|
-| abodybuilder2 | fold | rel_tol 1e-4, PDB RMSD < 1A | PASS |
-| nanobodybuilder2 | fold | rel_tol 1e-4, PDB RMSD < 1A | PASS |
-| tcrbuilder2 | fold | rel_tol 1e-4, PDB RMSD < 1A | PASS |
-| tcrbuilder2plus | fold | rel_tol 1e-4, PDB RMSD < 1A | PASS |
+| abodybuilder2 | fold | rel_tol 1e-4, PDB RMSD < 1.5 Å | PASS |
+| nanobodybuilder2 | fold | rel_tol 1e-4, PDB RMSD < 1.5 Å | PASS |
+| tcrbuilder2 | fold | rel_tol 1e-4, PDB RMSD < 1.5 Å | PASS |
+| tcrbuilder2plus | fold | rel_tol 1e-4, PDB RMSD < 1.5 Å | PASS |
 
 ### Comparison to Alternatives
 
@@ -157,9 +157,9 @@ Request
 
 ### Caching Behavior
 
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
-- Redis (Modal Dict) caching for fast repeated lookups
-- R2 caching for persistence
+Response caching is handled by the serving layer, not by the model container itself:
+- In-memory caching (Modal Dict) for fast repeated lookups
+- R2 object storage for persistent cross-container caching
 - Cache keys determined by full request payload
 
 ## Versions & Changelog

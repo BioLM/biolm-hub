@@ -197,7 +197,6 @@ From Brixi et al. (bioRxiv, 2025):
 - Multi-domain training improves eukaryotic sequence modeling
 - Scaling from 1B to 40B yields consistent improvements
 
-<!-- TODO: Extract specific numerical benchmarks when full paper is published -->
 
 ### SOTA Status
 
@@ -230,7 +229,7 @@ Numerical reproduction: integration tests compare model outputs against golden f
 
 | Resource | Value |
 |----------|-------|
-| Cold start | Reduced via Modal memory snapshot (GPU snapshot enabled) |
+| Cold start | Reduced via Modal CPU memory snapshot (CPU two-phase: load on CPU, move to GPU after restore) |
 | Batch size | 1 item per request |
 | Key dependencies | `torch`, `flash-attn==2.7.3`, `stripedhyena==0.2.2`, `einops==0.8.0`, `transformer-engine==1.13` |
 
@@ -238,7 +237,7 @@ Numerical reproduction: integration tests compare model outputs against golden f
 
 - **Memory snapshots**: Uses `@modal.enter(snap=True)` for CPU-phase setup, then `@modal.enter(snap=False)` to load and move model to GPU after snapshot restore.
 - **Snapshot base class**: Inherits from `ModelMixinSnap` for snapshot-compatible health and lifecycle hooks.
-- **GPU snapshots**: Enabled via `experimental_options={"enable_gpu_snapshot": True}`.
+- **GPU snapshots**: Not used — transformer_engine/flash-attn prevent GPU snapshot creation. CPU memory snapshot is used instead (`enable_memory_snapshot=True`).
 - **Container image**: Built from `pytorch/pytorch:2.4.1-cuda12.4-cudnn9-devel` with flash-attn and Evo2 installed from GitHub at pinned commit `67a079496b`.
 - **Download layer**: Model weights downloaded via unified `setup_download_layer` with R2 caching and HuggingFace fallback.
 - **Determinism**: `encode` and `log_prob` are fully deterministic. `generate` requires explicit seed for reproducibility.
@@ -252,7 +251,7 @@ Numerical reproduction: integration tests compare model outputs against golden f
 
 ### Papers
 
-1. Brixi G, Durber MG, Nguyen E, Poli M, Bartie LJ, Hie BL, Re C, Hsu PD. "Genome modeling and design across all domains of life with Evo 2." bioRxiv (2025). [arXiv: 2503.11265](https://arxiv.org/abs/2503.11265)
+1. Brixi G, Durber MG, Nguyen E, Poli M, Bartie LJ, Hie BL, Re C, Hsu PD. "Genome modeling and design across all domains of life with Evo 2." bioRxiv (2025). [doi:10.1101/2025.02.18.638918](https://doi.org/10.1101/2025.02.18.638918)
 
 ### BibTeX
 
@@ -262,13 +261,13 @@ Numerical reproduction: integration tests compare model outputs against golden f
   author={Brixi, Garyk and Durber, Matthew G and Nguyen, Eric and Poli, Michael and Bartie, Liam J and Hie, Brian L and Re, Christopher and Hsu, Patrick D},
   journal={bioRxiv},
   year={2025},
-  eprint={2503.11265}
+  doi={10.1101/2025.02.18.638918}
 }
 ```
 
 ### Links
 
-- **Preprint**: [arXiv:2503.11265](https://arxiv.org/abs/2503.11265)
+- **Preprint**: [bioRxiv 10.1101/2025.02.18.638918](https://www.biorxiv.org/content/10.1101/2025.02.18.638918v1)
 - **Code**: [github.com/ArcInstitute/evo2](https://github.com/ArcInstitute/evo2)
 - **Model weights**: [huggingface.co/arcinstitute/evo2_1b_base](https://huggingface.co/arcinstitute/evo2_1b_base)
 

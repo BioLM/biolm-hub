@@ -96,7 +96,7 @@ Propose modifications to improve stability.
 
 ### BioLM Verification Results
 
-<!-- TODO: Run verification once implementation is deployed — compare Pro-1 output on 3-5 known enzyme sequences against published examples from blog post -->
+Not yet run — requires initial deployment to execute inference.
 
 ### Comparison to Alternatives
 

@@ -1,5 +1,5 @@
 import re
-from typing import Annotated, Optional
+from typing import Annotated
 
 from pydantic import BeforeValidator, Field, field_validator, model_validator
 
@@ -56,13 +56,13 @@ class SpursPredictRequestItem(RequestModel):
             description="Protein sequence for SPURS prediction",
         ),
     ]
-    pdb: Optional[Annotated[str, BeforeValidator(validate_pdb)]] = Field(
+    pdb: Annotated[str, BeforeValidator(validate_pdb)] | None = Field(
         default=None,
         min_length=1,
         max_length=max_pdb_str_len,
         description="Input structure in PDB format. Provide exactly one of pdb or cif.",
     )
-    cif: Optional[Annotated[str, BeforeValidator(validate_cif)]] = Field(
+    cif: Annotated[str, BeforeValidator(validate_cif)] | None = Field(
         default=None,
         min_length=1,
         max_length=max_pdb_str_len,
@@ -77,7 +77,7 @@ class SpursPredictRequestItem(RequestModel):
             " for single-chain proteins."
         ),
     )
-    mutations: Optional[list[str]] = Field(
+    mutations: list[str] | None = Field(
         default=None,
         description=(
             "Optional list of mutations (formatted '<WT><position><MT>' with 1-indexed"
@@ -85,9 +85,9 @@ class SpursPredictRequestItem(RequestModel):
             " mutagenesis matrix covering every single-residue substitution."
         ),
     )
-    variant_sequence: Optional[
-        Annotated[str, BeforeValidator(validate_aa_unambiguous)]
-    ] = Field(
+    variant_sequence: (
+        Annotated[str, BeforeValidator(validate_aa_unambiguous)] | None
+    ) = Field(
         default=None,
         min_length=1,
         max_length=SpursParams.max_sequence_len,
@@ -259,6 +259,17 @@ class SpursPredictRequestItem(RequestModel):
                     f"structure sequence length ({len(structure_sequence)})"
                 )
 
+        # return_full_dms=False requires a variant_sequence or explicit mutations
+        if (
+            not self.return_full_dms
+            and self.variant_sequence is None
+            and self.mutations is None
+        ):
+            raise ValueError(
+                "return_full_dms=False requires either 'variant_sequence' for "
+                "automatic mutation calculation, or an explicit 'mutations' list."
+            )
+
         return self
 
 
@@ -300,27 +311,27 @@ class SpursDDGMatrix(ResponseModel):
 
 
 class SpursPredictResponseResult(ResponseModel):
-    mutations: Optional[list[str]] = Field(
+    mutations: list[str] | None = Field(
         default=None,
         description=(
             "Specific mutations evaluated. Null indicates the response includes a full"
             " ΔΔG matrix covering every single-residue substitution."
         ),
     )
-    ddG: Optional[float] = Field(
+    ddG: float | None = Field(
         default=None,
         description=(
             "Predicted ΔΔG in kcal/mol for the requested mutation set. Present when"
             " one or more explicit mutations were supplied."
         ),
     )
-    ddG_contributions: Optional[dict[str, float]] = Field(
+    ddG_contributions: dict[str, float] | None = Field(
         default=None,
         description=(
             "Per-mutation ΔΔG contributions (kcal/mol) for multi-mutation requests."
         ),
     )
-    ddG_matrix: Optional[SpursDDGMatrix] = Field(
+    ddG_matrix: SpursDDGMatrix | None = Field(
         default=None,
         description=(
             "Complete single-mutation ΔΔG matrix. Provided when mutations are omitted"

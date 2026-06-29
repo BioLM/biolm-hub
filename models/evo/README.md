@@ -117,7 +117,7 @@ Generates new DNA sequences from a prompt using autoregressive sampling. Returns
 }
 ```
 
-The `generated` field contains the full output sequence (prompt + newly generated tokens). The `score` is an average log-probability reflecting the model's confidence in the generated sequence.
+The `generated` field contains only the newly generated continuation (the prompt is NOT included). The `score` is an average log-probability reflecting the model's confidence in the generated sequence.
 
 ## Usage Examples
 
@@ -183,8 +183,6 @@ From Nguyen et al., *Science* (2024):
 - **Gene essentiality**: Log-probability scores distinguish essential from non-essential genes in bacterial genomes.
 - **Genome-scale generation**: Generated sequences encode proteins with plausible predicted structures (assessed via ESMFold), demonstrating that Evo learns higher-order genomic organization beyond nucleotide statistics.
 
-<!-- TODO: Extract exact numerical values from Nguyen et al. Science 2024 Figures 2-4  --  requires PDF viewing -->
-
 #### Zero-Shot Fitness Prediction (ProteinGym & Prokaryotic DMS)
 
 | Model | Task | Metric | Approximate Performance | Source |
@@ -230,7 +228,7 @@ Numerical reproduction (Option A): Integration tests compare model outputs again
 ## Implementation Notes
 
 - **Memory snapshots**: Uses `@modal.enter(snap=True)` with GPU snapshot enabled (`enable_memory_snapshot=True`, `enable_gpu_snapshot=True`). The model loads directly on GPU during snapshot creation.
-- **Caching**: Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not the model container.
+- **Caching**: Response caching is handled outside the model container by the serving infrastructure.
 - **No `@modal.enter(snap=False)`**: Unlike some models that move weights from CPU to GPU in a second enter phase, Evo loads directly on GPU during snapshot creation.
 - **Container image**: Built from `pytorch/pytorch:2.2.0-cuda11.8-cudnn8-devel` with flash-attn compiled using `--no-build-isolation` (requires pre-installed torch).
 - **Determinism**: `log_prob` is fully deterministic. `generate` is deterministic when a seed is provided; stochastic otherwise (time-based seed).
@@ -245,14 +243,14 @@ Numerical reproduction (Option A): Integration tests compare model outputs again
 
 ### Papers
 
-1. Nguyen E, Poli M, Durber MG, et al. "Sequence modeling and design from molecular to genome scale with Evo." *Science* (2024). [DOI](https://doi.org/10.1126/science.ado9336)
+1. Nguyen E, Poli M, Durrant MG, et al. "Sequence modeling and design from molecular to genome scale with Evo." *Science* (2024). [DOI](https://doi.org/10.1126/science.ado9336)
 
 ### BibTeX
 
 ```bibtex
 @article{nguyen2024evo,
   title={Sequence modeling and design from molecular to genome scale with Evo},
-  author={Nguyen, Eric and Poli, Michael and Durber, Matthew G and Kang, Brian and Katrekar, Dhruva and Li, David B and Bartie, Liam J and Thomas, Armin W and King, Samuel H and Brixi, Garyk and Sullivan, Jeremy and Ng, Madelena Y and Lewis, Ashley and Lou, Aaron and Ermon, Stefano and Baccus, Stephen A and Hernandez-Boussard, Tina and Re, Christopher and Hsu, Patrick D and Hie, Brian L},
+  author={Nguyen, Eric and Poli, Michael and Durrant, Matthew G and Kang, Brian and Katrekar, Dhruva and Li, David B and Bartie, Liam J and Thomas, Armin W and King, Samuel H and Brixi, Garyk and Sullivan, Jeremy and Ng, Madelena Y and Lewis, Ashley and Lou, Aaron and Ermon, Stefano and Baccus, Stephen A and Hernandez-Boussard, Tina and R\'{e}, Christopher and Hsu, Patrick D and Hie, Brian L},
   journal={Science},
   year={2024},
   doi={10.1126/science.ado9336}
@@ -261,7 +259,7 @@ Numerical reproduction (Option A): Integration tests compare model outputs again
 
 ### Links
 
-- **Paper**: [arXiv:2403.19444](https://arxiv.org/abs/2403.19444)
+- **Paper**: [DOI:10.1126/science.ado9336](https://doi.org/10.1126/science.ado9336) | [bioRxiv:2024.02.27.582234](https://www.biorxiv.org/content/10.1101/2024.02.27.582234)
 - **Code**: [github.com/evo-design/evo](https://github.com/evo-design/evo)
 - **StripedHyena**: [github.com/togethercomputer/stripedhyena](https://github.com/togethercomputer/stripedhyena)
 - **Model weights**: [HuggingFace togethercomputer](https://huggingface.co/togethercomputer)

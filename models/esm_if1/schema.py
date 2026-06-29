@@ -64,7 +64,8 @@ class ESMIF1GenerateRequestItem(RequestModel):
 
 class ESMIF1GenerateRequest(RequestModel):
     params: ESMIF1GenerateParams = Field(
-        description="Optional parameters controlling this action (defaults are used when omitted)."
+        default_factory=ESMIF1GenerateParams,
+        description="Optional parameters controlling this action (defaults are used when omitted).",
     )
     items: Annotated[
         list[ESMIF1GenerateRequestItem],
@@ -79,7 +80,7 @@ class ESMIF1GenerateRequest(RequestModel):
 ### ESM-IF1 Response
 
 
-class ESMIF1GenerateResponseSample(RequestModel):
+class ESMIF1GenerateResponseSample(ResponseModel):
     sequence: str = Field(
         description="A protein sequence in single-letter amino-acid codes."
     )

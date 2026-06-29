@@ -14,7 +14,7 @@ The key innovation is the masked diffusion training objective, which unifies the
 |---------|-----------|------------|--------|-----------------|-----|--------|
 | DSM-150M | 150M | 640 | 30 | 20 | A10G | 16 GB |
 | DSM-650M | 650M | 1280 | 33 | 20 | A10G | 32 GB |
-| DSM-3B | 3B | 2560 | 36 | 40 | A100 | 64 GB |
+| DSM-3B | 3B | 2560 | 36 | 40 | A100 | 64 GB (not yet released) |
 
 DSM models are extended from pre-trained ESM2 checkpoints (Hallee et al., 2025). DSM-150M inherits the ESM2-150M architecture (30 layers, 640 hidden dim, 20 attention heads). DSM-650M inherits the ESM2-650M architecture (33 layers, 1280 hidden dim, 20 attention heads). Both were trained on OMGprot50, a dataset of over 207 million protein sequences clustered at 50% sequence identity from the Open MetaGenomic dataset (OMG). DSM-150M was trained for 100,000 steps with batch size 32 and max sequence length 512. DSM-650M was trained for 100,000 steps with batch size 128 and max sequence length 2048. DSMppi (the PPI variant) was fine-tuned from DSM-650M on protein-protein interaction pairs from the STRING database.
 
@@ -136,7 +136,7 @@ Request
   |-- 1. Tokenize sequence
   |-- 2. Forward pass -> logits
   |-- 3. Compute log-softmax
-  |-- 4. Sum autoregressive log probabilities
+  |-- 4. Sum position-aligned pseudo-log-probabilities (bidirectional, non-AR)
   |-- 5. Calculate perplexity
   |-- 6. Return DSMScoreResponse
 ```
@@ -147,7 +147,7 @@ Request
 |---------|-----|------|-------------------|----------------|
 | DSM-150M | A10G | ~4 GB | ~500ms/seq | ~100ms/seq |
 | DSM-650M | A10G | ~12 GB | ~1-2s/seq | ~150ms/seq |
-| DSM-3B | A100 | ~24 GB | ~5-10s/seq | ~500ms/seq |
+| DSM-3B | A100 | ~24 GB | ~5-10s/seq (not yet released; illustrative) | ~500ms/seq |
 
 ### Determinism & Reproducibility
 
@@ -162,7 +162,7 @@ Request
 
 ### Caching Behavior
 
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container. Note: generation with time-based seed will not benefit from caching since inputs differ.
+Response caching is handled externally (e.g., by a caching proxy), not inside the model container. Note: generation with time-based seed will not benefit from caching since inputs differ.
 
 ## Versions & Changelog
 

@@ -1,12 +1,3 @@
-# comparison.yaml — Model Comparison Metadata
-# Machine-readable guidance for model selection.
-# Generated as part of Phase 3.5 of the model-knowledge-base workflow.
-#
-# Requirements:
-#   - strengths, weaknesses, use_when, dont_use_when: 5+ entries each (min 3)
-#   - alternatives, complements: 1+ entries where applicable
-#   - All referenced model slugs must exist in models/
-
 model_slug: "evo2"
 display_name: "Evo2"
 last_updated: "2026-03-17"
@@ -40,22 +31,19 @@ use_when:
   - "You need genome-scale DNA generation for synthetic biology applications involving eukaryotic-style genomic organization"
 
 dont_use_when:
-  - "You need a lightweight, cost-effective model for high-throughput DNA embedding or scoring on T4 GPUs (use dnabert2 or nt, which are much smaller)"
-  - "You need only DNA embeddings and the model's independent validation track record is critical for your application (use nt, which has years of benchmark validation)"
+  - "You need a lightweight, cost-effective model for high-throughput DNA embedding or scoring on T4 GPUs (use dnabert2, which is much smaller)"
+  - "You need only DNA embeddings and the model's independent validation track record is critical for your application (use dnabert2, which has years of benchmark validation)"
   - "You need codon optimization, restriction site checking, or deterministic DNA feature extraction (use dna_chisel)"
   - "You are working exclusively with short regulatory elements (<1 kbp) where Evo2's long-context capability provides no advantage over cheaper models like DNABERT-2"
   - "You need protein-level analysis from coding DNA (translate and use esm2 directly)"
   - "You need function-conditioned DNA generation with specific functional labels (no built-in conditioning mechanism; consider custom fine-tuning or prompt engineering)"
   - "You need RNA-specific analysis — Evo2 accepts only ACGT characters"
-  - "You need a model with extensive, multi-year real-world deployment experience (use nt or dnabert2)"
+  - "You need a model with extensive, multi-year real-world deployment experience (use dnabert2)"
 
 alternatives:
   - model: "evo"
     when_better: "More mature publication (Science 2024) with experimental validation of generated sequences; simpler model for prokaryotic-focused tasks where eukaryotic coverage is unnecessary"
     when_worse: "Prokaryotic-only training, no embedding endpoint, shorter context (8 kbp vs up to 1M), and single model size; Evo2 is strictly more capable for multi-domain analysis"
-  - model: "nt"
-    when_better: "Well-established multi-species embeddings with years of benchmark validation, lower compute requirements (T4 GPU), and two practical size variants"
-    when_worse: "No generation capability, shorter context (~12 kbp), encoder-only architecture, and non-commercial license; Evo2 provides generation plus broader genomic coverage"
   - model: "dnabert2"
     when_better: "Lightweight (117M on T4), BPE tokenization, Apache-2.0 license, and extensive GUE benchmark validation for regulatory element tasks"
     when_worse: "Much shorter context (~4-8 kbp), no generation, smaller capacity, and masked LM architecture; Evo2 is superior for long-range and generative tasks"
@@ -64,9 +52,6 @@ alternatives:
     when_worse: "Smaller model (1B), no generation endpoint, limited validation, and no multi-domain training; Evo2 is more capable across all dimensions"
 
 complements:
-  - model: "nt"
-    workflow: "Use Evo2 for long-range DNA generation or whole-locus design, then use NT to provide focused gene-scale embedding analysis and variant effect scoring on regions of interest within the generated sequences"
-    example_protocol: null
   - model: "dna_chisel"
     workflow: "Generate coding DNA with Evo2, then use DNA-Chisel to optimize codon usage (CAI), verify synthesis feasibility (GC content, homopolymers, restriction sites), and prepare sequences for gene synthesis"
     example_protocol: null

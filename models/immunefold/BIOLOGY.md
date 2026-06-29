@@ -51,9 +51,7 @@ ImmuneFold enables computational structure prediction for immune proteins in dru
 - **Antibody candidate characterization**: Rapid structural assessment of therapeutic antibody candidates from discovery campaigns
 - **Epitope mapping**: Predicting antibody-antigen complex structures to identify binding epitopes
 - **TCR engineering**: Structural modeling of engineered TCRs for immunotherapy applications
-- **Input for downstream tools**: Providing structures for feature extraction (ProperMAB), inverse folding (AntiFold), or docking studies
-
-<!-- TODO: Add specific applied literature citations from post-publication studies -->
+- **Input for downstream tools**: Providing structures for inverse folding (AntiFold) or docking studies
 
 ## Related Models
 
@@ -64,7 +62,6 @@ ImmuneFold enables computational structure prediction for immune proteins in dru
 
 ### Complementary Models
 
-- **ProperMAB**: Can use ImmuneFold-predicted structures for extracting 34 biophysical developability features.
 - **AntiFold**: Inverse folding model that can redesign sequences conditioned on ImmuneFold-predicted structures.
 - **ESM2**: The underlying language model used by ImmuneFold; can also provide independent sequence fitness scores.
 

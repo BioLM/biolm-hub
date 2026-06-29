@@ -1,9 +1,16 @@
 model_slug: "peptides"
-display_name: "peptides"
+display_name: "Peptides"
 license:
-  type: "Apache-2.0"
-  url: "https://github.com/dosorio/Peptides.py/blob/master/LICENSE"
-  notes: "peptides Python package for peptide feature computation"
+  type: "GPL-3.0"
+  url: "https://github.com/althonos/peptides.py/blob/main/COPYING"
+  notes: >-
+    Wraps the PyPI `peptides` package (althonos/peptides.py by Martin Larralde).
+    Upstream is license-contradictory: its source __license__ and COPYING declare
+    GPL-3.0 (copyleft) while its PyPI metadata says MIT. Treated as GPL-3.0 (the
+    conservative reading) pending maintainer resolution — MAINTAINER MUST CONFIRM
+    before launch; a confirmed-MIT upstream would let this ship permissively. The
+    scientific scales are cited to Osorio et al. 2015 (the separate R `Peptides`
+    package), which is the science, NOT the wrapped Python code's license/author.
 molecule_types:
   - "peptide"
 applicable_to:
@@ -26,12 +33,12 @@ primary_papers:
     figures_of_note: []
 source_repos:
   - type: "github"
-    url: "https://github.com/dosorio/Peptides.py"
+    url: "https://github.com/althonos/peptides.py"
     commit: ""
     snapshot_r2: "pending"
   - type: "pypi"
     url: "https://pypi.org/project/peptides/"
-    notes: "Python port of the R Peptides package"
+    notes: "althonos/peptides.py by Martin Larralde — an independent Python reimplementation (NOT the dosorio R-port). License-contradictory upstream (see license.notes)."
 applied_literature:
 - title: "AI4AMP: an Antimicrobial Peptide Predictor Using Physicochemical Property-Based Encoding Method and Deep Learning"
   doi: "10.1128/mSystems.00299-21"

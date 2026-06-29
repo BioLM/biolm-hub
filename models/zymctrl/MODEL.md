@@ -81,10 +81,10 @@ Key finding: Generated sequences average approximately 53% sequence identity to 
 - **Carbonic anhydrase (EC 4.2.1.1)**: Generated enzymes were experimentally validated, confirming catalytic activity
 - **Lactate dehydrogenase (EC 1.1.1.27)**: Fine-tuning on this EC class improved generation quality
 
-### BioLM Verification Results
+### Verification Results
 
-| Test Case | Expected | BioLM Result | Status |
-|-----------|----------|--------------|--------|
+| Test Case | Expected | Result | Status |
+|-----------|----------|--------|--------|
 | Glucokinase (2.7.1.2) perplexity | LOW (<1.5) | 1.11 avg, 1.06 min | PASS |
 | LDH (1.1.1.27) perplexity | LOW | 2.28 avg, 1.95 min | PASS |
 | Carbonic anhydrase (4.2.1.1) perplexity | LOW | 3.05 avg, 1.17 min | PASS |
@@ -206,14 +206,14 @@ Resource allocation: 2 CPU cores, 16 GB system RAM, T4 GPU, 10-minute timeout.
 
 ### Caching Behavior
 
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
+Response caching is handled at the serving layer, not by the model container:
 - **Cache key**: Based on full request payload (EC number, params, sequence)
 - **Generate action**: Caching is less useful due to stochastic outputs (same EC + different seed = different results)
 - **Encode action**: Caching is effective since outputs are deterministic
 
 ## Training Procedures
 
-Training was performed by the original authors (AI4PD group) and is not reproducible within BioLM.
+Training was performed by the original authors (AI4PD group) and is not reproducible here.
 
 | Hyperparameter | Value |
 |----------------|-------|

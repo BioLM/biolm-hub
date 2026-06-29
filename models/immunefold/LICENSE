@@ -189,14 +189,6 @@ model built on a pre-trained protein language model, developed by the
 CarbonMatrix Lab (Wu et al., 2024).
 
 Source: https://github.com/CarbonMatrixLab/immunefold
-License: https://github.com/CarbonMatrixLab/immunefold/blob/ImmuneFold/LICENSE
+License: https://github.com/CarbonMatrixLab/immunefold/blob/main/LICENSE
 
 The ImmuneFold source code is distributed under the Apache License, Version 2.0.
-
-NOTE TO MAINTAINERS -- COPYRIGHT HOLDER INFERRED:
-The upstream LICENSE file is the standard Apache-2.0 text with the appendix
-copyright line left as the unfilled placeholder ("Copyright [yyyy] [name of
-copyright owner]"). The holder ("CarbonMatrix Lab") and year (2024, the
-publication year of Wu et al.) above are inferred from the source repository
-and primary paper; confirm the exact copyright attribution with the upstream
-authors before public release.

@@ -57,7 +57,7 @@ applied_literature:
 - title: Protein Electrostatic Properties are Fine-Tuned Through Evolution
   doi: 10.1101/2025.04.17.649309
   year: 2025
-  relevance: Trains KaML-ESM models using ESM Cambrian 6B embeddings for protein pKa prediction, demonstrating ESMC learns
+  relevance: Trains KaML-ESM models using ESM Cambrian 600M embeddings for protein pKa prediction, demonstrating ESMC learns
     emergent structural features that improve electrostatic property prediction over ESM-2 despite fewer parameters.
   molecule_focus: protein
   task_focus: property_prediction

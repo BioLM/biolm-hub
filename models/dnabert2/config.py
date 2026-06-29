@@ -25,7 +25,7 @@ hf_pin_revision = "d064dece8a8b41d9fb8729fbe3435278786931f1"  # DNABERT2 Hugging
 
 DNABERT2ResourceSpec = ModalResourceSpec(
     cpu=2.0,
-    memory=4 * 1024,  # 8 GB
+    memory=4 * 1024,  # 4 GB
     gpu=ModalGPU.T4,
 )
 
