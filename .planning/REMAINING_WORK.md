@@ -5,6 +5,31 @@
 > `03_WORKSTREAMS`, `04_TESTING_STRATEGY`, `W4_ACQUISITION_PLAN`, `W5_HARDENING_GUIDE`, `COMMONS_REQUESTS`).
 > Snapshot at the **2026-06-28 pause** (session `oss-stage3-w5-fanout`). Internal file — deleted at launch.
 
+> ## ▶ RESUME HERE (paused 2026-06-30, session `oss-platform-w14-docs`)
+> **DONE & committed on `main`:** W1–W14 (docs site + per-field OpenAPI schema descriptions, public
+> CLAUDE.md) → **Round-1 independent review** (112 agents → `.planning/reviews/round-1/`: README dashboard,
+> FIX_PLAN, 44 model + 12 global write-ups) → **fix campaign Phase A** (foundational/shared-file) →
+> **Phase B** (per-model). Last commits: `4c62ccf` Phase B · `29506cd` Phase A · `4fe72f3` review+drops ·
+> `263bc7c` W14. Tree clean. Catalog = **39 SHIP + dummy** (dropped clean/boltz/rfd3/esmstabp — see
+> `.planning/reviews/round-1/DROPPED_MODELS.md`). De-internalization complete (0 `biolm-modal`/`qa` in
+> shipped dirs); schema guard ✓40; `mkdocs build --strict` green; unit tests 6-fail = ONLY pre-existing
+> env issues (boltzgen `pandas`, `test_cache` R2).
+>
+> **NEXT, in order (all Modal-free until Milestone B):**
+> 1. **Round-1 corrections tail** — the deferred items in `.planning/reviews/round-1/PHASE_B_DEFERRED.md`
+>    that are NOT Milestone-B/commons-gated (cross-model coordinated renames; lower-priority cleanups).
+> 2. **W3b** commons reconciliation (§2 below) + the Phase-A-deferred CI items (mypy-over-`.github/scripts`
+>    [67 errs], gitleaks gate, T20-ignore narrowing — see the Phase A note further down).
+> 3. **W-sec** — §3 below (license confirmations incl. the peptides MIT-vs-GPL-3.0 resolution; gitleaks;
+>    final residue sweep). **needs-human license confirmations are in §0 open-questions.**
+> 4. **(optional) Round-2 verification review** before the big spend.
+> 5. **Milestone B** — full deploy + golden-fixture + integration/deployment matrix (§1). **GATED on user
+>    infra: R2 bucket public-read decision + config, GitHub deploy-gate (label + `modal-dev` env + secrets),
+>    Modal CI token, R2 CI key — see §0 + the manual-actions list. Also applies the response-shape renames
+>    deferred in PHASE_B_DEFERRED.md (deploy-verify then apply).**
+> 6. **W-launch.**
+> The user has additional points to provide at the start of the next session (esp. around infra/permissions).
+
 ## STATUS SNAPSHOT — what's DONE (committed on `main`)
 - **Commons + global rules** (W1/W2/W3a/W-acq/W6/W7/W17) — earlier commits.
 - **W5 per-model hardening** — 43 SHIP models hardened; **nanobert + propermab EXCLUDED** (confirmed
