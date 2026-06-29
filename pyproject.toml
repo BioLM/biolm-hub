@@ -150,11 +150,10 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 # print() is allowed in the CLI, one-off scripts, and tests — banned everywhere else.
+# Test files (and the fixture/runner harness they import) are not runtime/inference
+# code, so progress prints there are output, not the banned runtime logging anti-pattern.
 "cli/**" = ["T20"]
 "tooling/**" = ["T20"]
 "**/scripts/**" = ["T20"]
 "**/test*.py" = ["T20"]
 "**/conftest.py" = ["T20"]
-# Standalone training script (run via `python models/esmstabp/_train.py` / `modal run`);
-# not on any inference/runtime import path, so its progress prints are script output.
-"models/esmstabp/_train.py" = ["T20"]

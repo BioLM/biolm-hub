@@ -55,3 +55,16 @@ jobs:
       - run: uv python install 3.12
       - run: uv sync --all-extras
       - run: uv run mkdocs build --strict
+
+  secrets:
+    name: secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history so gitleaks can scan all commits in the range
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Public repo → no GITLEAKS_LICENSE required. Tuned by .gitleaks.toml.

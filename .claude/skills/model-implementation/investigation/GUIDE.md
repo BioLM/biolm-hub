@@ -47,13 +47,13 @@ Browse `models/` to find the closest analogous implementation. Read its `app.py`
 | Dimension | Look at |
 |-----------|---------|
 | Protein sequence input | `esm2/`, `esmc/`, `e1/` |
-| DNA/RNA input | `nt/`, `evo/`, `dnabert2/` |
+| DNA/RNA input | `evo/`, `dnabert2/`, `omni_dna/` |
 | Structure (PDB) input | `mpnn/`, `esmfold/`, `chai1/` |
-| HuggingFace weights | `esmc/`, `nt/`, `esm3/` |
+| HuggingFace weights | `esmc/`, `prostt5/`, `dnabert2/` |
 | Custom URL weights | `mpnn/`, `antifold/` |
 | No external weights | `biotite/`, `dna_chisel/` |
 | Single variant, one action | `dna_chisel/` |
-| Multi-variant, one action | `nt/` |
+| Multi-variant, one action | `esm1v/` |
 | Multi-variant, multi-action | `esm2/` |
 
 > **Rule:** Never invent import organization, decorator usage, or class structure. Copy from the reference model.

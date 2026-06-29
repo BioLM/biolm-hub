@@ -1,0 +1,25 @@
+# gitleaks configuration for the secret-scan CI gate (see .github/workflows/ci.yml).
+# Extends the built-in ruleset; the allowlist below covers known non-secrets so the
+# gate doesn't false-positive on them. Secrets themselves never live in this repo —
+# they live in the Modal/GitHub secret stores — so a clean tree should pass.
+
+title = "biolm-models secret scan"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Paths/values that are not secrets"
+paths = [
+  # Internal planning dir (no secrets; deleted at launch anyway).
+  '''\.planning/.*''',
+  # Lockfile: hashes, not secrets.
+  '''uv\.lock''',
+  # Test fixtures use obviously-fake placeholder credentials.
+  '''.*/test_.*\.py''',
+  '''.*/conftest\.py''',
+]
+regexes = [
+  # The bucket's PUBLIC development URL — meant to be public, not a secret.
+  '''pub-c56611cf24404740b0ff53b356a6b48d\.r2\.dev''',
+]
