@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 import modal
 
@@ -24,7 +23,6 @@ r2_public_url = os.getenv(
 
 
 # Modal paths
-local_models_path = Path(__file__).resolve().parent.parent
 remote_models_path = "/root/models"
 
 

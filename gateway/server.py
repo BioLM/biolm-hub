@@ -28,8 +28,7 @@ logger = get_logger(__name__)
 
 # The gateway imports every model's config.py at startup, so it needs the WHOLE
 # models/ tree (models/__init__.py + models/commons/ + every models/<slug>/)
-# mounted at /root/models. (commons' `local_models_path` resolves to
-# models/commons, not models/, so we compute the real source dir here.)
+# mounted at /root/models, so we compute the real source dir here.
 _local_models_dir = Path(__file__).resolve().parent.parent / "models"
 _pycache_ignore = modal.FilePatternMatcher("**/__pycache__", "**/*.pyc")
 
