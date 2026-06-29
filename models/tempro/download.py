@@ -34,14 +34,14 @@ def get_model_dir(esm2_size: str):
 
     return get_model_dir_util(
         base_model_slug=TemproParams.base_model_slug,
-        params_version=TemproParams.params_version,
+        weights_version=TemproParams.weights_version,
         model_variant=esm2_size,
     )
 
 
 def _create_r2_config(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     model_variant: str,
     sub_path: Optional[str],
     target_dir: Path,
@@ -59,7 +59,7 @@ def _create_r2_config(
         ),
         r2_config=R2OnlyConfig(
             base_model_slug=base_model_slug,
-            params_version=params_version,
+            weights_version=weights_version,
             model_variant=model_variant,
             sub_path=sub_path,
         ),
@@ -190,7 +190,7 @@ def _create_custom_fallback_config(
 
 def download_model_assets(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     variant_config: Optional[dict] = None,
     sub_path: Optional[str] = None,
 ):
@@ -212,7 +212,7 @@ def download_model_assets(
 
     Args:
         base_model_slug: Base model identifier ("tempro")
-        params_version: Model version ("v1")
+        weights_version: Model version ("v1")
         variant_config: Dict with ESM2_SIZE key specifying variant
         sub_path: Optional subdirectory path
 
@@ -230,7 +230,7 @@ def download_model_assets(
     # Get target directory
     model_dir = get_model_dir_util(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         model_variant=model_variant,
         sub_path=sub_path,
     )
@@ -244,7 +244,7 @@ def download_model_assets(
 
     primary_config = _create_r2_config(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         model_variant=model_variant,
         sub_path=sub_path,
         target_dir=model_dir,

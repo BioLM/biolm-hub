@@ -45,7 +45,7 @@ image = modal.Image.micromamba(python_version="3.12")
 image = setup_download_layer(
     image,
     base_model_slug=RF3Params.base_model_slug,
-    params_version=RF3Params.params_version,
+    weights_version=RF3Params.weights_version,
     variant_config=None,  # no variants
 )
 

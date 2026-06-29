@@ -24,7 +24,7 @@ from models.commons.model.pydantic import (
 
 
 class AbLang2Params(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "AbLang2"
     base_model_slug = "ablang2"
     log_identifier = "AbLang2"

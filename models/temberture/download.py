@@ -37,7 +37,7 @@ def get_shared_base_model_dir() -> Path:
     """Get the directory path for the shared ProtBERT base model."""
     return get_model_dir_util(
         base_model_slug=TemBERTureParams.base_model_slug,
-        params_version=TemBERTureParams.params_version,
+        weights_version=TemBERTureParams.weights_version,
         model_variant="shared",
         sub_path="base_model",
     )
@@ -47,14 +47,14 @@ def get_model_dir() -> Path:
 
     return get_model_dir_util(
         base_model_slug=TemBERTureParams.base_model_slug,
-        params_version=TemBERTureParams.params_version,
+        weights_version=TemBERTureParams.weights_version,
         model_variant=None,
         sub_path="adapters",
     )
 
 
 def _download_shared_base_model(
-    base_model_slug: str, params_version: str, base_model_dir: Path
+    base_model_slug: str, weights_version: str, base_model_dir: Path
 ):
     """Download shared ProtBERT base model."""
 
@@ -78,7 +78,7 @@ def _download_shared_base_model(
         ),
         r2_config=R2OnlyConfig(
             base_model_slug=base_model_slug,
-            params_version=params_version,
+            weights_version=weights_version,
             model_variant="shared",
             sub_path="base_model",
         ),
@@ -187,7 +187,7 @@ def _extract_temberture_adapters(
 
 
 def _download_variant_adapters(
-    base_model_slug: str, params_version: str, model_type: str
+    base_model_slug: str, weights_version: str, model_type: str
 ):
     """Download variant-specific TemBERTure adapters to shared location with filtering."""
 
@@ -208,7 +208,7 @@ def _download_variant_adapters(
         validation_config=ValidationConfig(required_files=[adapter_subdir]),
         r2_config=R2OnlyConfig(
             base_model_slug=base_model_slug,
-            params_version=params_version,
+            weights_version=weights_version,
             model_variant=None,
             sub_path="adapters",
             filter_func=filter_func,
@@ -240,7 +240,7 @@ def _download_variant_adapters(
 
 def download_model_assets(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     variant_config: Optional[dict] = None,
     sub_path: Optional[str] = None,
 ):
@@ -254,11 +254,11 @@ def download_model_assets(
     logger.info("TemBERTure: Setting up shared base model at %s", base_model_dir)
 
     # ---- Download shared base model ----
-    _download_shared_base_model(base_model_slug, params_version, base_model_dir)
+    _download_shared_base_model(base_model_slug, weights_version, base_model_dir)
 
     # ---- Download adapters to shared location with filtering ----
     adapter_result = _download_variant_adapters(
-        base_model_slug, params_version, model_type
+        base_model_slug, weights_version, model_type
     )
 
     if not adapter_result.success:

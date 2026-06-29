@@ -49,7 +49,7 @@ image = modal.Image.micromamba(python_version="3.10").env(
 image = setup_download_layer(
     image,
     base_model_slug=MODEL_FAMILY.base_model_slug,
-    params_version=ImmuneFoldParams.params_version,
+    weights_version=ImmuneFoldParams.weights_version,
     variant_config=variant_config,
 )
 # Add dependencies and packages
@@ -105,7 +105,7 @@ image = (
     .run_commands(
         "mkdir /tmp_in",
         "mkdir /tmp_out",
-        f"ln -s /{r2_model_store_dir}/{ImmuneFoldParams.base_model_slug}/{ImmuneFoldParams.params_version} /root/models/immunefold/immunefold/params",
+        f"ln -s /{r2_model_store_dir}/{ImmuneFoldParams.base_model_slug}/{ImmuneFoldParams.weights_version} /root/models/immunefold/immunefold/params",
         # Copy config to both locations
         "mkdir -p /root/immunefold/config",
         "cp -r /root/models/immunefold/immunefold/config/* /root/immunefold/config/",

@@ -87,7 +87,7 @@ The modern pattern uses **download_with_fallback()** to implement a two-stage do
 # In models/{model}/download.py
 def download_model_assets(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     variant_config: Optional[dict] = None,
     sub_path: Optional[str] = None,
 ) -> Path:
@@ -143,7 +143,7 @@ The modern approach uses **explicit parameters** passed through kwargs:
 image = setup_download_layer(
     image,
     base_model_slug="esmc",
-    params_version="v1",
+    weights_version="v1",
     variant_config={"MODEL_SIZE": "300m"},  # Explicit variant config
     sub_path=None,
 )
@@ -162,7 +162,7 @@ Standard path structure:
 ```
 /model-store/
 ├── {base_model_slug}/
-│   ├── {params_version}/
+│   ├── {weights_version}/
 │   │   ├── {model_variant}/        # e.g., esmc_300m
 │   │   │   ├── model files...
 │   │   │   └── for HuggingFace models:
@@ -223,7 +223,7 @@ AcquisitionConfig(
     strategy=AcquisitionStrategy.R2_ONLY,
     r2_config=R2OnlyConfig(
         base_model_slug="esm2",
-        params_version="v1",
+        weights_version="v1",
         model_variant="8b",
         filter_func=lambda k: k.endswith(".pt")
     )
@@ -346,13 +346,13 @@ r2://bucket/model-store/
 ```python
 def download_model_assets(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     variant_config: Optional[dict] = None,
     sub_path: Optional[str] = None,
 ):
     result = standard_r2_download(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         model_variant=extract_model_variant(variant_config, "MODEL_SIZE"),
         sub_path=sub_path,
     )
@@ -498,7 +498,7 @@ def download_model_assets_from_env():
 ```python
 def download_model_assets(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     variant_config: Optional[dict] = None,
     sub_path: Optional[str] = None,
 ) -> Path:
@@ -539,7 +539,7 @@ def download_model_assets(...) -> Path:
 image = setup_download_layer(
     image,
     base_model_slug="new_model",
-    params_version="v1",
+    weights_version="v1",
     variant_config={"MODEL_SIZE": "base"},
 )
 ```

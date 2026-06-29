@@ -23,7 +23,7 @@ from models.commons.util.config import max_pdb_str_len
 
 
 class AntiFoldParams(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "AntiFold"
     base_model_slug = "antifold"
     log_identifier = "AntiFold"

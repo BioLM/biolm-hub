@@ -71,7 +71,7 @@ def get_model_dir(sub_path: Optional[str] = None) -> Path:
     """Get the directory path for BoltzGen model weights."""
     return get_model_dir_util(
         base_model_slug=BoltzGenParams.base_model_slug,
-        params_version=BoltzGenParams.params_version,
+        weights_version=BoltzGenParams.weights_version,
         model_variant=None,
         sub_path=sub_path,
     )
@@ -80,7 +80,7 @@ def get_model_dir(sub_path: Optional[str] = None) -> Path:
 def _download_artifact(
     artifact_name: str,
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     sub_path: Optional[str] = None,
 ) -> Path:
     """Download a single artifact using R2 cache with HuggingFace fallback."""
@@ -100,7 +100,7 @@ def _download_artifact(
         ),
         r2_config=R2OnlyConfig(
             base_model_slug=base_model_slug,
-            params_version=params_version,
+            weights_version=weights_version,
             model_variant=None,
             sub_path=sub_path or artifact_name,
         ),
@@ -137,7 +137,7 @@ def _download_artifact(
 
 def download_model_assets(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     variant_config: Optional[dict] = None,
     sub_path: Optional[str] = None,
 ):
@@ -152,7 +152,7 @@ def download_model_assets(
 
     Args:
         base_model_slug: The base model identifier (e.g., "boltzgen")
-        params_version: Version of the model parameters (e.g., "v1")
+        weights_version: Version of the model parameters (e.g., "v1")
         variant_config: Optional variant configuration (not used for boltzgen)
         sub_path: Optional subdirectory path
 
@@ -166,7 +166,7 @@ def download_model_assets(
     logger.info("Downloading BoltzGen model assets...")
 
     for artifact_name in ARTIFACTS:
-        _download_artifact(artifact_name, base_model_slug, params_version, sub_path)
+        _download_artifact(artifact_name, base_model_slug, weights_version, sub_path)
 
     logger.info("All BoltzGen model assets downloaded successfully")
     return get_model_dir()

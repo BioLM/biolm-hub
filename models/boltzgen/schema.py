@@ -44,7 +44,7 @@ def _validate_res_index_str(value: str) -> None:
 
 
 class BoltzGenParams(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "BoltzGen"
     base_model_slug = "boltzgen"
     log_identifier = "BOLTZGEN"

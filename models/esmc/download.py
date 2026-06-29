@@ -21,14 +21,14 @@ def get_model_dir(model_size: str):
     model_id = get_model_id(model_size)
     return get_model_dir_util(
         base_model_slug=ESMCParams.base_model_slug,
-        params_version=ESMCParams.params_version,
+        weights_version=ESMCParams.weights_version,
         model_variant=model_id,
     )
 
 
 def download_model_assets(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     variant_config: Optional[dict] = None,
     sub_path: Optional[str] = None,
 ) -> Path:
@@ -48,7 +48,7 @@ def download_model_assets(
 
     result = r2_then_hf(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         model_variant=derived_variant,
         sub_path=sub_path,
         hf_repo_id=hf_repo_id,

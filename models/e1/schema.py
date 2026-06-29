@@ -20,7 +20,7 @@ from models.commons.model.pydantic import (
 
 
 class E1Params(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "E1"
     base_model_slug = "e1"
     log_identifier = "E1"

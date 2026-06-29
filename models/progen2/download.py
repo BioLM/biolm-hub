@@ -83,7 +83,7 @@ def get_model_dir():
 
     return get_model_dir_util(
         base_model_slug=ProGen2Params.base_model_slug,
-        params_version=ProGen2Params.params_version,
+        weights_version=ProGen2Params.weights_version,
         sub_path="checkpoints",
     )
 
@@ -159,7 +159,7 @@ def _download_all_progen2_assets(target_dir, **_kwargs) -> dict:
 
 def download_model_assets(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     variant_config: Optional[dict] = None,
     sub_path: Optional[str] = None,
 ):
@@ -171,7 +171,7 @@ def download_model_assets(
 
     model_dir = get_model_dir_util(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         sub_path=sub_path,
     )
 
@@ -199,7 +199,7 @@ def download_model_assets(
         ),
         r2_config=R2OnlyConfig(
             base_model_slug=base_model_slug,
-            params_version=params_version,
+            weights_version=weights_version,
             model_variant=None,  # path is just <slug>/<version>/checkpoints/
             sub_path=sub_path,
             filter_func=progen2_filter_func,

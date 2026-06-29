@@ -50,7 +50,7 @@ image = modal.Image.debian_slim(python_version="3.10")
 image = setup_download_layer(
     image,
     base_model_slug=TemproParams.base_model_slug,
-    params_version=TemproParams.params_version,
+    weights_version=TemproParams.weights_version,
     variant_config=variant_config,
 )
 # Add dependencies and packages

@@ -123,7 +123,7 @@ image = (
 image = setup_download_layer(
     image,
     base_model_slug=BoltzGenParams.base_model_slug,
-    params_version=BoltzGenParams.params_version,
+    weights_version=BoltzGenParams.weights_version,
     variant_config=None,
     extra_pip_packages=["huggingface_hub==0.26.0"],
 )

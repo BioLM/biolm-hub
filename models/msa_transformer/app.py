@@ -32,7 +32,7 @@ image = modal.Image.from_registry("pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime
 image = setup_download_layer(
     image,
     base_model_slug=MSATransformerParams.base_model_slug,
-    params_version=MSATransformerParams.params_version,
+    weights_version=MSATransformerParams.weights_version,
     variant_config={},  # Single variant
     extra_pip_packages=[
         # fair-esm 2.0.1 from GitHub (needed for fallback download)

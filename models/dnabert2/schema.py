@@ -13,7 +13,7 @@ class DNABERT2Params(ModelParams):
     display_name = "DNABERT-2"
     base_model_slug = "dnabert2"
     log_identifier = "DNABERT2"
-    params_version = "v1"
+    weights_version = "v1"
     batch_size = 10
     # Character (nucleotide) cap enforced by the request schema — 2,048 nt ≈ 2 kbp
     max_sequence_len = 2048

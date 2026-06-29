@@ -193,7 +193,7 @@ Seeds are set during model loading. Inference uses `torch.no_grad()` and the mod
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v1 (params_version) | 2025 | Initial BioLM deployment with encode and log_prob actions |
+| v1 (weights_version) | 2025 | Initial BioLM deployment with encode and log_prob actions |
 
 ---
 

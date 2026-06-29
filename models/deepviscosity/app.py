@@ -31,7 +31,7 @@ image = modal.Image.micromamba(python_version="3.10")
 image = setup_download_layer(
     image,
     base_model_slug=DeepViscosityParams.base_model_slug,
-    params_version=DeepViscosityParams.params_version,
+    weights_version=DeepViscosityParams.weights_version,
     variant_config={},
 )
 # Add dependencies and packages

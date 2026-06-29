@@ -10,7 +10,7 @@ from models.commons.model.pydantic import RequestModel, ResponseModel
 class DeepViscosityParams(ModelParams):
     """DeepViscosity model parameters."""
 
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "DeepViscosity"
     base_model_slug = "deepviscosity"
     log_identifier = "DEEPVISCOSITY"

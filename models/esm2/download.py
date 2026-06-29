@@ -27,7 +27,7 @@ def get_model_dir(model_size: str) -> Path:
     model_id = get_model_id(model_size)
     return get_model_dir_util(
         base_model_slug=ESM2Params.base_model_slug,
-        params_version=ESM2Params.params_version,
+        weights_version=ESM2Params.weights_version,
         model_variant=model_id,
     )
 
@@ -62,7 +62,7 @@ def _init_esm2_weights(model_id: str):
 
 def download_model_assets(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     variant_config: Optional[dict] = None,
     sub_path: Optional[str] = None,
 ) -> Path:
@@ -72,7 +72,7 @@ def download_model_assets(
 
     result = r2_then_library(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         model_variant=model_id,
         sub_path=sub_path,
         library_name="esm",

@@ -13,13 +13,13 @@ def get_model_dir():
 
     return get_model_dir_util(
         base_model_slug=DNABERT2Params.base_model_slug,
-        params_version=DNABERT2Params.params_version,
+        weights_version=DNABERT2Params.weights_version,
     )
 
 
 def download_model_assets(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     variant_config: Optional[dict] = None,
     sub_path: Optional[str] = None,
 ):
@@ -31,7 +31,7 @@ def download_model_assets(
 
     result = r2_then_hf(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         sub_path=sub_path,
         hf_repo_id=hf_repo_id,
         hf_revision=hf_pin_revision,

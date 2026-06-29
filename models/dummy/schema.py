@@ -7,7 +7,7 @@ from models.commons.model.pydantic import RequestModel, ResponseModel
 
 
 class DummyParams(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "Dummy"
     base_model_slug = "dummy"
     log_identifier = "Dummy"

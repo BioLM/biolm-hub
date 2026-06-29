@@ -15,7 +15,7 @@ from models.commons.model.pydantic import (
 
 
 class OmniDNAParams(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "Omni-DNA"
     base_model_slug = "omni-dna"
     log_identifier = "Omni-DNA"

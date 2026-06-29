@@ -12,7 +12,7 @@ from models.commons.model.pydantic import (
 
 
 class EvoParams(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "Evo"
     base_model_slug = "evo"
     log_identifier = "Evo"

@@ -18,7 +18,7 @@ from models.spurs.util import extract_sequence_for_validation
 
 
 class SpursParams(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "SPURS"
     base_model_slug = "spurs"
     log_identifier = "SPURS"

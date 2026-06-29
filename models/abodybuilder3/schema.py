@@ -19,7 +19,7 @@ from models.commons.model.pydantic import (
 
 
 class AbodyBuilder3Params(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "ABodyBuilder3"
     base_model_slug = "abodybuilder3"
     log_identifier = "ABodyBuilder3"

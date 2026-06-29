@@ -118,7 +118,7 @@ image = modal.Image.micromamba(python_version="3.12")
 image = setup_download_layer(
     image,
     base_model_slug=ImmuneBuilderParams.base_model_slug,
-    params_version=ImmuneBuilderParams.params_version,
+    weights_version=ImmuneBuilderParams.weights_version,
     variant_config=variant_config,
 )
 # Add dependencies and packages

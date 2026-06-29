@@ -52,7 +52,7 @@ image = modal.Image.debian_slim(python_version="3.11")
 image = setup_download_layer(
     image,
     base_model_slug=AntiFoldParams.base_model_slug,
-    params_version=AntiFoldParams.params_version,
+    weights_version=AntiFoldParams.weights_version,
     variant_config=None,  # this model has no variants
 )
 # Add dependencies and packages

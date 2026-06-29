@@ -13,7 +13,7 @@ from models.commons.model.pydantic import (
 
 
 class BiotiteParams(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "Biotite"
     base_model_slug = "biotite"
     log_identifier = "BIOTITE"

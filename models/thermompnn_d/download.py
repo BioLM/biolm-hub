@@ -23,20 +23,20 @@ GITHUB_BASE_URL = (
 def get_model_dir():
     return get_model_dir_util(
         base_model_slug=ThermoMPNNDParams.base_model_slug,
-        params_version=ThermoMPNNDParams.params_version,
+        weights_version=ThermoMPNNDParams.weights_version,
     )
 
 
 def download_model_assets(  # noqa: C901
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     variant_config: Optional[dict] = None,
     sub_path: Optional[str] = None,
 ):
     """Download ThermoMPNN-D + ThermoMPNN-single + ProteinMPNN checkpoints."""
     result = r2_then_urls(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         sub_path=sub_path,
         urls={
             THERMOMPNN_D_EPISTATIC_CHECKPOINT: f"{GITHUB_BASE_URL}model_weights/{THERMOMPNN_D_EPISTATIC_CHECKPOINT}",

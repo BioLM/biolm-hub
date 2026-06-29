@@ -52,7 +52,7 @@ image = image.apt_install("curl", "wget", "git")
 image = setup_download_layer(
     image,
     base_model_slug=TemBERTureParams.base_model_slug,
-    params_version=TemBERTureParams.params_version,
+    weights_version=TemBERTureParams.weights_version,
     variant_config=variant_config,
     extra_pip_packages=["huggingface_hub==0.16.4"],
 )

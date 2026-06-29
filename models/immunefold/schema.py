@@ -23,7 +23,7 @@ from models.commons.util.config import max_pdb_str_len
 
 
 class ImmuneFoldParams(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "ImmuneFold"
     base_model_slug = "immunefold"
     log_identifier = "ImmuneFold"

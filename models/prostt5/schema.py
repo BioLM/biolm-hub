@@ -15,7 +15,7 @@ from models.commons.model.pydantic import (
 
 
 class ProstT5Params(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "ProstT5"
     base_model_slug = "prostt5"
     log_identifier = "ProstT5"

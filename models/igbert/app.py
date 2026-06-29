@@ -51,7 +51,7 @@ image = modal.Image.from_registry("pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime
 image = setup_download_layer(
     image,
     base_model_slug=IgBertParams.base_model_slug,
-    params_version=IgBertParams.params_version,
+    weights_version=IgBertParams.weights_version,
     variant_config=variant_config,
     # huggingface_hub needed in the download layer for the r2_then_hf fallback
     # when the R2 cache is empty (self-population).

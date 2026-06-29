@@ -22,7 +22,7 @@ from models.commons.model.pydantic import (
 
 
 class IgT5Params(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "IgT5"
     base_model_slug = "igt5"
     log_identifier = "IgT5"

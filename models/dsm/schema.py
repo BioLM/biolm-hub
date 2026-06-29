@@ -42,7 +42,7 @@ class DSMRemaskingStrategy(EnhancedStringEnum):
 
 
 class DSMParams(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "DSM"
     base_model_slug = "dsm"
     log_identifier = "DSM"

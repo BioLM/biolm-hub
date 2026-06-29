@@ -13,7 +13,7 @@ def get_model_dir() -> Path:
     """Get model directory for MSA Transformer weights."""
     return get_model_dir_util(
         base_model_slug=MSATransformerParams.base_model_slug,
-        params_version=MSATransformerParams.params_version,
+        weights_version=MSATransformerParams.weights_version,
     )
 
 
@@ -40,14 +40,14 @@ def _init_msa_transformer_weights(target_dir: Path) -> Path:
 
 def download_model_assets(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     variant_config: Optional[dict] = None,
     sub_path: Optional[str] = None,
 ) -> Path:
     """Download MSA Transformer model assets."""
     result = r2_then_library(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         sub_path=sub_path,
         library_name="esm",
         init_fn=_init_msa_transformer_weights,

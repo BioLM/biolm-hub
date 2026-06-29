@@ -22,13 +22,13 @@ def get_model_dir() -> Path:
     """Get the model directory for DeepViscosity assets."""
     return get_model_dir_util(
         base_model_slug=DeepViscosityParams.base_model_slug,
-        params_version=DeepViscosityParams.params_version,
+        weights_version=DeepViscosityParams.weights_version,
     )
 
 
 def download_model_assets(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     variant_config: Optional[dict] = None,
     sub_path: Optional[str] = None,
 ) -> Path:
@@ -45,7 +45,7 @@ def download_model_assets(
     """
     result = r2_then_archive(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         sub_path=sub_path,
         archive_url=DEEPVISCOSITY_ZIP_URL,
         extract_subtrees={

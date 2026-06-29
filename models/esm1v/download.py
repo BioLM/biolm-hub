@@ -31,7 +31,7 @@ def get_member_model_dir(member: str) -> Path:
     model_variant = get_model_id(member)
     base_dir = get_model_dir_util(
         base_model_slug=ESM1vParams.base_model_slug,
-        params_version=ESM1vParams.params_version,
+        weights_version=ESM1vParams.weights_version,
         model_variant=model_variant,
     )
     return build_hf_snapshot_path(
@@ -49,14 +49,14 @@ def get_model_dir(model_number: str = "all") -> Path:
     if model_number == "all":
         return get_model_dir_util(
             base_model_slug=ESM1vParams.base_model_slug,
-            params_version=ESM1vParams.params_version,
+            weights_version=ESM1vParams.weights_version,
         )
     return get_member_model_dir(model_number)
 
 
 def download_model_assets(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     variant_config: Optional[dict] = None,
     sub_path: Optional[str] = None,
 ) -> Union[Path, str]:
@@ -76,7 +76,7 @@ def download_model_assets(
         model_variant = get_model_id(member)
         result = r2_then_hf(
             base_model_slug=base_model_slug,
-            params_version=params_version,
+            weights_version=weights_version,
             model_variant=model_variant,
             sub_path=sub_path,
             hf_repo_id=ESM1V_HF_REPO_MAP[member],

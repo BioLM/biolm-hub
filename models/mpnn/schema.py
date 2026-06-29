@@ -22,7 +22,7 @@ from models.commons.util.config import max_pdb_str_len
 
 
 class MPNNParams(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "MPNN"
     base_model_slug = "mpnn"
     log_identifier = "MPNN"

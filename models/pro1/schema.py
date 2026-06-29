@@ -14,7 +14,7 @@ from models.commons.model.pydantic import (
 
 
 class Pro1Params(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "Pro-1"
     base_model_slug = "pro1"
     log_identifier = "Pro-1"

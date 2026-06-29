@@ -15,7 +15,7 @@ from models.commons.model.pydantic import (
 
 
 class DnaChiselParams(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "DNA-Chisel"
     base_model_slug = "dna-chisel"
     log_identifier = "DNA-Chisel"

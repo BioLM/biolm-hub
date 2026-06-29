@@ -22,7 +22,7 @@ logger = get_logger(__name__)
 def get_model_dir():
     return get_model_dir_util(
         base_model_slug=Pro1Params.base_model_slug,
-        params_version=Pro1Params.params_version,
+        weights_version=Pro1Params.weights_version,
     )
 
 
@@ -68,7 +68,7 @@ def _init_pro1_weights(
 
 def download_model_assets(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     variant_config: dict | None = None,
     sub_path: str | None = None,
 ) -> Path:
@@ -85,7 +85,7 @@ def download_model_assets(
     target_dir = Path(
         get_model_dir_util(
             base_model_slug=base_model_slug,
-            params_version=params_version,
+            weights_version=weights_version,
         )
     )
 
@@ -94,7 +94,7 @@ def download_model_assets(
 
     result = r2_then_library(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         library_name="pro1",
         init_fn=init_fn,
         # Base = Meta Llama-3.1-8B-Instruct (Llama Community License): intentionally

@@ -17,7 +17,7 @@ from models.commons.model.pydantic import (
 
 
 class ESM1vParams(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "ESM1v"
     base_model_slug = "esm1v"
     log_identifier = "ESM-1v"

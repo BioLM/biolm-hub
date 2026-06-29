@@ -21,7 +21,7 @@ from models.commons.model.pydantic import (
 
 
 class ImmuneBuilderParams(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "ImmuneBuilder"
     base_model_slug = "immunebuilder"
     log_identifier = "ImmuneBuilder"

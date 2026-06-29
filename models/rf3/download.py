@@ -32,13 +32,13 @@ def get_model_dir() -> Path:
     """Get model directory for RosettaFold3."""
     return get_model_dir_util(
         base_model_slug=RF3Params.base_model_slug,
-        params_version=RF3Params.params_version,
+        weights_version=RF3Params.weights_version,
     )
 
 
 def download_model_assets(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     variant_config: Optional[dict] = None,
     sub_path: Optional[str] = None,
     checkpoint_version: str = "latest",
@@ -57,7 +57,7 @@ def download_model_assets(
 
     result = r2_then_urls(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         sub_path=sub_path,
         urls={checkpoint_filename: checkpoint_url},
         required_files=[checkpoint_filename],

@@ -137,7 +137,7 @@ image = image.env({"PYTHONPATH": "/root/DSM"})
 image = setup_download_layer(
     image,
     base_model_slug=DSMParams.base_model_slug,
-    params_version=DSMParams.params_version,
+    weights_version=DSMParams.weights_version,
     variant_config=variant_config,
     extra_pip_packages=["huggingface_hub==0.36.0"],
 )

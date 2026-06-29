@@ -40,7 +40,7 @@ image = modal.Image.micromamba(python_version="3.10")
 image = setup_download_layer(
     image,
     base_model_slug=ThermoMPNNDParams.base_model_slug,
-    params_version=ThermoMPNNDParams.params_version,
+    weights_version=ThermoMPNNDParams.weights_version,
     variant_config=variant_config,
 )
 # Add dependencies and packages

@@ -26,7 +26,7 @@ from models.commons.model.pydantic import (
 
 
 class IgBertParams(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "IgBert"
     base_model_slug = "igbert"
     log_identifier = "IgBert"

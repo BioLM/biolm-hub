@@ -73,7 +73,7 @@ class ModelParams:
     log_identifier: str  # Identifier used in logs and print statements (eg: "ESM-IF1")
 
     """ Define model checkpoint parameters """
-    params_version: str
+    weights_version: str
 
     """ Define model parameters """
     batch_size: int

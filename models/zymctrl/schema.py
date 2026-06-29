@@ -18,7 +18,7 @@ class ZymCTRLParams(ModelParams):
     display_name = "ZymCTRL"
     base_model_slug = "zymctrl"
     log_identifier = "ZymCTRL"
-    params_version = "v1"
+    weights_version = "v1"
     batch_size = 1  # For generate (sequential, resource-intensive)
     batch_size_encode = 8  # For encode
     # 1024 matches the paper's block size and training window

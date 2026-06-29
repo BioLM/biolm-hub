@@ -29,14 +29,14 @@ def get_model_dir(model_variant: str):
 
     return get_model_dir_util(
         base_model_slug=Evo2Params.base_model_slug,
-        params_version=Evo2Params.params_version,
+        weights_version=Evo2Params.weights_version,
         model_variant=model_variant,
     )
 
 
 def download_model_assets(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     variant_config: Optional[dict] = None,
     sub_path: Optional[str] = None,
 ):
@@ -66,7 +66,7 @@ def download_model_assets(
     # Get target model directory
     model_dir = get_model_dir_util(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         model_variant=model_variant,
         sub_path=sub_path,
     )
@@ -91,7 +91,7 @@ def download_model_assets(
     # ---- Primary strategy: R2 cache ----
     r2_config = R2OnlyConfig(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         model_variant=model_variant,
         sub_path=sub_path,
         filter_func=evo2_filter_func,  # Apply variant filtering

@@ -14,7 +14,7 @@ def get_model_dir():
 
     return get_model_dir_util(
         base_model_slug=Chai1Params.base_model_slug,
-        params_version=Chai1Params.params_version,
+        weights_version=Chai1Params.weights_version,
     )
 
 
@@ -122,7 +122,7 @@ def _verify_chai1_structure(model_path: str):
 
 def download_model_assets(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     variant_config: Optional[dict] = None,
     sub_path: Optional[str] = None,
 ):
@@ -138,7 +138,7 @@ def download_model_assets(
 
     result = r2_then_library(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         sub_path=sub_path,
         library_name="chai1",
         init_fn=_init_chai1_weights,

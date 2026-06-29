@@ -84,7 +84,7 @@ image = (
 image = setup_download_layer(
     image,
     base_model_slug=Pro1Params.base_model_slug,
-    params_version=Pro1Params.params_version,
+    weights_version=Pro1Params.weights_version,
     variant_config=variant_config,
 )
 # Add all model source files

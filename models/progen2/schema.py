@@ -17,7 +17,7 @@ class ProGen2Params(ModelParams):
     display_name = "ProGen2"
     base_model_slug = "progen2"
     log_identifier = "ProGen2"
-    params_version = "v1"
+    weights_version = "v1"
     batch_size = 1
     max_sequence_len = 512
 

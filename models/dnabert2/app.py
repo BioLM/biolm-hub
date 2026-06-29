@@ -37,7 +37,7 @@ image = modal.Image.from_registry("pytorch/pytorch:2.3.1-cuda11.8-cudnn8-runtime
 image = setup_download_layer(
     image,
     base_model_slug=DNABERT2Params.base_model_slug,
-    params_version=DNABERT2Params.params_version,
+    weights_version=DNABERT2Params.weights_version,
     variant_config=None,  # this model has no variants
     extra_pip_packages=[
         "huggingface_hub==0.19.4",

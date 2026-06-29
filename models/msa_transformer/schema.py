@@ -57,7 +57,7 @@ class ValidateMSA:
 class MSATransformerParams(ModelParams):
     """Parameters for MSA Transformer model."""
 
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "MSA Transformer"
     base_model_slug = "msa-transformer"
     log_identifier = "MSA-Transformer"

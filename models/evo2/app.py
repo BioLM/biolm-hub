@@ -58,7 +58,7 @@ image = modal.Image.from_registry("pytorch/pytorch:2.4.1-cuda12.4-cudnn9-devel")
 image = setup_download_layer(
     image,
     base_model_slug=Evo2Params.base_model_slug,
-    params_version=Evo2Params.params_version,
+    weights_version=Evo2Params.weights_version,
     variant_config=variant_config,
     extra_pip_packages=["huggingface_hub==0.26.0"],
 )

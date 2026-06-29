@@ -14,7 +14,7 @@ from models.commons.util.config import max_pdb_str_len
 
 
 class ThermoMPNNParams(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "ThermoMPNN"
     base_model_slug = "thermompnn"
     log_identifier = "ThermoMPNN"

@@ -52,7 +52,7 @@ def get_model_dir():
 
     return get_model_dir_util(
         base_model_slug=AbodyBuilder3Params.base_model_slug,
-        params_version=AbodyBuilder3Params.params_version,
+        weights_version=AbodyBuilder3Params.weights_version,
     )
 
 
@@ -132,7 +132,7 @@ def _download_abodybuilder3_assets(target_dir: Path, **_kwargs) -> dict:
 
 def download_model_assets(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     variant_config: Optional[dict] = None,
     sub_path: Optional[str] = None,
 ):
@@ -140,7 +140,7 @@ def download_model_assets(
 
     model_dir = get_model_dir_util(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         sub_path=sub_path,
     )
 
@@ -151,7 +151,7 @@ def download_model_assets(
         cache_config=CacheConfig(enable_r2_cache=False),
         r2_config=R2OnlyConfig(
             base_model_slug=base_model_slug,
-            params_version=params_version,
+            weights_version=weights_version,
             model_variant=None,  # AbodyBuilder3 has no variant in the path
             sub_path=sub_path,
         ),

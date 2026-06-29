@@ -14,7 +14,7 @@ from models.commons.model.pydantic import (
 
 
 class TemproParams(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "TEMPRO"
     base_model_slug = "tempro"
     log_identifier = "TEMPRO"

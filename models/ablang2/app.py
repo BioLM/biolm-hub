@@ -55,7 +55,7 @@ image = (
 image = setup_download_layer(
     image,
     base_model_slug=AbLang2Params.base_model_slug,
-    params_version=AbLang2Params.params_version,
+    weights_version=AbLang2Params.weights_version,
     variant_config=None,  # this model has no variants
 )
 # Finally, add all model files

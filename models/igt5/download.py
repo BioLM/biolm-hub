@@ -22,7 +22,7 @@ def get_model_dir(model_type: str) -> Path:
     model_id = model_id_mapping[model_type]
     base_dir = get_model_dir_util(
         base_model_slug=IgT5Params.base_model_slug,
-        params_version=IgT5Params.params_version,
+        weights_version=IgT5Params.weights_version,
         model_variant=model_id,
     )
     return build_hf_snapshot_path(
@@ -32,7 +32,7 @@ def get_model_dir(model_type: str) -> Path:
 
 def download_model_assets(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     variant_config: Optional[dict] = None,
     sub_path: Optional[str] = None,
 ):
@@ -45,7 +45,7 @@ def download_model_assets(
 
     result = r2_then_hf(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         model_variant=model_id,
         sub_path=sub_path,
         hf_repo_id=IGT5_HF_REPO_MAP[model_id],

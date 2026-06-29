@@ -14,7 +14,7 @@ from models.commons.model.pydantic import (
 
 
 class ProDyParams(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "ProDy"
     base_model_slug = "prody"
     log_identifier = "PRODY"

@@ -13,7 +13,7 @@ def get_model_dir(sub_path: str | None = None) -> Path:
     """Resolve the local directory where SPURS weights should be stored."""
     return get_model_dir_util(
         base_model_slug=SpursParams.base_model_slug,
-        params_version=SpursParams.params_version,
+        weights_version=SpursParams.weights_version,
         model_variant=None,
         sub_path=sub_path,
     )
@@ -21,7 +21,7 @@ def get_model_dir(sub_path: str | None = None) -> Path:
 
 def download_model_assets(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     variant_config: dict | None = None,
     sub_path: str | None = None,
 ) -> Path:
@@ -30,7 +30,7 @@ def download_model_assets(
 
     result = r2_then_hf(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         sub_path=sub_path,
         hf_repo_id=HF_REPO_ID,
         hf_revision=HF_REVISION,

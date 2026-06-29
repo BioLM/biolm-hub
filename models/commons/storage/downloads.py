@@ -114,7 +114,7 @@ def upload_file_with_size_optimization(
 
 def get_model_dir_util(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     model_variant: Optional[str] = None,
     sub_path: Optional[str] = None,
 ) -> Path:
@@ -124,7 +124,7 @@ def get_model_dir_util(
 
     Args:
         base_model_slug: The base model identifier (e.g., "esm2", "ablang2")
-        params_version: Version of the model parameters (e.g., "v1", "v2")
+        weights_version: Version of the model parameters (e.g., "v1", "v2")
         model_variant: Optional model variant/size (e.g., "8b", "250m")
         sub_path: Optional subdirectory path (e.g., "checkpoints")
 
@@ -138,7 +138,7 @@ def get_model_dir_util(
         >>> get_model_dir_util("esm_if1", "v1", sub_path="checkpoints")
         Path("/model-store/esm_if1/v1/checkpoints")
     """
-    path_parts = [f"/{r2_model_store_dir}", base_model_slug, params_version]
+    path_parts = [f"/{r2_model_store_dir}", base_model_slug, weights_version]
     if model_variant:
         path_parts.append(model_variant)
     if sub_path:

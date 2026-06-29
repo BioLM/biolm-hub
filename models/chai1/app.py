@@ -49,7 +49,7 @@ image = (
 image = setup_download_layer(
     image,
     base_model_slug=Chai1Params.base_model_slug,
-    params_version=Chai1Params.params_version,
+    weights_version=Chai1Params.weights_version,
     variant_config=None,  # this model has no variants
 )
 # Finally, add all model files

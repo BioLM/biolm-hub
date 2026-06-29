@@ -17,7 +17,7 @@ from models.commons.model.pydantic import (
 
 
 class TemBERTureParams(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "TemBERTure"
     base_model_slug = "temberture"
     log_identifier = "TEMBERTURE"

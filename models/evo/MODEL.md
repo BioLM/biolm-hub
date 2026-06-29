@@ -200,7 +200,7 @@ Response caching is handled outside the model container by the serving infrastru
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v1 (params_version) | 2025-02 | Initial implementation with `log_prob` and `generate` actions; Evo 1.5-8k-base variant |
+| v1 (weights_version) | 2025-02 | Initial implementation with `log_prob` and `generate` actions; Evo 1.5-8k-base variant |
 
 ---
 

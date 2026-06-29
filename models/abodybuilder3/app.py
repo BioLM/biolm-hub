@@ -47,7 +47,7 @@ image = modal.Image.micromamba(python_version="3.10")
 image = setup_download_layer(
     image,
     base_model_slug=AbodyBuilder3Params.base_model_slug,
-    params_version=AbodyBuilder3Params.params_version,
+    weights_version=AbodyBuilder3Params.weights_version,
     variant_config=variant_config,
     extra_pip_packages=["huggingface_hub==0.26.0"],
 )

@@ -25,7 +25,7 @@ from typing import Annotated
 
 
 class MyModelParams(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "My Model"
     base_model_slug = "my-model"
     log_identifier = "MY_MODEL"
@@ -163,14 +163,14 @@ def get_model_dir(model_variant: str) -> Path:
     """Path helper — used by app.py to locate the weights."""
     return get_model_dir_util(
         base_model_slug=MyModelParams.base_model_slug,
-        params_version=MyModelParams.params_version,
+        weights_version=MyModelParams.weights_version,
         model_variant=model_variant,
     )
 
 
 def download_model_assets(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     variant_config: Optional[dict] = None,
     sub_path: Optional[str] = None,
 ) -> Path:
@@ -180,7 +180,7 @@ def download_model_assets(
     # R2 cache first; on a miss, download from HuggingFace and cache back to R2.
     result = r2_then_hf(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         model_variant=model_size,
         sub_path=sub_path,
         hf_repo_id="org/model-name",
@@ -253,7 +253,7 @@ base_image = modal.Image.from_registry(
 image = setup_download_layer(
     base_image,
     base_model_slug=MyModelParams.base_model_slug,
-    params_version=MyModelParams.params_version,
+    weights_version=MyModelParams.weights_version,
     variant_config={"MODEL_SIZE": "650m"},   # or parse from env for multi-variant
 )
 image = image.uv_pip_install(common_requirements)

@@ -331,7 +331,7 @@ Option A -- Numerical Reproduction: outputs from the BioLM implementation are co
 - **Temporary files**: PDB strings are written to temporary files in `/tmp_pdbs/` during inference and cleaned up after each request.
 - **Determinism**: Model weights loaded with seed 42. The `generate` action uses time-based seeding by default for diversity, or a user-provided seed for reproducibility.
 - **Dependencies**: `torch==2.3.1`, `torch_geometric==2.4.0`, `biopython==1.83`, `biotite==0.38`, `numpy==1.26.*`, `pandas==2.*`.
-- **Model weights**: Downloaded from R2 storage via the standard download layer (`params_version="v1"`).
+- **Model weights**: Downloaded from R2 storage via the standard download layer (`weights_version="v1"`).
 
 ## License
 

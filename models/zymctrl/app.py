@@ -45,7 +45,7 @@ image = modal.Image.from_registry("pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime
 image = setup_download_layer(
     image,
     base_model_slug=ZymCTRLParams.base_model_slug,
-    params_version=ZymCTRLParams.params_version,
+    weights_version=ZymCTRLParams.weights_version,
     extra_pip_packages=["huggingface_hub==0.26.0"],
 )
 # Add dependencies and packages

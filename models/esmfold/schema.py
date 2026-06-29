@@ -13,7 +13,7 @@ from models.commons.model.pydantic import RequestModel, ResponseModel
 
 
 class ESMFoldParams(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "ESMFold"
     base_model_slug = "esmfold"
     log_identifier = "ESMFold"

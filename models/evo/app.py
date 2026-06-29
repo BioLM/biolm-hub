@@ -60,7 +60,7 @@ image = (
 image = setup_download_layer(
     image,
     base_model_slug=EvoParams.base_model_slug,
-    params_version=EvoParams.params_version,
+    weights_version=EvoParams.weights_version,
     variant_config=variant_config,
 )
 # Finally, add all model files

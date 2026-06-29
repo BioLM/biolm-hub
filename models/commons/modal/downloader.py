@@ -27,7 +27,7 @@ Why this exists:
 
 Primary APIs:
 - setup_download_layer(): add minimal files, install deps, run download with kwargs
-- _run_download_with_params(): executes with `base_model_slug`, `params_version`,
+- _run_download_with_params(): executes with `base_model_slug`, `weights_version`,
   optional `variant_config` and `sub_path`.
 """
 
@@ -35,7 +35,7 @@ Primary APIs:
 def setup_download_layer(
     image: modal.Image,
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     variant_config: Optional[dict] = None,
     sub_path: Optional[str] = None,
     extra_pip_packages: Optional[list[str]] = None,
@@ -45,7 +45,7 @@ def setup_download_layer(
     Args:
         image: Base Modal image to build upon
         base_model_slug: Model identifier (e.g., "esm2", "ablang2")
-        params_version: Version of model parameters to download
+        weights_version: Version of model parameters to download
         variant_config: Dictionary containing all variant configuration
         sub_path: Optional subdirectory for model storage
         extra_pip_packages: Additional pip packages needed for download
@@ -88,7 +88,7 @@ def setup_download_layer(
     # These ensure each model gets its own download layer cached separately
     envs_to_add = {
         "_BIOLM_BASE_MODEL_SLUG": base_model_slug,
-        "_BIOLM_PARAMS_VERSION": params_version,
+        "_BIOLM_WEIGHTS_VERSION": weights_version,
     }
 
     # Add variant config if present (for both runtime and cache distinction)
@@ -113,7 +113,7 @@ def setup_download_layer(
         secrets=[cloudflare_r2_secret, huggingface_api_token_secret],
         kwargs={
             "base_model_slug": base_model_slug,
-            "params_version": params_version,
+            "weights_version": weights_version,
             "variant_config": variant_config,
             "sub_path": sub_path,
             "_source_hash": source_hash,
@@ -247,7 +247,7 @@ def _add_minimal_commons(image: modal.Image, model_folder_name: str) -> modal.Im
 
 def _run_download_with_params(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     sub_path: Optional[str] = None,
     variant_config: Optional[dict] = None,
     _source_hash: Optional[str] = None,
@@ -264,7 +264,7 @@ def _run_download_with_params(
     # Call with explicit parameters
     download_model_assets(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         variant_config=variant_config,
         sub_path=sub_path,
     )

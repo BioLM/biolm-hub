@@ -22,7 +22,7 @@ def get_model_dir(model_variant: str) -> Path:
     """
     return get_model_dir_util(
         base_model_slug=EvoParams.base_model_slug,
-        params_version=EvoParams.params_version,
+        weights_version=EvoParams.weights_version,
         model_variant=model_variant,
     )
 
@@ -51,7 +51,7 @@ def _init_evo_weights(model_name: str):
 
 def download_model_assets(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     variant_config: Optional[dict] = None,
     sub_path: Optional[str] = None,
 ) -> Path:
@@ -61,7 +61,7 @@ def download_model_assets(
 
     result = r2_then_library(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         model_variant=model_variant,
         sub_path=sub_path,
         library_name="evo",

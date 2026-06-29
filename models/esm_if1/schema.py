@@ -11,7 +11,7 @@ from models.commons.util.config import max_pdb_str_len
 
 
 class ESMIF1Params(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "ESM-IF1 Inverse Fold"
     base_model_slug = "esm-if1"
     log_identifier = "ESM-IF1"

@@ -19,7 +19,7 @@ from models.commons.model.pydantic import (
 
 
 class RF3Params(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "RosettaFold3"
     base_model_slug = "rf3"
     log_identifier = "RF3"

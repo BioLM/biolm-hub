@@ -18,14 +18,14 @@ def get_model_dir() -> Path:
     """
     base_dir = get_model_dir_util(
         base_model_slug=ProstT5Params.base_model_slug,
-        params_version=ProstT5Params.params_version,
+        weights_version=ProstT5Params.weights_version,
     )
     return build_hf_snapshot_path(base_dir, PROSTT5_HF_REPO_ID, PROSTT5_HF_REVISION)
 
 
 def download_model_assets(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     variant_config: Optional[dict] = None,
     sub_path: Optional[str] = None,
 ):
@@ -36,7 +36,7 @@ def download_model_assets(
     """
     result = r2_then_hf(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         sub_path=sub_path,
         hf_repo_id=PROSTT5_HF_REPO_ID,
         hf_revision=PROSTT5_HF_REVISION,

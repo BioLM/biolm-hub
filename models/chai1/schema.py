@@ -19,7 +19,7 @@ from models.commons.model.pydantic import (
 
 
 class Chai1Params(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "Chai-1"
     base_model_slug = "chai1"
     log_identifier = "Chai1"

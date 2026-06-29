@@ -20,13 +20,13 @@ def get_model_dir():
 
     return get_model_dir_util(
         base_model_slug=AntiFoldParams.base_model_slug,
-        params_version=AntiFoldParams.params_version,
+        weights_version=AntiFoldParams.weights_version,
     )
 
 
 def download_model_assets(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     variant_config: Optional[dict] = None,
     sub_path: Optional[str] = None,
 ):
@@ -37,7 +37,7 @@ def download_model_assets(
     """
     result = r2_then_urls(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         sub_path=sub_path,
         urls={ANTIFOLD_CHECKPOINT_FILENAME: ANTIFOLD_WEIGHTS_URL},
         required_files=[ANTIFOLD_CHECKPOINT_FILENAME],

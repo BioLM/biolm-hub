@@ -89,7 +89,7 @@ class R2OnlyConfig:
     """Configuration for R2-only acquisition strategy."""
 
     base_model_slug: str
-    params_version: str
+    weights_version: str
     model_variant: Optional[str] = None
     sub_path: Optional[str] = None
     filter_func: Optional[Callable[[str], bool]] = None
@@ -507,7 +507,7 @@ def _acquire_r2_only(config: AcquisitionConfig) -> AcquisitionResult:
     target_dir.mkdir(parents=True, exist_ok=True)
 
     logger.info("Acquiring model weights from R2 storage to %s", target_dir)
-    logger.info("   Model: %s/%s", r2_config.base_model_slug, r2_config.params_version)
+    logger.info("   Model: %s/%s", r2_config.base_model_slug, r2_config.weights_version)
     if r2_config.model_variant:
         logger.info("   Variant: %s", r2_config.model_variant)
     if r2_config.sub_path:
@@ -545,7 +545,7 @@ def _acquire_r2_only(config: AcquisitionConfig) -> AcquisitionResult:
                 metadata={
                     "strategy": "r2_only",
                     "model_slug": r2_config.base_model_slug,
-                    "params_version": r2_config.params_version,
+                    "weights_version": r2_config.weights_version,
                     "cache_miss_reason": "no_completion_marker",
                 },
             )
@@ -568,7 +568,7 @@ def _acquire_r2_only(config: AcquisitionConfig) -> AcquisitionResult:
                 metadata={
                     "strategy": "r2_only",
                     "model_slug": r2_config.base_model_slug,
-                    "params_version": r2_config.params_version,
+                    "weights_version": r2_config.weights_version,
                     "model_variant": r2_config.model_variant,
                     "sub_path": r2_config.sub_path,
                 },
@@ -594,7 +594,7 @@ def _acquire_r2_only(config: AcquisitionConfig) -> AcquisitionResult:
             metadata={
                 "strategy": "r2_only",
                 "model_slug": r2_config.base_model_slug,
-                "params_version": r2_config.params_version,
+                "weights_version": r2_config.weights_version,
                 "model_variant": r2_config.model_variant,
                 "sub_path": r2_config.sub_path,
                 "filter_applied": r2_config.filter_func is not None,
@@ -612,7 +612,7 @@ def _acquire_r2_only(config: AcquisitionConfig) -> AcquisitionResult:
             metadata={
                 "strategy": "r2_only",
                 "model_slug": r2_config.base_model_slug,
-                "params_version": r2_config.params_version,
+                "weights_version": r2_config.weights_version,
             },
         )
 

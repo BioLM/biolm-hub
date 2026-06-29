@@ -49,7 +49,7 @@ image = modal.Image.from_registry("pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
 image = setup_download_layer(
     image,
     base_model_slug=ESM2Params.base_model_slug,
-    params_version=ESM2Params.params_version,
+    weights_version=ESM2Params.weights_version,
     variant_config={"MODEL_SIZE": ESM2ModelSizes.SIZE_650M},
     extra_pip_packages=[
         # fair-esm 2.0.1 from GitHub (needed for the fallback download)
@@ -60,7 +60,7 @@ image = setup_download_layer(
 image = setup_download_layer(
     image,
     base_model_slug=MODEL_FAMILY.base_model_slug,
-    params_version=SpursParams.params_version,
+    weights_version=SpursParams.weights_version,
     extra_pip_packages=["huggingface_hub==0.24.6"],
 )
 # Add dependencies and packages

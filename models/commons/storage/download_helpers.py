@@ -45,7 +45,7 @@ logger = get_logger(__name__)
 
 def standard_r2_download(
     base_model_slug: Optional[str] = None,
-    params_version: Optional[str] = None,
+    weights_version: Optional[str] = None,
     model_variant: Optional[str] = None,
     sub_path: Optional[str] = None,
     target_dir: Optional[Path] = None,
@@ -63,7 +63,7 @@ def standard_r2_download(
 
     Args:
         base_model_slug: Model family identifier
-        params_version: Parameter version
+        weights_version: Parameter version
         model_variant: Model size/variant
         sub_path: Subdirectory path
         target_dir: Custom target directory (computed if None)
@@ -78,7 +78,7 @@ def standard_r2_download(
         >>> # Pass explicit kwargs (recommended)
         >>> result = standard_r2_download(
         ...     base_model_slug="esm2",
-        ...     params_version="v1",
+        ...     weights_version="v1",
         ...     model_variant="8b",
         ...     required_files=["model.pt", "config.json"],
         ...     filter_func=lambda k: k.endswith(".pt"),
@@ -87,13 +87,13 @@ def standard_r2_download(
     # Validate required parameters
     if not base_model_slug:
         raise ValueError("base_model_slug is required for standard_r2_download")
-    if not params_version:
-        raise ValueError("params_version is required for standard_r2_download")
+    if not weights_version:
+        raise ValueError("weights_version is required for standard_r2_download")
 
     # Create R2 configuration
     r2_config = R2OnlyConfig(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         model_variant=model_variant,
         sub_path=sub_path,
         filter_func=filter_func,
@@ -116,7 +116,7 @@ def standard_r2_download(
 
         target_dir = get_model_dir_util(
             base_model_slug=base_model_slug,
-            params_version=params_version,
+            weights_version=weights_version,
             model_variant=model_variant,
             sub_path=sub_path,
         )
@@ -364,7 +364,7 @@ def extract_model_variant(variant_config: Optional[dict[str, Any]], key: str) ->
 def _build_r2_primary(
     *,
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     model_variant: Optional[str],
     sub_path: Optional[str],
     target_dir: "Path",
@@ -379,7 +379,7 @@ def _build_r2_primary(
         validation_config=ValidationConfig(required_files=required_files),
         r2_config=R2OnlyConfig(
             base_model_slug=base_model_slug,
-            params_version=params_version,
+            weights_version=weights_version,
             model_variant=model_variant,
             sub_path=sub_path,
             filter_func=filter_func,
@@ -390,7 +390,7 @@ def _build_r2_primary(
 def r2_then_hf(
     *,
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     model_variant: Optional[str] = None,
     sub_path: Optional[str] = None,
     hf_repo_id: str,
@@ -416,7 +416,7 @@ def r2_then_hf(
 
     target_dir = get_model_dir_util(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         model_variant=model_variant,
         sub_path=sub_path,
     )
@@ -426,7 +426,7 @@ def r2_then_hf(
     # vs pytorch_model.bin, no nested snapshot dirs).
     primary = _build_r2_primary(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         model_variant=model_variant,
         sub_path=sub_path,
         target_dir=target_dir,
@@ -463,7 +463,7 @@ def r2_then_hf(
 def r2_then_library(
     *,
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     model_variant: Optional[str] = None,
     sub_path: Optional[str] = None,
     library_name: str,
@@ -490,7 +490,7 @@ def r2_then_library(
 
     target_dir = get_model_dir_util(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         model_variant=model_variant,
         sub_path=sub_path,
     )
@@ -500,7 +500,7 @@ def r2_then_library(
     # what required_files specifies for the library download.
     primary = _build_r2_primary(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         model_variant=model_variant,
         sub_path=sub_path,
         target_dir=target_dir,
@@ -525,7 +525,7 @@ def r2_then_library(
 def r2_then_urls(
     *,
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     model_variant: Optional[str] = None,
     sub_path: Optional[str] = None,
     urls: dict[str, str],
@@ -540,14 +540,14 @@ def r2_then_urls(
 
     target_dir = get_model_dir_util(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         model_variant=model_variant,
         sub_path=sub_path,
     )
 
     primary = _build_r2_primary(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         model_variant=model_variant,
         sub_path=sub_path,
         target_dir=target_dir,
@@ -574,7 +574,7 @@ def r2_then_urls(
 def r2_then_archive(
     *,
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     model_variant: Optional[str] = None,
     sub_path: Optional[str] = None,
     archive_url: str,
@@ -620,14 +620,14 @@ def r2_then_archive(
 
     target_dir = get_model_dir_util(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         model_variant=model_variant,
         sub_path=sub_path,
     )
 
     primary = _build_r2_primary(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         model_variant=model_variant,
         sub_path=sub_path,
         target_dir=target_dir,

@@ -14,13 +14,13 @@ def get_model_dir() -> Path:
     """Get the model directory path. Used by app.py for loading."""
     return get_model_dir_util(
         base_model_slug=ZymCTRLParams.base_model_slug,
-        params_version=ZymCTRLParams.params_version,
+        weights_version=ZymCTRLParams.weights_version,
     )
 
 
 def download_model_assets(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     variant_config: Optional[dict] = None,
     sub_path: Optional[str] = None,
 ) -> Path:
@@ -29,7 +29,7 @@ def download_model_assets(
 
     result = r2_then_hf(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         sub_path=sub_path,
         hf_repo_id=HF_REPO_ID,
         hf_revision=HF_REVISION,

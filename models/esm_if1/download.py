@@ -27,7 +27,7 @@ def get_model_dir() -> Path:
     """
     return get_model_dir_util(
         base_model_slug=ESMIF1Params.base_model_slug,
-        params_version=ESMIF1Params.params_version,
+        weights_version=ESMIF1Params.weights_version,
     )
 
 
@@ -63,14 +63,14 @@ def _init_esm_if1_weights(target_dir: Path) -> Path:
 
 def download_model_assets(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     variant_config: Optional[dict] = None,
     sub_path: Optional[str] = None,
 ) -> Path:
     """Acquire ESM-IF1 weights: R2 cache first, else fair-esm download, cached back to R2."""
     result = r2_then_library(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         sub_path=sub_path,
         library_name="esm",
         init_fn=_init_esm_if1_weights,

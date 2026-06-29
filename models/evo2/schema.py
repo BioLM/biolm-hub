@@ -15,7 +15,7 @@ from models.commons.model.pydantic import (
 
 
 class Evo2Params(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "Evo2"
     base_model_slug = "evo2"
     log_identifier = "Evo2"

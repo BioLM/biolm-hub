@@ -36,7 +36,7 @@ image = modal.Image.from_registry("pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime
 image = setup_download_layer(
     image,
     base_model_slug=ESM1bParams.base_model_slug,
-    params_version=ESM1bParams.params_version,
+    weights_version=ESM1bParams.weights_version,
     variant_config={},  # No variants for ESM-1b
     extra_pip_packages=["huggingface_hub==0.26.0"],
 )

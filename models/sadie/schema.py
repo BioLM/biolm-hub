@@ -14,7 +14,7 @@ from models.commons.model.pydantic import (
 
 
 class SADIEParams(ModelParams):
-    params_version = "v1"
+    weights_version = "v1"
     display_name = "SADIE"
     base_model_slug = "sadie"
     log_identifier = "SADIE"

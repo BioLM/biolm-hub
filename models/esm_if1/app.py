@@ -35,7 +35,7 @@ image = modal.Image.from_registry("pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
 image = setup_download_layer(
     image,
     base_model_slug=ESMIF1Params.base_model_slug,
-    params_version=ESMIF1Params.params_version,
+    weights_version=ESMIF1Params.weights_version,
     variant_config=None,  # this model has no variants
     extra_pip_packages=[
         # fair-esm 2.0.1 from GitHub (needed for the fallback download)

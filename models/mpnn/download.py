@@ -34,13 +34,13 @@ def get_model_dir():
 
     return get_model_dir_util(
         base_model_slug=MPNNParams.base_model_slug,
-        params_version=MPNNParams.params_version,
+        weights_version=MPNNParams.weights_version,
     )
 
 
 def download_model_assets(
     base_model_slug: str,
-    params_version: str,
+    weights_version: str,
     variant_config: Optional[dict] = None,
     sub_path: Optional[str] = None,
 ):
@@ -53,7 +53,7 @@ def download_model_assets(
     """
     result = r2_then_urls(
         base_model_slug=base_model_slug,
-        params_version=params_version,
+        weights_version=weights_version,
         sub_path=sub_path,
         urls=MPNN_CHECKPOINT_URLS,
         required_files=list(MPNN_CHECKPOINT_URLS.keys()),
