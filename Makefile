@@ -2,7 +2,7 @@
 
 # Helper to scope tests to one or more models:
 #   make test MODEL=esm2
-#   make test MODELS=esm2,peptides
+#   make test MODELS=esm2,biotite
 comma := ,
 define get_test_paths
 $(if $(MODEL),models/$(MODEL),$(if $(MODELS),$(foreach m,$(subst $(comma), ,$(MODELS)),models/$(m)),))

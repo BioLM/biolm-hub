@@ -17,25 +17,25 @@ def test_catalog_generation_produces_endpoints():
     catalog = generate_catalog_data(app)
 
     assert catalog, "catalog should not be empty"
-    # peptides is a known single-variant model with an encode endpoint.
-    assert "peptides" in catalog
-    endpoints = catalog["peptides"]["endpoints"]
+    # dna-chisel is a known single-variant model with an encode endpoint.
+    assert "dna-chisel" in catalog
+    endpoints = catalog["dna-chisel"]["endpoints"]
     assert endpoints
     assert all("path" in e and "method" in e for e in endpoints)
-    assert any(e["path"].startswith("/api/v3/peptides/") for e in endpoints)
+    assert any(e["path"].startswith("/api/v3/dna-chisel/") for e in endpoints)
 
 
 def test_deployment_status_maps_deployed_and_undeployed(monkeypatch):
     mapper = get_model_mapper()
-    peptides_app = mapper.get_variant_info("peptides")["modal_app_name"]
-    # Pretend only the peptides app is deployed.
+    dna_chisel_app = mapper.get_variant_info("dna-chisel")["modal_app_name"]
+    # Pretend only the dna-chisel app is deployed.
     monkeypatch.setattr(
-        ds, "get_deployed_app_names", lambda environment=None: {peptides_app}
+        ds, "get_deployed_app_names", lambda environment=None: {dna_chisel_app}
     )
 
     status = get_deployment_status(mapper)
-    assert status["peptides"] is True
-    assert any(v is False for slug, v in status.items() if slug != "peptides")
+    assert status["dna-chisel"] is True
+    assert any(v is False for slug, v in status.items() if slug != "dna-chisel")
 
 
 def test_deployment_status_unknown_when_query_fails(monkeypatch):
@@ -67,28 +67,28 @@ def _catalog_client(monkeypatch, deployed_app_names):
 
 def test_catalog_page_renders_status_badges(monkeypatch):
     mapper = get_model_mapper()
-    peptides_app = mapper.get_variant_info("peptides")["modal_app_name"]
-    client = _catalog_client(monkeypatch, {peptides_app})
+    dna_chisel_app = mapper.get_variant_info("dna-chisel")["modal_app_name"]
+    client = _catalog_client(monkeypatch, {dna_chisel_app})
 
     resp = client.get("/catalog")
     assert resp.status_code == 200
     assert "BioLM API Catalog" in resp.text
-    assert "● deployed" in resp.text  # peptides
+    assert "● deployed" in resp.text  # dna-chisel
     assert "● not deployed" in resp.text  # the rest
 
 
 def test_model_page_deployed_vs_undeployed(monkeypatch):
     mapper = get_model_mapper()
-    peptides_app = mapper.get_variant_info("peptides")["modal_app_name"]
+    dna_chisel_app = mapper.get_variant_info("dna-chisel")["modal_app_name"]
 
-    deployed = _catalog_client(monkeypatch, {peptides_app})
-    r1 = deployed.get("/catalog/peptides")
+    deployed = _catalog_client(monkeypatch, {dna_chisel_app})
+    r1 = deployed.get("/catalog/dna-chisel")
     assert r1.status_code == 200
     assert "deploy-notice" not in r1.text
     assert "disabled title" not in r1.text
 
     undeployed = _catalog_client(monkeypatch, set())
-    r2 = undeployed.get("/catalog/peptides")
+    r2 = undeployed.get("/catalog/dna-chisel")
     assert r2.status_code == 200
     assert "deploy-notice" in r2.text
     assert "disabled title" in r2.text

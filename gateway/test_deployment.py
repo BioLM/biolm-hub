@@ -29,8 +29,8 @@ if not GATEWAY_URL:
 class GatewayTestCase:
     """Defines a single end-to-end test case for the gateway."""
 
-    model_slug: str  # The public-facing slug in the URL, e.g., "peptides"
-    base_model_slug: str  # The slug for finding test data, e.g., "peptides"
+    model_slug: str  # The public-facing slug in the URL, e.g., "dna-chisel"
+    base_model_slug: str  # The slug for finding test data, e.g., "dna-chisel"
     model_action: str
     input_filename: str
 
@@ -41,10 +41,10 @@ class GatewayTestCase:
 
 gateway_test_cases = [
     GatewayTestCase(
-        model_slug="peptides",
-        base_model_slug="peptides",
+        model_slug="dna-chisel",
+        base_model_slug="dna-chisel",
         model_action=ModelActions.ENCODE,
-        input_filename="single_seq_input.json",
+        input_filename="encode_input_default.json",
     ),
     # Add more tests here
 ]

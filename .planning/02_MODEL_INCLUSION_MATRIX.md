@@ -54,7 +54,7 @@ for ★fold; `predict_log_prob`→`log_prob` everywhere; `extract_features`→`p
 | nanobert | **CC-BY-NC-SA-4.0** (HF card `NaturalAntibody/nanoBERT`; matrix "MIT" was wrong — GitHub LICENSE 404s) | **EXCLUDE** | encode, generate, log_prob | TBD | 🧬ab; NonCommercial weights — **user-confirmed EXCLUDE 2026-06-28** (revisitable if NaturalAntibody grants a commercial license) |
 | nt | CC-BY-NC-SA-4.0 | EXCLUDE | encode, log_prob | Easy | non-commercial |
 | omni_dna | Apache-2.0 | SHIP | encode, log_prob | Easy | |
-| peptides | Apache-2.0 | SHIP | encode | Easy | simplest CPU model — 2nd vertical slice |
+| peptides | GPL-3.0 vs MIT (disputed) | DROP (v1) | encode | Easy | DROPPED 2026-06-30 — wrapped `peptides==0.3.4` license self-contradictory (GPLv3 src vs MIT PyPI); see DROPPED_MODELS.md |
 | poet | CC-BY-NC-SA-4.0 | EXCLUDE | score, encode | Medium | non-commercial weights |
 | pro1 | Apache-2.0 | SHIP | generate | TBD | license per HF model card (GitHub repo has no LICENSE file) — confirm during hardening |
 | pro4s | CC-BY-NC-4.0 | EXCLUDE | predict | TBD | non-commercial |

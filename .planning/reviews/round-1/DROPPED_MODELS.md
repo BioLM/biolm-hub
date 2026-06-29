@@ -42,6 +42,20 @@ license with a documented source, so it self-populates like the other weight mod
 
 ---
 
-**Catalog impact:** 43 SHIP → **39 SHIP** (+ `dummy` template) after dropping `clean`, `boltz`, `rfd3`,
-`esmstabp`. Downstream cleanup (matrix update, dangling `comparison.yaml` alternative slugs,
+## `peptides` — TEMPORARY drop (2026-06-30, session `oss-w3b-wsec`)
+**Reason:** the wrapped PyPI package `peptides==0.3.4` (althonos/peptides.py) is **self-contradictory on
+license** — its source + bundled `COPYING` declare **GPL-3.0** (copyleft) while its PyPI metadata says
+**MIT**. Shipping it would either put the catalog's only copyleft dependency into an otherwise cleanly-
+permissive repo (conservative GPL-3.0 reading) or require an upstream maintainer ping to confirm MIT before
+launch — an unresolved-license asterisk on a non-marquee, pure-compute descriptor wrapper. Per user
+direction, dropped from v1 rather than carry the headache.
+**Re-include when:** upstream (althonos/Martin Larralde) confirms the package is really MIT (then it ships
+permissively), **or** the team accepts shipping one GPL-3.0 model and vendors the full GPL-3.0 text into
+`models/peptides/LICENSE`. The model code itself is sound (single-variant `encode`, CPU, no weights) — a
+clean revert of the drop commit once the license is resolved.
+
+---
+
+**Catalog impact:** 43 SHIP → **38 SHIP** (+ `dummy` template) after dropping `clean`, `boltz`, `rfd3`,
+`esmstabp`, `peptides`. Downstream cleanup (matrix update, dangling `comparison.yaml` alternative slugs,
 gateway/catalog references, docs counts, shared-asset users) is handled in the Round-1 fix campaign.
