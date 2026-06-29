@@ -23,21 +23,33 @@
 > - **`weights_version`** rename done (above).
 > - **R2 anonymous public-read = ENABLED** by the cofounder via the bucket's **Public Development URL**:
 >   `https://pub-c56611cf24404740b0ff53b356a6b48d.r2.dev` (anonymous HTTPS GET, rate-limited, no S3 LIST).
->   Resolves Open-Q #1. **TODO (block 3, in progress):** add an **unauthenticated HTTP read path** for the
->   **cached-model-weights read ONLY** — when no R2 creds are present, GET `{public_url}/{key}` via
->   requests/httpx instead of boto3. ⚠️ DESIGN CONSTRAINT: r2.dev serves single-key GETs but **cannot LIST**,
->   while the current cache-read (`download_model_from_r2`) lists a prefix → an anon read needs a known key
->   set (manifest/required_files), not a prefix sync. Writes stay CI-gated (only GitHub Actions holds R2_*
->   S3 creds) — matches user intent. Validate at Milestone B. The read path uses `{public_url}/{key}` so it
->   needs NO change when the bucket prefix moves to `biolm-hub/` at launch.
+>   Resolves Open-Q #1. **✅ DONE (block 3, `fb0afaa`):** new `models/commons/storage/r2_http.py`
+>   (`restore_weights_via_http`) reads cached weights anonymously over r2.dev when no S3 creds present —
+>   manifest-driven (r2.dev can't LIST, so it GETs `.r2_manifest.json` then each key), gated by the
+>   `.r2_cache_complete` marker; retry/backoff Session, URL-encoded keys, path-traversal guard, streamed-
+>   response cleanup; fresh-Opus reviewed (all 4 should-fixes applied) + 11 Modal-free tests. Branched at the
+>   two weight-read seams (`_acquire_r2_only` → `_acquire_r2_only_via_http`; `restore_from_r2_atomic`) via
+>   `config.r2_public_url` + `r2.r2_credentials_present()`. Writes stay CI-gated. The read URL is
+>   `{public_url}/{key}` so it survives the `biolm-hub/` bucket-prefix re-path unchanged.
+>   **⚠️ FOLLOW-UPS (NOT done — required for the end-to-end creds-less deploy):** (a) **activation switch** —
+>   make the `cloudflare-r2` Modal secret mount OPTIONAL in `commons/modal/downloader.py:113` (today it's
+>   `secrets=[cloudflare_r2_secret, ...]`, which Modal requires to exist, so a creds-less deploy can't even
+>   start — this is exactly why Milestone A's esm2 blocked). Use `Secret.from_name(..., required=False)` or
+>   conditional inclusion; Modal-gated. (b) **Live-validate** the r2.dev fetch on a representative deploy at
+>   Milestone B (does the Modal container actually pull over r2.dev + cache correctly). The read CODE is done
+>   and Modal-free-tested; (a)+(b) flip it on.
 > - **Modal CI token:** secret names are **`MODAL_TOKEN_ID` / `MODAL_TOKEN_SECRET`** (identical to internal
 >   `biolm-modal` `.github/`; our `deploy.yml` already uses them). **User action:** add both (+ `R2_*`) as
 >   **Environment secrets on the `modal-dev` environment** of the (future) repo — env-scoped, so org secrets
 >   don't auto-apply. Same token values as the internal repo.
 >
 > **NEXT, in order (all Modal-free until Milestone B):**
-> 1. **Block 3 — R2 unauthenticated HTTP read path** for cached weights (see DESIGN CONSTRAINT above).
-> 2. **Round-1 corrections tail** — deferred items in `.planning/reviews/round-1/PHASE_B_DEFERRED.md` that
+> 1. ~~Block 3 — R2 unauthenticated HTTP read path~~ **✅ DONE (`fb0afaa`).**
+> 2. **W3b commons reconciliation** (§2 below): remove `protocols_r2_bucket_secret` from `config.py` +
+>    delete the `protocols-r2-bkt` Modal secret (boltzgen no longer uses it); Phase-1-deferred dead-code
+>    (bypass_detected/locations, monitor_directories, use_auth_token — migrate readers then delete);
+>    `r2_then_archive` NIT-1 clobber fix; + the R2 secret-mount activation switch follow-up (above).
+> 3. **Round-1 corrections tail** — deferred items in `.planning/reviews/round-1/PHASE_B_DEFERRED.md` that
 >    are NOT Milestone-B/commons-gated (cross-model coordinated renames; lower-priority cleanups). Also a
 >    skill-doc cleanup: `model-implementation/investigation/GUIDE.md` examples still reference EXCLUDED
 >    models `nt/`/`esm3/` (fix in the skill-review pass).
