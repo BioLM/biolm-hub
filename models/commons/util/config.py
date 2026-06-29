@@ -11,6 +11,17 @@ r2_model_store_dir = "model-store"
 r2_model_cache_dir = "model-cache"
 r2_test_data_dir = "test-data"
 
+# Public read URL for the OSS bucket — Cloudflare R2's "Public Development URL".
+# When NO R2 (S3) credentials are present, cached model weights are read
+# anonymously over HTTPS GET from this base URL instead of the signed S3 API
+# (see models/commons/storage/r2_http.py). This is what makes the "no credentials
+# beyond Modal" happy path real. It is rate-limited and not recommended for
+# production — put a custom domain on the bucket and override BIOLM_R2_PUBLIC_URL
+# for that. Reads only; writes/self-population always require S3 credentials.
+r2_public_url = os.getenv(
+    "BIOLM_R2_PUBLIC_URL", "https://pub-c56611cf24404740b0ff53b356a6b48d.r2.dev"
+)
+
 
 # Modal paths
 local_models_path = Path(__file__).resolve().parent.parent

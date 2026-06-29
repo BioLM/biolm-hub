@@ -593,6 +593,18 @@ class R2Utils:
             ...     print("Restore completed successfully")
         """
         try:
+            # Credential-less public read: with no S3 creds present, restore the
+            # cached weights anonymously over HTTPS from the bucket's public URL.
+            # r2.dev has no LIST, so the manifest drives the fetch. Writes still
+            # need creds, so this branch only ever reads.
+            from models.commons.storage.r2 import r2_credentials_present
+            from models.commons.util.config import r2_public_url
+
+            if not r2_credentials_present() and r2_public_url:
+                from models.commons.storage.r2_http import restore_weights_via_http
+
+                return restore_weights_via_http(target_dir, r2_prefix, r2_public_url)
+
             r2_client = get_r2_client()
 
             # Check for completion marker first

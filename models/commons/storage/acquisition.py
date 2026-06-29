@@ -479,6 +479,52 @@ def _acquire_direct_urls(config: AcquisitionConfig) -> AcquisitionResult:
         )
 
 
+def _acquire_r2_only_via_http(
+    r2_config: "R2OnlyConfig",
+    target_dir: Path,
+    r2_prefix: str,
+    public_url: str,
+    start_time: float,
+) -> AcquisitionResult:
+    """Credential-less R2_ONLY restore over anonymous public HTTPS (r2.dev).
+
+    Mirrors the marker-gate miss/hit semantics of the signed S3 read, returning a
+    success result on a complete manifest-driven restore and a miss result
+    otherwise so the caller's source fallback runs.
+    """
+    from models.commons.storage.r2_http import restore_weights_via_http
+
+    base_metadata = {
+        "strategy": "r2_only",
+        "model_slug": r2_config.base_model_slug,
+        "weights_version": r2_config.weights_version,
+        "read_via": "public_http",
+    }
+    if restore_weights_via_http(target_dir, r2_prefix, public_url):
+        return AcquisitionResult(
+            success=True,
+            target_dir=target_dir,
+            actual_model_path=target_dir,
+            cache_hit=False,  # R2 is the primary source, not a cache hit
+            acquisition_time_seconds=time.time() - start_time,
+            metadata={
+                **base_metadata,
+                "model_variant": r2_config.model_variant,
+                "sub_path": r2_config.sub_path,
+            },
+        )
+    return AcquisitionResult(
+        success=False,
+        target_dir=target_dir,
+        error_message=(
+            "Public R2 read: no completion marker/manifest at the expected prefix "
+            "(anonymous HTTP cache miss)"
+        ),
+        acquisition_time_seconds=time.time() - start_time,
+        metadata={**base_metadata, "cache_miss_reason": "no_public_marker_or_manifest"},
+    )
+
+
 def _acquire_r2_only(config: AcquisitionConfig) -> AcquisitionResult:
     """
     Acquire model weights directly from R2 storage.
@@ -521,9 +567,19 @@ def _acquire_r2_only(config: AcquisitionConfig) -> AcquisitionResult:
         # source fallback runs, instead of silently restoring a partial weight
         # set as a false "success". This unifies the R2-primary read semantics
         # with R2Utils.restore_from_r2_atomic, which already requires the marker.
-        from models.commons.storage.r2 import get_r2_client
+        from models.commons.storage.r2 import get_r2_client, r2_credentials_present
+        from models.commons.util.config import r2_public_url
 
         r2_prefix = R2Utils.get_r2_prefix_from_target_dir(target_dir)
+
+        # Credential-less public read: with no S3 creds present, restore the cached
+        # weights anonymously over HTTPS from the bucket's public URL (r2.dev has no
+        # LIST, so it drives off the manifest). Writes still require credentials.
+        if not r2_credentials_present() and r2_public_url:
+            return _acquire_r2_only_via_http(
+                r2_config, target_dir, r2_prefix, r2_public_url, start_time
+            )
+
         if not R2Utils.check_completion_marker(
             get_r2_client(),
             r2_prefix,

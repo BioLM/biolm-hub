@@ -8,6 +8,16 @@ from models.commons.core.logging import get_logger
 logger = get_logger(__name__)
 
 
+def r2_credentials_present() -> bool:
+    """Return True if S3 credentials for R2 are configured in the environment.
+
+    When False, the public OSS bucket can still be READ anonymously over HTTPS via
+    its r2.dev public URL (see models/commons/storage/r2_http.py) — this is the
+    credential-less happy path. Writes/self-population always require credentials.
+    """
+    return bool(os.getenv("AWS_ACCESS_KEY_ID") and os.getenv("AWS_SECRET_ACCESS_KEY"))
+
+
 def get_r2_transfer_config():
     """
     Returns a TransferConfig optimized for large file *downloads*.
