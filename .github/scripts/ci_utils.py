@@ -8,6 +8,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 # Directories under models/ that are not model implementations.
 EXCLUDED_MODEL_DIRS = {"commons", "scripts", "__pycache__"}
@@ -97,6 +98,6 @@ def write_github_outputs(outputs: dict[str, str]) -> None:
             print(f"{key}={value}")
 
 
-def json_dumps(value) -> str:
+def json_dumps(value: Any) -> str:
     """Serialize value to JSON string (convenience wrapper)."""
     return json.dumps(value)

@@ -249,8 +249,11 @@
 
 <!-- How does caching work for this model?
 
-     - Redis (Modal Dict) caching: Enabled/Disabled, TTL
-     - R2 caching: Enabled/Disabled
+     Response caching is provided by the commons two-tier cache (an in-container
+     modal.Dict backed by R2 object storage). It is opt-in and off by default,
+     toggled via the BIOLM_CACHE_ENABLED environment variable.
+
+     - Cache enabled: Yes/No (and under which BIOLM_CACHE_ENABLED setting)
      - Cache key composition: What inputs determine the cache key?
      - Cache invalidation: When are cached results invalidated?
 -->

@@ -175,7 +175,11 @@ class DictComparator:
         # print(f"Computed cosine distance at {self._diff_path_str(path)}: {cos_dist}")
 
         if cos_dist <= self.cosine_distance_threshold:
-            diff = cos_dist  # Comparison successful and within tolerance.
+            # Within the cosine tolerance: record a pass by zeroing diff, exactly
+            # like the PDB/MSA/generated-seq comparators. Recording cos_dist here
+            # would re-gate it against the stricter final rel_tol check in
+            # compare(), silently overriding cosine_distance_threshold.
+            diff = 0.0
         else:
             print(
                 f">>> Vectors/matrices at {self._diff_path_str(path)} differ beyond threshold: "

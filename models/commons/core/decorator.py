@@ -17,6 +17,7 @@ from models.commons.core.error import (
     ErrorResponse,
     ModelExecutionError,
     ResourceNotFoundError,
+    ServerError,
     UnsupportedOptionError,
     UserError,
     ValidationError400,
@@ -425,14 +426,15 @@ ERROR_MAP = {
     UnsupportedOptionError: (400, "{exc}"),
     ResourceNotFoundError: (404, "{exc}"),
     UserError: (400, "{exc}"),
-    # BioLM system-error hierarchy.
+    # BioLM system-error hierarchy (specific subclass before the ServerError base).
     ModelExecutionError: (500, "{exc}"),
+    ServerError: (500, "{exc}"),
 }
 
 
 def _handle_errors(exc, *, debug_logger):
     """
-    Concise error handler for the biolm_modal_function decorator.
+    Concise error handler for the modal_endpoint decorator.
     """
     for etype, (status_code, tmpl) in ERROR_MAP.items():
         if isinstance(exc, etype):

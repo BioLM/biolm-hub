@@ -8,9 +8,9 @@ The smart mode is opt-in and falls back to default mode if analysis fails.
 """
 
 import re
-import subprocess
 import sys
 import time
+from typing import Any
 
 from ci_utils import (
     EXCLUDED_MODEL_DIRS,
@@ -59,6 +59,12 @@ def detect_affected_models_default(
             continue
 
         if file_path.startswith("models/commons/"):
+            # A docs/data-only commons change (README.md, *.yaml, ...) does not
+            # affect any model's runtime — skip it, matching smart mode's
+            # `_categorize_changed_files`. Without this, a commons docs change
+            # would needlessly trigger ALL models (Modal cost).
+            if is_docs_only(file_path):
+                continue
             commons_changed = True
             if not for_deployment_tests:
                 print(f"ℹ️  Commons file changed: {file_path}")
@@ -104,44 +110,25 @@ def _categorize_changed_files(changed_files: list[str]) -> tuple[list[str], set[
     return commons_changes, direct_model_changes
 
 
-def _get_git_diff(base_ref: str, commons_changes: list[str]) -> str:
-    """Get git diff for commons changes."""
-    if not commons_changes:
-        return ""
-
-    try:
-        result = subprocess.run(
-            ["git", "diff", base_ref, "HEAD", "--"] + commons_changes,
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
-        return result.stdout if result.returncode == 0 else ""
-    except Exception:
-        return ""
-
-
-def _run_dependency_analysis(commons_changes: list[str], diff_output: str) -> set[str]:
+def _run_dependency_analysis(commons_changes: list[str]) -> set[str]:
     """Run dependency analysis to find affected models."""
     from analyze_commons_dependencies import DependencyAnalyzer
 
     analyzer = DependencyAnalyzer()
     analyzer.build_import_map()
-    commons_affected_models, _ = analyzer.get_affected_models(
-        commons_changes, diff_output
-    )
+    commons_affected_models, _ = analyzer.get_affected_models(commons_changes)
     return commons_affected_models
 
 
 def detect_affected_models_smart(
-    changed_files: list[str], base_ref: str, for_deployment_tests: bool = False
-) -> tuple[set[str], bool, dict]:
+    changed_files: list[str], for_deployment_tests: bool = False
+) -> tuple[set[str], bool, dict[str, Any]]:
     """Smart detection using dependency analysis.
 
     Only tests models that actually import from changed commons modules.
     Falls back to default behavior if analysis fails.
     """
-    metrics = {
+    metrics: dict[str, Any] = {
         "method": "smart",
         "commons_files_changed": [],
         "models_saved": 0,
@@ -161,10 +148,7 @@ def detect_affected_models_smart(
         try:
             print("🧠 Using smart dependency analysis...")
 
-            diff_output = _get_git_diff(base_ref, commons_changes)
-            commons_affected_models = _run_dependency_analysis(
-                commons_changes, diff_output
-            )
+            commons_affected_models = _run_dependency_analysis(commons_changes)
             affected_models.update(commons_affected_models)
 
             all_models = get_all_valid_models()
@@ -200,7 +184,7 @@ def _build_model_outputs(
     models_with_code_changes: list[str],
     commons_changed: bool = False,
     changed_files: list[str] | None = None,
-    metrics: dict | None = None,
+    metrics: dict[str, Any] | None = None,
 ) -> dict[str, str]:
     """Build the outputs dict for GitHub Actions."""
     has_unit_test_changes = bool(
@@ -229,7 +213,7 @@ def _build_model_outputs(
     return outputs
 
 
-def main():
+def main() -> None:
     """Main entry point with smart mode support."""
     import argparse
 
@@ -283,12 +267,12 @@ Examples:
     print(f"📝 Found {len(changed_files)} changed file(s)")
 
     use_smart = args.smart and not args.force_default
-    metrics = None
+    metrics: dict[str, Any]
 
     if use_smart:
         print("🔍 Smart mode enabled")
         affected_models, commons_changed, metrics = detect_affected_models_smart(
-            changed_files, args.base_ref, for_deployment_tests=args.deployment_tests
+            changed_files, for_deployment_tests=args.deployment_tests
         )
     else:
         print("📦 Using default detection (commons → all models)")
@@ -305,7 +289,7 @@ Examples:
 
     models_list = _safe_model_names(sorted(affected_models))
 
-    models_with_code_changes = []
+    models_with_code_changes: list[str] = []
     if not args.deployment_tests:
         direct_changes, _ = detect_affected_models_default(
             changed_files, for_deployment_tests=True

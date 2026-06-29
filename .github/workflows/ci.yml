@@ -2,7 +2,7 @@ name: CI
 
 # Safe checks that run on EVERY PR (no Modal, no R2, no secrets).
 # Model deploy + integration/deployment tests are maintainer-gated in a separate
-# workflow (W11) so untrusted PRs never trigger expensive Modal jobs.
+# workflow so untrusted PRs never trigger expensive Modal jobs.
 on:
   push:
     branches: [main]

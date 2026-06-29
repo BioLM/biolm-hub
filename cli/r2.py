@@ -364,19 +364,34 @@ def _check_if_directory(r2_client, bucket: str, key: str) -> bool:
 
 
 def _stream_file_content(streaming_body) -> None:
-    """Stream file content to stdout, handling binary data gracefully."""
+    """Stream file content to stdout, handling binary data gracefully.
+
+    Uses an incremental UTF-8 decoder so a multi-byte character that straddles a
+    1 MB chunk boundary is decoded across chunks rather than failing. Decoding each
+    chunk independently would corrupt boundary-straddling characters and wrongly
+    reject a valid UTF-8 file as binary.
+    """
+    import codecs
     import sys
 
+    decoder = codecs.getincrementaldecoder("utf-8")()
     try:
         # Stream in chunks for better memory efficiency with large files
         for chunk in streaming_body.iter_chunks(chunk_size=1024 * 1024):  # 1MB chunks
-            text = chunk.decode("utf-8")
+            text = decoder.decode(chunk)
+            if text:
+                sys.stdout.write(text)
+                sys.stdout.flush()
+        # Flush any bytes still buffered; an incomplete trailing sequence here
+        # (final=True) raises UnicodeDecodeError -> genuinely not valid UTF-8.
+        text = decoder.decode(b"", final=True)
+        if text:
             sys.stdout.write(text)
             sys.stdout.flush()
     except UnicodeDecodeError:
-        # Use standard print to stderr for error messages
+        # Plain text to stderr (builtin print does not render Rich markup).
         print(
-            "[red]Error: File contains binary data, cannot display as text[/red]",
+            "Error: File contains binary data, cannot display as text",
             file=sys.stderr,
         )
         raise typer.Exit(1) from None

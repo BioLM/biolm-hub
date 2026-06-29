@@ -3,11 +3,10 @@ Tests for cli/kb.py — Knowledge Base CLI commands.
 
 Tests the underlying logic of helper functions and validate_cmd:
 - _load_sources / _get_all_model_slugs
-- _collect_missing_papers / _format_missing_report
 - validate_cmd (schema, comparison.yaml, pending R2 checks)
 
-Note: status_cmd, missing_cmd, sources_cmd, and matrix_cmd are not
-unit-tested here (they primarily format Rich output).
+Note: status_cmd and sources_cmd are not unit-tested here (they
+primarily format Rich output).
 
 We mock the filesystem and YAML parsing so tests run without the real
 models/ tree.  Rich console output is captured via a patched Console
@@ -18,8 +17,8 @@ from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
 
-import click
 import pytest
+import typer
 import yaml
 from rich.console import Console
 
@@ -31,8 +30,6 @@ from cli.kb import (
     VALID_MOLECULE_TYPES,
     VALID_REPO_TYPES,
     VALID_TASKS,
-    _collect_missing_papers,
-    _format_missing_report,
     _get_all_model_slugs,
     _load_sources,
     validate_cmd,
@@ -141,7 +138,7 @@ class TestLoadSources:
 
     def test_missing_model_exits(self, mock_models_dir: Path):
         """Raises typer.Exit(1) when sources.yaml does not exist."""
-        with pytest.raises(click.exceptions.Exit) as exc:
+        with pytest.raises(typer.Exit) as exc:
             _load_sources("nonexistent")
         assert exc.value.exit_code == 1
 
@@ -151,7 +148,7 @@ class TestLoadSources:
         model_dir.mkdir()
         (model_dir / "sources.yaml").write_text("invalid: yaml: [unterminated")
 
-        with pytest.raises(click.exceptions.Exit) as exc:
+        with pytest.raises(typer.Exit) as exc:
             _load_sources("bad-yaml")
         assert exc.value.exit_code == 1
 
@@ -166,289 +163,6 @@ class TestLoadSources:
 
 
 # ---------------------------------------------------------------------------
-# _collect_missing_papers
-# ---------------------------------------------------------------------------
-
-
-class TestCollectMissingPapers:
-    """Tests for paper categorization by acquisition difficulty."""
-
-    def _setup_model(self, mock_models_dir: Path, slug: str, sources: dict) -> None:
-        _make_model_dir(mock_models_dir, slug, sources=sources)
-
-    def test_paper_already_in_r2_is_skipped(self, mock_models_dir: Path):
-        """Papers with a valid knowledge-base/ R2 path are not missing."""
-        self._setup_model(
-            mock_models_dir,
-            "m1",
-            {
-                "primary_papers": [
-                    {
-                        "title": "Good Paper",
-                        "doi": "10.1234/good",
-                        "pdf_r2": "knowledge-base/m1/papers/good.pdf",
-                    }
-                ]
-            },
-        )
-        oa, pw, nop = _collect_missing_papers(["m1"])
-        assert oa == [] and pw == [] and nop == []
-
-    def test_pending_paper_is_counted(self, mock_models_dir: Path):
-        """pdf_r2='pending' is treated as missing."""
-        self._setup_model(
-            mock_models_dir,
-            "m1",
-            {
-                "primary_papers": [
-                    {
-                        "title": "Pending Paper",
-                        "doi": "10.1234/pending",
-                        "pdf_r2": "pending",
-                    }
-                ]
-            },
-        )
-        oa, pw, nop = _collect_missing_papers(["m1"])
-        # Has DOI but not arxiv/biorxiv -> paywall
-        assert len(pw) == 1
-        assert pw[0][0] == "m1"
-
-    def test_empty_pdf_r2_is_counted(self, mock_models_dir: Path):
-        """Empty pdf_r2 string is treated as missing."""
-        self._setup_model(
-            mock_models_dir,
-            "m1",
-            {
-                "primary_papers": [
-                    {"title": "No R2", "doi": "10.1234/test", "pdf_r2": ""}
-                ]
-            },
-        )
-        oa, pw, nop = _collect_missing_papers(["m1"])
-        assert len(pw) == 1
-
-    def test_missing_pdf_r2_key_is_counted(self, mock_models_dir: Path):
-        """No pdf_r2 key at all is treated as missing."""
-        self._setup_model(
-            mock_models_dir,
-            "m1",
-            {"primary_papers": [{"title": "No Key", "doi": "10.1234/test"}]},
-        )
-        oa, pw, nop = _collect_missing_papers(["m1"])
-        assert len(pw) == 1
-
-    def test_null_pdf_r2_is_counted(self, mock_models_dir: Path):
-        """pdf_r2 explicitly set to None (YAML null) is treated as missing."""
-        self._setup_model(
-            mock_models_dir,
-            "m1",
-            {
-                "primary_papers": [
-                    {"title": "Null R2", "doi": "10.1234/test", "pdf_r2": None}
-                ]
-            },
-        )
-        oa, pw, nop = _collect_missing_papers(["m1"])
-        assert len(pw) == 1
-
-    def test_arxiv_is_open_access(self, mock_models_dir: Path):
-        """Paper with arxiv identifier is categorized as open access."""
-        self._setup_model(
-            mock_models_dir,
-            "m1",
-            {
-                "primary_papers": [
-                    {
-                        "title": "ArXiv Paper",
-                        "arxiv": "2401.12345",
-                        "pdf_r2": "",
-                    }
-                ]
-            },
-        )
-        oa, pw, nop = _collect_missing_papers(["m1"])
-        assert len(oa) == 1
-        assert oa[0][2] == "primary"
-
-    def test_biorxiv_doi_prefix_is_open_access(self, mock_models_dir: Path):
-        """bioRxiv papers identified by 10.1101/ DOI prefix -> open access.
-
-        Regression test: bioRxiv DOIs use the 10.1101/ prefix (e.g.
-        10.1101/2024.11.19.624167). An earlier version failed to
-        categorize these as open access.
-        """
-        self._setup_model(
-            mock_models_dir,
-            "m1",
-            {
-                "primary_papers": [
-                    {
-                        "title": "bioRxiv Paper",
-                        "doi": "10.1101/2024.11.19.624167",
-                        "pdf_r2": "",
-                    }
-                ]
-            },
-        )
-        oa, pw, nop = _collect_missing_papers(["m1"])
-        assert len(oa) == 1
-        assert len(pw) == 0, "bioRxiv DOI should NOT be categorized as paywall"
-
-    def test_biorxiv_in_doi_string_is_open_access(self, mock_models_dir: Path):
-        """DOI containing 'biorxiv' (case-insensitive) -> open access."""
-        self._setup_model(
-            mock_models_dir,
-            "m1",
-            {
-                "primary_papers": [
-                    {
-                        "title": "bioRxiv Paper 2",
-                        "doi": "https://doi.org/10.1101/biorxiv.something",
-                        "pdf_r2": "",
-                    }
-                ]
-            },
-        )
-        oa, pw, nop = _collect_missing_papers(["m1"])
-        assert len(oa) == 1
-
-    def test_regular_doi_is_paywall(self, mock_models_dir: Path):
-        """A normal journal DOI without arxiv/biorxiv -> paywall."""
-        self._setup_model(
-            mock_models_dir,
-            "m1",
-            {
-                "primary_papers": [
-                    {
-                        "title": "Nature Paper",
-                        "doi": "10.1038/s41586-024",
-                        "pdf_r2": "",
-                    }
-                ]
-            },
-        )
-        oa, pw, nop = _collect_missing_papers(["m1"])
-        assert len(pw) == 1
-
-    def test_no_identifiers_is_no_paper(self, mock_models_dir: Path):
-        """Paper with neither DOI nor arXiv -> no_paper bucket."""
-        self._setup_model(
-            mock_models_dir,
-            "m1",
-            {"primary_papers": [{"title": "Mystery Paper", "pdf_r2": ""}]},
-        )
-        oa, pw, nop = _collect_missing_papers(["m1"])
-        assert len(nop) == 1
-
-    def test_applied_literature_also_collected(self, mock_models_dir: Path):
-        """Papers in applied_literature section are collected with kind='applied'."""
-        self._setup_model(
-            mock_models_dir,
-            "m1",
-            {
-                "applied_literature": [
-                    {
-                        "title": "Applied Paper",
-                        "arxiv": "2401.99999",
-                        "pdf_r2": "",
-                    }
-                ]
-            },
-        )
-        oa, pw, nop = _collect_missing_papers(["m1"])
-        assert len(oa) == 1
-        assert oa[0][2] == "applied"
-
-    def test_model_without_sources_yaml_skipped(self, mock_models_dir: Path):
-        """Model directories without sources.yaml are silently skipped."""
-        _make_model_dir(mock_models_dir, "no-sources")  # No sources.yaml
-        oa, pw, nop = _collect_missing_papers(["no-sources"])
-        assert oa == [] and pw == [] and nop == []
-
-    def test_multiple_models_aggregated(self, mock_models_dir: Path):
-        """Papers from multiple models are aggregated correctly."""
-        self._setup_model(
-            mock_models_dir,
-            "m1",
-            {"primary_papers": [{"title": "P1", "arxiv": "2401.00001", "pdf_r2": ""}]},
-        )
-        self._setup_model(
-            mock_models_dir,
-            "m2",
-            {"primary_papers": [{"title": "P2", "doi": "10.1038/test", "pdf_r2": ""}]},
-        )
-        oa, pw, nop = _collect_missing_papers(["m1", "m2"])
-        assert len(oa) == 1  # arxiv paper
-        assert len(pw) == 1  # journal paper
-
-
-# ---------------------------------------------------------------------------
-# _format_missing_report
-# ---------------------------------------------------------------------------
-
-
-class TestFormatMissingReport:
-    def test_all_empty_shows_completion_message(self):
-        """When all lists are empty, report says everything is in R2."""
-        report = _format_missing_report([], [], [])
-        assert "All papers are in R2!" in report
-        assert "Total missing: 0 papers" in report
-
-    def test_open_access_section_rendered(self):
-        """Open access papers appear in the Open Access section."""
-        oa = [("esm2", {"title": "ESM2 Paper", "doi": "10.1101/xxx"}, "primary")]
-        report = _format_missing_report(oa, [], [])
-        assert "Open Access" in report
-        assert "1 papers" in report
-        assert "esm2" in report
-        assert "ESM2 Paper" in report
-
-    def test_paywall_section_rendered(self):
-        """Paywall papers appear in the Paywall section."""
-        pw = [("boltz", {"title": "Boltz Paper", "doi": "10.1038/xxx"}, "applied")]
-        report = _format_missing_report([], pw, [])
-        assert "Paywall" in report
-        assert "boltz" in report
-
-    def test_no_paper_section_rendered(self):
-        """No-paper entries appear in the Non-Academic section."""
-        nop = [("nims", {"title": "NIM Tool"}, "primary")]
-        report = _format_missing_report([], [], nop)
-        assert "No Paper" in report
-        assert "nims" in report
-
-    def test_total_count_correct(self):
-        """Total missing count sums all three categories."""
-        oa = [("m1", {"title": "A"}, "primary")]
-        pw = [("m2", {"title": "B"}, "applied"), ("m3", {"title": "C"}, "primary")]
-        nop = [("m4", {"title": "D"}, "primary")]
-        report = _format_missing_report(oa, pw, nop)
-        assert "Total missing: 4 papers" in report
-
-    def test_long_title_truncated_in_table(self):
-        """Titles longer than 60 chars are truncated in the table rows."""
-        long_title = "A" * 100
-        oa = [("m1", {"title": long_title, "doi": "10.1101/xxx"}, "primary")]
-        report = _format_missing_report(oa, [], [])
-        # The table row should have the truncated title (60 chars)
-        assert "A" * 60 in report
-        assert "A" * 100 not in report
-
-    def test_report_starts_with_header(self):
-        """Report starts with markdown header."""
-        report = _format_missing_report([], [], [])
-        assert report.startswith("# Missing R2 Papers Report")
-
-    def test_report_has_date(self):
-        """Report includes generation date."""
-        import datetime
-
-        report = _format_missing_report([], [], [])
-        assert datetime.date.today().isoformat() in report
-
-
-# ---------------------------------------------------------------------------
 # validate_cmd — schema and comparison.yaml validation
 # ---------------------------------------------------------------------------
 
@@ -458,7 +172,7 @@ class TestValidateCmd:
 
     We invoke validate_cmd directly, mocking the filesystem as needed.
     The function raises typer.Exit(1) when errors are found, which we
-    capture with pytest.raises(click.exceptions.Exit).
+    capture with pytest.raises(typer.Exit).
     """
 
     def _make_complete_model(
@@ -505,7 +219,7 @@ class TestValidateCmd:
         for doc in REQUIRED_DOCS:
             (model_dir / doc).write_text(f"# {doc}")
 
-        with pytest.raises(click.exceptions.Exit) as exc:
+        with pytest.raises(typer.Exit) as exc:
             validate_cmd(model="no-sources")
         assert exc.value.exit_code == 1
 
@@ -515,7 +229,7 @@ class TestValidateCmd:
         empty_sources: dict = {}
         self._make_complete_model(mock_models_dir, sources=empty_sources)
 
-        with pytest.raises(click.exceptions.Exit) as exc:
+        with pytest.raises(typer.Exit) as exc:
             validate_cmd(model="test-model")
         assert exc.value.exit_code == 1
 
@@ -524,7 +238,7 @@ class TestValidateCmd:
         sources = {**MINIMAL_SOURCES, "license": {"url": "http://example.com"}}
         self._make_complete_model(mock_models_dir, sources=sources)
 
-        with pytest.raises(click.exceptions.Exit) as exc:
+        with pytest.raises(typer.Exit) as exc:
             validate_cmd(model="test-model")
         assert exc.value.exit_code == 1
 
@@ -566,7 +280,7 @@ class TestValidateCmd:
         }
         self._make_complete_model(mock_models_dir, sources=sources)
 
-        with pytest.raises(click.exceptions.Exit) as exc:
+        with pytest.raises(typer.Exit) as exc:
             validate_cmd(model="test-model")
         assert exc.value.exit_code == 1
 
@@ -583,7 +297,7 @@ class TestValidateCmd:
         }
         self._make_complete_model(mock_models_dir, sources=sources)
 
-        with pytest.raises(click.exceptions.Exit) as exc:
+        with pytest.raises(typer.Exit) as exc:
             validate_cmd(model="test-model")
         assert exc.value.exit_code == 1
 
@@ -618,7 +332,7 @@ class TestValidateCmd:
         }
         self._make_complete_model(mock_models_dir, sources=sources)
 
-        with pytest.raises(click.exceptions.Exit) as exc:
+        with pytest.raises(typer.Exit) as exc:
             validate_cmd(model="test-model")
         assert exc.value.exit_code == 1
 
@@ -630,7 +344,7 @@ class TestValidateCmd:
         }
         self._make_complete_model(mock_models_dir, sources=sources)
 
-        with pytest.raises(click.exceptions.Exit) as exc:
+        with pytest.raises(typer.Exit) as exc:
             validate_cmd(model="test-model")
         assert exc.value.exit_code == 1
 
@@ -654,7 +368,7 @@ class TestValidateCmd:
         # Create model with sources and comparison but NO doc files
         self._make_complete_model(mock_models_dir, docs=set())
 
-        with pytest.raises(click.exceptions.Exit) as exc:
+        with pytest.raises(typer.Exit) as exc:
             validate_cmd(model="test-model")
         assert exc.value.exit_code == 1
 
@@ -689,7 +403,7 @@ class TestValidateCmd:
         }
         self._make_complete_model(mock_models_dir, comparison=comparison)
 
-        with pytest.raises(click.exceptions.Exit) as exc:
+        with pytest.raises(typer.Exit) as exc:
             validate_cmd(model="test-model")
         assert exc.value.exit_code == 1
 
@@ -722,7 +436,7 @@ class TestValidateCmd:
         }
         self._make_complete_model(mock_models_dir, comparison=comparison)
 
-        with pytest.raises(click.exceptions.Exit) as exc:
+        with pytest.raises(typer.Exit) as exc:
             validate_cmd(model="test-model")
         assert exc.value.exit_code == 1
 
@@ -734,7 +448,7 @@ class TestValidateCmd:
         }
         self._make_complete_model(mock_models_dir, comparison=comparison)
 
-        with pytest.raises(click.exceptions.Exit) as exc:
+        with pytest.raises(typer.Exit) as exc:
             validate_cmd(model="test-model")
         assert exc.value.exit_code == 1
 
@@ -757,7 +471,7 @@ class TestValidateCmd:
         # Overwrite with bad YAML
         (model_dir / "comparison.yaml").write_text("invalid: yaml: [unterminated")
 
-        with pytest.raises(click.exceptions.Exit) as exc:
+        with pytest.raises(typer.Exit) as exc:
             validate_cmd(model="test-model")
         assert exc.value.exit_code == 1
 
@@ -811,88 +525,3 @@ class TestConstants:
 
     def test_skip_dirs_includes_commons(self):
         assert "commons" in SKIP_DIRS
-
-
-# ---------------------------------------------------------------------------
-# Edge cases
-# ---------------------------------------------------------------------------
-
-
-class TestEdgeCases:
-    """Edge cases and regression tests."""
-
-    def test_biorxiv_doi_with_date_prefix_open_access(self, mock_models_dir: Path):
-        """Regression: bioRxiv DOIs like 10.1101/2024.01.01.000000 must be open access.
-
-        This is the canonical format for bioRxiv DOIs and must not fall through
-        to the paywall bucket.
-        """
-        _make_model_dir(
-            mock_models_dir,
-            "m1",
-            sources={
-                "primary_papers": [
-                    {
-                        "title": "bioRxiv Test",
-                        "doi": "10.1101/2024.01.01.000000",
-                        "pdf_r2": "",
-                    }
-                ]
-            },
-        )
-        oa, pw, nop = _collect_missing_papers(["m1"])
-        assert len(oa) == 1
-        assert len(pw) == 0
-
-    def test_medrxiv_doi_is_open_access(self, mock_models_dir: Path):
-        """medRxiv also uses 10.1101/ prefix and should be open access."""
-        _make_model_dir(
-            mock_models_dir,
-            "m1",
-            sources={
-                "primary_papers": [
-                    {
-                        "title": "medRxiv Test",
-                        "doi": "10.1101/2024.05.15.123456",
-                        "pdf_r2": "",
-                    }
-                ]
-            },
-        )
-        oa, pw, nop = _collect_missing_papers(["m1"])
-        assert len(oa) == 1
-
-    def test_both_arxiv_and_doi_prefers_open_access(self, mock_models_dir: Path):
-        """Paper with both arxiv and a journal DOI -> open access (arxiv check first)."""
-        _make_model_dir(
-            mock_models_dir,
-            "m1",
-            sources={
-                "primary_papers": [
-                    {
-                        "title": "Dual Identifier",
-                        "arxiv": "2401.12345",
-                        "doi": "10.1038/s41586-024",
-                        "pdf_r2": "",
-                    }
-                ]
-            },
-        )
-        oa, pw, nop = _collect_missing_papers(["m1"])
-        assert len(oa) == 1
-        assert len(pw) == 0
-
-    def test_empty_slug_list_produces_no_results(self, mock_models_dir: Path):
-        """Passing an empty list of slugs returns empty results."""
-        oa, pw, nop = _collect_missing_papers([])
-        assert oa == [] and pw == [] and nop == []
-
-    def test_sources_with_no_papers_sections(self, mock_models_dir: Path):
-        """sources.yaml with no primary_papers or applied_literature -> no missing."""
-        _make_model_dir(
-            mock_models_dir,
-            "m1",
-            sources={"model_slug": "m1", "display_name": "M1"},
-        )
-        oa, pw, nop = _collect_missing_papers(["m1"])
-        assert oa == [] and pw == [] and nop == []

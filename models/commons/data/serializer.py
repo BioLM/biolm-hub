@@ -1,6 +1,5 @@
 import datetime
 import decimal
-import logging
 import pathlib
 import uuid
 from enum import Enum
@@ -8,9 +7,9 @@ from typing import Any, Optional
 
 from pydantic import BaseModel
 
-from models.commons.core.logging import DebugLogger
+from models.commons.core.logging import DebugLogger, get_logger
 
-_logger = logging.getLogger(__name__)
+_logger = get_logger(__name__)
 
 # Sentinel returned by _coerce_pandas_numpy when the object is not a
 # pandas/numpy type so callers can distinguish None (valid coercion) from
@@ -123,10 +122,10 @@ def _coerce_to_json_native(obj: Any) -> Any:
     # IMPORTANT: Enums must be checked BEFORE the str/int/float/bool fast
     # path. String-valued enums (e.g. EnhancedStringEnum) subclass `str`,
     # so `isinstance(obj, str)` is True for them — but they still pickle
-    # by their class module path (e.g. `training.xgboost.enums.TaskType`)
-    # which breaks Modal's cloudpickle round-trip when the receiver does
-    # not have the module installed. Extracting `.value` returns a plain
-    # str/int with no module reference.
+    # by their class module path (e.g. `my_app.enums.SomeEnum`) which breaks
+    # Modal's cloudpickle round-trip when the receiver does not have the
+    # module installed. Extracting `.value` returns a plain str/int with no
+    # module reference.
     if isinstance(obj, Enum):
         return _coerce_to_json_native(obj.value)
 
@@ -166,8 +165,9 @@ def serialize_model(obj: Any, debug_logger: Optional[DebugLogger] = None) -> Any
 
     IMPORTANT: the top-level return crosses the Modal function boundary, which
     cloudpickles everything. Any object whose class lives in a module not
-    available on the caller side (e.g. ``training.*`` on the Django host) will
-    raise ``DeserializationError`` on the receiver. This function therefore
+    available on the caller side (e.g. a class defined only in the calling
+    application's own modules) will raise ``DeserializationError`` on the
+    receiver. This function therefore
     enforces a strict JSON-native contract: every leaf is coerced to
     bool/int/float/str/None via :func:`_coerce_to_json_native`.
 

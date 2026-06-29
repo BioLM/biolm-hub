@@ -87,8 +87,10 @@ def _fields_table(block: dict[str, Any]) -> str:
     if not props:
         return ""
     required = set(block.get("required", []))
-    rows = ["| Field | Type | Required | Constraints | Description |",
-            "|-------|------|----------|-------------|-------------|"]
+    rows = [
+        "| Field | Type | Required | Constraints | Description |",
+        "|-------|------|----------|-------------|-------------|",
+    ]
     for name, prop in props.items():
         is_req = name in required
         desc = _esc(str(prop.get("description", "")))
@@ -180,7 +182,9 @@ def demote_headings(md: str, by: int, strip_first_h1: bool = True) -> str:
     return "\n".join(out)
 
 
-def rewrite_links(md: str, base_dir: str, page_map: dict[str, str] | None = None) -> str:
+def rewrite_links(
+    md: str, base_dir: str, page_map: dict[str, str] | None = None
+) -> str:
     """Rewrite repo-relative links so the strict mkdocs build resolves them.
 
     ``base_dir`` is the source file's directory (POSIX, repo-relative). A target
@@ -238,4 +242,6 @@ def strip_html_comments(md: str) -> str:
 
 def embed(md: str, base_dir: str, page_map: dict[str, str] | None = None) -> str:
     """Prepare an embedded knowledge-graph doc for inclusion in a model page."""
-    return rewrite_links(demote_headings(strip_html_comments(md), by=1), base_dir, page_map)
+    return rewrite_links(
+        demote_headings(strip_html_comments(md), by=1), base_dir, page_map
+    )

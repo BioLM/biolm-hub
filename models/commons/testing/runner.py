@@ -36,20 +36,12 @@ def _fixture_r2_path(r2_fixture_subdir: str, slug: str, filename: str) -> str:
 
 def _validate_log_prob(actual_output: dict, _expected_output: dict = None):
     """Consolidated validator for log probability output across all models."""
-    # Common response keys: 'results', 'sequences', 'data', etc.
-    common_response_keys = ["results", "sequences", "data"]
-    response_key = next(
-        (key for key in common_response_keys if key in actual_output), None
-    )
-    assert (
-        response_key is not None
-    ), f"Response missing a valid response key. Expected one of: {common_response_keys}"
-    assert (
-        len(actual_output[response_key]) > 0
-    ), f"{response_key.capitalize()} list is empty"
+    # All models wrap batch output under the canonical `results` key.
+    assert "results" in actual_output, "Response missing the 'results' key"
+    assert len(actual_output["results"]) > 0, "Results list is empty"
 
     # Validate structure of each result
-    for result in actual_output[response_key]:
+    for result in actual_output["results"]:
         assert "log_prob" in result, "Result missing 'log_prob' key"
         assert isinstance(result["log_prob"], int | float), "log_prob must be numeric"
         assert result["log_prob"] < 0, "log_prob should be negative"
@@ -132,21 +124,25 @@ def _load_and_validate_payload(
         else:
             input_data = case.input_fixture.model_dump()
 
-    # Determine which schema to use for validation
-    # - case.request_schema=None: Send raw JSON (no validation)
-    # - case.request_schema=SomeSchema: Use override schema
-    # - case.request_schema unset: Use ModelFamily default schema
-    if hasattr(case, "request_schema") and case.request_schema is None:
-        request_schema = None
-    elif hasattr(case, "request_schema") and case.request_schema is not None:
-        request_schema = case.request_schema
-        print(f"  - Using override schema: {request_schema.__name__}")
-    else:
+    # Determine which schema to use for validation. ``request_schema`` is an
+    # optional field that defaults to None, so an *unset* case is
+    # indistinguishable from an explicit ``None`` via attribute access. We
+    # discriminate intent with ``model_fields_set`` (the set of fields the case
+    # actually provided):
+    # - request_schema unset      -> validate against the ModelFamily default
+    # - request_schema=None        -> explicit opt-out: send raw JSON (no validation)
+    # - request_schema=SomeSchema  -> per-case override
+    if "request_schema" not in case.model_fields_set:
         action_schema = next(
             a for a in suite.model_family.action_schemas if a.name == case.action_name
         )
         request_schema = action_schema.request_schema
         print(f"  - Using ModelFamily schema: {request_schema.__name__}")
+    elif case.request_schema is None:
+        request_schema = None
+    else:
+        request_schema = case.request_schema
+        print(f"  - Using override schema: {request_schema.__name__}")
 
     # Use consolidated validation function
     test_context = f"[{variant.modal_app_name}] -> {case.action_name}"
@@ -253,22 +249,15 @@ def execute_integration_test_case(
 
 
 def _default_deployment_validator(actual_output: dict):
-    """Default check: ensure a valid response key exists and is not empty."""
-    # Common response keys: 'results', 'sequences', 'data', etc.
-    common_response_keys = ["results", "sequences", "data"]
-    response_key = next(
-        (key for key in common_response_keys if key in actual_output), None
-    )
-
+    """Default check: ensure the canonical 'results' key exists and is not empty."""
+    # All models wrap batch output under the canonical `results` key.
     print(
-        f"  - Using default deployment validator (checking for non-empty '{response_key or 'response'}' key)."
+        "  - Using default deployment validator (checking for non-empty 'results' key)."
     )
     assert (
-        response_key is not None
-    ), f"Validation failed: Response is missing a valid response key. Expected one of: {common_response_keys}"
-    assert actual_output[
-        response_key
-    ], f"Validation failed: '{response_key}' key is empty."
+        "results" in actual_output
+    ), "Validation failed: Response is missing the 'results' key."
+    assert actual_output["results"], "Validation failed: 'results' key is empty."
 
 
 def _get_model_class_from_deployment(suite: TestSuite, variant: ResolvedVariant):

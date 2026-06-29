@@ -103,7 +103,7 @@ primary_papers:
       - "Author B et al."
 
     pdf_r2: "knowledge-base/models/dummy/primary/papers/paper-name.pdf"
-      # R2 path (without r2://biolm-modal/ prefix) to the PDF.
+      # R2 path (without r2://biolm-public/ prefix) to the PDF.
       # Set to "" or "pending" if not yet uploaded.
 
     md_r2: "knowledge-base/models/dummy/primary/papers-md/paper-name.md"

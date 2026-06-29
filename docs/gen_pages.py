@@ -29,6 +29,11 @@ log = logging.getLogger("mkdocs.gen_pages")
 
 REPO = Path(__file__).resolve().parent.parent
 MODELS_DIR = REPO / "models"
+# ``dummy`` is the model *template* (unresolved placeholder prose), so it is
+# render-skipped here. NOTE: a second, divergent discovery copy lives in
+# ``tooling/check_schema_docs.py`` — it keeps ``dummy`` so the template's schema
+# stays guarded. The two SKIP sets should be factored into one shared
+# ``discover_models(skip=...)`` helper (deferred de-duplication, see FIX_PLAN S14).
 SKIP = {"commons", "dummy", "__pycache__"}
 
 # Cross-links between the top-level prose pages resolve to their in-site page;
@@ -39,11 +44,17 @@ ROOT_PAGE_MAP = {
     "FUTURE_WORK.md": "future-work.md",
     "README.md": "index.md",
 }
-# Same map, but from a model page (one directory deeper). README.md is excluded:
-# a model's own "see also: README.md" link should go to that model's source on
-# GitHub, not the site home page (ROOT_PAGE_MAP maps README.md -> the home page).
+# Link map used when embedding a model's own knowledge-graph prose. Top-level
+# prose pages resolve to their in-site page (one directory up). A model page
+# concatenates that model's README / MODEL.md / BIOLOGY.md into the "Usage" /
+# "Architecture & training" / "Biology" sections, so the model's own "see also"
+# cross-links resolve to the matching in-page anchor instead of bouncing off-site
+# to GitHub for content that is the next section down on the same page.
 MODEL_PAGE_MAP = {
-    k: "../" + v for k, v in ROOT_PAGE_MAP.items() if k != "README.md"
+    **{k: "../" + v for k, v in ROOT_PAGE_MAP.items() if k != "README.md"},
+    "README.md": "#usage",
+    "MODEL.md": "#architecture-training",
+    "BIOLOGY.md": "#biology",
 }
 
 
@@ -87,6 +98,36 @@ def _first_paragraph(md: str) -> str:
     return " ".join(para)
 
 
+def _one_liner(md: str) -> str:
+    """Return the authored one-line summary from a README's leading blockquote.
+
+    Every README states its summary as a Markdown blockquote
+    (``> **One-line summary**: ...``), which ``_first_paragraph`` skips — so the
+    tagline would otherwise fall through to the verbose Overview paragraph. Pull
+    that first blockquote out (stripping the ``>`` markers and the
+    ``**One-line summary**:`` lead-in); fall back to the first body paragraph
+    when no blockquote is present. HTML comments are stripped first so a stray
+    template comment can't be mistaken for the summary.
+    """
+    quote: list[str] = []
+    for line in dg.strip_html_comments(md).split("\n"):
+        s = line.strip()
+        if s.startswith(">"):
+            quote.append(s.lstrip(">").strip())
+            continue
+        if quote:  # the leading blockquote just ended
+            break
+        if s.startswith("#") or not s:
+            continue
+        break  # body content before any blockquote -> none present
+    one = " ".join(q for q in quote if q)
+    for lead in ("**One-line summary**:", "One-line summary:"):
+        if one.startswith(lead):
+            one = one[len(lead) :].strip()
+            break
+    return one or _first_paragraph(md)
+
+
 def _bullets(items: list[Any]) -> str:
     return "\n".join(f"- {str(i).strip()}" for i in items if str(i).strip())
 
@@ -122,7 +163,12 @@ def _at_a_glance(cmp: dict[str, Any]) -> str:
     if cmp.get("strengths"):
         out += ['??? success "Strengths"', "", _indent(_bullets(cmp["strengths"])), ""]
     if cmp.get("weaknesses"):
-        out += ['??? warning "Limitations"', "", _indent(_bullets(cmp["weaknesses"])), ""]
+        out += [
+            '??? warning "Limitations"',
+            "",
+            _indent(_bullets(cmp["weaknesses"])),
+            "",
+        ]
     if cmp.get("dont_use_when"):
         out += [
             '??? failure "Reach for something else when"',
@@ -165,9 +211,7 @@ def _api(fam: Any) -> str:
             spec = v.modal_resource_spec
             raw_mem = getattr(spec, "memory", None)
             mem = (
-                f"{raw_mem / 1024:.0f} GB"
-                if isinstance(raw_mem, int | float)
-                else "—"
+                f"{raw_mem / 1024:.0f} GB" if isinstance(raw_mem, int | float) else "—"
             )
             out.append(
                 f"| {v.name or '—'} | `{v.public_endpoint_slug}` | {_gpu(spec)} "
@@ -247,7 +291,7 @@ def _model_page(name: str) -> tuple[str, str] | None:
     title = fam.display_name or name
     parts = [f"# {title}", ""]
     if readme:
-        tag = _first_paragraph(readme)
+        tag = _one_liner(readme)
         if tag:
             parts += [f"*{tag}*", ""]
     parts += [_badges(fam, src), ""]

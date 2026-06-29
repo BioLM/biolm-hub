@@ -229,9 +229,9 @@ request = ModelRequest(
 
 ## Implementation Notes
 
-<!-- Technical details specific to the BioLM Modal deployment:
+<!-- Technical details specific to the Modal deployment:
      - Memory snapshots: Does this model use @modal.enter(snap=True)?
-     - Caching: Redis/R2 caching behavior
+     - Caching: commons two-tier cache (in-container modal.Dict + R2), opt-in via BIOLM_CACHE_ENABLED (off by default)
      - Determinism: Seeds set? Reproducible outputs?
      - External dependencies: Calls to other Modal endpoints?
      - Container architecture: Special image layers or volumes?

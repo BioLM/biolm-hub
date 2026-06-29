@@ -149,7 +149,7 @@ def acquire_library_managed_model(
     .. deprecated::
         Prefer :func:`r2_then_library`, which adds the marker-gated R2-primary
         read in front of the library download. This wrapper is retained only
-        until ``evo``/``pro1`` migrate (Phase 2), after which it is removed.
+        until the remaining callers migrate, after which it is removed.
 
     This function lets libraries manage their own downloads while providing
     R2 caching.

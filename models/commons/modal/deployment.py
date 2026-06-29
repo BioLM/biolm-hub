@@ -6,6 +6,7 @@ from typing import Optional
 import modal
 
 from models.commons.core.logging import get_logger
+from models.commons.util.config import deployed_environment_names
 from models.commons.util.environment import get_environment_name, is_production
 
 logger = get_logger(__name__)
@@ -32,14 +33,14 @@ def run_or_deploy_modal_app(
     parser.add_argument(
         "--force-deploy",
         action="store_true",
-        help="Force deploy even if environment is 'qa' or 'main'",
+        help="Force deploy even when targeting a deployed (dev/prod) environment",
     )
 
     args = parser.parse_args()
 
     current_env = get_environment_name()
-    if current_env in ("qa", "main"):
-        logger.info("Production Modal environment detected: %s", current_env)
+    if current_env in deployed_environment_names:
+        logger.info("Deployed Modal environment detected: %s", current_env)
     else:
         logger.info("Local or dev Modal environment: %s", current_env)
 

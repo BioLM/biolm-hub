@@ -1,3 +1,8 @@
+"""BioLM Models CLI (``bm``).
+
+Command-line tools for deploying and running BioLM models on Modal.
+"""
+
 import typer
 from rich.console import Console
 from rich.padding import Padding
@@ -11,13 +16,6 @@ from cli.kb import kb_app
 from cli.r2 import r2_app
 from cli.serve import serve_cmd
 from cli.setup import setup_cmd
-
-"""
-BioLM-Modal Command Line Interface
-
-A suite of tools for working with BioLM-Modal models and infrastructure.
-"""
-
 
 console = Console()
 app = typer.Typer(
@@ -44,7 +42,7 @@ def main(
         is_eager=True,
     ),
 ) -> None:
-    """BioLM-Modal is a platform for serving BioLM models on Modal."""
+    """Command-line tools for deploying and running BioLM models on Modal."""
     pass
 
 
@@ -108,8 +106,6 @@ def display_cli_help() -> None:
     commands_table.add_row("kb status", "Show knowledge base completion status")
     commands_table.add_row("kb validate", "Validate sources.yaml schema")
     commands_table.add_row("kb sources", "Display sources.yaml summary for a model")
-    commands_table.add_row("kb matrix", "Generate MODEL_COMPARISON_MATRIX.md")
-    commands_table.add_row("kb missing", "Report papers with pending R2 uploads")
 
     footer = Padding(
         Text(

@@ -112,7 +112,7 @@ def get_environment_name() -> str:
     Retrieves the current Modal environment name from config.
 
     Returns:
-        str: The environment name (e.g., "qa" or "main").
+        str: The environment name (e.g., "biolm-models-dev" or "biolm-models").
     """
 
     return modal.config.config.get("environment")
@@ -137,7 +137,8 @@ def is_production() -> bool:
     """
     Checks if the current Modal environment is one of the deployed environments.
 
-    Compares the environment name to known deployed_environment_names such as "qa" or "main".
+    Compares the environment name to known deployed_environment_names such as
+    "biolm-models-dev" or "biolm-models".
 
     Returns:
         bool: True if the environment is in the deployed list, otherwise False.

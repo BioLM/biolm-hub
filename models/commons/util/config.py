@@ -68,20 +68,17 @@ def cache_enabled() -> bool:
 cloudflare_r2_secret_name = "cloudflare-r2"
 cloudflare_r2_secret = modal.Secret.from_name(cloudflare_r2_secret_name)
 
-protocols_r2_bucket_secret_name = "protocols-r2-bkt"
-protocols_r2_bucket_secret = modal.Secret.from_name(protocols_r2_bucket_secret_name)
-
 huggingface_api_token_secret_name = "hf-api-token"
 huggingface_api_token_secret = modal.Secret.from_name(huggingface_api_token_secret_name)
 
-nvidia_ngc_secret_name = "ngc-cli-api-key"
-nvidia_ngc_secret = modal.Secret.from_name(nvidia_ngc_secret_name)
-
 
 # Modal environments
-qa_environment_name = "qa"
-prod_environment_name = "main"
-deployed_environment_names = [qa_environment_name, prod_environment_name]
+# The deploy targets used by CI. The non-prod ("dev") environment runs PR
+# smoke/comprehensive checks; the prod environment serves the public catalog.
+# Override-free defaults match the names CI deploys to.
+dev_environment_name = "biolm-models-dev"
+prod_environment_name = "biolm-models"
+deployed_environment_names = [dev_environment_name, prod_environment_name]
 
 
 # Validation parameters

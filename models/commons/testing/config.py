@@ -73,6 +73,6 @@ class TestSuite(BaseModel):
     r2_fixture_subdir: str
 
     # Override the auto-detected app module path. By default, the runner
-    # constructs "models.{slug}.app". Training inference apps should set this
-    # to their module path, e.g. "training.xgboost.infer.app".
+    # constructs "models.{slug}.app". Set this when a model's Modal app lives at
+    # a non-default import path, e.g. "models.{slug}.infer.app".
     app_module: Optional[str] = None

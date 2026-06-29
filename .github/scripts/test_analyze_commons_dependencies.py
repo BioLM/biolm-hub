@@ -1,8 +1,8 @@
-"""Test suite for the commons dependency analyzer.
+"""Test suite for the module-granular commons dependency analyzer.
 
 Tests the dependency analysis that:
-- Maps all imports from each model
-- Detects changes including variables, constants, functions, classes
+- Maps the commons modules each model imports
+- Returns all models importing a changed commons module (module granularity)
 - Uses conservative matching (better to over-test than under-test)
 """
 
@@ -65,7 +65,7 @@ class TestFileFiltering:
 
 
 class TestImportExtraction:
-    """Test extraction of imports from Python files."""
+    """Test extraction of commons modules from Python files."""
 
     def test_extracts_all_commons_import_styles(self):
         test_content = """\
@@ -84,124 +84,41 @@ from transformers import AutoModel
 
         try:
             analyzer = DependencyAnalyzer()
-            imports = analyzer.extract_all_imports(temp_path)
+            modules = analyzer.extract_imported_modules(temp_path)
 
-            expected = {
-                "models.commons.core.decorator": {"modal_endpoint"},
-                "models.commons.data.request_response": {"*"},
-                "models.commons.modal.deployment": {"*"},
-                "models.commons.model.config": {"ModelFamily"},
+            assert modules == {
+                "models.commons.core.decorator",
+                "models.commons.data.request_response",
+                "models.commons.modal.deployment",
+                "models.commons.model.config",
             }
-
-            for module, expected_symbols in expected.items():
-                assert module in imports, f"Missing module: {module}"
-                assert (
-                    imports[module] == expected_symbols
-                ), f"Wrong symbols for {module}: expected {expected_symbols}, got {imports[module]}"
-
-            assert "torch" not in imports, "Non-commons imports should be excluded"
+            assert "torch" not in modules, "Non-commons imports should be excluded"
             assert (
-                "transformers" not in imports
+                "transformers" not in modules
             ), "Non-commons imports should be excluded"
         finally:
             temp_path.unlink(missing_ok=True)
 
 
-class TestChangeDetection:
-    """Test detection of changed symbols from git diff."""
-
-    FAKE_DIFF = """\
-diff --git a/models/commons/core/decorator.py b/models/commons/core/decorator.py
-index abc123..def456 100644
---- a/models/commons/core/decorator.py
-+++ b/models/commons/core/decorator.py
-@@ -10,7 +10,7 @@
--class ModalEndpoint:
-+class ModalEndpoint:  # Modified
-     def __call__(self):
-         pass
-
--def modal_endpoint():
-+def modal_endpoint(new_param):
-    pass
-
-diff --git a/models/commons/config/settings.py b/models/commons/config/settings.py
-index 111222..333444 100644
---- a/models/commons/config/settings.py
-+++ b/models/commons/config/settings.py
--MAX_RETRIES = 3
-+MAX_RETRIES = 5
--DEFAULT_TIMEOUT: int = 30
-+DEFAULT_TIMEOUT: int = 60
-+NEW_SETTING = "value"
-"""
-
-    def test_detects_correct_files(self):
-        analyzer = DependencyAnalyzer()
-        changed = analyzer.extract_changed_symbols_from_diff(self.FAKE_DIFF)
-        assert set(changed.keys()) == {
-            "models/commons/core/decorator.py",
-            "models/commons/config/settings.py",
-        }
-
-    def test_detects_class_change(self):
-        analyzer = DependencyAnalyzer()
-        changed = analyzer.extract_changed_symbols_from_diff(self.FAKE_DIFF)
-        assert "ModalEndpoint" in changed["models/commons/core/decorator.py"]
-
-    def test_detects_function_change(self):
-        analyzer = DependencyAnalyzer()
-        changed = analyzer.extract_changed_symbols_from_diff(self.FAKE_DIFF)
-        assert "modal_endpoint" in changed["models/commons/core/decorator.py"]
-
-    def test_detects_variable_change(self):
-        analyzer = DependencyAnalyzer()
-        changed = analyzer.extract_changed_symbols_from_diff(self.FAKE_DIFF)
-        assert "MAX_RETRIES" in changed["models/commons/config/settings.py"]
-
-    def test_detects_typed_variable_change(self):
-        analyzer = DependencyAnalyzer()
-        changed = analyzer.extract_changed_symbols_from_diff(self.FAKE_DIFF)
-        assert "DEFAULT_TIMEOUT" in changed["models/commons/config/settings.py"]
-
-    def test_wildcard_always_present(self):
-        analyzer = DependencyAnalyzer()
-        changed = analyzer.extract_changed_symbols_from_diff(self.FAKE_DIFF)
-        for symbols in changed.values():
-            assert "*" in symbols, "Wildcard should be present for any changed file"
-
-
-class TestConservativeMatching:
-    """Test that the analyzer uses conservative matching when appropriate."""
+class TestModuleGranularMatching:
+    """Test module-granular matching of changed commons modules to models."""
 
     def _build_analyzer_with_stub_imports(self):
         """Build analyzer with stub imports using a NON-critical commons file.
 
         Uses models.commons.model.config instead of core.decorator because
         core/decorator.py is in CRITICAL_COMMONS_FILES which triggers ALL models
-        before symbol matching logic runs.
+        before module matching logic runs.
         """
         analyzer = DependencyAnalyzer()
         analyzer.model_imports = {
             "esm2": {
-                "models.commons.model.config": {"ModelFamily"},
-                "models.commons.core.decorator": {"modal_endpoint"},
+                "models.commons.model.config",
+                "models.commons.core.decorator",
             },
-            "evo": {
-                "models.commons.model.config": {"biolm_model_class"},
-            },
-            "chai1": {
-                "models.commons.model.config": {"*"},
-            },
+            "evo": {"models.commons.model.config"},
+            "chai1": {"models.commons.model.config"},
         }
-        # Build reverse mapping (mirrors build_import_map behavior)
-        for model, imports in analyzer.model_imports.items():
-            for module, symbols in imports.items():
-                for symbol in symbols:
-                    key = f"{module}.{symbol}"
-                    analyzer.symbol_to_models[key].add(model)
-                # Register module-level wildcard (matches build_import_map)
-                analyzer.symbol_to_models[f"{module}.*"].add(model)
         return analyzer
 
     def test_module_change_affects_all_importers(self):
@@ -213,13 +130,10 @@ class TestConservativeMatching:
         """
         analyzer = self._build_analyzer_with_stub_imports()
         changed_files = ["models/commons/model/config.py"]
-        diff = "-class ModelFamily:\n+class ModelFamily:  # Modified\n"
-        changed_symbols = {"models/commons/model/config.py": {"ModelFamily"}}
-        analyzer.extract_changed_symbols_from_diff = lambda x: changed_symbols
 
-        affected, _ = analyzer.get_affected_models(changed_files, diff)
+        affected, _ = analyzer.get_affected_models(changed_files)
 
-        # All three import from models.commons.model.config — all should be affected
+        # All three import from models.commons.model.config — all affected
         assert "esm2" in affected
         assert "evo" in affected
         assert "chai1" in affected
@@ -228,61 +142,42 @@ class TestConservativeMatching:
         """Models that don't import from the changed module are not affected."""
         analyzer = self._build_analyzer_with_stub_imports()
         changed_files = ["models/commons/storage/r2.py"]
-        changed_symbols = {"models/commons/storage/r2.py": {"upload_to_r2"}}
-        analyzer.extract_changed_symbols_from_diff = lambda x: changed_symbols
 
-        affected, _ = analyzer.get_affected_models(changed_files, "fake diff")
+        affected, _ = analyzer.get_affected_models(changed_files)
 
         # No model in the stub imports from models.commons.storage.r2
         assert (
             len(affected) == 0
         ), f"No stub models import from storage.r2, but got: {affected}"
 
-    def test_method_level_change_detected_via_wildcard(self):
-        """Regression test: method-level changes inside an imported class.
-
-        When the diff touches a method (e.g., `def get_app_config`) inside
-        a class that models import by name, the diff parser emits
-        `{"get_app_config", "*"}`. The wildcard must resolve to all models
-        importing from that module.
-        """
-        analyzer = self._build_analyzer_with_stub_imports()
-        changed_files = ["models/commons/model/config.py"]
-        changed_symbols = {"models/commons/model/config.py": {"get_app_config", "*"}}
-        analyzer.extract_changed_symbols_from_diff = lambda x: changed_symbols
-
-        affected, _ = analyzer.get_affected_models(changed_files, "fake diff")
-
-        # All three models import from models.commons.model.config,
-        # so the wildcard should match all of them via module-level wildcard
-        assert "esm2" in affected, "esm2 should be affected via module wildcard"
-        assert "evo" in affected, "evo should be affected via module wildcard"
-        assert "chai1" in affected, "chai1 should be affected via module wildcard"
-
-    def test_fail_open_when_no_symbol_matches(self):
-        """When diff symbols exist but none match the import map, fall back
-        to conservative matching (all models importing from that module)."""
+    def test_specific_submodule_import_matched(self):
+        """A change to a module matches models importing that exact module."""
         analyzer = DependencyAnalyzer()
         analyzer.model_imports = {
-            "testmodel": {
-                "models.commons.util.environment": {"parse_variant"},
-            },
+            "testmodel": {"models.commons.util.environment"},
         }
-        # Only register the specific symbol — no module wildcard
-        analyzer.symbol_to_models["models.commons.util.environment.parse_variant"].add(
-            "testmodel"
-        )
-
         changed_files = ["models/commons/util/environment.py"]
-        # Diff has a symbol that doesn't match anything in the import map
-        changed_symbols = {"models/commons/util/environment.py": {"_internal_helper"}}
-        analyzer.extract_changed_symbols_from_diff = lambda x: changed_symbols
 
-        affected, _ = analyzer.get_affected_models(changed_files, "fake diff")
+        affected, _ = analyzer.get_affected_models(changed_files)
 
-        assert (
-            "testmodel" in affected
-        ), "Should fall back to conservative matching when no symbols match"
+        assert "testmodel" in affected
+
+    def test_parent_module_change_affects_submodule_importers(self):
+        """A change to a parent module path matches submodule importers.
+
+        e.g. a model imports `models.commons.storage.downloads`; a change to
+        the `models.commons.storage` parent is a prefix of that import path
+        and should still mark the model affected (conservative).
+        """
+        analyzer = DependencyAnalyzer()
+        analyzer.model_imports = {
+            "testmodel": {"models.commons.storage.downloads"},
+        }
+        changed_files = ["models/commons/storage.py"]
+
+        affected, _ = analyzer.get_affected_models(changed_files)
+
+        assert "testmodel" in affected
 
 
 class TestBuildImportMap:
@@ -292,11 +187,6 @@ class TestBuildImportMap:
         analyzer = DependencyAnalyzer()
         analyzer.build_import_map()
         assert len(analyzer.model_imports) > 0, "Should find at least one model"
-
-    def test_reverse_mapping_built(self):
-        analyzer = DependencyAnalyzer()
-        analyzer.build_import_map()
-        assert len(analyzer.symbol_to_models) > 0, "Should build reverse mapping"
 
     def test_known_model_has_imports(self):
         analyzer = DependencyAnalyzer()
@@ -334,12 +224,6 @@ class TestRealScenario:
         analyzer.build_import_map()
 
         changed_files = ["models/commons/model/config.py"]
-        fake_diff = (
-            "diff --git a/models/commons/model/config.py "
-            "b/models/commons/model/config.py\n"
-            "-class ModelFamily:\n"
-            "+class ModelFamily:  # Modified\n"
-        )
 
-        report = analyzer.generate_comparison_report(changed_files, fake_diff)
+        report = analyzer.generate_comparison_report(changed_files)
         assert report["new_way"]["models_tested"] <= report["old_way"]["models_tested"]

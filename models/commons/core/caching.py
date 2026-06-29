@@ -1,5 +1,4 @@
 import hashlib
-import logging
 from collections.abc import Awaitable, Callable
 from typing import Any, Optional
 
@@ -7,7 +6,7 @@ import modal
 import orjson
 from pydantic import BaseModel
 
-from models.commons.core.logging import DebugLogger
+from models.commons.core.logging import DebugLogger, get_logger
 from models.commons.data.serializer import serialize_model
 from models.commons.model.schema import ModelActions
 from models.commons.storage.cache import (
@@ -16,7 +15,7 @@ from models.commons.storage.cache import (
 )
 from models.commons.util.config import cache_enabled, get_model_cache_name
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 ### ------- Configuration and Helper Functions ------- ###
 
@@ -67,12 +66,20 @@ def build_item_cache_key(
 def _result_item_is_cacheable(item_dict: dict) -> bool:
     """Return True only if item_dict contains at least one non-trivial output field.
 
-    Input-only fields (sequence, id, heavy, light, nucleotide_sequence) are ignored.
-    An item is *not* cacheable if every output field is None, an empty list, or an
-    empty dict — those are error / null-embedding responses that should not be stored
-    in the cache to avoid poisoning future lookups.
+    Input-only fields (the canonical request keys: sequence, sequences, id,
+    heavy_chain, light_chain, nucleotide_sequence) are ignored. An item is *not*
+    cacheable if every output field is None, an empty list, or an empty dict —
+    those are error / null-embedding responses that should not be stored in the
+    cache to avoid poisoning future lookups.
     """
-    INPUT_FIELDS = {"sequence", "id", "heavy", "light", "nucleotide_sequence"}
+    INPUT_FIELDS = {
+        "sequence",
+        "sequences",
+        "id",
+        "heavy_chain",
+        "light_chain",
+        "nucleotide_sequence",
+    }
     for key, value in item_dict.items():
         if key in INPUT_FIELDS:
             continue
