@@ -5,30 +5,52 @@
 > `03_WORKSTREAMS`, `04_TESTING_STRATEGY`, `W4_ACQUISITION_PLAN`, `W5_HARDENING_GUIDE`, `COMMONS_REQUESTS`).
 > Snapshot at the **2026-06-28 pause** (session `oss-stage3-w5-fanout`). Internal file — deleted at launch.
 
-> ## ▶ RESUME HERE (paused 2026-06-30, session `oss-platform-w14-docs`)
-> **DONE & committed on `main`:** W1–W14 (docs site + per-field OpenAPI schema descriptions, public
-> CLAUDE.md) → **Round-1 independent review** (112 agents → `.planning/reviews/round-1/`: README dashboard,
-> FIX_PLAN, 44 model + 12 global write-ups) → **fix campaign Phase A** (foundational/shared-file) →
-> **Phase B** (per-model). Last commits: `4c62ccf` Phase B · `29506cd` Phase A · `4fe72f3` review+drops ·
-> `263bc7c` W14. Tree clean. Catalog = **39 SHIP + dummy** (dropped clean/boltz/rfd3/esmstabp — see
-> `.planning/reviews/round-1/DROPPED_MODELS.md`). De-internalization complete (0 `biolm-modal`/`qa` in
-> shipped dirs); schema guard ✓40; `mkdocs build --strict` green; unit tests 6-fail = ONLY pre-existing
-> env issues (boltzgen `pandas`, `test_cache` R2).
+> ## ▶ RESUME HERE (in progress 2026-06-30, session `oss-w3b-wsec`)
+> **NEW this session (committed on `main`):** `88a8a11` **DROP `peptides`** from v1 (upstream license
+> dispute → catalog now **38 SHIP + dummy**); `c6c8a5a` **deferred biolm-hub rebrand bundle documented**
+> (`.planning/RENAME_TO_BIOLM_HUB.md`); `cf3f4fd` **`params_version`→`weights_version` rename** (117 files,
+> mechanical, internal @dataclass field — no API/R2 impact). Schema guard ✓ **39 model dirs** (38 SHIP +
+> dummy); 125 Modal-free tests pass (1 fail = pre-existing `test_cache` R2-creds).
+>
+> **USER DECISIONS folded in (2026-06-30):**
+> - **biolm-hub rebrand = DEFERRED to "just before launch"** (one bundle: repo name `biolm-models`→`biolm-hub`,
+>   **CLI `bm`→`bh`**, Modal envs `biolm-models`→`biolm-hub` / `biolm-models-dev`→`biolm-hub-dev`, and
+>   **re-path the `biolm-public` bucket under a `biolm-hub/` prefix mirroring the repo tree**
+>   `r2://biolm-public/biolm-hub/models/esm2/…`). Full pre-computed checklist in `RENAME_TO_BIOLM_HUB.md`.
+>   The GitHub repo does NOT exist yet → CREATE `BioLM/biolm-hub` at launch (not a rename). Keep names as-is
+>   until then; **focus stays on dev/test of the rest first.**
+> - **peptides** dropped (above).
+> - **`weights_version`** rename done (above).
+> - **R2 anonymous public-read = ENABLED** by the cofounder via the bucket's **Public Development URL**:
+>   `https://pub-c56611cf24404740b0ff53b356a6b48d.r2.dev` (anonymous HTTPS GET, rate-limited, no S3 LIST).
+>   Resolves Open-Q #1. **TODO (block 3, in progress):** add an **unauthenticated HTTP read path** for the
+>   **cached-model-weights read ONLY** — when no R2 creds are present, GET `{public_url}/{key}` via
+>   requests/httpx instead of boto3. ⚠️ DESIGN CONSTRAINT: r2.dev serves single-key GETs but **cannot LIST**,
+>   while the current cache-read (`download_model_from_r2`) lists a prefix → an anon read needs a known key
+>   set (manifest/required_files), not a prefix sync. Writes stay CI-gated (only GitHub Actions holds R2_*
+>   S3 creds) — matches user intent. Validate at Milestone B. The read path uses `{public_url}/{key}` so it
+>   needs NO change when the bucket prefix moves to `biolm-hub/` at launch.
+> - **Modal CI token:** secret names are **`MODAL_TOKEN_ID` / `MODAL_TOKEN_SECRET`** (identical to internal
+>   `biolm-modal` `.github/`; our `deploy.yml` already uses them). **User action:** add both (+ `R2_*`) as
+>   **Environment secrets on the `modal-dev` environment** of the (future) repo — env-scoped, so org secrets
+>   don't auto-apply. Same token values as the internal repo.
 >
 > **NEXT, in order (all Modal-free until Milestone B):**
-> 1. **Round-1 corrections tail** — the deferred items in `.planning/reviews/round-1/PHASE_B_DEFERRED.md`
->    that are NOT Milestone-B/commons-gated (cross-model coordinated renames; lower-priority cleanups).
-> 2. **W3b** commons reconciliation (§2 below) + the Phase-A-deferred CI items (mypy-over-`.github/scripts`
+> 1. **Block 3 — R2 unauthenticated HTTP read path** for cached weights (see DESIGN CONSTRAINT above).
+> 2. **Round-1 corrections tail** — deferred items in `.planning/reviews/round-1/PHASE_B_DEFERRED.md` that
+>    are NOT Milestone-B/commons-gated (cross-model coordinated renames; lower-priority cleanups). Also a
+>    skill-doc cleanup: `model-implementation/investigation/GUIDE.md` examples still reference EXCLUDED
+>    models `nt/`/`esm3/` (fix in the skill-review pass).
+> 3. **W3b** commons reconciliation (§2 below) + Phase-A-deferred CI items (mypy-over-`.github/scripts`
 >    [67 errs], gitleaks gate, T20-ignore narrowing — see the Phase A note further down).
-> 3. **W-sec** — §3 below (license confirmations incl. the peptides MIT-vs-GPL-3.0 resolution; gitleaks;
->    final residue sweep). **needs-human license confirmations are in §0 open-questions.**
-> 4. **(optional) Round-2 verification review** before the big spend.
-> 5. **Milestone B** — full deploy + golden-fixture + integration/deployment matrix (§1). **GATED on user
->    infra: R2 bucket public-read decision + config, GitHub deploy-gate (label + `modal-dev` env + secrets),
->    Modal CI token, R2 CI key — see §0 + the manual-actions list. Also applies the response-shape renames
->    deferred in PHASE_B_DEFERRED.md (deploy-verify then apply).**
-> 6. **W-launch.**
-> The user has additional points to provide at the start of the next session (esp. around infra/permissions).
+> 4. **W-sec** — §3 below (license confirmations; gitleaks; final residue sweep). **needs-human license
+>    confirmations in §0 open-questions** (peptides one is now moot — model dropped).
+> 5. **(optional) Round-2 verification review** before the big spend.
+> 6. **Milestone B** — full deploy + golden-fixture + integration/deployment matrix (§1). **GATED on user
+>    infra: GitHub deploy-gate (label + `modal-dev` env + `MODAL_TOKEN_*`/`R2_*` secrets), R2 read-path
+>    deploy-validate. Also applies the response-shape renames deferred in PHASE_B_DEFERRED.md.** Before any
+>    real weight WRITES, do the `biolm-hub/`-prefix R2 re-path (else weights land under the old prefix).
+> 7. **W-launch** — incl. the full `RENAME_TO_BIOLM_HUB.md` bundle.
 
 ## STATUS SNAPSHOT — what's DONE (committed on `main`)
 - **Commons + global rules** (W1/W2/W3a/W-acq/W6/W7/W17) — earlier commits.
