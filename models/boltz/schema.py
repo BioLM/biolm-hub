@@ -61,19 +61,62 @@ class BoltzIncludeParams(EnhancedStringEnum):
 class BoltzAffinityProperty(RequestModel):
     """Affinity calculation property for Boltz YAML properties block."""
 
-    binder: str  # Chain ID of the binder
+    binder: str = Field(
+        description="Chain identifier of the binder molecule for affinity calculation."
+    )
 
 
 # Base predict parameters (common to both Boltz1 and Boltz2)
 class BoltzPredictParamsBase(RequestModel):
-    recycling_steps: int = Field(default=3, ge=1, le=10)
-    sampling_steps: int = Field(default=20, ge=1, le=200)
-    diffusion_samples: int = Field(default=1, ge=1, le=10)
-    step_scale: float = Field(default=1.638, ge=0.1, le=10.0)
-    seed: Optional[int] = 42
-    potentials: bool = True
+    recycling_steps: int = Field(
+        default=3,
+        ge=1,
+        le=10,
+        description=(
+            "Number of recycling iterations to refine the predicted structure "
+            "(1–10; more improves accuracy at greater cost)."
+        ),
+    )
+    sampling_steps: int = Field(
+        default=20,
+        ge=1,
+        le=200,
+        description=(
+            "Number of diffusion denoising steps (1–200; more steps improve "
+            "structure quality at greater cost)."
+        ),
+    )
+    diffusion_samples: int = Field(
+        default=1,
+        ge=1,
+        le=10,
+        description=(
+            "Number of independent structure samples to generate per input; "
+            "the top-ranked sample is returned."
+        ),
+    )
+    step_scale: float = Field(
+        default=1.638,
+        ge=0.1,
+        le=10.0,
+        description=(
+            "Sampling step scale for the diffusion/sampling process; "
+            "lower values increase diversity."
+        ),
+    )
+    seed: Optional[int] = Field(
+        default=42,
+        description="Random seed for reproducible sampling.",
+    )
+    potentials: bool = Field(
+        default=True,
+        description=(
+            "Apply inference-time potentials to encourage physically plausible poses."
+        ),
+    )
     include: Optional[list[BoltzIncludeParams]] = Field(
-        default_factory=partial(list, [])
+        default_factory=partial(list, []),
+        description="Optional outputs to compute and include in the response.",
     )
 
     # Automatic MSA generation via MSA Search NIM
@@ -139,8 +182,10 @@ BoltzPredictParams = Boltz2PredictParams
 
 # Modification model
 class BoltzModification(RequestModel):
-    position: int
-    ccd: str
+    position: int = Field(description="Residue position (1-based) of the modification.")
+    ccd: str = Field(
+        description="Chemical Component Dictionary (CCD) code of the modification."
+    )
 
 
 # Bond constraint model
@@ -153,8 +198,12 @@ class BoltzBondConstraint(RequestModel):
     - ATOM_NAME is the standardized atom name (see RCSB CIF file for the component).
     """
 
-    atom1: list[Union[str, int]]
-    atom2: list[Union[str, int]]
+    atom1: list[Union[str, int]] = Field(
+        description="First atom in the covalent bond as [CHAIN_ID, RES_IDX, ATOM_NAME]."
+    )
+    atom2: list[Union[str, int]] = Field(
+        description="Second atom in the covalent bond as [CHAIN_ID, RES_IDX, ATOM_NAME]."
+    )
 
 
 # Pocket constraint model
@@ -166,9 +215,21 @@ class BoltzPocketConstraint(RequestModel):
     - Only a single binder chain is supported.
     """
 
-    binder: str
-    contacts: list[list[Union[str, int]]]
-    max_distance: Optional[float] = None
+    binder: str = Field(
+        description="Chain identifier of the molecule binding to the defined pocket."
+    )
+    contacts: list[list[Union[str, int]]] = Field(
+        description=(
+            "Pocket residues as [[CHAIN_ID, RES_IDX], ...] that define the binding site."
+        )
+    )
+    max_distance: Optional[float] = Field(
+        default=None,
+        description=(
+            "Maximum distance (Å) from binder atoms to define pocket residues; "
+            "uses model default when omitted."
+        ),
+    )
 
     @field_validator("binder")
     def validate_single_binder(cls, v):
@@ -187,9 +248,21 @@ class BoltzContactConstraint(RequestModel):
     - max_distance: maximum allowed distance in angstroms
     """
 
-    token1: list[Union[str, int]]
-    token2: list[Union[str, int]]
-    max_distance: float
+    token1: list[Union[str, int]] = Field(
+        description=(
+            "First token (residue or atom) as [CHAIN_ID, RES_IDX] in the contact constraint."
+        )
+    )
+    token2: list[Union[str, int]] = Field(
+        description=(
+            "Second token (residue or atom) as [CHAIN_ID, RES_IDX] in the contact constraint."
+        )
+    )
+    max_distance: float = Field(
+        description=(
+            "Maximum allowed distance in Ångströms between the two constrained tokens."
+        )
+    )
 
 
 # Entity type for sequences
@@ -208,16 +281,51 @@ class BoltzAlignmentDatabase(EnhancedStringEnum):
 
 
 class BoltzEntity(RequestModel):
-    id: Union[str, list[str]]
-    type: BoltzEntityType
-    sequence: Optional[str] = None
-    smiles: Optional[str] = None
-    ccd: Optional[str] = None
-    alignment: Optional[dict[BoltzAlignmentDatabase, str]] = (
-        None  # key: database enum, value: a3m file content
+    id: Union[str, list[str]] = Field(
+        description=(
+            "Chain identifier(s); use a list for multiple copies of the same entity "
+            "(e.g., homodimers)."
+        )
     )
-    modifications: Optional[list[BoltzModification]] = None
-    cyclic: bool = False
+    type: BoltzEntityType = Field(
+        description="Molecular entity type: protein, dna, rna, or ligand."
+    )
+    sequence: Optional[str] = Field(
+        default=None,
+        description=(
+            "Amino-acid or nucleotide sequence in single-letter codes "
+            "(required for protein/DNA/RNA; omit for ligand)."
+        ),
+    )
+    smiles: Optional[str] = Field(
+        default=None,
+        description="Ligand structure as a SMILES string.",
+    )
+    ccd: Optional[str] = Field(
+        default=None,
+        description=(
+            "Chemical Component Dictionary code for a ligand "
+            "(mutually exclusive with smiles)."
+        ),
+    )
+    alignment: Optional[dict[BoltzAlignmentDatabase, str]] = Field(
+        default=None,
+        description=(
+            "Pre-computed MSA per database as {database_name: a3m_content}; "
+            "protein entities only."
+        ),
+    )
+    modifications: Optional[list[BoltzModification]] = Field(
+        default=None,
+        description=(
+            "Post-translational or chemical modifications as [{position, ccd}]; "
+            "protein/DNA/RNA entities only."
+        ),
+    )
+    cyclic: bool = Field(
+        default=False,
+        description="Whether the polymer chain is cyclic.",
+    )
 
     @field_validator("sequence")
     def validate_sequence_for_type(cls, v, info):
@@ -302,9 +410,20 @@ class BoltzPredictConstraints(RequestModel):
     - contact: contacts between tokens (residues/atoms)
     """
 
-    bond: Optional[BoltzBondConstraint] = None
-    pocket: Optional[BoltzPocketConstraint] = None
-    contact: Optional[BoltzContactConstraint] = None
+    bond: Optional[BoltzBondConstraint] = Field(
+        default=None,
+        description="Optional covalent bond constraint between two atoms.",
+    )
+    pocket: Optional[BoltzPocketConstraint] = Field(
+        default=None,
+        description=(
+            "Optional pocket constraint specifying residues that define a binding site."
+        ),
+    )
+    contact: Optional[BoltzContactConstraint] = Field(
+        default=None,
+        description="Optional distance constraint between two residues or atoms.",
+    )
 
     @model_validator(mode="after")
     def validate_at_least_one_constraint(self):
@@ -317,9 +436,19 @@ class BoltzPredictConstraints(RequestModel):
 
 # Template model
 class BoltzTemplate(RequestModel):
-    cif: str
-    chain_id: Optional[Union[str, list[str]]] = None
-    template_id: Optional[Union[str, list[str]]] = None
+    cif: str = Field(
+        description="Template structure in mmCIF format used to guide structure prediction."
+    )
+    chain_id: Optional[Union[str, list[str]]] = Field(
+        default=None,
+        description=(
+            "Chain identifier(s) in the molecules list to which this template applies."
+        ),
+    )
+    template_id: Optional[Union[str, list[str]]] = Field(
+        default=None,
+        description=("Identifier(s) of the chain(s) within the template CIF to use."),
+    )
 
     @field_validator("cif")
     def validate_cif_not_empty(cls, v):
@@ -333,7 +462,13 @@ class BoltzTemplate(RequestModel):
 # Base input class
 class BoltzPredictRequestInputBase(RequestModel):
     # Both Boltz1 and Boltz2 use "molecules" convention
-    molecules: list[BoltzEntity] = Field(min_length=1)
+    molecules: list[BoltzEntity] = Field(
+        min_length=1,
+        description=(
+            "List of molecular entities (proteins, DNA, RNA, ligands) "
+            "forming the complex to predict."
+        ),
+    )
 
     @model_validator(mode="after")
     def validate_molecules_provided(self):
@@ -349,8 +484,19 @@ Boltz1PredictRequestInput = BoltzPredictRequestInputBase
 
 # Boltz2 input (with constraints and templates)
 class Boltz2PredictRequestInput(BoltzPredictRequestInputBase):
-    constraints: Optional[list[BoltzPredictConstraints]] = None
-    templates: Optional[list[BoltzTemplate]] = None
+    constraints: Optional[list[BoltzPredictConstraints]] = Field(
+        default=None,
+        description=(
+            "Optional structural constraints (bond, pocket, contact) "
+            "to guide Boltz2 prediction."
+        ),
+    )
+    templates: Optional[list[BoltzTemplate]] = Field(
+        default=None,
+        description=(
+            "Optional structural templates in mmCIF format to condition Boltz2 prediction."
+        ),
+    )
 
     @model_validator(mode="after")
     # TODO: Refactor to reduce complexity below 10
@@ -443,18 +589,32 @@ BoltzPredictRequestInput = Boltz2PredictRequestInput
 class Boltz1PredictRequest(RequestModel):
     items: Annotated[
         list[Boltz1PredictRequestInput],
-        Field(min_length=1, max_length=BoltzModelParams.batch_size),
+        Field(
+            min_length=1,
+            max_length=BoltzModelParams.batch_size,
+            description="Batch of inputs to process in a single request.",
+        ),
     ]
-    params: Boltz1PredictParams = Boltz1PredictParams()
+    params: Boltz1PredictParams = Field(
+        default_factory=Boltz1PredictParams,
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
 
 
 # Boltz2 request (with affinity support)
 class Boltz2PredictRequest(RequestModel):
     items: Annotated[
         list[Boltz2PredictRequestInput],
-        Field(min_length=1, max_length=BoltzModelParams.batch_size),
+        Field(
+            min_length=1,
+            max_length=BoltzModelParams.batch_size,
+            description="Batch of inputs to process in a single request.",
+        ),
     ]
-    params: Boltz2PredictParams = Boltz2PredictParams()
+    params: Boltz2PredictParams = Field(
+        default_factory=Boltz2PredictParams,
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
 
     @model_validator(mode="after")
     def validate_affinity_binder_exists(self):
@@ -485,50 +645,140 @@ BoltzPredictRequest = Boltz2PredictRequest
 
 # Confidence scores
 class BoltzChainScores(ResponseModel):
-    ptm: dict[str, float]
-    pair_chains_iptm: dict[str, dict[str, float]]
+    ptm: dict[str, float] = Field(
+        description="Per-chain predicted TM-score, keyed by chain identifier."
+    )
+    pair_chains_iptm: dict[str, dict[str, float]] = Field(
+        description=(
+            "Pairwise inter-chain interface TM-score as a nested dict keyed by chain pair."
+        )
+    )
 
 
 # Affinity scores
 class BoltzAffinityScores(ResponseModel):
-    affinity_pred_value: float  # Predicted binding affinity from the ensemble model
-    affinity_probability_binary: (
-        float  # Predicted binding likelihood from the ensemble model
+    affinity_pred_value: float = Field(
+        description=(
+            "Predicted binding affinity as log10(IC50) in µM from the ensemble model; "
+            "lower values indicate stronger binding."
+        )
     )
-    affinity_pred_value1: (
-        float  # Predicted binding affinity from the first model of the ensemble
+    affinity_probability_binary: float = Field(
+        description=(
+            "Predicted probability that the ligand is a binder (0–1) "
+            "from the ensemble model."
+        )
     )
-    affinity_probability_binary1: (
-        float  # Predicted binding likelihood from the first model in the ensemble
+    affinity_pred_value1: float = Field(
+        description=(
+            "Predicted binding affinity (log10 IC50 in µM) from the first model "
+            "in the ensemble."
+        )
     )
-    affinity_pred_value2: (
-        float  # Predicted binding affinity from the second model of the ensemble
+    affinity_probability_binary1: float = Field(
+        description=(
+            "Predicted binding probability (0–1) from the first model in the ensemble."
+        )
     )
-    affinity_probability_binary2: (
-        float  # Predicted binding likelihood from the second model in the ensemble
+    affinity_pred_value2: float = Field(
+        description=(
+            "Predicted binding affinity (log10 IC50 in µM) from the second model "
+            "in the ensemble."
+        )
+    )
+    affinity_probability_binary2: float = Field(
+        description=(
+            "Predicted binding probability (0–1) from the second model in the ensemble."
+        )
     )
 
 
 class BoltzConfidenceScores(ResponseModel):
-    confidence_score: float
-    ptm: float
-    iptm: float
-    ligand_iptm: float
-    protein_iptm: float
-    complex_plddt: float
-    complex_iplddt: float
-    complex_pde: float
-    complex_ipde: float
-    chains_ptm: dict[str, float]
-    pair_chains_iptm: dict[str, dict[str, float]]
-    pair_chains_ipae: Optional[dict[str, dict[str, float]]] = None
-    pair_chains_ipsae: Optional[dict[str, dict[str, dict[str, float]]]] = None
+    confidence_score: float = Field(
+        description=(
+            "Aggregated structure confidence score "
+            "(0.8 × complex_plddt + 0.2 × iptm); higher is better."
+        )
+    )
+    ptm: float = Field(
+        description="Predicted TM-score (pTM) for the overall structure (0–1)."
+    )
+    iptm: float = Field(
+        description=(
+            "Predicted interface TM-score measuring inter-chain interface accuracy (0–1)."
+        )
+    )
+    ligand_iptm: float = Field(
+        description=(
+            "Predicted interface TM-score restricted to ligand–protein interfaces (0–1)."
+        )
+    )
+    protein_iptm: float = Field(
+        description=(
+            "Predicted interface TM-score restricted to protein–protein interfaces (0–1)."
+        )
+    )
+    complex_plddt: float = Field(
+        description=(
+            "Average per-residue pLDDT confidence over the full complex "
+            "(0–1; higher is more confident)."
+        )
+    )
+    complex_iplddt: float = Field(
+        description=(
+            "Interface-weighted average pLDDT over inter-chain residues "
+            "(0–1; higher is more confident)."
+        )
+    )
+    complex_pde: float = Field(
+        description=(
+            "Mean predicted distance error (PDE) over the full complex "
+            "in Ångströms; lower is better."
+        )
+    )
+    complex_ipde: float = Field(
+        description=(
+            "Mean predicted distance error (PDE) restricted to inter-chain residues "
+            "in Ångströms; lower is better."
+        )
+    )
+    chains_ptm: dict[str, float] = Field(
+        description="Per-chain predicted TM-score, keyed by chain identifier."
+    )
+    pair_chains_iptm: dict[str, dict[str, float]] = Field(
+        description=(
+            "Pairwise inter-chain interface TM-score as a nested dict keyed by chain pair."
+        )
+    )
+    pair_chains_ipae: Optional[dict[str, dict[str, float]]] = Field(
+        default=None,
+        description=(
+            'Symmetrized mean PAE between chain pairs (Å); requires include=["pae"]; '
+            "lower indicates higher interface confidence."
+        ),
+    )
+    pair_chains_ipsae: Optional[dict[str, dict[str, dict[str, float]]]] = Field(
+        default=None,
+        description=(
+            'ipSAE metrics between chain pairs; requires include=["pae"]; '
+            "higher values indicate more confident interface predictions."
+        ),
+    )
 
 
 # Embeddings response
 class BoltzEmbeddings(ResponseModel):
-    s: list[list[float]]  # single embeddings
-    z: list[list[list[float]]]  # pairwise embeddings
+    s: list[list[float]] = Field(
+        description=(
+            "Per-token single embeddings (shape: N × 384), "
+            "where N is the number of residues/atoms."
+        )
+    )
+    z: list[list[list[float]]] = Field(
+        description=(
+            "Pairwise embeddings (shape: N × N × 128) encoding inter-residue relationships."
+        )
+    )
 
 
 # Predict response
@@ -541,14 +791,41 @@ class BoltzPredictResponseOutput(ResponseModel):
             "exclude_none": True,
         },
     }
-    cif: str
-    plddt: Optional[list[float]] = None  # a lot of data takes a while to transfer
-    pae: Optional[list[list[float]]] = None
-    pde: Optional[list[list[float]]] = None
-    embeddings: Optional[BoltzEmbeddings] = None  # Optional embeddings if requested
-    confidence: BoltzConfidenceScores
-    affinity: Optional[BoltzAffinityScores] = (
-        None  # Optional affinity predictions if available
+    cif: str = Field(description="Predicted structure in mmCIF format.")
+    plddt: Optional[list[float]] = Field(
+        default=None,
+        description="Per-residue pLDDT confidence score (0–1; higher is more confident).",
+    )
+    pae: Optional[list[list[float]]] = Field(
+        default=None,
+        description="Predicted aligned error (PAE) matrix, in Ångströms.",
+    )
+    pde: Optional[list[list[float]]] = Field(
+        default=None,
+        description=(
+            "Predicted distance error (PDE) matrix in Ångströms; "
+            'present when include=["pde"] is set.'
+        ),
+    )
+    embeddings: Optional[BoltzEmbeddings] = Field(
+        default=None,
+        description=(
+            "Single and pairwise structural embeddings; "
+            'present when include=["embeddings"] is set.'
+        ),
+    )
+    confidence: BoltzConfidenceScores = Field(
+        description=(
+            "Predicted confidence scores for the structure, including "
+            "pTM, ipTM, pLDDT, and PDE metrics."
+        )
+    )
+    affinity: Optional[BoltzAffinityScores] = Field(
+        default=None,
+        description=(
+            "Predicted binding affinity scores (Boltz2 only); "
+            "present when the affinity parameter is set."
+        ),
     )
 
 
@@ -561,4 +838,6 @@ class BoltzPredictResponse(ResponseModel):
             "exclude_none": True,
         },
     }
-    results: list[BoltzPredictResponseOutput]
+    results: list[BoltzPredictResponseOutput] = Field(
+        description="Per-input results, returned in the same order as the request items."
+    )

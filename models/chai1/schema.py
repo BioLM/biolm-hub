@@ -50,11 +50,24 @@ class Chai1AlignmentDatabase(EnhancedStringEnum):
 
 
 class Chai1Molecule(RequestModel):
-    name: str
-    type: Chai1EntityType
-    sequence: Optional[str] = None
-    smiles: Optional[str] = None
-    alignment: Optional[dict[Chai1AlignmentDatabase, str]] = None
+    name: str = Field(
+        description="Human-readable name identifying this molecule within the complex (used in FASTA headers and MSA labels)."
+    )
+    type: Chai1EntityType = Field(
+        description="Molecule type (protein, DNA, RNA, ligand, polymer_hybrid, water, or unknown)."
+    )
+    sequence: Optional[str] = Field(
+        default=None,
+        description="Amino-acid, nucleotide (DNA/RNA), or SMILES sequence for the molecule; validated against the declared entity type.",
+    )
+    smiles: Optional[str] = Field(
+        default=None,
+        description="Ligand structure as a SMILES string.",
+    )
+    alignment: Optional[dict[Chai1AlignmentDatabase, str]] = Field(
+        default=None,
+        description="Pre-computed MSA alignments for this protein molecule; keys are database names, values are A3M-format strings.",
+    )
 
     @field_validator("sequence")
     def validate_sequence(cls, v, info: ValidationInfo):  # noqa: C901
@@ -129,14 +142,36 @@ class Chai1ScoreOptions(EnhancedStringEnum):
 
 
 class Chai1PredictRequestParams(RequestModel):
-    num_trunk_recycles: int = Field(default=3, ge=1, le=10)
-    num_diffusion_timesteps: int = Field(default=200, ge=50, le=200)
-    num_diffn_samples: int = Field(default=1, ge=1, le=5)
-    use_esm_embeddings: bool = True
-    seed: int = 42
+    num_trunk_recycles: int = Field(
+        default=3,
+        ge=1,
+        le=10,
+        description="Number of trunk recycling iterations; more recycles improve accuracy at the cost of inference time.",
+    )
+    num_diffusion_timesteps: int = Field(
+        default=200,
+        ge=50,
+        le=200,
+        description="Number of diffusion denoising timesteps; higher values improve structure quality at the cost of inference time.",
+    )
+    num_diffn_samples: int = Field(
+        default=1,
+        ge=1,
+        le=5,
+        description="Number of candidate structures to generate per input complex (1–5); more samples increase output diversity.",
+    )
+    use_esm_embeddings: bool = Field(
+        default=True,
+        description="Whether to use ESM protein language model embeddings to enrich sequence representations.",
+    )
+    seed: int = Field(
+        default=42,
+        description="Random seed for reproducible sampling.",
+    )
     # TODO: Disabled for now due to large size of PAE/PLDDT scores in response
     include: list[Chai1ScoreOptions] = Field(
-        default_factory=list
+        default_factory=list,
+        description="Confidence-score outputs to include in the response (currently forced to empty; pae/plddt are disabled).",
     )  # Will be forced to empty list by validator
 
     @field_validator("include")
@@ -145,7 +180,9 @@ class Chai1PredictRequestParams(RequestModel):
 
 
 class Chai1PredictRequestInput(RequestModel):
-    molecules: list[Chai1Molecule]
+    molecules: list[Chai1Molecule] = Field(
+        description="List of molecules forming the complex to predict (up to 5 entities per request)."
+    )
 
     @field_validator("molecules")
     def validate_molecules(cls, v):
@@ -159,10 +196,17 @@ class Chai1PredictRequestInput(RequestModel):
 
 
 class Chai1PredictRequest(RequestModel):
-    params: Chai1PredictRequestParams = Chai1PredictRequestParams()
+    params: Chai1PredictRequestParams = Field(
+        default_factory=Chai1PredictRequestParams,
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: Annotated[
         list[Chai1PredictRequestInput],
-        Field(min_length=1, max_length=Chai1Params.batch_size),
+        Field(
+            min_length=1,
+            max_length=Chai1Params.batch_size,
+            description="Batch of inputs to process in a single request.",
+        ),
     ]
 
 
@@ -178,12 +222,18 @@ class Chai1PredictResponseResult(ResponseModel):
         },
     }
 
-    cif: str  # CIF content as a string
-    pae: Optional[list[list[float]]] = None
-    plddt: Optional[list[float]] = None
+    cif: str = Field(description="Predicted structure in mmCIF format.")
+    pae: Optional[list[list[float]]] = Field(
+        default=None,
+        description="Predicted aligned error (PAE) matrix, in Ångströms.",
+    )
+    plddt: Optional[list[float]] = Field(
+        default=None,
+        description="Per-residue pLDDT confidence score (0–100; higher is more confident).",
+    )
 
 
 class Chai1PredictResponse(ResponseModel):
-    results: list[
-        list[Chai1PredictResponseResult]
-    ]  # multiple samples in list must correspond to idx of input items
+    results: list[list[Chai1PredictResponseResult]] = Field(
+        description="Per-input results, returned in the same order as the request items."
+    )  # multiple samples in list must correspond to idx of input items

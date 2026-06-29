@@ -1,0 +1,62 @@
+# Canonical schema-field descriptions — the consistency source of truth.
+#
+# `tooling/check_schema_docs.py` enforces this (and runs in CI via
+# tooling/test_schema_docs.py):
+#   1. EVERY request/response field across every model must carry a non-empty
+#      description that RENDERS in model_json_schema() (a `Field(description=...)`;
+#      a Field nested inside Optional[Annotated[...]] silently drops it — put the
+#      Field at field level instead).
+#   2. Fields listed under `verbatim` must use one of the exact strings given, so
+#      a shared concept reads identically across models. If a model genuinely
+#      needs different wording, add that wording to the allowed list here (with a
+#      comment) rather than letting it drift silently.
+#
+# Only fields with a single, stable, model-independent meaning are pinned here.
+# Everything else just needs *a* good description (rule 1) — wording is per-model.
+
+verbatim:
+  # Sampling / generation parameters
+  seed:
+    - "Random seed for reproducible sampling."
+  temperature:
+    - "Sampling temperature; higher values increase diversity."
+  top_p:
+    - "Nucleus (top-p) sampling threshold."
+  top_k:
+    - "Top-k sampling cutoff; only the k most likely tokens are sampled."
+  num_samples:
+    - "Number of sequences to generate per input."
+  max_new_tokens:
+    - "Maximum number of new tokens to generate."
+  diffusion_batch_size:
+    - "Number of diffusion samples to generate in parallel."
+
+  # Structure-confidence outputs. (pLDDT is intentionally NOT pinned: in folding
+  # models it's an output score, but in some models it's a boolean request flag.)
+  ptm:
+    - "Predicted TM-score (pTM) for the overall structure (0–1)."
+  pae:
+    - "Predicted aligned error (PAE) matrix, in Ångströms."
+
+  # Representation / token outputs. (`contacts` is NOT pinned: a predicted contact
+  # map in language models but an input contact restraint in structure models.)
+  per_token_embeddings:
+    - "Per-residue (per-token) embedding vectors."
+  residue_embeddings:
+    - "Per-residue embedding vectors."
+  sequence_index:
+    - "Index of the corresponding input sequence within the request batch."
+  vocab_tokens:
+    - "Vocabulary token order corresponding to the logits columns."
+  sequence_tokens:
+    - "Per-position input tokens, aligned with the logits."
+  layer:
+    - "Model layer this representation was taken from."
+  logits:
+    - "Per-position logits over the model vocabulary."
+
+  # Per-sequence likelihood — masked-LM models report a pseudo-log-likelihood;
+  # autoregressive models report an exact (joint) log-likelihood. Both allowed.
+  log_prob:
+    - "Pseudo-log-likelihood of the sequence under the model."
+    - "Log-likelihood of the sequence under the model."

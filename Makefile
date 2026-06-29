@@ -1,4 +1,4 @@
-.PHONY: install style lint format mypy check test test-unit test-integration test-deployment test-github-scripts docs clean
+.PHONY: install style lint format mypy check check-schema-docs test test-unit test-integration test-deployment test-github-scripts docs clean
 
 # Helper to scope tests to one or more models:
 #   make test MODEL=esm2
@@ -34,8 +34,12 @@ format:
 mypy:
 	uv run mypy .
 
-# Everything CI runs on every PR: style + types + unit + CI-script tests (no Modal/R2 needed).
-check: style mypy test-github-scripts test-unit
+# Everything CI runs on every PR: style + types + schema docs + unit + CI-script tests (no Modal/R2 needed).
+check: style mypy check-schema-docs test-github-scripts test-unit
+
+# Every schema field has a rendered Field(description=...) and shared fields match the glossary.
+check-schema-docs:
+	uv run python tooling/check_schema_docs.py
 
 # All non-deployment tests (scope with MODEL=/MODELS=).
 test:

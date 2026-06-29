@@ -52,82 +52,295 @@ class MPNNModelTypes(EnhancedStringEnum):
 
 
 class MPNNGenerateParams(RequestModel):
-    seed: Optional[int] = None
-    temperature: float = 0.1
-    fixed_residues: list[str] = Field(default_factory=partial(list, []))
-    redesigned_residues: list[str] = Field(default_factory=partial(list, []))
-    bias_AA: dict[str, float] = Field(default_factory=partial(dict, {}))
-    bias_AA_per_residue: dict[str, dict[str, float]] = Field(
-        default_factory=partial(dict, {})
+    seed: Optional[int] = Field(
+        default=None,
+        description="Random seed for reproducible sampling.",
     )
-    omit_AA: str = ""
-    omit_AA_per_residue: dict[str, str] = Field(default_factory=partial(dict, {}))
-    symmetry_residues: list[list[str]] = Field(default_factory=partial(list, []))
-    symmetry_weights: list[list[float]] = Field(default_factory=partial(list, []))
-    homo_oligomer: bool = False
-    chains_to_design: list[str] = Field(default_factory=partial(list, []))
-    parse_these_chains_only: list[str] = Field(default_factory=partial(list, []))
-    parse_atoms_with_zero_occupancy: bool = False
+    temperature: float = Field(
+        default=0.1,
+        description="Sampling temperature; higher values increase diversity.",
+    )
+    fixed_residues: list[str] = Field(
+        default_factory=partial(list, []),
+        description=(
+            "Residues to keep fixed (not redesigned), each as"
+            " ChainId+Position (e.g., 'A10')."
+        ),
+    )
+    redesigned_residues: list[str] = Field(
+        default_factory=partial(list, []),
+        description=(
+            "Residues to redesign; all others remain fixed."
+            " Each specified as ChainId+Position (e.g., 'A10')."
+        ),
+    )
+    bias_AA: dict[str, float] = Field(
+        default_factory=partial(dict, {}),
+        description=(
+            "Global log-odds bias per amino acid letter;"
+            " positive values favor, negative values disfavor that amino acid."
+        ),
+    )
+    bias_AA_per_residue: dict[str, dict[str, float]] = Field(
+        default_factory=partial(dict, {}),
+        description=(
+            "Per-residue log-odds biases keyed by residue spec (e.g., 'A10'),"
+            " mapping amino acid letter to bias value."
+        ),
+    )
+    omit_AA: str = Field(
+        default="",
+        description=(
+            "Amino acid letters to globally exclude from all designed positions"
+            " (e.g., 'CM' omits Cys and Met)."
+        ),
+    )
+    omit_AA_per_residue: dict[str, str] = Field(
+        default_factory=partial(dict, {}),
+        description=(
+            "Per-residue amino acid exclusions keyed by residue spec (e.g., 'A10')"
+            " with letters of amino acids to omit."
+        ),
+    )
+    symmetry_residues: list[list[str]] = Field(
+        default_factory=partial(list, []),
+        description=(
+            "Groups of residue specs that must receive the same amino acid"
+            " identity for symmetric design."
+        ),
+    )
+    symmetry_weights: list[list[float]] = Field(
+        default_factory=partial(list, []),
+        description=(
+            "Log-odds weights for each symmetry group; each list must match the"
+            " length of the corresponding symmetry_residues entry."
+        ),
+    )
+    homo_oligomer: bool = Field(
+        default=False,
+        description=(
+            "If true, automatically links equivalent positions across all chains"
+            " for homo-oligomeric symmetry."
+        ),
+    )
+    chains_to_design: list[str] = Field(
+        default_factory=partial(list, []),
+        description=(
+            "Chain identifiers to redesign; if empty, all chains in the structure"
+            " are designed."
+        ),
+    )
+    parse_these_chains_only: list[str] = Field(
+        default_factory=partial(list, []),
+        description=(
+            "If set, only these chains are parsed from the PDB;"
+            " all other chains are ignored."
+        ),
+    )
+    parse_atoms_with_zero_occupancy: bool = Field(
+        default=False,
+        description="If true, includes atoms with zero occupancy from the input PDB.",
+    )
 
-    number_of_batches: int = Field(1, ge=1, le=MPNNParams.num_batches)
-    batch_size: int = Field(1, ge=1, le=MPNNParams.batch_size)
+    number_of_batches: int = Field(
+        1,
+        ge=1,
+        le=MPNNParams.num_batches,
+        description=(
+            "Number of sampling batches to run;"
+            " total sequences generated = batch_size × number_of_batches."
+        ),
+    )
+    batch_size: int = Field(
+        1,
+        ge=1,
+        le=MPNNParams.batch_size,
+        description="Number of sequences to generate per batch.",
+    )
 
     # Side-chain (sc) model
-    repack_everything: Optional[bool] = False
-    pack_side_chains: Optional[bool] = False
+    repack_everything: Optional[bool] = Field(
+        default=False,
+        description=(
+            "If true, repacks all side chains (not just designed positions)"
+            " when side-chain packing is enabled."
+        ),
+    )
+    pack_side_chains: Optional[bool] = Field(
+        default=False,
+        description=(
+            "If true, runs the side-chain packer to produce all-atom output"
+            " alongside the backbone PDB."
+        ),
+    )
     number_of_packs_per_design: Optional[int] = Field(
-        1, ge=1, le=MPNNParams.sc_num_packs
+        1,
+        ge=1,
+        le=MPNNParams.sc_num_packs,
+        description=(
+            "Number of side-chain packing attempts per design;"
+            " results keyed by pack index in the response."
+        ),
     )
-    sc_num_samples: Optional[int] = Field(16, ge=1, le=MPNNParams.sc_num_samples)
+    sc_num_samples: Optional[int] = Field(
+        16,
+        ge=1,
+        le=MPNNParams.sc_num_samples,
+        description="Number of diffusion samples per design used by the side-chain packer.",
+    )
     sc_num_denoising_steps: Optional[int] = Field(
-        3, ge=1, le=MPNNParams.sc_denoising_steps
+        3,
+        ge=1,
+        le=MPNNParams.sc_denoising_steps,
+        description="Number of denoising steps performed by the side-chain packer per sample.",
     )
-    force_hetatm: Optional[bool] = False
-    pack_with_ligand_context: Optional[bool] = True
+    force_hetatm: Optional[bool] = Field(
+        default=False,
+        description=(
+            "If true, preserves the original HETATM record flags for non-protein"
+            " (ligand/water) atoms in the packed output PDB."
+        ),
+    )
+    pack_with_ligand_context: Optional[bool] = Field(
+        default=True,
+        description="If true, includes nearby ligand atoms when packing side chains.",
+    )
 
     # Hardcoded param defaults from argparser
-    fasta_seq_separation: str = ":"
-    file_ending: str = ""
-    zero_indexed: int = 0
+    fasta_seq_separation: str = Field(
+        default=":",
+        description="Separator character used between chains in multi-chain FASTA output.",
+    )
+    file_ending: str = Field(
+        default="",
+        description="Optional suffix appended to intermediate output file names; empty by default.",
+    )
+    zero_indexed: int = Field(
+        default=0,
+        description="Controls residue numbering in output files; 0 = one-based numbering (default).",
+    )
 
     # Unused or always set to None in the model
-    pdb_path: None = None
-    redesigned_residues_multi: None = None
-    fixed_residues_multi: None = None
-    bias_AA_per_residue_multi: None = None
-    omit_AA_per_residue_multi: None = None
-    save_stats: None = None
-    verbose: bool = True
-    ligand_mpnn_use_side_chain_context: None = None
+    pdb_path: None = Field(
+        default=None,
+        description="Internal use only; always null in API requests.",
+    )
+    redesigned_residues_multi: None = Field(
+        default=None,
+        description="Internal use only; always null in API requests.",
+    )
+    fixed_residues_multi: None = Field(
+        default=None,
+        description="Internal use only; always null in API requests.",
+    )
+    bias_AA_per_residue_multi: None = Field(
+        default=None,
+        description="Internal use only; always null in API requests.",
+    )
+    omit_AA_per_residue_multi: None = Field(
+        default=None,
+        description="Internal use only; always null in API requests.",
+    )
+    save_stats: None = Field(
+        default=None,
+        description="Internal use only; always null in API requests.",
+    )
+    verbose: bool = Field(
+        default=True,
+        description="Internal verbosity flag; always true in server mode.",
+    )
+    ligand_mpnn_use_side_chain_context: None = Field(
+        default=None,
+        description="Internal use only; always null in API requests.",
+    )
 
 
 class LigandMPNNGenerateParams(MPNNGenerateParams):
-    ligand_mpnn_use_atom_context: Optional[bool] = True
-    ligand_mpnn_cutoff_for_score: Optional[float] = 8.0
+    ligand_mpnn_use_atom_context: Optional[bool] = Field(
+        default=True,
+        description=(
+            "If true, conditions sequence design on non-protein atom context"
+            " (ligands, metals, nucleic acids)."
+        ),
+    )
+    ligand_mpnn_cutoff_for_score: Optional[float] = Field(
+        default=8.0,
+        description="Distance cutoff in Ångströms for including ligand atoms in the confidence score.",
+    )
 
 
 class GlobalMembraneMPNNGenerateParams(MPNNGenerateParams):
-    global_transmembrane_label: Optional[Literal["membrane", "soluble"]] = "soluble"
+    global_transmembrane_label: Optional[Literal["membrane", "soluble"]] = Field(
+        default="soluble",
+        description=(
+            "Whole-protein membrane context label;"
+            " 'membrane' for transmembrane proteins, 'soluble' otherwise."
+        ),
+    )
 
 
 class ResidueMembraneMPNNGenerateParams(MPNNGenerateParams):
-    transmembrane_buried: Optional[list[str]] = None
-    transmembrane_interface: Optional[list[str]] = None
+    transmembrane_buried: Optional[list[str]] = Field(
+        default=None,
+        description=(
+            "Residue specs for positions buried in the membrane core,"
+            " used to guide membrane-aware design."
+        ),
+    )
+    transmembrane_interface: Optional[list[str]] = Field(
+        default=None,
+        description=(
+            "Residue specs for positions at the membrane-water interface,"
+            " used to guide membrane-aware design."
+        ),
+    )
 
 
 class AllMPNNGenerateParams(MPNNGenerateParams):
-    ligand_mpnn_use_atom_context: Optional[bool] = True
-    ligand_mpnn_cutoff_for_score: Optional[float] = 8.0
-    global_transmembrane_label: Optional[Literal["membrane", "soluble"]] = "soluble"
-    transmembrane_buried: Optional[list[str]] = None
-    transmembrane_interface: Optional[list[str]] = None
+    ligand_mpnn_use_atom_context: Optional[bool] = Field(
+        default=True,
+        description=(
+            "If true, conditions sequence design on non-protein atom context"
+            " (ligands, metals, nucleic acids)."
+        ),
+    )
+    ligand_mpnn_cutoff_for_score: Optional[float] = Field(
+        default=8.0,
+        description="Distance cutoff in Ångströms for including ligand atoms in the confidence score.",
+    )
+    global_transmembrane_label: Optional[Literal["membrane", "soluble"]] = Field(
+        default="soluble",
+        description=(
+            "Whole-protein membrane context label;"
+            " 'membrane' for transmembrane proteins, 'soluble' otherwise."
+        ),
+    )
+    transmembrane_buried: Optional[list[str]] = Field(
+        default=None,
+        description=(
+            "Residue specs for positions buried in the membrane core,"
+            " used to guide membrane-aware design."
+        ),
+    )
+    transmembrane_interface: Optional[list[str]] = Field(
+        default=None,
+        description=(
+            "Residue specs for positions at the membrane-water interface,"
+            " used to guide membrane-aware design."
+        ),
+    )
 
 
 class MPNNGenerateRequestItem(RequestModel):
     pdb: Annotated[
         str,
         BeforeValidator(validate_pdb),
-        Field(..., min_length=1, max_length=max_pdb_str_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=max_pdb_str_len,
+            description="Input structure in PDB format.",
+        ),
     ]
 
 
@@ -204,10 +417,16 @@ def validate_residue_lists(
 
 
 class MPNNGenerateRequest(RequestModel):
-    params: AllMPNNGenerateParams
+    params: AllMPNNGenerateParams = Field(
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: Annotated[
         list[MPNNGenerateRequestItem],
-        Field(min_length=1, max_length=1),
+        Field(
+            min_length=1,
+            max_length=1,
+            description="Batch of inputs to process in a single request. Accepts exactly 1 PDB structure.",
+        ),
     ]
 
     @model_validator(mode="after")
@@ -332,26 +551,44 @@ class MPNNGenerateRequest(RequestModel):
 
 
 class LigandMPNNGenerateRequest(MPNNGenerateRequest):
-    params: LigandMPNNGenerateParams
+    params: LigandMPNNGenerateParams = Field(
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: Annotated[
         list[MPNNGenerateRequestItem],
-        Field(min_length=1, max_length=MPNNParams.items_batch_size),
+        Field(
+            min_length=1,
+            max_length=MPNNParams.items_batch_size,
+            description="Batch of inputs to process in a single request. Accepts exactly 1 PDB structure.",
+        ),
     ]
 
 
 class GlobalMembraneMPNNGenerateRequest(MPNNGenerateRequest):
-    params: GlobalMembraneMPNNGenerateParams
+    params: GlobalMembraneMPNNGenerateParams = Field(
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: Annotated[
         list[MPNNGenerateRequestItem],
-        Field(min_length=1, max_length=MPNNParams.items_batch_size),
+        Field(
+            min_length=1,
+            max_length=MPNNParams.items_batch_size,
+            description="Batch of inputs to process in a single request. Accepts exactly 1 PDB structure.",
+        ),
     ]
 
 
 class ResidueMembraneMPNNGenerateRequest(MPNNGenerateRequest):
-    params: ResidueMembraneMPNNGenerateParams
+    params: ResidueMembraneMPNNGenerateParams = Field(
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: Annotated[
         list[MPNNGenerateRequestItem],
-        Field(min_length=1, max_length=MPNNParams.items_batch_size),
+        Field(
+            min_length=1,
+            max_length=MPNNParams.items_batch_size,
+            description="Batch of inputs to process in a single request. Accepts exactly 1 PDB structure.",
+        ),
     ]
 
     @model_validator(mode="after")
@@ -387,18 +624,54 @@ FloatLike = Annotated[float, BeforeValidator(lambda v: float(v))]
 
 
 class MPNNGenerateResponseItem(RequestModel):
-    sequence: str
-    pdb: str
-    overall_confidence: FloatLike
-    ligand_confidence: FloatLike
-    seq_rec: FloatLike
-    log_probs: list[list[float]]
-    sampling_probs: list[list[float]]
+    sequence: str = Field(
+        description=(
+            "Designed amino acid sequence; chains are separated by ':'"
+            " when multiple chains are present."
+        ),
+    )
+    pdb: str = Field(
+        description=(
+            "Input backbone coordinates with the designed sequence threaded in,"
+            " in PDB format."
+        ),
+    )
+    overall_confidence: FloatLike = Field(
+        description=(
+            "Overall design confidence (0–1); computed as exp of negative"
+            " cross-entropy loss over designed positions."
+        ),
+    )
+    ligand_confidence: FloatLike = Field(
+        description=(
+            "Design confidence near ligand atoms (0–1);"
+            " most informative for LigandMPNN variants."
+        ),
+    )
+    seq_rec: FloatLike = Field(
+        description=(
+            "Sequence recovery relative to the native sequence (0–1);"
+            " fraction of positions matching native."
+        ),
+    )
+    log_probs: list[list[float]] = Field(
+        description="Per-residue log probabilities over 21 amino acid types, in the model's canonical order.",
+    )
+    sampling_probs: list[list[float]] = Field(
+        description="Per-residue sampling probabilities over 21 amino acid types, corresponding to log_probs.",
+    )
 
 
 class MPNNSCGenerateResponseItem(MPNNGenerateResponseItem):
-    pdb_packed: dict[str, str]
+    pdb_packed: dict[str, str] = Field(
+        description=(
+            "All-atom packed PDB structures after side-chain placement,"
+            " keyed by pack index (e.g., 'packed_1')."
+        ),
+    )
 
 
 class MPNNGenerateResponse(ResponseModel):
-    results: list[Union[MPNNSCGenerateResponseItem, MPNNGenerateResponseItem]]
+    results: list[Union[MPNNSCGenerateResponseItem, MPNNGenerateResponseItem]] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )

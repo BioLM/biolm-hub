@@ -220,28 +220,18 @@ class BoltzGenFileEntity(RequestModel):
     The file will be written to a temporary location when processing.
     """
 
-    cif: Optional[
-        Annotated[
-            str,
-            BeforeValidator(validate_cif),
-            Field(
-                min_length=1,
-                max_length=max_pdb_str_len,
-                description="Structure content in mmCIF format. Exactly one of 'cif' or 'pdb' must be provided.",
-            ),
-        ]
-    ] = None
-    pdb: Optional[
-        Annotated[
-            str,
-            BeforeValidator(validate_pdb),
-            Field(
-                min_length=1,
-                max_length=max_pdb_str_len,
-                description="Structure content in PDB format. Exactly one of 'cif' or 'pdb' must be provided.",
-            ),
-        ]
-    ] = None
+    cif: Optional[Annotated[str, BeforeValidator(validate_cif)]] = Field(
+        default=None,
+        min_length=1,
+        max_length=max_pdb_str_len,
+        description="Structure content in mmCIF format. Exactly one of 'cif' or 'pdb' must be provided.",
+    )
+    pdb: Optional[Annotated[str, BeforeValidator(validate_pdb)]] = Field(
+        default=None,
+        min_length=1,
+        max_length=max_pdb_str_len,
+        description="Structure content in PDB format. Exactly one of 'cif' or 'pdb' must be provided.",
+    )
     include: Optional[list[BoltzGenChainSelector]] = Field(
         default=None,
         description=(
@@ -637,11 +627,7 @@ class BoltzGenDesignParams(RequestModel):
         default=None,
         ge=1,
         le=100,
-        description=(
-            "Number of backbone structures to generate per diffusion forward pass. "
-            "Higher values use more GPU memory but can be faster overall. "
-            "If omitted, boltzgen uses its internal default. Tune this if you hit OOM errors."
-        ),
+        description="Number of diffusion samples to generate in parallel.",
     )
     step_scale: Optional[float] = Field(
         default=None,
@@ -786,9 +772,16 @@ class BoltzGenDesignRequest(RequestModel):
 
     items: Annotated[
         list[BoltzGenDesignRequestItem],
-        Field(min_length=1, max_length=BoltzGenParams.batch_size),
+        Field(
+            min_length=1,
+            max_length=BoltzGenParams.batch_size,
+            description="Batch of inputs to process in a single request. Up to 1 design system per request.",
+        ),
     ]
-    params: BoltzGenDesignParams = BoltzGenDesignParams()
+    params: BoltzGenDesignParams = Field(
+        default_factory=BoltzGenDesignParams,
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
 
 
 ### BoltzGen Response

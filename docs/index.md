@@ -29,6 +29,9 @@ bm deploy esm2    # deploys the model to your Modal workspace
   schemas, structured logging, and a consistent error taxonomy — so an agent that learns one model
   knows them all.
 
-!!! note
-    This site is under construction; full per-model API docs and the rendered knowledge graph land
-    with the documentation workstream.
+## Start here
+
+- [Quickstart](quickstart.md) — clone to a running model in a few commands.
+- [Model catalog](models/index.md) — every model, with API schema, when-to-use guidance, and license.
+- [Philosophy](philosophy.md) — the design center.
+- [Contributing](contributing.md) — add a model and the house rules.

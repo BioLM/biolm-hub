@@ -33,12 +33,33 @@ class ProGen2ModelTypes(EnhancedStringEnum):
 
 
 class ProGen2GenerateParams(RequestModel):
-    temperature: float = Field(default=0.8, ge=0.0, le=8.0)
-    top_p: float = Field(default=0.9, ge=0.0, le=1.0)
-    num_samples: int = Field(default=1, ge=1, le=3)
-    max_length: int = Field(default=128, ge=12, le=ProGen2Params.max_sequence_len)
+    temperature: float = Field(
+        default=0.8,
+        ge=0.0,
+        le=8.0,
+        description="Sampling temperature; higher values increase diversity.",
+    )
+    top_p: float = Field(
+        default=0.9,
+        ge=0.0,
+        le=1.0,
+        description="Nucleus (top-p) sampling threshold.",
+    )
+    num_samples: int = Field(
+        default=1,
+        ge=1,
+        le=3,
+        description="Number of sequences to generate per input.",
+    )
+    max_length: int = Field(
+        default=128,
+        ge=12,
+        le=ProGen2Params.max_sequence_len,
+        description="Maximum length of the generated sequence.",
+    )
     seed: int | None = Field(
-        default=None, description="Random seed for reproducibility"
+        default=None,
+        description="Random seed for reproducible sampling.",
     )
 
 
@@ -46,15 +67,26 @@ class ProGen2GenerateRequestItem(RequestModel):
     context: Annotated[
         str,
         BeforeValidator(validate_aa_unambiguous),
-        Field(..., min_length=1, max_length=ProGen2Params.max_sequence_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=ProGen2Params.max_sequence_len,
+            description="Amino acid seed sequence (unambiguous codes) to condition generation; the output begins with this context.",
+        ),
     ]
 
 
 class ProGen2GenerateRequest(RequestModel):
-    params: ProGen2GenerateParams
+    params: ProGen2GenerateParams = Field(
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: Annotated[
         list[ProGen2GenerateRequestItem],
-        Field(min_length=1, max_length=ProGen2Params.batch_size),
+        Field(
+            min_length=1,
+            max_length=ProGen2Params.batch_size,
+            description="Batch of inputs to process in a single request. Up to 1 sequence per request.",
+        ),
     ]
 
 
@@ -62,13 +94,21 @@ class ProGen2GenerateRequest(RequestModel):
 
 
 class ProGen2GenerateResponseGenerated(RequestModel):
-    sequence: str
-    ll_sum: float
-    ll_mean: float
+    sequence: str = Field(
+        description="Generated protein sequence (context prefix + completion), with terminal tokens stripped.",
+    )
+    ll_sum: float = Field(
+        description="Summed bidirectional log-likelihood (forward + reverse passes averaged); more negative means less likely.",
+    )
+    ll_mean: float = Field(
+        description="Mean bidirectional log-likelihood per position; more negative means less likely per residue.",
+    )
 
 
 ProGen2GenerateResponseResult = list[ProGen2GenerateResponseGenerated]
 
 
 class ProGen2GenerateResponse(ResponseModel):
-    results: list[ProGen2GenerateResponseResult]
+    results: list[ProGen2GenerateResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )

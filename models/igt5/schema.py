@@ -48,7 +48,8 @@ class IgT5EncodeIncludeOptions(EnhancedStringEnum):
 
 class IgT5EncodeRequestParams(RequestModel):
     include: list[IgT5EncodeIncludeOptions] = Field(
-        default_factory=partial(list, [IgT5EncodeIncludeOptions.MEAN])
+        default_factory=partial(list, [IgT5EncodeIncludeOptions.MEAN]),
+        description="Optional outputs to compute and include in the response.",
     )
 
 
@@ -56,39 +57,32 @@ class IgT5EncodeRequestItem(RequestModel):
     # Canonical antibody field names; old `heavy`/`light` accepted via alias.
     model_config = ConfigDict(populate_by_name=True)
 
-    heavy_chain: Optional[
-        Annotated[
-            str,
-            BeforeValidator(validate_aa_extended),
-            Field(
-                None,
-                min_length=1,
-                max_length=IgT5Params.max_sequence_len,
-                validation_alias=AliasChoices("heavy_chain", "heavy"),
-            ),
-        ]
-    ] = None
+    heavy_chain: Optional[Annotated[str, BeforeValidator(validate_aa_extended)]] = (
+        Field(
+            default=None,
+            min_length=1,
+            max_length=IgT5Params.max_sequence_len,
+            validation_alias=AliasChoices("heavy_chain", "heavy"),
+            description="Antibody heavy-chain amino-acid sequence.",
+        )
+    )
 
-    light_chain: Optional[
-        Annotated[
-            str,
-            BeforeValidator(validate_aa_extended),
-            Field(
-                None,
-                min_length=1,
-                max_length=IgT5Params.max_sequence_len,
-                validation_alias=AliasChoices("light_chain", "light"),
-            ),
-        ]
-    ] = None
+    light_chain: Optional[Annotated[str, BeforeValidator(validate_aa_extended)]] = (
+        Field(
+            default=None,
+            min_length=1,
+            max_length=IgT5Params.max_sequence_len,
+            validation_alias=AliasChoices("light_chain", "light"),
+            description="Antibody light-chain amino-acid sequence.",
+        )
+    )
 
-    sequence: Optional[
-        Annotated[
-            str,
-            BeforeValidator(validate_aa_extended),
-            Field(None, min_length=1, max_length=IgT5Params.max_unpaired_sequence_len),
-        ]
-    ] = None
+    sequence: Optional[Annotated[str, BeforeValidator(validate_aa_extended)]] = Field(
+        default=None,
+        min_length=1,
+        max_length=IgT5Params.max_unpaired_sequence_len,
+        description="Single antibody-chain sequence in single-letter amino-acid codes (unpaired mode).",
+    )
 
     # Private attribute to store the inferred "kind"
     _kind: Optional[str] = PrivateAttr()
@@ -133,9 +127,14 @@ class IgT5EncodeRequestItem(RequestModel):
 
 
 class IgT5EncodeRequest(RequestModel):
-    params: IgT5EncodeRequestParams = Field(default_factory=IgT5EncodeRequestParams)
+    params: IgT5EncodeRequestParams = Field(
+        default_factory=IgT5EncodeRequestParams,
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: list[IgT5EncodeRequestItem] = Field(
-        min_length=1, max_length=IgT5Params.batch_size
+        min_length=1,
+        max_length=IgT5Params.batch_size,
+        description="Batch of inputs to process in a single request. Up to 8 sequences per request.",
     )
 
 
@@ -150,11 +149,19 @@ class IgT5EncodeResponseResult(ResponseModel):
         exclude_none=True,
     )
 
-    embeddings: Optional[list[float]] = None
-    residue_embeddings: Optional[list[list[float]]] = None
+    embeddings: Optional[list[float]] = Field(
+        default=None,
+        description="Mean-pooled embedding vector for the antibody sequence (included when 'mean' is in params.include).",
+    )
+    residue_embeddings: Optional[list[list[float]]] = Field(
+        default=None,
+        description="Per-residue embedding vectors.",
+    )
     # attentions: Optional[list[list[float]]] = None
     # logits: Optional[list[list[float]]] = None
 
 
 class IgT5EncodeResponse(ResponseModel):
-    results: list[IgT5EncodeResponseResult]
+    results: list[IgT5EncodeResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )

@@ -51,7 +51,8 @@ class IgBertEncodeIncludeOptions(EnhancedStringEnum):
 
 class IgBertEncodeRequestParams(RequestModel):
     include: list[IgBertEncodeIncludeOptions] = Field(
-        default_factory=partial(list, [IgBertEncodeIncludeOptions.MEAN])
+        default_factory=partial(list, [IgBertEncodeIncludeOptions.MEAN]),
+        description="Optional outputs to compute and include in the response.",
     )
 
 
@@ -59,41 +60,32 @@ class IgBertEncodeRequestItem(RequestModel):
     # Canonical antibody field names; old `heavy`/`light` accepted via alias.
     model_config = ConfigDict(populate_by_name=True)
 
-    heavy_chain: Optional[
-        Annotated[
-            str,
-            BeforeValidator(validate_aa_extended),
-            Field(
-                None,
-                min_length=1,
-                max_length=IgBertParams.max_sequence_len,
-                validation_alias=AliasChoices("heavy_chain", "heavy"),
-            ),
-        ]
-    ] = None
+    heavy_chain: Optional[Annotated[str, BeforeValidator(validate_aa_extended)]] = (
+        Field(
+            default=None,
+            min_length=1,
+            max_length=IgBertParams.max_sequence_len,
+            validation_alias=AliasChoices("heavy_chain", "heavy"),
+            description="Antibody heavy-chain amino-acid sequence.",
+        )
+    )
 
-    light_chain: Optional[
-        Annotated[
-            str,
-            BeforeValidator(validate_aa_extended),
-            Field(
-                None,
-                min_length=1,
-                max_length=IgBertParams.max_sequence_len,
-                validation_alias=AliasChoices("light_chain", "light"),
-            ),
-        ]
-    ] = None
+    light_chain: Optional[Annotated[str, BeforeValidator(validate_aa_extended)]] = (
+        Field(
+            default=None,
+            min_length=1,
+            max_length=IgBertParams.max_sequence_len,
+            validation_alias=AliasChoices("light_chain", "light"),
+            description="Antibody light-chain amino-acid sequence.",
+        )
+    )
 
-    sequence: Optional[
-        Annotated[
-            str,
-            BeforeValidator(validate_aa_extended),
-            Field(
-                None, min_length=1, max_length=IgBertParams.max_unpaired_sequence_len
-            ),
-        ]
-    ] = None
+    sequence: Optional[Annotated[str, BeforeValidator(validate_aa_extended)]] = Field(
+        default=None,
+        min_length=1,
+        max_length=IgBertParams.max_unpaired_sequence_len,
+        description="An antibody chain sequence in single-letter amino-acid codes, for unpaired mode.",
+    )
 
     # Private attribute to store the inferred "kind"
     _kind: Optional[str] = PrivateAttr()
@@ -134,9 +126,14 @@ class IgBertEncodeRequestItem(RequestModel):
 
 
 class IgBertEncodeRequest(RequestModel):
-    params: IgBertEncodeRequestParams = Field(default_factory=IgBertEncodeRequestParams)
+    params: IgBertEncodeRequestParams = Field(
+        default_factory=IgBertEncodeRequestParams,
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: list[IgBertEncodeRequestItem] = Field(
-        min_length=1, max_length=IgBertParams.batch_size
+        min_length=1,
+        max_length=IgBertParams.batch_size,
+        description="Batch of inputs to process in a single request. Up to 32 sequences per request.",
     )
 
 
@@ -149,38 +146,28 @@ class IgBertGenerateRequestItem(RequestModel):
     # Canonical antibody field names; old `heavy`/`light` accepted via alias.
     model_config = ConfigDict(populate_by_name=True)
 
-    heavy_chain: Optional[
-        Annotated[
-            str,
-            Field(
-                None,
-                min_length=1,
-                max_length=IgBertParams.max_sequence_len,
-                validation_alias=AliasChoices("heavy_chain", "heavy"),
-            ),
-        ]
-    ] = None
+    heavy_chain: Optional[str] = Field(
+        default=None,
+        min_length=1,
+        max_length=IgBertParams.max_sequence_len,
+        validation_alias=AliasChoices("heavy_chain", "heavy"),
+        description="Antibody heavy-chain sequence with * at masked positions to be restored.",
+    )
 
-    light_chain: Optional[
-        Annotated[
-            str,
-            Field(
-                None,
-                min_length=1,
-                max_length=IgBertParams.max_sequence_len,
-                validation_alias=AliasChoices("light_chain", "light"),
-            ),
-        ]
-    ] = None
+    light_chain: Optional[str] = Field(
+        default=None,
+        min_length=1,
+        max_length=IgBertParams.max_sequence_len,
+        validation_alias=AliasChoices("light_chain", "light"),
+        description="Antibody light-chain sequence with * at masked positions to be restored.",
+    )
 
-    sequence: Optional[
-        Annotated[
-            str,
-            Field(
-                None, min_length=1, max_length=IgBertParams.max_unpaired_sequence_len
-            ),
-        ]
-    ] = None
+    sequence: Optional[str] = Field(
+        default=None,
+        min_length=1,
+        max_length=IgBertParams.max_unpaired_sequence_len,
+        description="An antibody chain sequence in single-letter amino-acid codes with * at masked positions, for unpaired mode.",
+    )
 
     _kind: Optional[str] = PrivateAttr()
 
@@ -217,13 +204,17 @@ class IgBertGenerateRequestItem(RequestModel):
 
 class IgBertGenerateRequest(RequestModel):
     items: list[IgBertGenerateRequestItem] = Field(
-        min_length=1, max_length=IgBertParams.batch_size
+        min_length=1,
+        max_length=IgBertParams.batch_size,
+        description="Batch of inputs to process in a single request. Up to 32 sequences per request.",
     )
 
 
 class IgBertLogProbRequest(RequestModel):
     items: list[IgBertEncodeRequestItem] = Field(
-        min_length=1, max_length=IgBertParams.batch_size
+        min_length=1,
+        max_length=IgBertParams.batch_size,
+        description="Batch of inputs to process in a single request. Up to 32 sequences per request.",
     )
 
 
@@ -237,29 +228,55 @@ class IgBertEncodeResponseResult(ResponseModel):
         extra="forbid",
     )
 
-    embeddings: Optional[list[float]] = None
-    residue_embeddings: Optional[list[list[float]]] = None
-    logits: Optional[list[list[float]]] = None
+    embeddings: Optional[list[float]] = Field(
+        default=None,
+        description="Mean-pooled embedding vector for the sequence.",
+    )
+    residue_embeddings: Optional[list[list[float]]] = Field(
+        default=None,
+        description="Per-residue embedding vectors.",
+    )
+    logits: Optional[list[list[float]]] = Field(
+        default=None,
+        description="Per-position logits over the model vocabulary.",
+    )
 
 
 class IgBertEncodeResponse(ResponseModel):
-    results: list[IgBertEncodeResponseResult]
+    results: list[IgBertEncodeResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )
 
 
 class IgBertGenerateResponseResult(ResponseModel):
     # Restore output mirrors the canonical antibody field names.
-    heavy_chain: Optional[str] = None
-    light_chain: Optional[str] = None
-    sequence: Optional[str] = None
+    heavy_chain: Optional[str] = Field(
+        default=None,
+        description="Restored antibody heavy-chain sequence with masked positions filled in.",
+    )
+    light_chain: Optional[str] = Field(
+        default=None,
+        description="Restored antibody light-chain sequence with masked positions filled in.",
+    )
+    sequence: Optional[str] = Field(
+        default=None,
+        description="Restored antibody chain sequence with masked positions filled in, populated in unpaired mode.",
+    )
 
 
 class IgBertGenerateResponse(ResponseModel):
-    results: list[IgBertGenerateResponseResult]
+    results: list[IgBertGenerateResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )
 
 
 class IgBertLogProbResponseResult(ResponseModel):
-    log_prob: float
+    log_prob: float = Field(
+        description="Pseudo-log-likelihood of the sequence under the model.",
+    )
 
 
 class IgBertLogProbResponse(ResponseModel):
-    results: list[IgBertLogProbResponseResult]
+    results: list[IgBertLogProbResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )

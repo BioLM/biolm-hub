@@ -95,12 +95,15 @@ Per-model LICENSE files frequently carry **inferred** copyright holders/years (f
 - **igbert/igt5** — CC-BY-4.0 (attribution obligation).
 - Inferred holders/years across Batch B/E/F + boltz/chai1/rf3/rfd3/boltzgen/abodybuilder3/immunebuilder/etc.
 - W-sec: gitleaks/trufflehog scan (CI + pre-launch); confirm `biolm-public` holds **no raw third-party PDFs**;
-  fix any remaining internal identifiers. **De-internalization sweep — `biolm-modal`→`biolm-public` bucket
-  name still appears in ~11 non-`.planning` files** (`models/dummy/{sources.yaml,BIOLOGY.md}` doc blocks,
-  `models/esmstabp/{README,MODEL}.md`+`_train.py`+`download.py`, `models/boltz/{fixture,test}.py`,
-  `models/deepviscosity/fixture.py`, `models/commons/storage/cache.py`). W10 fixed only the dummy template's
-  W10-broken `bm r2 cp` command + `dummy/MODEL.md`; the rest (incl. code path-strings in fixtures/tests that
-  need care) is this sweep. Also de-internalize the temp bootstrap `CLAUDE.md` (deleted at launch anyway).
+  fix any remaining internal identifiers. **De-internalization sweep — `biolm-modal`→`biolm-public`.** W14
+  fixed the PROSE leaks that render into the docs site (`models/esmstabp/{README,MODEL}.md` example paths +
+  `models/dummy/BIOLOGY.md`); the temp bootstrap `CLAUDE.md` was replaced by the permanent public one. **Still
+  open (functional path-strings — change with care, may affect Milestone B R2 paths):**
+  `models/dummy/sources.yaml` (comment), `models/esmstabp/{_train.py,download.py}`,
+  `models/boltz/{fixture,test}.py`, `models/deepviscosity/fixture.py`, `models/commons/storage/cache.py`.
+- **abodybuilder3 README doc bug (found in W14 review):** `models/abodybuilder3/README.md` says output pLDDT is
+  on a `0–1` scale, but upstream (`compute_plddt` multiplies by 100) + BIOLOGY.md/comparison.yaml say `0–100`.
+  Fix the README in a docs pass (schema description is correct at 0–100).
 
 ---
 
@@ -200,8 +203,25 @@ Per-model LICENSE files frequently carry **inferred** copyright holders/years (f
   `download.py` taught the hand-rolled `AcquisitionConfig` instead of the canonical `r2_then_hf/library/urls`
   wrappers). **FOLLOW-UP:** a fresh-Opus skills review never completed cleanly — re-run one when infra is stable
   (low risk; in-context review was thorough).
-- **W14 Docs site + DX** — mkdocs in CI; per-model FastAPI schema docs; render the knowledge graph; **author the
-  permanent public `CLAUDE.md` and DELETE the temporary bootstrap `CLAUDE.md`** (tracked deliverable).
+- **W14 Docs site + DX — ✅ DONE (Modal-free; `mkdocs build --strict` green, fresh-Opus infra review).**
+  Build-time generation via `mkdocs-gen-files`+`mkdocs-literate-nav` (pinned to pre-`properdocs` versions to
+  avoid that dep's injected FUD banner): `docs/gen_pages.py`+`docs/_docgen.py` emit one rich page per model
+  (badges → at-a-glance from comparison.yaml → auto API/schema field tables + collapsible raw JSON → README/
+  MODEL/BIOLOGY embedded with heading-demotion + GitHub link-rewrite + HTML-comment stripping → license/papers
+  from sources.yaml, internal `*_r2` paths NOT rendered) + catalog index + quickstart + single-source-mirrored
+  Philosophy/Contributing/Future-work. Dormant Pages deploy `.github/workflows/docs.yml` (gated on `PAGES_ENABLED`
+  var). **Permanent public `CLAUDE.md` authored; temp bootstrap replaced.**
+  **MAJOR ADD-ON (user-requested): per-field OpenAPI descriptions across ALL 44 models.** Mechanism =
+  `Field(description=...)` (the only thing Pydantic renders; comments don't; attribute-docstrings fail for
+  sadie's v1 path). Canonical glossary (`tooling/field_glossary.yaml`) + CI guard `tooling/check_schema_docs.py`
+  (checks RENDERED descriptions + glossary drift; wired into `make check`+`ci.yml`). Done via a write→review
+  agent fan-out (sonnet writers, opus reviewers); global checker `✓ (44 models)`, ruff+black clean.
+  **Fixed a pre-existing LATENT BUG: 6 models (igbert/igt5/boltzgen/immunefold/prody/spurs, 21 fields) had
+  `Field` nested in `Optional[Annotated[...]]`, which Pydantic silently drops — so their descriptions AND
+  `validation_alias`/constraints never rendered. Restructured to field-level `Field` → descriptions render +
+  the dead `heavy`/`light` aliases + length constraints now work.** ⚠️ This is a validation BEHAVIOR change
+  (aliases/constraints now active) — re-confirm at Milestone B (canonical-input goldens unaffected; only
+  previously-ignored aliases/constraints newly apply). mypy stays CI-gated (1.5.1 crashes on numpy stubs locally).
 - **W15 Off-Modal Dockerfile** — OPTIONAL (go/defer decided late); eligible models only (no GPU-at-build, public source).
 - **W-sec** — secret + license hygiene (see §3); gates Stage 7.
 - **W-launch** — irreversible ordered sequence: R2 completeness sweep + sec sign-off → public CLAUDE.md → delete

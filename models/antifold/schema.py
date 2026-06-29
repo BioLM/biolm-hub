@@ -146,18 +146,24 @@ class AntiFoldPredictRequestParams(RequestModel):
     model_config = ConfigDict(populate_by_name=True)
 
     heavy_chain_id: Optional[str] = Field(
-        default=None, validation_alias=AliasChoices("heavy_chain_id", "heavy_chain")
+        default=None,
+        validation_alias=AliasChoices("heavy_chain_id", "heavy_chain"),
+        description="PDB chain identifier for the antibody heavy chain (VH).",
     )
     light_chain_id: Optional[str] = Field(
-        default=None, validation_alias=AliasChoices("light_chain_id", "light_chain")
+        default=None,
+        validation_alias=AliasChoices("light_chain_id", "light_chain"),
+        description="PDB chain identifier for the antibody light chain (VL).",
     )
     nanobody_chain_id: Optional[str] = Field(
         default=None,
         validation_alias=AliasChoices("nanobody_chain_id", "nanobody_chain"),
+        description="PDB chain identifier for the nanobody (VHH) chain; mutually exclusive with heavy_chain_id.",
     )
     antigen_chain_id: Optional[str] = Field(
         default=None,
         validation_alias=AliasChoices("antigen_chain_id", "antigen_chain"),
+        description="Optional PDB chain identifier for the antigen chain, providing structural context during inference.",
     )
 
     # Private attribute to store the inferred "chain mode"
@@ -206,7 +212,8 @@ class AntiFoldPredictRequestParams(RequestModel):
 
 class AntiFoldEncodeRequestParams(AntiFoldPredictRequestParams):
     include: list[AntiFoldEncodeIncludeOptions] = Field(
-        default_factory=partial(list, [AntiFoldEncodeIncludeOptions.MEAN])
+        default_factory=partial(list, [AntiFoldEncodeIncludeOptions.MEAN]),
+        description="Optional outputs to compute and include in the response.",
     )
 
 
@@ -214,14 +221,23 @@ class AntiFoldBaseRequestItem(RequestModel):
     pdb: Annotated[
         str,
         BeforeValidator(validate_pdb),
-        Field(..., min_length=1, max_length=max_pdb_str_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=max_pdb_str_len,
+            description="Input structure in PDB format.",
+        ),
     ]
 
 
 class AntiFoldPredictRequest(RequestModel):
-    params: AntiFoldPredictRequestParams
+    params: AntiFoldPredictRequestParams = Field(
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: list[AntiFoldBaseRequestItem] = Field(
-        min_length=1, max_length=AntiFoldParams.batch_size
+        min_length=1,
+        max_length=AntiFoldParams.batch_size,
+        description="Batch of inputs to process in a single request. Up to 32 structures per request.",
     )
 
     @model_validator(mode="after")
@@ -252,14 +268,32 @@ class AntiFoldPredictRequest(RequestModel):
 
 
 class AntiFoldEncodeRequest(AntiFoldPredictRequest):
-    params: AntiFoldEncodeRequestParams
+    params: AntiFoldEncodeRequestParams = Field(
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
 
 
 class AntiFoldGenerateRequestParams(AntiFoldPredictRequestParams):
-    seed: Optional[int] = None
-    include: Optional[list[AntiFoldGenerateIncludeOptions]] = None
-    num_seq_per_target: int = Field(default=1, ge=1, le=50000)
-    sampling_temp: float = Field(default=0.2, ge=0.0, le=4.0)
+    seed: Optional[int] = Field(
+        default=None,
+        description="Random seed for reproducible sampling.",
+    )
+    include: Optional[list[AntiFoldGenerateIncludeOptions]] = Field(
+        default=None,
+        description="Optional outputs to compute and include in the response.",
+    )
+    num_seq_per_target: int = Field(
+        default=1,
+        ge=1,
+        le=50000,
+        description="Number of sequences to generate per input.",
+    )
+    sampling_temp: float = Field(
+        default=0.2,
+        ge=0.0,
+        le=4.0,
+        description="Sampling temperature; higher values increase diversity.",
+    )
     regions: Union[list[AntiFoldValidRegions], list[int]] = Field(
         default_factory=partial(
             list,
@@ -268,25 +302,44 @@ class AntiFoldGenerateRequestParams(AntiFoldPredictRequestParams):
                 AntiFoldValidRegions.CDR2,
                 AntiFoldValidRegions.CDR3,
             ],
-        )
+        ),
+        description='Antibody regions to redesign; accepts named regions (e.g. "CDR3", "FWH1") or a list of 1-based residue positions.',
     )
-    limit_expected_variation: Optional[bool] = False
-    exclude_heavy: Optional[bool] = False
-    exclude_light: Optional[bool] = False
+    limit_expected_variation: Optional[bool] = Field(
+        default=False,
+        description="If true, constrain sequence sampling to the natural variation range observed in antibody databases.",
+    )
+    exclude_heavy: Optional[bool] = Field(
+        default=False,
+        description="If true, exclude the heavy chain from sequence sampling (the light chain is designed instead).",
+    )
+    exclude_light: Optional[bool] = Field(
+        default=False,
+        description="If true, exclude the light chain from sequence sampling (the heavy chain is designed instead).",
+    )
 
 
 class AntiFoldGenerateRequestItem(RequestModel):
     pdb: Annotated[
         str,
         BeforeValidator(validate_pdb),
-        Field(..., min_length=1, max_length=max_pdb_str_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=max_pdb_str_len,
+            description="Input structure in PDB format.",
+        ),
     ]
 
 
 class AntiFoldGenerateRequest(RequestModel):
-    params: AntiFoldGenerateRequestParams
+    params: AntiFoldGenerateRequestParams = Field(
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: list[AntiFoldBaseRequestItem] = Field(
-        min_length=1, max_length=AntiFoldParams.generate_batch_size
+        min_length=1,
+        max_length=AntiFoldParams.generate_batch_size,
+        description="Batch of inputs to process in a single request. Up to 1 structure per request.",
     )
 
     @model_validator(mode="after")
@@ -331,24 +384,57 @@ class AntiFoldEncodeResponseResult(ResponseModel):
         },
     }
 
-    embeddings: Optional[list[float]] = None
-    residue_embeddings: Optional[list[list[float]]] = None
-    logits: Optional[list[list[float]]] = None
-    pdb_posins: Optional[list[int]] = None
-    pdb_chain: Optional[list[str]] = None
-    pdb_res: Optional[list[str]] = None
-    top_res: Optional[list[str]] = None
-    perplexity: Optional[list[float]] = None
-    vocab: Optional[list[str]] = None
+    embeddings: Optional[list[float]] = Field(
+        default=None,
+        description="Mean-pooled embedding vector for the sequence.",
+    )
+    residue_embeddings: Optional[list[list[float]]] = Field(
+        default=None,
+        description="Per-residue embedding vectors.",
+    )
+    logits: Optional[list[list[float]]] = Field(
+        default=None,
+        description="Per-position logits over the model vocabulary.",
+    )
+    pdb_posins: Optional[list[int]] = Field(
+        default=None,
+        description="IMGT-based residue position numbers for each position in the output.",
+    )
+    pdb_chain: Optional[list[str]] = Field(
+        default=None,
+        description="PDB chain identifier for each output position.",
+    )
+    pdb_res: Optional[list[str]] = Field(
+        default=None,
+        description="Native amino-acid residue type at each output position.",
+    )
+    top_res: Optional[list[str]] = Field(
+        default=None,
+        description="Highest-probability predicted amino acid at each position.",
+    )
+    perplexity: Optional[list[float]] = Field(
+        default=None,
+        description="Per-position perplexity values for the sequence under the model (lower means more likely).",
+    )
+    vocab: Optional[list[str]] = Field(
+        default=None,
+        description="Vocabulary token order corresponding to the logits columns.",
+    )
 
 
 class AntiFoldEncodeResponse(ResponseModel):
-    results: list[AntiFoldEncodeResponseResult]
+    results: list[AntiFoldEncodeResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )
 
 
 class AntiFoldGenerateResponseResultInput(RequestModel):
-    global_score: float
-    sequence: str
+    global_score: float = Field(
+        description="Mean per-residue inverse-folding log-likelihood over the full antibody sequence given the backbone structure.",
+    )
+    sequence: str = Field(
+        description="Antibody sequence in single-letter amino-acid codes.",
+    )
 
 
 class AntiFoldGenerateResponseResultSamples(RequestModel):
@@ -359,17 +445,32 @@ class AntiFoldGenerateResponseResultSamples(RequestModel):
             "exclude_none": True,  # Ensures that None fields do not appear in JSON
         },
     }
-    global_score: float
-    score: float
+    global_score: float = Field(
+        description="Mean per-residue inverse-folding log-likelihood over the full antibody sequence given the backbone structure.",
+    )
+    score: float = Field(
+        description="Mean per-residue inverse-folding log-likelihood over the designed region(s) of this sample.",
+    )
     # Designed antibody chain sequences. Canonical output names; the upstream
     # AntiFold keys (`heavy`/`light`) are accepted via alias.
-    heavy_chain: str = Field(validation_alias=AliasChoices("heavy_chain", "heavy"))
-    light_chain: Optional[str] = Field(
-        default=None, validation_alias=AliasChoices("light_chain", "light")
+    heavy_chain: str = Field(
+        validation_alias=AliasChoices("heavy_chain", "heavy"),
+        description="Antibody heavy-chain amino-acid sequence.",
     )
-    temperature: float
-    mutations: int
-    seq_recovery: float
+    light_chain: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices("light_chain", "light"),
+        description="Antibody light-chain amino-acid sequence.",
+    )
+    temperature: float = Field(
+        description="Sampling temperature; higher values increase diversity.",
+    )
+    mutations: int = Field(
+        description="Number of amino-acid mutations relative to the native input sequence.",
+    )
+    seq_recovery: float = Field(
+        description="Fraction of positions matching the native sequence (sequence recovery rate, 0–1).",
+    )
 
 
 class AntiFoldGenerateResponseResultSequences(RequestModel):
@@ -381,7 +482,10 @@ class AntiFoldGenerateResponseResultSequences(RequestModel):
         },
     }
 
-    samples: Optional[list[AntiFoldGenerateResponseResultSamples]] = None
+    samples: Optional[list[AntiFoldGenerateResponseResultSamples]] = Field(
+        default=None,
+        description="Generated antibody sequence samples for this input.",
+    )
 
 
 class AntiFoldGenerateResponseResult(ResponseModel):
@@ -392,27 +496,59 @@ class AntiFoldGenerateResponseResult(ResponseModel):
             "exclude_none": True,  # Ensures that None fields do not appear in JSON
         },
     }
-    sequences: list[AntiFoldGenerateResponseResultSamples]
-    logprobs: Optional[list[list[float]]] = None
-    logits: Optional[list[list[float]]] = None
-    pdb_posins: Optional[list[int]] = None
-    pdb_chain: Optional[list[str]] = None
-    pdb_res: Optional[list[str]] = None
-    top_res: Optional[list[str]] = None
-    perplexity: Optional[list[float]] = None
-    vocab: Optional[list[str]] = None
+    sequences: list[AntiFoldGenerateResponseResultSamples] = Field(
+        description="Generated antibody sequence samples for this input.",
+    )
+    logprobs: Optional[list[list[float]]] = Field(
+        default=None,
+        description="Per-position softmax log-probabilities over the vocabulary (included when logprobs is in the include list).",
+    )
+    logits: Optional[list[list[float]]] = Field(
+        default=None,
+        description="Per-position logits over the model vocabulary.",
+    )
+    pdb_posins: Optional[list[int]] = Field(
+        default=None,
+        description="IMGT-based residue position numbers for each position in the output.",
+    )
+    pdb_chain: Optional[list[str]] = Field(
+        default=None,
+        description="PDB chain identifier for each output position.",
+    )
+    pdb_res: Optional[list[str]] = Field(
+        default=None,
+        description="Native amino-acid residue type at each output position.",
+    )
+    top_res: Optional[list[str]] = Field(
+        default=None,
+        description="Highest-probability predicted amino acid at each position.",
+    )
+    perplexity: Optional[list[float]] = Field(
+        default=None,
+        description="Per-position perplexity values for the sequence under the model (lower means more likely).",
+    )
+    vocab: Optional[list[str]] = Field(
+        default=None,
+        description="Vocabulary token order corresponding to the logits columns.",
+    )
 
 
 class AntiFoldGenerateResponse(ResponseModel):
-    results: list[AntiFoldGenerateResponseResult]
+    results: list[AntiFoldGenerateResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )
 
 
 class AntiFoldLogProbResponseResult(ResponseModel):
-    log_prob: float
+    log_prob: float = Field(
+        description="Log-likelihood of the sequence under the model.",
+    )
 
 
 class AntiFoldLogProbResponse(ResponseModel):
-    results: list[AntiFoldLogProbResponseResult]
+    results: list[AntiFoldLogProbResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )
 
 
 class AntiFoldScoreResponseResult(ResponseModel):
@@ -423,14 +559,23 @@ class AntiFoldScoreResponseResult(ResponseModel):
             "exclude_none": True,  # Ensures that None fields do not appear in JSON
         },
     }
-    global_score: float
+    global_score: float = Field(
+        description="Mean per-residue inverse-folding log-likelihood over the full antibody sequence given the backbone structure.",
+    )
     # Scored antibody chain sequences. Canonical output names; the upstream
     # AntiFold keys (`heavy`/`light`) are accepted via alias.
-    heavy_chain: str = Field(validation_alias=AliasChoices("heavy_chain", "heavy"))
+    heavy_chain: str = Field(
+        validation_alias=AliasChoices("heavy_chain", "heavy"),
+        description="Antibody heavy-chain amino-acid sequence.",
+    )
     light_chain: Optional[str] = Field(
-        default=None, validation_alias=AliasChoices("light_chain", "light")
+        default=None,
+        validation_alias=AliasChoices("light_chain", "light"),
+        description="Antibody light-chain amino-acid sequence.",
     )
 
 
 class AntiFoldScoreResponse(ResponseModel):
-    results: list[AntiFoldScoreResponseResult]
+    results: list[AntiFoldScoreResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )

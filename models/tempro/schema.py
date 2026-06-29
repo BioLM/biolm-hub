@@ -40,7 +40,7 @@ class TemproPredictRequestItem(RequestModel):
             ...,
             min_length=TemproParams.min_sequence_len,
             max_length=TemproParams.max_sequence_len,
-            description="Protein sequence (100-160 amino acids, typical nanobody length with some generalization)",
+            description="A nanobody (VHH) amino-acid sequence in single-letter codes (100–160 residues).",
         ),
     ]
 
@@ -51,7 +51,7 @@ class TemproPredictRequest(RequestModel):
         Field(
             min_length=1,
             max_length=TemproParams.batch_size,
-            description="List of protein sequences to predict melting temperatures for",
+            description="Batch of inputs to process in a single request. Up to 8 sequences per request.",
         ),
     ]
 
@@ -60,10 +60,13 @@ class TemproPredictRequest(RequestModel):
 
 
 class TemproPredictResponseResult(ResponseModel):
-    tm: float = Field(..., description="Predicted melting temperature in Celsius")
+    tm: float = Field(
+        ..., description="Predicted melting temperature (Tm) in degrees Celsius."
+    )
 
 
 class TemproPredictResponse(ResponseModel):
     results: list[TemproPredictResponseResult] = Field(
-        ..., description="List of melting temperature predictions"
+        ...,
+        description="Per-input results, returned in the same order as the request items.",
     )

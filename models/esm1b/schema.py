@@ -38,9 +38,13 @@ class ESM1bEncodeIncludeOptions(EnhancedStringEnum):
 
 
 class ESM1bEncodeRequestParams(RequestModel):
-    repr_layers: list[int] = Field(default_factory=partial(list, [-1]))
+    repr_layers: list[int] = Field(
+        default_factory=partial(list, [-1]),
+        description="Hidden layers whose representations to return (negative indexes count from the last layer).",
+    )
     include: list[ESM1bEncodeIncludeOptions] = Field(
-        default_factory=partial(list, [ESM1bEncodeIncludeOptions.MEAN])
+        default_factory=partial(list, [ESM1bEncodeIncludeOptions.MEAN]),
+        description="Output types to include in the encode response; controls which embeddings, logits, or attention outputs are returned.",
     )
 
 
@@ -48,15 +52,27 @@ class ESM1bEncodeRequestItem(RequestModel):
     sequence: Annotated[
         str,
         BeforeValidator(AAExtendedPlusExtra(extra=["-"])),
-        Field(..., min_length=1, max_length=ESM1bParams.max_sequence_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=ESM1bParams.max_sequence_len,
+            description="A protein sequence in single-letter amino-acid codes.",
+        ),
     ]
 
 
 class ESM1bEncodeRequest(RequestModel):
-    params: ESM1bEncodeRequestParams = ESM1bEncodeRequestParams()
+    params: ESM1bEncodeRequestParams = Field(
+        default=ESM1bEncodeRequestParams(),
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: Annotated[
         list[ESM1bEncodeRequestItem],
-        Field(min_length=1, max_length=ESM1bParams.batch_size),
+        Field(
+            min_length=1,
+            max_length=ESM1bParams.batch_size,
+            description="Batch of inputs to process in a single request. Up to 8 sequences per request.",
+        ),
     ]
 
 
@@ -68,14 +84,23 @@ class ESM1bPredictRequestItem(RequestModel):
         str,
         BeforeValidator(AAExtendedPlusExtra(extra=["<mask>"])),
         BeforeValidator(SingleOrMoreOccurrencesOf(token="<mask>")),
-        Field(..., min_length=1, max_length=ESM1bParams.max_sequence_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=ESM1bParams.max_sequence_len,
+            description="A protein sequence in single-letter amino-acid codes, with one or more <mask> tokens for masked prediction.",
+        ),
     ]
 
 
 class ESM1bPredictRequest(RequestModel):
     items: Annotated[
         list[ESM1bPredictRequestItem],
-        Field(min_length=1, max_length=ESM1bParams.batch_size),
+        Field(
+            min_length=1,
+            max_length=ESM1bParams.batch_size,
+            description="Batch of inputs to process in a single request. Up to 8 sequences per request.",
+        ),
     ]
 
 
@@ -85,7 +110,11 @@ class ESM1bPredictRequest(RequestModel):
 class ESM1bLogProbRequest(RequestModel):
     items: Annotated[
         list[ESM1bEncodeRequestItem],
-        Field(min_length=1, max_length=ESM1bParams.batch_size),
+        Field(
+            min_length=1,
+            max_length=ESM1bParams.batch_size,
+            description="Batch of inputs to process in a single request. Up to 8 sequences per request.",
+        ),
     ]
 
 
@@ -93,13 +122,17 @@ class ESM1bLogProbRequest(RequestModel):
 
 
 class LayerEmbedding(ResponseModel):
-    layer: int
-    embedding: list[float]
+    layer: int = Field(description="Model layer this representation was taken from.")
+    embedding: list[float] = Field(
+        description="Embedding vector for the sequence at this layer.",
+    )
 
 
 class LayerPerTokenEmbeddings(ResponseModel):
-    layer: int
-    embeddings: list[list[float]]
+    layer: int = Field(description="Model layer this representation was taken from.")
+    embeddings: list[list[float]] = Field(
+        description="Per-residue (per-token) embedding vectors for this layer.",
+    )
 
 
 class ESM1bEncodeResponseResult(ResponseModel):
@@ -111,38 +144,72 @@ class ESM1bEncodeResponseResult(ResponseModel):
         },
     }
 
-    sequence_index: int
-    embeddings: Optional[list["LayerEmbedding"]] = None
-    bos_embeddings: Optional[list["LayerEmbedding"]] = None
-    per_token_embeddings: Optional[list["LayerPerTokenEmbeddings"]] = None
-    attentions: Optional[list[list[float]]] = None
-    logits: Optional[list[list[float]]] = None
-    vocab_tokens: Optional[list[str]] = None
+    sequence_index: int = Field(
+        description="Index of the corresponding input sequence within the request batch.",
+    )
+    embeddings: Optional[list["LayerEmbedding"]] = Field(
+        default=None,
+        description="Per-layer mean-pooled embedding vectors; present only when 'mean' is requested.",
+    )
+    bos_embeddings: Optional[list["LayerEmbedding"]] = Field(
+        default=None,
+        description="Per-layer beginning-of-sequence (BOS/CLS) token embedding vectors; present only when 'bos' is requested.",
+    )
+    per_token_embeddings: Optional[list["LayerPerTokenEmbeddings"]] = Field(
+        default=None,
+        description="Per-residue (per-token) embedding vectors.",
+    )
+    attentions: Optional[list[list[float]]] = Field(
+        default=None,
+        description="Averaged attention weights across all layers and heads; present only when 'attentions' is requested.",
+    )
+    logits: Optional[list[list[float]]] = Field(
+        default=None,
+        description="Per-position logits over the model vocabulary.",
+    )
+    vocab_tokens: Optional[list[str]] = Field(
+        default=None,
+        description="Vocabulary token order corresponding to the logits columns.",
+    )
 
 
 class ESM1bEncodeResponse(ResponseModel):
-    results: list[ESM1bEncodeResponseResult]
+    results: list[ESM1bEncodeResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )
 
 
 ### ESM-1b Predict Response
 
 
 class ESM1bPredictResponseResult(ResponseModel):
-    logits: list[list[float]]
-    sequence_tokens: list[str]
-    vocab_tokens: list[str]
+    logits: list[list[float]] = Field(
+        description="Per-position logits over the model vocabulary.",
+    )
+    sequence_tokens: list[str] = Field(
+        description="Per-position input tokens, aligned with the logits.",
+    )
+    vocab_tokens: list[str] = Field(
+        description="Vocabulary token order corresponding to the logits columns.",
+    )
 
 
 class ESM1bPredictResponse(ResponseModel):
-    results: list[ESM1bPredictResponseResult]
+    results: list[ESM1bPredictResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )
 
 
 ### ESM-1b Log Prob Response
 
 
 class ESM1bLogProbResponseResult(ResponseModel):
-    log_prob: float
+    log_prob: float = Field(
+        description="Pseudo-log-likelihood of the sequence under the model.",
+    )
 
 
 class ESM1bLogProbResponse(ResponseModel):
-    results: list[ESM1bLogProbResponseResult]
+    results: list[ESM1bLogProbResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )

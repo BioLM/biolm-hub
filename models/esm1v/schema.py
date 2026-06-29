@@ -42,14 +42,23 @@ class ESM1vPredictRequestItem(RequestModel):
         str,
         BeforeValidator(AAExtendedPlusExtra(extra=["<mask>"])),
         BeforeValidator(SingleOccurrenceOf(single_token="<mask>")),
-        Field(..., min_length=1, max_length=ESM1vParams.max_sequence_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=ESM1vParams.max_sequence_len,
+            description="A protein sequence in single-letter amino-acid codes with exactly one <mask> token marking the position to predict.",
+        ),
     ]
 
 
 class ESM1vPredictRequest(RequestModel):
     items: Annotated[
         list[ESM1vPredictRequestItem],
-        Field(min_length=1, max_length=ESM1vParams.batch_size),
+        Field(
+            min_length=1,
+            max_length=ESM1vParams.batch_size,
+            description="Batch of inputs to process in a single request. Up to 5 sequences per request.",
+        ),
     ]
 
 
@@ -57,10 +66,18 @@ class ESM1vPredictRequest(RequestModel):
 
 
 class ESM1vPredictResponseLabel(RequestModel):
-    token: int
-    token_str: str
-    score: float
-    sequence: str
+    token: int = Field(
+        description="Tokenizer vocabulary ID for the predicted amino acid."
+    )
+    token_str: str = Field(
+        description="Single-letter amino-acid code for the predicted residue."
+    )
+    score: float = Field(
+        description="Model probability for this amino acid at the masked position."
+    )
+    sequence: str = Field(
+        description="Full protein sequence with the masked position filled by this amino acid."
+    )
 
 
 ESM1vNPredictResponseResult = list[ESM1vPredictResponseLabel]
@@ -74,4 +91,6 @@ ESM1vAllPredictResponseResult = dict[
 class ESM1vPredictResponse(ResponseModel):
     results: Union[
         list[ESM1vNPredictResponseResult], list[ESM1vAllPredictResponseResult]
-    ]
+    ] = Field(
+        description="Per-input results, returned in the same order as the request items."
+    )

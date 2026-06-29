@@ -79,15 +79,18 @@ class RFD3DesignParams(RequestModel):
         default=1,
         ge=1,
         le=RFD3Params.max_num_designs,
-        description="Number of designs to generate",
+        description="Number of diffusion samples to generate in parallel.",
     )
     seed: Optional[int] = Field(
-        default=None, description="Random seed for reproducibility"
+        default=None, description="Random seed for reproducible sampling."
     )
 
     # Temperature/sampling controls
     temperature: float = Field(
-        default=1.0, ge=0.1, le=2.0, description="Sampling temperature"
+        default=1.0,
+        ge=0.1,
+        le=2.0,
+        description="Sampling temperature; higher values increase diversity.",
     )
 
     # Conditioning parameters
@@ -181,10 +184,17 @@ class RFD3DesignRequestInput(RequestModel):
 class RFD3DesignRequest(RequestModel):
     """Request for RFdiffusion3 design."""
 
-    params: RFD3DesignParams = RFD3DesignParams()
+    params: RFD3DesignParams = Field(
+        default_factory=RFD3DesignParams,
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: Annotated[
         list[RFD3DesignRequestInput],
-        Field(min_length=1, max_length=RFD3Params.batch_size),
+        Field(
+            min_length=1,
+            max_length=RFD3Params.batch_size,
+            description="Batch of inputs to process in a single request.",
+        ),
     ]
 
 

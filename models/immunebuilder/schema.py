@@ -40,7 +40,9 @@ class ImmuneBuilderModelTypes(EnhancedStringEnum):
 
 
 class ImmuneBuilderPredictParams(RequestModel):
-    seed: int = Field(default=42, ge=0)
+    seed: int = Field(
+        default=42, ge=0, description="Random seed for reproducible sampling."
+    )
 
 
 class ImmuneBuilderPredictRequestItem(RequestModel):
@@ -60,6 +62,7 @@ class ImmuneBuilderPredictRequestItem(RequestModel):
         min_length=1,
         max_length=ImmuneBuilderParams.max_sequence_len,
         validation_alias=AliasChoices("heavy_chain", "H"),
+        description="Antibody heavy-chain amino-acid sequence; provide alone for nanobody (VHH) prediction.",
     )
 
     light_chain: Optional[
@@ -72,6 +75,7 @@ class ImmuneBuilderPredictRequestItem(RequestModel):
         min_length=1,
         max_length=ImmuneBuilderParams.max_sequence_len,
         validation_alias=AliasChoices("light_chain", "L"),
+        description="Antibody light-chain amino-acid sequence.",
     )
     tcr_alpha: Optional[
         Annotated[
@@ -83,6 +87,7 @@ class ImmuneBuilderPredictRequestItem(RequestModel):
         min_length=1,
         max_length=ImmuneBuilderParams.max_sequence_len,
         validation_alias=AliasChoices("tcr_alpha", "A"),
+        description="TCR alpha-chain amino-acid sequence; pair with tcr_beta for TCR structure prediction.",
     )
 
     tcr_beta: Optional[
@@ -95,6 +100,7 @@ class ImmuneBuilderPredictRequestItem(RequestModel):
         min_length=1,
         max_length=ImmuneBuilderParams.max_sequence_len,
         validation_alias=AliasChoices("tcr_beta", "B"),
+        description="TCR beta-chain amino-acid sequence; pair with tcr_alpha for TCR structure prediction.",
     )
 
     # Private attribute to store the inferred "kind"
@@ -140,19 +146,25 @@ class ImmuneBuilderPredictRequestItem(RequestModel):
 
 
 class ImmuneBuilderPredictRequest(RequestModel):
-    items: Annotated[
-        list[ImmuneBuilderPredictRequestItem],
-        Field(min_length=1, max_length=ImmuneBuilderParams.batch_size),
-    ]
-    params: Optional[ImmuneBuilderPredictParams] = ImmuneBuilderPredictParams()
+    items: list[ImmuneBuilderPredictRequestItem] = Field(
+        min_length=1,
+        max_length=ImmuneBuilderParams.batch_size,
+        description="Batch of inputs to process in a single request. Up to 8 sequences per request.",
+    )
+    params: Optional[ImmuneBuilderPredictParams] = Field(
+        default=ImmuneBuilderPredictParams(),
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
 
 
 ### ImmuneBuilder Response
 
 
 class ImmuneBuilderPredictResponseResult(ResponseModel):
-    pdb: str
+    pdb: str = Field(description="Predicted structure in PDB format.")
 
 
 class ImmuneBuilderPredictResponse(ResponseModel):
-    results: list[ImmuneBuilderPredictResponseResult]
+    results: list[ImmuneBuilderPredictResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items."
+    )

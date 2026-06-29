@@ -38,7 +38,12 @@ class ThermoMPNNPredictRequestItem(RequestModel):
     pdb: Annotated[
         str,
         BeforeValidator(validate_pdb),
-        Field(..., min_length=1, max_length=max_pdb_str_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=max_pdb_str_len,
+            description="Input structure in PDB format.",
+        ),
     ]
     mutations: Optional[list[str]] = Field(
         default=None,
@@ -81,10 +86,17 @@ class ThermoMPNNPredictRequestItem(RequestModel):
 
 
 class ThermoMPNNPredictRequest(RequestModel):
-    params: ThermoMPNNPredictParams
+    params: ThermoMPNNPredictParams = Field(
+        ...,
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: Annotated[
         list[ThermoMPNNPredictRequestItem],
-        Field(min_length=1, max_length=1),
+        Field(
+            min_length=1,
+            max_length=1,
+            description="Batch of inputs to process in a single request. Exactly 1 PDB structure per request.",
+        ),
     ]
 
 
@@ -94,14 +106,17 @@ class ThermoMPNNPredictRequest(RequestModel):
 class ThermoMPNNPredictResponseItem(ResponseModel):
     """Response item for a single mutation prediction"""
 
-    mutation: str = Field(..., description="Mutation in format 'WT{position}MUT'")
-    position: int = Field(..., description="Residue position (1-indexed)")
-    wildtype: str = Field(..., description="Wildtype amino acid")
-    mutation_aa: str = Field(..., description="Mutant amino acid")
+    mutation: str = Field(..., description="Mutation in format 'WT{position}MUT'.")
+    position: int = Field(..., description="Residue position (1-indexed).")
+    wildtype: str = Field(..., description="Wildtype amino acid.")
+    mutation_aa: str = Field(..., description="Mutant amino acid.")
     ddg: float = Field(
-        ..., description="Predicted change in free energy (ddG) in kcal/mol"
+        ..., description="Predicted change in free energy (ddG) in kcal/mol."
     )
 
 
 class ThermoMPNNPredictResponse(ResponseModel):
-    results: list[ThermoMPNNPredictResponseItem]
+    results: list[ThermoMPNNPredictResponseItem] = Field(
+        ...,
+        description="Per-input results, returned in the same order as the request items.",
+    )

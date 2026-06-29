@@ -37,6 +37,9 @@ jobs:
       - name: Type check (mypy)
         run: uv run mypy .
 
+      - name: Schema docs (field descriptions)
+        run: uv run python tooling/check_schema_docs.py
+
       - name: CI script tests (change detection)
         run: uv run pytest .github/scripts/ -p no:cacheprovider --no-cov -v
 

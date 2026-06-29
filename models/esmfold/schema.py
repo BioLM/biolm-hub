@@ -40,6 +40,7 @@ class ESMFoldPredictRequestItem(RequestModel):
             max_length=ESMFoldParams.max_sequence_len
             + ESMFoldParams.max_n_multimers
             - 1,
+            description='A protein sequence in single-letter amino-acid codes; for complexes, separate up to 4 chains with ":" (768 residues total).',
         ),
     ]
 
@@ -47,7 +48,11 @@ class ESMFoldPredictRequestItem(RequestModel):
 class ESMFoldPredictRequest(RequestModel):
     items: Annotated[
         list[ESMFoldPredictRequestItem],
-        Field(min_length=1, max_length=ESMFoldParams.batch_size),
+        Field(
+            min_length=1,
+            max_length=ESMFoldParams.batch_size,
+            description="Batch of inputs to process in a single request. Up to 2 sequences per request.",
+        ),
     ]
 
 
@@ -55,10 +60,16 @@ class ESMFoldPredictRequest(RequestModel):
 
 
 class ESMFoldPredictResponseResult(ResponseModel):
-    pdb: str
-    mean_plddt: float
-    ptm: float
+    pdb: str = Field(description="Predicted structure in PDB format.")
+    mean_plddt: float = Field(
+        description="Mean per-residue pLDDT confidence score (0–1); higher values indicate more confident predictions."
+    )
+    ptm: float = Field(
+        description="Predicted TM-score (pTM) for the overall structure (0–1)."
+    )
 
 
 class ESMFoldPredictResponse(ResponseModel):
-    results: list[ESMFoldPredictResponseResult]
+    results: list[ESMFoldPredictResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items."
+    )

@@ -45,10 +45,17 @@ class BiotiteExtractChainsRequestItem(RequestModel):
 
 
 class BiotiteExtractChainsRequest(RequestModel):
-    params: BiotiteExtractChainsRequestParams | None = None
+    params: BiotiteExtractChainsRequestParams | None = Field(
+        default=None,
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: Annotated[
         list[BiotiteExtractChainsRequestItem],
-        Field(min_length=1, max_length=BiotiteParams.batch_size),
+        Field(
+            min_length=1,
+            max_length=BiotiteParams.batch_size,
+            description="Batch of inputs to process in a single request. Up to 8 structures per request.",
+        ),
     ]
 
 
@@ -79,10 +86,17 @@ class BiotiteRMSDRequestItem(RequestModel):
 
 
 class BiotiteRMSDRequest(RequestModel):
-    params: BiotiteRMSDRequestParams | None = None
+    params: BiotiteRMSDRequestParams | None = Field(
+        default=None,
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: Annotated[
         list[BiotiteRMSDRequestItem],
-        Field(min_length=1, max_length=BiotiteParams.batch_size),
+        Field(
+            min_length=1,
+            max_length=BiotiteParams.batch_size,
+            description="Batch of inputs to process in a single request. Up to 8 structure pairs per request.",
+        ),
     ]
 
 
@@ -101,7 +115,9 @@ class BiotiteExtractChainsResponseResult(ResponseModel):
 
 
 class BiotiteExtractChainsResponse(ResponseModel):
-    results: list[BiotiteExtractChainsResponseResult]
+    results: list[BiotiteExtractChainsResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )
 
 
 class BiotiteRMSDResponseResult(ResponseModel):
@@ -111,4 +127,6 @@ class BiotiteRMSDResponseResult(ResponseModel):
 
 
 class BiotiteRMSDResponse(ResponseModel):
-    results: list[BiotiteRMSDResponseResult]
+    results: list[BiotiteRMSDResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )

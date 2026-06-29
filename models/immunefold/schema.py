@@ -41,7 +41,10 @@ class ImmuneFoldModelTypes(EnhancedStringEnum):
 
 
 class ImmuneFoldPredictRequestParams(RequestModel):
-    contact_idx: Optional[int] = None
+    contact_idx: Optional[int] = Field(
+        default=None,
+        description="Contact index for antibody-antigen complex prediction; used only when an antigen pdb is provided.",
+    )
 
 
 # Biological minimum lengths for antibody variable domains to support IMGT numbering
@@ -69,6 +72,7 @@ class ImmuneFoldPredictRequestItem(RequestModel):
         min_length=1,
         max_length=ImmuneFoldParams.max_sequence_len,
         validation_alias=AliasChoices("heavy_chain", "H"),
+        description="Antibody heavy-chain amino-acid sequence.",
     )
 
     light_chain: Optional[
@@ -81,6 +85,7 @@ class ImmuneFoldPredictRequestItem(RequestModel):
         min_length=1,
         max_length=ImmuneFoldParams.max_sequence_len,
         validation_alias=AliasChoices("light_chain", "L"),
+        description="Antibody light-chain amino-acid sequence.",
     )
 
     tcr_beta: Optional[
@@ -93,6 +98,7 @@ class ImmuneFoldPredictRequestItem(RequestModel):
         min_length=1,
         max_length=ImmuneFoldParams.max_sequence_len,
         validation_alias=AliasChoices("tcr_beta", "B"),
+        description="TCR beta-chain amino-acid sequence; required for TCR mode alongside tcr_alpha, peptide, and mhc.",
     )
     tcr_alpha: Optional[
         Annotated[
@@ -104,6 +110,7 @@ class ImmuneFoldPredictRequestItem(RequestModel):
         min_length=1,
         max_length=ImmuneFoldParams.max_sequence_len,
         validation_alias=AliasChoices("tcr_alpha", "A"),
+        description="TCR alpha-chain amino-acid sequence; required for TCR mode alongside tcr_beta, peptide, and mhc.",
     )
     peptide: Optional[
         Annotated[
@@ -115,6 +122,7 @@ class ImmuneFoldPredictRequestItem(RequestModel):
         min_length=1,
         max_length=ImmuneFoldParams.max_sequence_len,
         validation_alias=AliasChoices("peptide", "P"),
+        description="Antigenic peptide sequence presented by the MHC; required for TCR mode alongside tcr_alpha, tcr_beta, and mhc.",
     )
     mhc: Optional[
         Annotated[
@@ -126,15 +134,15 @@ class ImmuneFoldPredictRequestItem(RequestModel):
         min_length=1,
         max_length=ImmuneFoldParams.max_sequence_len,
         validation_alias=AliasChoices("mhc", "M"),
+        description="MHC sequence presenting the peptide antigen; required for TCR mode alongside tcr_alpha, tcr_beta, and peptide.",
     )
 
-    pdb: Optional[
-        Annotated[
-            str,
-            BeforeValidator(validate_pdb),
-            Field(min_length=1, max_length=max_pdb_str_len),
-        ]
-    ] = None
+    pdb: Optional[Annotated[str, BeforeValidator(validate_pdb)]] = Field(
+        default=None,
+        min_length=1,
+        max_length=max_pdb_str_len,
+        description="Antigen structure in PDB format for antibody-antigen complex mode.",
+    )
 
     # Private attribute to store the inferred "kind"
     _kind: Optional[str] = PrivateAttr()
@@ -209,10 +217,13 @@ class ImmuneFoldPredictRequestItem(RequestModel):
 
 class ImmuneFoldPredictRequest(RequestModel):
     params: Optional[ImmuneFoldPredictRequestParams] = Field(
-        default_factory=ImmuneFoldPredictRequestParams
+        default_factory=ImmuneFoldPredictRequestParams,
+        description="Optional parameters controlling this action (defaults are used when omitted).",
     )
     items: list[ImmuneFoldPredictRequestItem] = Field(
-        min_length=1, max_length=ImmuneFoldParams.batch_size
+        min_length=1,
+        max_length=ImmuneFoldParams.batch_size,
+        description="Batch of inputs to process in a single request. Up to 32 per request.",
     )
 
 
@@ -220,11 +231,19 @@ class ImmuneFoldPredictRequest(RequestModel):
 
 
 class ImmuneFoldPredictResponseResult(ResponseModel):
-    ptm: float
-    full_plddt: float
-    plddt: list[list[float]]
-    pdb: str
+    ptm: float = Field(
+        description="Predicted TM-score (pTM) for the overall structure (0–1)."
+    )
+    full_plddt: float = Field(
+        description="Mean pLDDT confidence score averaged over all residues (0–100; higher is more confident)."
+    )
+    plddt: list[list[float]] = Field(
+        description="Per-residue pLDDT confidence scores for the predicted structure (0–100; higher is more confident)."
+    )
+    pdb: str = Field(description="Predicted structure in PDB format.")
 
 
 class ImmuneFoldPredictResponse(ResponseModel):
-    results: list[ImmuneFoldPredictResponseResult]
+    results: list[ImmuneFoldPredictResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items."
+    )

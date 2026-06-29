@@ -78,9 +78,13 @@ class MSATransformerEncodeIncludeOptions(EnhancedStringEnum):
 class MSATransformerEncodeRequestParams(RequestModel):
     """Parameters for encode request."""
 
-    repr_layers: list[int] = Field(default_factory=partial(list, [-1]))
+    repr_layers: list[int] = Field(
+        default_factory=partial(list, [-1]),
+        description="Hidden layers whose representations to return (negative indexes count from the last layer).",
+    )
     include: list[MSATransformerEncodeIncludeOptions] = Field(
-        default_factory=partial(list, [MSATransformerEncodeIncludeOptions.MEAN])
+        default_factory=partial(list, [MSATransformerEncodeIncludeOptions.MEAN]),
+        description="Optional outputs to compute and include in the response.",
     )
 
 
@@ -94,7 +98,7 @@ class MSATransformerEncodeRequestItem(RequestModel):
             ...,
             min_length=2,
             max_length=MSATransformerParams.max_msa_depth,
-            description="List of aligned sequences. First sequence is the query.",
+            description="Multiple-sequence alignment for the query protein; first row is the query, all rows pre-aligned to equal length.",
         ),
     ]
 
@@ -102,25 +106,36 @@ class MSATransformerEncodeRequestItem(RequestModel):
 class MSATransformerEncodeRequest(RequestModel):
     """Request for MSA Transformer encode action."""
 
-    params: MSATransformerEncodeRequestParams = MSATransformerEncodeRequestParams()
+    params: MSATransformerEncodeRequestParams = Field(
+        default_factory=MSATransformerEncodeRequestParams,
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: Annotated[
         list[MSATransformerEncodeRequestItem],
-        Field(min_length=1, max_length=MSATransformerParams.batch_size),
+        Field(
+            min_length=1,
+            max_length=MSATransformerParams.batch_size,
+            description="Batch of inputs to process in a single request. Up to 4 MSAs per request.",
+        ),
     ]
 
 
 class LayerEmbedding(ResponseModel):
     """Embedding for a specific layer."""
 
-    layer: int
-    embedding: list[float]
+    layer: int = Field(description="Model layer this representation was taken from.")
+    embedding: list[float] = Field(
+        description="Mean-pooled embedding vector for the sequence."
+    )
 
 
 class LayerPerTokenEmbeddings(ResponseModel):
     """Per-token embeddings for a specific layer."""
 
-    layer: int
-    embeddings: list[list[float]]
+    layer: int = Field(description="Model layer this representation was taken from.")
+    embeddings: list[list[float]] = Field(
+        description="Per-token (per-residue) embedding vectors for this layer."
+    )
 
 
 class MSATransformerEncodeResponseResult(ResponseModel):
@@ -134,14 +149,30 @@ class MSATransformerEncodeResponseResult(ResponseModel):
         },
     }
 
-    sequence_index: int
-    embeddings: Optional[list[LayerEmbedding]] = None
-    per_token_embeddings: Optional[list[LayerPerTokenEmbeddings]] = None
-    row_attentions: Optional[list[list[list[float]]]] = None  # [layers, L, L]
-    contacts: Optional[list[list[float]]] = None  # [L, L]
+    sequence_index: int = Field(
+        description="Index of the corresponding input sequence within the request batch."
+    )
+    embeddings: Optional[list[LayerEmbedding]] = Field(
+        default=None,
+        description="Mean-pooled embeddings of the query sequence, one entry per requested layer.",
+    )
+    per_token_embeddings: Optional[list[LayerPerTokenEmbeddings]] = Field(
+        default=None,
+        description="Per-residue (per-token) embedding vectors.",
+    )
+    row_attentions: Optional[list[list[list[float]]]] = Field(
+        default=None,
+        description="Tied row-attention maps averaged over heads; shape [layers, seq_len, seq_len].",
+    )
+    contacts: Optional[list[list[float]]] = Field(
+        default=None,
+        description="Predicted residue–residue contact probability map.",
+    )
 
 
 class MSATransformerEncodeResponse(ResponseModel):
     """Response for MSA Transformer encode action."""
 
-    results: list[MSATransformerEncodeResponseResult]
+    results: list[MSATransformerEncodeResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items."
+    )

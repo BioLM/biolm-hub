@@ -76,20 +76,16 @@ class ProDyEncodeRequestParams(RequestModel):
 class ProDyEncodeRequestItem(RequestModel):
     """Input structure for ProDy InSty analysis."""
 
-    pdb: Optional[
-        Annotated[
-            str,
-            BeforeValidator(validate_pdb),
-            Field(default=None, min_length=1, description="PDB structure as string"),
-        ]
-    ] = None
-    cif: Optional[
-        Annotated[
-            str,
-            BeforeValidator(validate_cif),
-            Field(default=None, min_length=1, description="CIF structure as string"),
-        ]
-    ] = None
+    pdb: Optional[Annotated[str, BeforeValidator(validate_pdb)]] = Field(
+        default=None,
+        min_length=1,
+        description="Input structure in PDB format. Provide exactly one of pdb or cif.",
+    )
+    cif: Optional[Annotated[str, BeforeValidator(validate_cif)]] = Field(
+        default=None,
+        min_length=1,
+        description="Input structure in mmCIF format. Provide exactly one of pdb or cif.",
+    )
     chain_ids: Optional[list[str]] = Field(
         default=None,
         description="List of chain IDs to analyze. If None, all chains are analyzed.",
@@ -286,10 +282,17 @@ class ProDyEncodeRequestItem(RequestModel):
 
 
 class ProDyEncodeRequest(RequestModel):
-    params: ProDyEncodeRequestParams = ProDyEncodeRequestParams()
+    params: ProDyEncodeRequestParams = Field(
+        default_factory=ProDyEncodeRequestParams,
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: Annotated[
         list[ProDyEncodeRequestItem],
-        Field(min_length=1, max_length=ProDyParams.batch_size),
+        Field(
+            min_length=1,
+            max_length=ProDyParams.batch_size,
+            description="Batch of inputs to process in a single request. Up to 8 structures per request.",
+        ),
     ]
 
 
@@ -308,46 +311,30 @@ class ProDyPredictRequestParams(RequestModel):
 class ProDyPredictRequestItem(RequestModel):
     """Input structures for RMSD calculation."""
 
-    pdb_a: Optional[
-        Annotated[
-            str,
-            BeforeValidator(validate_pdb),
-            Field(
-                default=None, min_length=1, description="First PDB structure as string"
-            ),
-        ]
-    ] = None
-    cif_a: Optional[
-        Annotated[
-            str,
-            BeforeValidator(validate_cif),
-            Field(
-                default=None, min_length=1, description="First CIF structure as string"
-            ),
-        ]
-    ] = None
+    pdb_a: Optional[Annotated[str, BeforeValidator(validate_pdb)]] = Field(
+        default=None,
+        min_length=1,
+        description="First input structure in PDB format. Provide exactly one of pdb_a or cif_a.",
+    )
+    cif_a: Optional[Annotated[str, BeforeValidator(validate_cif)]] = Field(
+        default=None,
+        min_length=1,
+        description="First input structure in mmCIF format. Provide exactly one of pdb_a or cif_a.",
+    )
     chain_a: Union[str, list[str]] = Field(
         ...,
         description="Chain ID(s) to use from first structure. Can be a single chain ID or a list of chain IDs.",
     )
-    pdb_b: Optional[
-        Annotated[
-            str,
-            BeforeValidator(validate_pdb),
-            Field(
-                default=None, min_length=1, description="Second PDB structure as string"
-            ),
-        ]
-    ] = None
-    cif_b: Optional[
-        Annotated[
-            str,
-            BeforeValidator(validate_cif),
-            Field(
-                default=None, min_length=1, description="Second CIF structure as string"
-            ),
-        ]
-    ] = None
+    pdb_b: Optional[Annotated[str, BeforeValidator(validate_pdb)]] = Field(
+        default=None,
+        min_length=1,
+        description="Second input structure in PDB format. Provide exactly one of pdb_b or cif_b.",
+    )
+    cif_b: Optional[Annotated[str, BeforeValidator(validate_cif)]] = Field(
+        default=None,
+        min_length=1,
+        description="Second input structure in mmCIF format. Provide exactly one of pdb_b or cif_b.",
+    )
     chain_b: Union[str, list[str]] = Field(
         ...,
         description="Chain ID(s) to use from second structure. Can be a single chain ID or a list of chain IDs.",
@@ -494,10 +481,17 @@ class ProDyPredictRequestItem(RequestModel):
 
 
 class ProDyPredictRequest(RequestModel):
-    params: ProDyPredictRequestParams = ProDyPredictRequestParams()
+    params: ProDyPredictRequestParams = Field(
+        default_factory=ProDyPredictRequestParams,
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: Annotated[
         list[ProDyPredictRequestItem],
-        Field(min_length=1, max_length=ProDyParams.batch_size),
+        Field(
+            min_length=1,
+            max_length=ProDyParams.batch_size,
+            description="Batch of inputs to process in a single request. Up to 8 structure pairs per request.",
+        ),
     ]
 
 
@@ -621,7 +615,9 @@ class ProDyEncodeResponseResult(ResponseModel):
 
 
 class ProDyEncodeResponse(ResponseModel):
-    results: list[ProDyEncodeResponseResult]
+    results: list[ProDyEncodeResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )
 
 
 ### ProDy Predict (RMSD) Response
@@ -645,4 +641,6 @@ class ProDyPredictResponseResult(ResponseModel):
 
 
 class ProDyPredictResponse(ResponseModel):
-    results: list[ProDyPredictResponseResult]
+    results: list[ProDyPredictResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )

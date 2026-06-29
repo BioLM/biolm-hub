@@ -52,8 +52,14 @@ ABODYBUILDER3_VARIANT_RESOURCE_SPECS = {
 
 
 class AbodyBuilder3PredictRequestParams(RequestModel):
-    plddt: bool = False
-    seed: Optional[int] = 42
+    plddt: bool = Field(
+        default=False,
+        description="Whether to return per-residue pLDDT confidence scores in the response.",
+    )
+    seed: Optional[int] = Field(
+        default=42,
+        description="Random seed for reproducible sampling.",
+    )
 
 
 class AbodyBuilder3PredictRequestItem(RequestModel):
@@ -70,6 +76,7 @@ class AbodyBuilder3PredictRequestItem(RequestModel):
             min_length=1,
             max_length=AbodyBuilder3Params.max_sequence_len,
             validation_alias=AliasChoices("heavy_chain", "H"),
+            description="Antibody heavy-chain amino-acid sequence.",
         ),
     ]
 
@@ -81,17 +88,23 @@ class AbodyBuilder3PredictRequestItem(RequestModel):
             min_length=1,
             max_length=AbodyBuilder3Params.max_sequence_len,
             validation_alias=AliasChoices("light_chain", "L"),
+            description="Antibody light-chain amino-acid sequence.",
         ),
     ]
 
 
 class AbodyBuilder3PredictRequest(RequestModel):
-    params: Optional[AbodyBuilder3PredictRequestParams] = (
-        AbodyBuilder3PredictRequestParams()
+    params: Optional[AbodyBuilder3PredictRequestParams] = Field(
+        default=AbodyBuilder3PredictRequestParams(),
+        description="Optional parameters controlling this action (defaults are used when omitted).",
     )
     items: Annotated[
         list[AbodyBuilder3PredictRequestItem],
-        Field(min_length=1, max_length=AbodyBuilder3Params.batch_size),
+        Field(
+            min_length=1,
+            max_length=AbodyBuilder3Params.batch_size,
+            description="Batch of inputs to process in a single request. Up to 4 sequence pairs per request.",
+        ),
     ]
 
 
@@ -106,9 +119,14 @@ class AbodyBuilder3PredictResponseResult(ResponseModel):
             "exclude_none": True,  # Ensures that None fields do not appear in JSON
         },
     }
-    pdb: str
-    plddt: Optional[list[list[float]]] = None
+    pdb: str = Field(description="Predicted structure in PDB format.")
+    plddt: Optional[list[list[float]]] = Field(
+        default=None,
+        description="Per-residue pLDDT confidence score (0–100; higher is more confident).",
+    )
 
 
 class AbodyBuilder3PredictResponse(ResponseModel):
-    results: list[AbodyBuilder3PredictResponseResult]
+    results: list[AbodyBuilder3PredictResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items."
+    )

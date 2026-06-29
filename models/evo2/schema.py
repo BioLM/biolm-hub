@@ -51,10 +51,17 @@ class Evo2EncodeIncludeOptions(EnhancedStringEnum):
 
 
 class Evo2EncodeRequestParams(RequestModel):
-    embedding_layers: list[int] = Field(default_factory=partial(list, [-2]))
-    mlp_layer: int = 3  # Fixed to 3, but can be adjusted
+    embedding_layers: list[int] = Field(
+        default_factory=partial(list, [-2]),
+        description="Transformer layers whose embeddings to extract; supports negative indexing from the last layer.",
+    )
+    mlp_layer: int = Field(
+        default=3,
+        description="Index of the MLP sublayer within each transformer block used for embedding extraction.",
+    )
     include: list[Evo2EncodeIncludeOptions] = Field(
-        default_factory=partial(list, [Evo2EncodeIncludeOptions.MEAN])
+        default_factory=partial(list, [Evo2EncodeIncludeOptions.MEAN]),
+        description="Optional outputs to compute and include in the response.",
     )
 
 
@@ -62,15 +69,28 @@ class Evo2EncodeRequestItem(RequestModel):
     sequence: Annotated[
         str,
         BeforeValidator(validate_dna_unambiguous),
-        Field(..., min_length=1, max_length=Evo2Params.max_sequence_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=Evo2Params.max_sequence_len,
+            description="A DNA sequence (A/C/G/T).",
+        ),
     ]
 
 
 class Evo2EncodeRequest(RequestModel):
-    params: Evo2EncodeRequestParams = Evo2EncodeRequestParams()
+    params: Evo2EncodeRequestParams = Field(
+        default_factory=Evo2EncodeRequestParams,
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: Annotated[
         list[Evo2EncodeRequestItem],
-        Field(..., min_length=1, max_length=Evo2Params.batch_size),
+        Field(
+            ...,
+            min_length=1,
+            max_length=Evo2Params.batch_size,
+            description="Batch of inputs to process in a single request. Up to 1 sequence per request.",
+        ),
     ]
 
 
@@ -78,38 +98,78 @@ class Evo2PredictLogProbRequestItem(RequestModel):
     sequence: Annotated[
         str,
         BeforeValidator(validate_dna_unambiguous),
-        Field(..., min_length=1, max_length=Evo2Params.max_sequence_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=Evo2Params.max_sequence_len,
+            description="A DNA sequence (A/C/G/T).",
+        ),
     ]
 
 
 class Evo2PredictLogProbRequest(RequestModel):
     items: Annotated[
         list[Evo2PredictLogProbRequestItem],
-        Field(..., min_length=1, max_length=Evo2Params.batch_size),
+        Field(
+            ...,
+            min_length=1,
+            max_length=Evo2Params.batch_size,
+            description="Batch of inputs to process in a single request. Up to 1 sequence per request.",
+        ),
     ]
 
 
 class Evo2GenerateRequestParams(RequestModel):
-    max_new_tokens: int = Field(100, ge=1, le=Evo2Params.max_sequence_len)
-    temperature: float = Field(1.0, ge=0.0)
-    top_k: int = Field(4, ge=1)
-    top_p: float = Field(1.0, ge=0.0, le=1.0)
-    seed: Optional[int] = None  # For reproducibility control
+    max_new_tokens: int = Field(
+        100,
+        ge=1,
+        le=Evo2Params.max_sequence_len,
+        description="Maximum number of new tokens to generate.",
+    )
+    temperature: float = Field(
+        1.0,
+        ge=0.0,
+        description="Sampling temperature; higher values increase diversity.",
+    )
+    top_k: int = Field(
+        4,
+        ge=1,
+        description="Top-k sampling cutoff; only the k most likely tokens are sampled.",
+    )
+    top_p: float = Field(
+        1.0, ge=0.0, le=1.0, description="Nucleus (top-p) sampling threshold."
+    )
+    seed: Optional[int] = Field(
+        default=None, description="Random seed for reproducible sampling."
+    )  # For reproducibility control
 
 
 class Evo2GenerateRequestItem(RequestModel):
     prompt: Annotated[
         str,
         BeforeValidator(validate_dna_unambiguous),
-        Field(..., min_length=1, max_length=Evo2Params.max_sequence_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=Evo2Params.max_sequence_len,
+            description="DNA seed sequence (A/C/G/T only) from which to continue autoregressive generation.",
+        ),
     ]
 
 
 class Evo2GenerateRequest(RequestModel):
-    params: Evo2GenerateRequestParams = Evo2GenerateRequestParams()
+    params: Evo2GenerateRequestParams = Field(
+        default_factory=Evo2GenerateRequestParams,
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: Annotated[
         list[Evo2GenerateRequestItem],
-        Field(..., min_length=1, max_length=Evo2Params.batch_size),
+        Field(
+            ...,
+            min_length=1,
+            max_length=Evo2Params.batch_size,
+            description="Batch of inputs to process in a single request. Up to 1 sequence per request.",
+        ),
     ]
 
 
@@ -125,30 +185,48 @@ class Evo2EncodeResponseEmbedding(RequestModel):
         },
     }
 
-    layer: int
-    mean: Optional[list[float]] = None
-    last: Optional[list[float]] = None
+    layer: int = Field(description="Model layer this representation was taken from.")
+    mean: Optional[list[float]] = Field(
+        default=None,
+        description="Mean-pooled embedding vector over all non-padded sequence positions for this layer.",
+    )
+    last: Optional[list[float]] = Field(
+        default=None,
+        description="Last-token embedding vector for this layer; null if not requested.",
+    )
 
 
 class Evo2EncodeResponseResult(ResponseModel):
-    embeddings: list[Evo2EncodeResponseEmbedding]
+    embeddings: list[Evo2EncodeResponseEmbedding] = Field(
+        description="Per-layer embedding vectors for the sequence."
+    )
 
 
 class Evo2EncodeResponse(ResponseModel):
-    results: list[Evo2EncodeResponseResult]
+    results: list[Evo2EncodeResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items."
+    )
 
 
 class Evo2PredictLogProbResponseResult(ResponseModel):
-    log_prob: float
+    log_prob: float = Field(
+        description="Pseudo-log-likelihood of the sequence under the model."
+    )
 
 
 class Evo2PredictLogProbResponse(ResponseModel):
-    results: list[Evo2PredictLogProbResponseResult]
+    results: list[Evo2PredictLogProbResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items."
+    )
 
 
 class Evo2GenerateResponseResult(ResponseModel):
-    generated: str
+    generated: str = Field(
+        description="Autoregressive continuation of the input prompt as a DNA sequence (A/C/G/T)."
+    )
 
 
 class Evo2GenerateResponse(ResponseModel):
-    results: list[Evo2GenerateResponseResult]
+    results: list[Evo2GenerateResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items."
+    )

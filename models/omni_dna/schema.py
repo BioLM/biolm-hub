@@ -43,7 +43,8 @@ class OmniDNAEncodeIncludeOptions(EnhancedStringEnum):
 
 class OmniDNAEncodeRequestParams(RequestModel):
     include: list[OmniDNAEncodeIncludeOptions] = Field(
-        default_factory=partial(list, [OmniDNAEncodeIncludeOptions.MEAN])
+        default_factory=partial(list, [OmniDNAEncodeIncludeOptions.MEAN]),
+        description="Optional outputs to compute and include in the response.",
     )
 
 
@@ -51,15 +52,28 @@ class OmniDNAEncodeRequestItem(RequestModel):
     sequence: Annotated[
         str,
         BeforeValidator(validate_dna_unambiguous),
-        Field(..., min_length=1, max_length=OmniDNAParams.max_sequence_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=OmniDNAParams.max_sequence_len,
+            description="A DNA sequence (A/C/G/T).",
+        ),
     ]
 
 
 class OmniDNAEncodeRequest(RequestModel):
-    params: OmniDNAEncodeRequestParams = OmniDNAEncodeRequestParams()
+    params: OmniDNAEncodeRequestParams = Field(
+        default_factory=OmniDNAEncodeRequestParams,
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: Annotated[
         list[OmniDNAEncodeRequestItem],
-        Field(..., min_length=1, max_length=OmniDNAParams.batch_size),
+        Field(
+            ...,
+            min_length=1,
+            max_length=OmniDNAParams.batch_size,
+            description="Batch of inputs to process in a single request. Up to 2 sequences per request.",
+        ),
     ]
 
 
@@ -67,14 +81,24 @@ class OmniDNAPredictLogProbRequestItem(RequestModel):
     sequence: Annotated[
         str,
         BeforeValidator(validate_dna_unambiguous),
-        Field(..., min_length=1, max_length=OmniDNAParams.max_sequence_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=OmniDNAParams.max_sequence_len,
+            description="A DNA sequence (A/C/G/T).",
+        ),
     ]
 
 
 class OmniDNAPredictLogProbRequest(RequestModel):
     items: Annotated[
         list[OmniDNAPredictLogProbRequestItem],
-        Field(..., min_length=1, max_length=OmniDNAParams.batch_size),
+        Field(
+            ...,
+            min_length=1,
+            max_length=OmniDNAParams.batch_size,
+            description="Batch of inputs to process in a single request. Up to 2 sequences per request.",
+        ),
     ]
 
 
@@ -82,7 +106,9 @@ class OmniDNAPredictLogProbRequest(RequestModel):
 
 
 class OmniDNAEncodeResponseEmbedding(RequestModel):
-    embedding: list[float]
+    embedding: list[float] = Field(
+        description="Embedding vector for the sequence.",
+    )
 
 
 class OmniDNAEncodeResponseResult(ResponseModel):
@@ -94,17 +120,29 @@ class OmniDNAEncodeResponseResult(ResponseModel):
         },
     }
 
-    mean: Optional[list[OmniDNAEncodeResponseEmbedding]] = None
-    last: Optional[list[OmniDNAEncodeResponseEmbedding]] = None
+    mean: Optional[list[OmniDNAEncodeResponseEmbedding]] = Field(
+        default=None,
+        description='Mean-pooled embeddings over non-padded BPE tokens; present when "mean" is in params.include.',
+    )
+    last: Optional[list[OmniDNAEncodeResponseEmbedding]] = Field(
+        default=None,
+        description='Last-token embeddings from the final hidden layer; present when "last" is in params.include.',
+    )
 
 
 class OmniDNAEncodeResponse(ResponseModel):
-    results: list[OmniDNAEncodeResponseResult]
+    results: list[OmniDNAEncodeResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )
 
 
 class OmniDNAPredictLogProbResponseResult(ResponseModel):
-    log_prob: float
+    log_prob: float = Field(
+        description="Log-likelihood of the sequence under the model.",
+    )
 
 
 class OmniDNAPredictLogProbResponse(ResponseModel):
-    results: list[OmniDNAPredictLogProbResponseResult]
+    results: list[OmniDNAPredictLogProbResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )

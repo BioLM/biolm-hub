@@ -258,7 +258,7 @@ These results closely match the published paper's R-squared of 0.94-0.95.
 
 - **Training command**: `modal run models/esmstabp/_train.py`
 - **Training data source**: [GitHub Dataset.csv](https://github.com/marcusramos2024/ESMStabP/blob/main/Dataset%20Assembly/Dataset.csv)
-- **Artifact storage**: `r2://biolm-modal/model-store/esmstabp/v1/`
+- **Artifact storage**: `r2://biolm-public/model-store/esmstabp/v1/`
 - **Artifacts**: `1.joblib`, `2.joblib`, `3.joblib`, `4.joblib`
 
 ## Versions & Changelog

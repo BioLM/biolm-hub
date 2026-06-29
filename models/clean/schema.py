@@ -31,13 +31,13 @@ class CLEANPredictRequestParams(RequestModel):
         default=10,
         ge=1,
         le=20,
-        description="Maximum number of EC predictions to return per sequence",
+        description="Maximum number of EC predictions to return per sequence.",
     )
     min_confidence: float = Field(
         default=0.05,
         ge=0.0,
         le=1.0,
-        description="Minimum confidence threshold to include a prediction",
+        description="Minimum confidence threshold to include a prediction.",
     )
 
 
@@ -47,17 +47,29 @@ class CLEANPredictRequestItem(RequestModel):
     sequence: Annotated[
         str,
         BeforeValidator(validate_aa_extended),
-        Field(..., min_length=1, max_length=CLEANParams.max_sequence_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=CLEANParams.max_sequence_len,
+            description="A protein sequence in single-letter amino-acid codes.",
+        ),
     ]
 
 
 class CLEANPredictRequest(RequestModel):
     """CLEAN prediction request."""
 
-    params: Optional[CLEANPredictRequestParams] = None
+    params: Optional[CLEANPredictRequestParams] = Field(
+        default=None,
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: Annotated[
         list[CLEANPredictRequestItem],
-        Field(min_length=1, max_length=CLEANParams.batch_size),
+        Field(
+            min_length=1,
+            max_length=CLEANParams.batch_size,
+            description="Batch of inputs to process in a single request. Up to 10 sequences per request.",
+        ),
     ]
 
 
@@ -67,7 +79,12 @@ class CLEANEncodeRequestItem(RequestModel):
     sequence: Annotated[
         str,
         BeforeValidator(validate_aa_extended),
-        Field(..., min_length=1, max_length=CLEANParams.max_sequence_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=CLEANParams.max_sequence_len,
+            description="A protein sequence in single-letter amino-acid codes.",
+        ),
     ]
 
 
@@ -76,7 +93,11 @@ class CLEANEncodeRequest(RequestModel):
 
     items: Annotated[
         list[CLEANEncodeRequestItem],
-        Field(min_length=1, max_length=CLEANParams.batch_size),
+        Field(
+            min_length=1,
+            max_length=CLEANParams.batch_size,
+            description="Batch of inputs to process in a single request. Up to 10 sequences per request.",
+        ),
     ]
 
 
@@ -88,15 +109,15 @@ class ECPrediction(ResponseModel):
 
     ec_number: str = Field(
         ...,
-        description="Predicted EC number (e.g., '3.5.2.6')",
+        description="Predicted Enzyme Commission (EC) number.",
     )
     distance: float = Field(
         ...,
-        description="Euclidean distance to EC cluster center (lower = more similar)",
+        description="Euclidean distance to the predicted EC cluster center (lower means more similar to known enzymes of that class).",
     )
     confidence: float = Field(
         ...,
-        description="GMM-based confidence score (0-1, higher = more confident)",
+        description="GMM-based confidence score (0–1; higher means more confident in the EC prediction).",
     )
 
 
@@ -105,14 +126,16 @@ class CLEANPredictResult(ResponseModel):
 
     predictions: list[ECPrediction] = Field(
         ...,
-        description="List of predicted EC numbers, ordered by distance (closest first)",
+        description="List of predicted EC numbers, ordered by distance (closest first).",
     )
 
 
 class CLEANPredictResponse(ResponseModel):
     """CLEAN prediction response."""
 
-    results: list[CLEANPredictResult]
+    results: list[CLEANPredictResult] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )
 
 
 class CLEANEncodeResult(ResponseModel):
@@ -120,11 +143,13 @@ class CLEANEncodeResult(ResponseModel):
 
     embedding: list[float] = Field(
         ...,
-        description="128-dimensional CLEAN embedding",
+        description="128-dimensional CLEAN functional embedding, projected from ESM-1b mean-pooled features.",
     )
 
 
 class CLEANEncodeResponse(ResponseModel):
     """CLEAN encoding response."""
 
-    results: list[CLEANEncodeResult]
+    results: list[CLEANEncodeResult] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )

@@ -54,22 +54,40 @@ class RF3EntityType(EnhancedStringEnum):
 class RF3Component(RequestModel):
     """A biomolecular component for structure prediction."""
 
-    name: str = Field(..., description="Component name")
-    type: RF3EntityType = Field(..., description="Entity type")
-    sequence: Optional[str] = Field(None, description="Sequence string")
-    smiles: Optional[str] = Field(None, description="SMILES string for small molecule")
+    name: str = Field(
+        ...,
+        description="Optional human-readable label for this input, echoed back in the response.",
+    )
+    type: RF3EntityType = Field(
+        ...,
+        description="Component entity type: protein, DNA, RNA, or ligand.",
+    )
+    sequence: Optional[str] = Field(
+        None,
+        description="A protein, DNA, or RNA sequence in single-letter codes.",
+    )
+    smiles: Optional[str] = Field(
+        None, description="Ligand structure as a SMILES string."
+    )
     ccd_code: Optional[str] = Field(
-        None, description="Chemical Component Dictionary code"
+        None, description="Chemical Component Dictionary code for a ligand."
     )
     structure_path: Optional[str] = Field(
-        None, description="Path to structure file (CIF/PDB/SDF)"
+        None, description="Path to a template structure file (CIF/PDB/SDF)."
     )
-    structure_cif: Optional[str] = Field(None, description="Structure in mmCIF format")
-    chain_id: Optional[str] = Field(None, description="Chain identifier")
-    msa_path: Optional[str] = Field(None, description="Path to MSA file (.a3m)")
-    msa_content: Optional[str] = Field(None, description="MSA content in A3M format")
+    structure_cif: Optional[str] = Field(
+        None, description="Input structure in mmCIF format."
+    )
+    chain_id: Optional[str] = Field(
+        None, description='Chain identifier to operate on (e.g. "A").'
+    )
+    msa_path: Optional[str] = Field(None, description="Path to an MSA file (.a3m).")
+    msa_content: Optional[str] = Field(
+        None,
+        description="Multiple-sequence alignment for the query sequence, in A3M format.",
+    )
     alignment: Optional[dict[RF3AlignmentDatabase, str]] = Field(
-        None, description="MSA alignments by database"
+        None, description="MSA alignments keyed by sequence database."
     )
 
 
@@ -78,32 +96,35 @@ class RF3PredictParams(RequestModel):
 
     # Recycling and sampling parameters
     n_recycles: int = Field(
-        default=10, ge=0, le=20, description="Number of trunk recycles"
+        default=10, ge=0, le=20, description="Number of trunk recycling iterations."
     )
     num_steps: int = Field(
-        default=200, ge=50, le=500, description="Number of diffusion sampling steps"
+        default=200,
+        ge=50,
+        le=500,
+        description="Number of diffusion sampling steps.",
     )
     diffusion_batch_size: int = Field(
         default=5,
         ge=1,
         le=RF3Params.max_num_samples,
-        description="Number of output structures to generate",
+        description="Number of diffusion samples to generate in parallel.",
     )
     seed: Optional[int] = Field(
-        default=42, description="Random seed for reproducibility"
+        default=42, description="Random seed for reproducible sampling."
     )
 
     # Template parameters
     template_selection: Optional[list[str]] = Field(
         None,
-        description="Atom selections for token-level templates (e.g., ['A', 'B/*/1-10'])",
+        description="Atom selections for token-level templates (e.g. ['A', 'B/*/1-10']).",
     )
     ground_truth_conformer_selection: Optional[list[str]] = Field(
         None,
-        description="Atom selections for ground truth conformers (e.g., ['C', 'D'])",
+        description="Atom selections fixed to their ground-truth conformers (e.g. ['C', 'D']).",
     )
     cyclic_chains: Optional[list[str]] = Field(
-        None, description="List of chain IDs to cyclize"
+        None, description="Chain identifiers to model as cyclic (e.g. cyclic peptides)."
     )
 
     # Early stopping
@@ -111,45 +132,61 @@ class RF3PredictParams(RequestModel):
         default=0.5,
         ge=0.0,
         le=1.0,
-        description="pLDDT threshold for early stopping",
+        description="pLDDT threshold below which sampling is stopped early.",
     )
 
     # Output control
     one_model_per_file: bool = Field(
-        default=False, description="Save each model to separate file"
+        default=False,
+        description="Whether to write each predicted model to its own file.",
     )
     annotate_b_factor_with_plddt: bool = Field(
-        default=False, description="Annotate B-factor column with pLDDT"
+        default=False,
+        description="Whether to store per-residue pLDDT in the B-factor column.",
     )
 
     # Confidence scores to include
     include_pae: bool = Field(
-        default=False, description="Include Predicted Aligned Error matrix"
+        default=False,
+        description="Whether to include the predicted aligned error matrix in the response.",
     )
     include_plddt: bool = Field(
-        default=True, description="Include per-residue pLDDT scores"
+        default=True,
+        description="Whether to include per-residue pLDDT scores in the response.",
     )
 
 
 class RF3PredictRequestInput(RequestModel):
     """Input specification for a structure prediction task."""
 
-    name: str = Field(..., description="Name for this prediction task")
+    name: str = Field(
+        ...,
+        description="Optional human-readable label for this input, echoed back in the response.",
+    )
     components: list[RF3Component] = Field(
-        ..., min_length=1, description="List of components for prediction"
+        ...,
+        min_length=1,
+        description="Biomolecular components that make up the complex to predict.",
     )
     bonds: Optional[list[tuple[str, str]]] = Field(
-        None, description="Custom bonds as pairs of atom specifications"
+        None, description="Custom covalent bonds as pairs of atom specifications."
     )
 
 
 class RF3PredictRequest(RequestModel):
     """Request for RF3 structure prediction."""
 
-    params: RF3PredictParams = RF3PredictParams()
+    params: RF3PredictParams = Field(
+        default_factory=RF3PredictParams,
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: Annotated[
         list[RF3PredictRequestInput],
-        Field(min_length=1, max_length=RF3Params.batch_size),
+        Field(
+            min_length=1,
+            max_length=RF3Params.batch_size,
+            description="Batch of inputs to process in a single request. Up to 1 input per request.",
+        ),
     ]
 
 
@@ -159,32 +196,49 @@ class RF3PredictRequest(RequestModel):
 class RF3ConfidenceScores(ResponseModel):
     """Confidence metrics for a prediction."""
 
-    ptm: Optional[float] = Field(None, description="Predicted TM-score")
-    iptm: Optional[float] = Field(
-        None, description="Interface predicted TM-score (multi-chain)"
+    ptm: Optional[float] = Field(
+        None, description="Predicted TM-score (pTM) for the overall structure (0–1)."
     )
-    ranking_score: Optional[float] = Field(None, description="Overall ranking score")
-    has_clash: Optional[bool] = Field(None, description="Whether structure has clashes")
-    plddt: Optional[list[float]] = Field(None, description="Per-residue pLDDT scores")
+    iptm: Optional[float] = Field(
+        None,
+        description="Interface predicted TM-score (ipTM) for multi-chain complexes (0–1).",
+    )
+    ranking_score: Optional[float] = Field(
+        None, description="Composite score used to rank diffusion samples."
+    )
+    has_clash: Optional[bool] = Field(
+        None, description="Whether the predicted structure contains steric clashes."
+    )
+    plddt: Optional[list[float]] = Field(
+        None,
+        description="Per-residue pLDDT confidence score (0–100; higher is more confident).",
+    )
     pae: Optional[list[list[float]]] = Field(
-        None, description="Predicted Aligned Error matrix"
+        None, description="Predicted aligned error (PAE) matrix, in Ångströms."
     )
 
 
 class RF3PredictResponseResult(ResponseModel):
     """Single prediction output from RF3."""
 
-    structure_cif: str = Field(..., description="Predicted structure in mmCIF format")
-    confidence: RF3ConfidenceScores = Field(..., description="Confidence metrics")
-    early_stopped: bool = Field(
-        default=False, description="Whether prediction was early-stopped"
+    structure_cif: str = Field(..., description="Predicted structure in mmCIF format.")
+    confidence: RF3ConfidenceScores = Field(
+        ...,
+        description="Confidence scores for the prediction (pTM, ipTM, pLDDT, PAE, ranking).",
     )
-    sample_idx: int = Field(..., description="Sample index within diffusion batch")
+    early_stopped: bool = Field(
+        default=False,
+        description="Whether this sample was stopped early on low confidence.",
+    )
+    sample_idx: int = Field(
+        ..., description="Index of this sample within the diffusion batch."
+    )
 
 
 class RF3PredictResponse(ResponseModel):
     """Response from RF3 structure prediction."""
 
     results: list[list[RF3PredictResponseResult]] = Field(
-        ..., description="Prediction results corresponding to input items"
+        ...,
+        description="Per-input results, returned in the same order as the request items.",
     )

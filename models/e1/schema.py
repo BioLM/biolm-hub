@@ -46,9 +46,13 @@ class E1EncodeIncludeOptions(EnhancedStringEnum):
 
 
 class E1EncodeRequestParams(RequestModel):
-    repr_layers: list[int] = Field(default_factory=partial(list, [-1]))
+    repr_layers: list[int] = Field(
+        default_factory=partial(list, [-1]),
+        description="Hidden layers whose representations to return (negative indexes count from the last layer).",
+    )
     include: list[E1EncodeIncludeOptions] = Field(
-        default_factory=partial(list, [E1EncodeIncludeOptions.MEAN])
+        default_factory=partial(list, [E1EncodeIncludeOptions.MEAN]),
+        description="Optional outputs to compute and include in the response.",
     )
 
 
@@ -70,10 +74,17 @@ class E1EncodeRequestItem(RequestModel):
     sequence: Annotated[
         str,
         BeforeValidator(validate_aa_extended),
-        Field(..., min_length=1, max_length=E1Params.max_sequence_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=E1Params.max_sequence_len,
+            description="A protein sequence in single-letter amino-acid codes (extended alphabet: standard 20 + B/X/Z/U/O).",
+        ),
     ]
     context_sequences: Optional[list[str]] = Field(
-        default=None, max_length=E1Params.max_context_sequences
+        default=None,
+        max_length=E1Params.max_context_sequences,
+        description="Optional homologous sequences to condition inference via block-causal attention; up to 50 sequences allowed.",
     )
 
     @field_validator("context_sequences")
@@ -94,10 +105,17 @@ class E1EncodeRequestItem(RequestModel):
 
 
 class E1EncodeRequest(RequestModel):
-    params: E1EncodeRequestParams = E1EncodeRequestParams()
+    params: E1EncodeRequestParams = Field(
+        default_factory=E1EncodeRequestParams,
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: Annotated[
         list[E1EncodeRequestItem],
-        Field(min_length=1, max_length=E1Params.batch_size),
+        Field(
+            min_length=1,
+            max_length=E1Params.batch_size,
+            description="Batch of inputs to process in a single request. Up to 8 sequences per request.",
+        ),
     ]
 
 
@@ -115,10 +133,17 @@ class E1PredictRequestItem(RequestModel):
         str,
         BeforeValidator(AAExtendedPlusExtra(extra=["?"])),
         BeforeValidator(SingleOrMoreOccurrencesOf("?")),
-        Field(..., min_length=1, max_length=E1Params.max_sequence_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=E1Params.max_sequence_len,
+            description="A protein sequence with one or more '?' mask tokens marking positions to predict.",
+        ),
     ]
     context_sequences: Optional[list[str]] = Field(
-        default=None, max_length=E1Params.max_context_sequences
+        default=None,
+        max_length=E1Params.max_context_sequences,
+        description="Optional homologous sequences for context; no '?' mask tokens allowed in context sequences.",
     )
 
     @field_validator("context_sequences")
@@ -146,7 +171,11 @@ class E1PredictRequestItem(RequestModel):
 class E1PredictRequest(RequestModel):
     items: Annotated[
         list[E1PredictRequestItem],
-        Field(min_length=1, max_length=E1Params.batch_size),
+        Field(
+            min_length=1,
+            max_length=E1Params.batch_size,
+            description="Batch of inputs to process in a single request. Up to 8 sequences per request.",
+        ),
     ]
 
 
@@ -165,10 +194,17 @@ class E1PredictLogProbRequestItem(RequestModel):
     sequence: Annotated[
         str,
         BeforeValidator(validate_aa_unambiguous),
-        Field(..., min_length=1, max_length=E1Params.max_sequence_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=E1Params.max_sequence_len,
+            description="A protein sequence in the 20 canonical amino-acid codes to score.",
+        ),
     ]
     context_sequences: Optional[list[str]] = Field(
-        default=None, max_length=E1Params.max_context_sequences
+        default=None,
+        max_length=E1Params.max_context_sequences,
+        description="Optional homologous sequences to condition scoring via block-causal attention; up to 50 sequences allowed.",
     )
 
     @field_validator("context_sequences")
@@ -191,7 +227,11 @@ class E1PredictLogProbRequestItem(RequestModel):
 class E1PredictLogProbRequest(RequestModel):
     items: Annotated[
         list[E1PredictLogProbRequestItem],
-        Field(min_length=1, max_length=E1Params.batch_size),
+        Field(
+            min_length=1,
+            max_length=E1Params.batch_size,
+            description="Batch of inputs to process in a single request. Up to 8 sequences per request.",
+        ),
     ]
 
 
@@ -201,15 +241,19 @@ class E1PredictLogProbRequest(RequestModel):
 class LayerEmbedding(ResponseModel):
     """Embedding vector for a single layer."""
 
-    layer: int
-    embedding: list[float]
+    layer: int = Field(description="Model layer this representation was taken from.")
+    embedding: list[float] = Field(
+        description="Mean-pooled embedding vector for the sequence."
+    )
 
 
 class LayerPerTokenEmbeddings(ResponseModel):
     """Per-token embedding vectors for a single layer."""
 
-    layer: int
-    embeddings: list[list[float]]
+    layer: int = Field(description="Model layer this representation was taken from.")
+    embeddings: list[list[float]] = Field(
+        description="Per-token embedding vectors for the sequence at this layer."
+    )
 
 
 class E1EncodeResponseResult(ResponseModel):
@@ -223,30 +267,59 @@ class E1EncodeResponseResult(ResponseModel):
         },
     }
 
-    embeddings: Optional[list[LayerEmbedding]] = None
-    per_token_embeddings: Optional[list[LayerPerTokenEmbeddings]] = None
-    logits: Optional[list[list[float]]] = None
-    vocab_tokens: Optional[list[str]] = None  # Included when logits requested
-    context_sequence_count: Optional[int] = None  # Number of context sequences
+    embeddings: Optional[list[LayerEmbedding]] = Field(
+        default=None,
+        description="Per-layer mean-pooled embedding vectors for the query sequence.",
+    )
+    per_token_embeddings: Optional[list[LayerPerTokenEmbeddings]] = Field(
+        default=None,
+        description="Per-residue (per-token) embedding vectors.",
+    )
+    logits: Optional[list[list[float]]] = Field(
+        default=None,
+        description="Per-position logits over the model vocabulary.",
+    )
+    vocab_tokens: Optional[list[str]] = Field(
+        default=None,
+        description="Vocabulary token order corresponding to the logits columns.",
+    )
+    context_sequence_count: Optional[int] = Field(
+        default=None,
+        description="Number of context sequences used to condition this prediction.",
+    )
 
 
 class E1EncodeResponse(ResponseModel):
-    results: list[E1EncodeResponseResult]
+    results: list[E1EncodeResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )
 
 
 class E1PredictResponseResult(ResponseModel):
-    logits: list[list[float]]
-    sequence_tokens: list[str]
-    vocab_tokens: list[str]
+    logits: list[list[float]] = Field(
+        description="Per-position logits over the model vocabulary.",
+    )
+    sequence_tokens: list[str] = Field(
+        description="Per-position input tokens, aligned with the logits.",
+    )
+    vocab_tokens: list[str] = Field(
+        description="Vocabulary token order corresponding to the logits columns.",
+    )
 
 
 class E1PredictResponse(ResponseModel):
-    results: list[E1PredictResponseResult]
+    results: list[E1PredictResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )
 
 
 class E1PredictLogProbResponseResult(ResponseModel):
-    log_prob: float
+    log_prob: float = Field(
+        description="Pseudo-log-likelihood of the sequence under the model.",
+    )
 
 
 class E1PredictLogProbResponse(ResponseModel):
-    results: list[E1PredictLogProbResponseResult]
+    results: list[E1PredictLogProbResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )

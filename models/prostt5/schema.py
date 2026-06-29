@@ -67,7 +67,12 @@ class ProstT5EncodeRequestItemAA(RequestModel):  # AA2fold
     sequence: Annotated[
         str,
         BeforeValidator(validate_aa_extended),
-        Field(..., min_length=1, max_length=ProstT5EncodeParams.max_sequence_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=ProstT5EncodeParams.max_sequence_len,
+            description="A protein sequence in single-letter amino-acid codes.",
+        ),
     ]
 
 
@@ -75,21 +80,34 @@ class ProstT5EncodeRequestItemFold(RequestModel):  # fold2AA
     sequence: Annotated[
         str,
         BeforeValidator(validate_prostt5_3di),
-        Field(..., min_length=1, max_length=ProstT5EncodeParams.max_sequence_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=ProstT5EncodeParams.max_sequence_len,
+            description="A 3Di structural token sequence in Foldseek's lowercase 20-letter alphabet.",
+        ),
     ]
 
 
 class ProstT5EncodeRequestAA(RequestModel):
     items: Annotated[
         list[ProstT5EncodeRequestItemAA],
-        Field(min_length=1, max_length=ProstT5EncodeParams.batch_size),
+        Field(
+            min_length=1,
+            max_length=ProstT5EncodeParams.batch_size,
+            description="Batch of inputs to process in a single request. Up to 16 sequences per request.",
+        ),
     ]
 
 
 class ProstT5EncodeRequestFold(RequestModel):
     items: Annotated[
         list[ProstT5EncodeRequestItemFold],
-        Field(min_length=1, max_length=ProstT5EncodeParams.batch_size),
+        Field(
+            min_length=1,
+            max_length=ProstT5EncodeParams.batch_size,
+            description="Batch of inputs to process in a single request. Up to 16 sequences per request.",
+        ),
     ]
 
 
@@ -97,76 +115,167 @@ class ProstT5EncodeRequestFold(RequestModel):
 
 
 class ProstT5EncodeResponseLabel(RequestModel):
-    token: int
-    token_str: str
-    score: float
-    sequence: str
+    token: int = Field(description="Vocabulary token ID at this position.")
+    token_str: str = Field(description="String form of the vocabulary token.")
+    score: float = Field(
+        description="Log-probability score assigned to this token by the model."
+    )
+    sequence: str = Field(
+        description="Decoded sequence string for this generation candidate."
+    )
 
 
 ProstT5NEncodeResponseResult = list[ProstT5EncodeResponseLabel]
 
 
 class ProstT5EncodeResponseResult(ResponseModel):
-    mean_representation: list[float]
+    mean_representation: list[float] = Field(
+        description="Mean-pooled 1024-dimensional embedding vector for the input sequence."
+    )
 
 
 class ProstT5EncodeResponse(ResponseModel):
-    results: list[ProstT5EncodeResponseResult]
+    results: list[ProstT5EncodeResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items."
+    )
 
 
 ### ProstT5 Generate Request
 
 
 class ProstT5GenerateParamsAA(RequestModel):  # AA2Fold
-    temperature: float = Field(default=1.2, ge=0.0, le=8.0)
-    top_p: float = Field(default=0.95, ge=0.0, le=1.0)
-    top_k: int = Field(default=6, ge=1, le=20)
+    temperature: float = Field(
+        default=1.2,
+        ge=0.0,
+        le=8.0,
+        description="Sampling temperature; higher values increase diversity.",
+    )
+    top_p: float = Field(
+        default=0.95,
+        ge=0.0,
+        le=1.0,
+        description="Nucleus (top-p) sampling threshold.",
+    )
+    top_k: int = Field(
+        default=6,
+        ge=1,
+        le=20,
+        description="Top-k sampling cutoff; only the k most likely tokens are sampled.",
+    )
     repetition_penalty: float = Field(
-        default=1.2, ge=0.0, le=3.0
+        default=1.2,
+        ge=0.0,
+        le=3.0,
+        description="Repetition penalty applied during generation; values > 1.0 discourage repeated tokens.",
     )  # No specific cap was in model repo
-    num_samples: int = Field(default=1, ge=1, le=3)
-    num_beams: int = Field(default=3, ge=1, le=ProstT5GenerateParams.max_beam_width)
-    seed: int | None = None  # For reproducibility control
+    num_samples: int = Field(
+        default=1,
+        ge=1,
+        le=3,
+        description="Number of sequences to generate per input.",
+    )
+    num_beams: int = Field(
+        default=3,
+        ge=1,
+        le=ProstT5GenerateParams.max_beam_width,
+        description="Beam search width for AA2fold translation; wider beams improve quality at higher compute cost.",
+    )
+    seed: int | None = Field(
+        default=None,
+        description="Random seed for reproducible sampling.",
+    )  # For reproducibility control
 
 
 class ProstT5GenerateRequestItemAA(RequestModel):
     sequence: Annotated[
         str,
         BeforeValidator(validate_aa_extended),
-        Field(..., min_length=1, max_length=ProstT5GenerateParams.max_sequence_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=ProstT5GenerateParams.max_sequence_len,
+            description="A protein sequence in single-letter amino-acid codes.",
+        ),
     ]
 
 
 class ProstT5GenerateRequestAA(RequestModel):
-    params: ProstT5GenerateParamsAA = ProstT5GenerateParamsAA()
+    params: ProstT5GenerateParamsAA = Field(
+        default_factory=ProstT5GenerateParamsAA,
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: Annotated[
         list[ProstT5GenerateRequestItemAA],
-        Field(min_length=1, max_length=ProstT5GenerateParams.batch_size),
+        Field(
+            min_length=1,
+            max_length=ProstT5GenerateParams.batch_size,
+            description="Batch of inputs to process in a single request. Up to 2 sequences per request.",
+        ),
     ]
 
 
 class ProstT5GenerateParamsFold(RequestModel):  # fold2AA
-    temperature: float = Field(default=1.0, ge=0.0, le=8.0)
-    top_p: float = Field(default=0.85, ge=0.0, le=1.0)
-    top_k: int = Field(default=3, ge=1, le=20)
-    repetition_penalty: float = Field(default=1.2, ge=0.0, le=3.0)
-    num_samples: int = Field(default=1, ge=1, le=3)
-    seed: int | None = None  # For reproducibility control
+    temperature: float = Field(
+        default=1.0,
+        ge=0.0,
+        le=8.0,
+        description="Sampling temperature; higher values increase diversity.",
+    )
+    top_p: float = Field(
+        default=0.85,
+        ge=0.0,
+        le=1.0,
+        description="Nucleus (top-p) sampling threshold.",
+    )
+    top_k: int = Field(
+        default=3,
+        ge=1,
+        le=20,
+        description="Top-k sampling cutoff; only the k most likely tokens are sampled.",
+    )
+    repetition_penalty: float = Field(
+        default=1.2,
+        ge=0.0,
+        le=3.0,
+        description="Repetition penalty applied during generation; values > 1.0 discourage repeated tokens.",
+    )
+    num_samples: int = Field(
+        default=1,
+        ge=1,
+        le=3,
+        description="Number of sequences to generate per input.",
+    )
+    seed: int | None = Field(
+        default=None,
+        description="Random seed for reproducible sampling.",
+    )  # For reproducibility control
 
 
 class ProstT5GenerateRequestItemFold(RequestModel):
     sequence: Annotated[
         str,
         BeforeValidator(validate_prostt5_3di),
-        Field(..., min_length=1, max_length=ProstT5GenerateParams.max_sequence_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=ProstT5GenerateParams.max_sequence_len,
+            description="A 3Di structural token sequence in Foldseek's lowercase 20-letter alphabet.",
+        ),
     ]
 
 
 class ProstT5GenerateRequestFold(RequestModel):
-    params: ProstT5GenerateParamsFold = ProstT5GenerateParamsFold()
+    params: ProstT5GenerateParamsFold = Field(
+        default_factory=ProstT5GenerateParamsFold,
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: Annotated[
         list[ProstT5GenerateRequestItemFold],
-        Field(min_length=1, max_length=ProstT5GenerateParams.batch_size),
+        Field(
+            min_length=1,
+            max_length=ProstT5GenerateParams.batch_size,
+            description="Batch of inputs to process in a single request. Up to 2 sequences per request.",
+        ),
     ]
 
 
@@ -174,11 +283,15 @@ class ProstT5GenerateRequestFold(RequestModel):
 
 
 class ProstT5GenerateResponseGenerated(RequestModel):
-    sequence: str
+    sequence: str = Field(
+        description="A generated sequence in the target alphabet (uppercase amino acids for fold2AA; lowercase 3Di tokens for AA2fold).",
+    )
 
 
 ProstT5GenerateResponseResult = list[ProstT5GenerateResponseGenerated]
 
 
 class ProstT5GenerateResponse(ResponseModel):
-    results: list[ProstT5GenerateResponseResult]
+    results: list[ProstT5GenerateResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items."
+    )

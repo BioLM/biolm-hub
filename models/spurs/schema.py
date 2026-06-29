@@ -56,28 +56,18 @@ class SpursPredictRequestItem(RequestModel):
             description="Protein sequence for SPURS prediction",
         ),
     ]
-    pdb: Optional[
-        Annotated[
-            str,
-            BeforeValidator(validate_pdb),
-            Field(
-                min_length=1,
-                max_length=max_pdb_str_len,
-                description="PDB format structure content",
-            ),
-        ]
-    ] = None
-    cif: Optional[
-        Annotated[
-            str,
-            BeforeValidator(validate_cif),
-            Field(
-                min_length=1,
-                max_length=max_pdb_str_len,
-                description="mmCIF format structure content",
-            ),
-        ]
-    ] = None
+    pdb: Optional[Annotated[str, BeforeValidator(validate_pdb)]] = Field(
+        default=None,
+        min_length=1,
+        max_length=max_pdb_str_len,
+        description="Input structure in PDB format. Provide exactly one of pdb or cif.",
+    )
+    cif: Optional[Annotated[str, BeforeValidator(validate_cif)]] = Field(
+        default=None,
+        min_length=1,
+        max_length=max_pdb_str_len,
+        description="Input structure in mmCIF format. Provide exactly one of pdb or cif.",
+    )
     chain_id: str = Field(
         "A",
         min_length=1,
@@ -96,21 +86,18 @@ class SpursPredictRequestItem(RequestModel):
         ),
     )
     variant_sequence: Optional[
-        Annotated[
-            str,
-            BeforeValidator(validate_aa_unambiguous),
-            Field(
-                min_length=1,
-                max_length=SpursParams.max_sequence_len,
-                description=(
-                    "Optional variant sequence for automatic mutation calculation. "
-                    "When provided with return_full_dms=False and mutations=None, "
-                    "the system will calculate mutations from the wild-type sequence "
-                    "(in 'sequence' field) to this variant sequence."
-                ),
-            ),
-        ]
-    ] = None
+        Annotated[str, BeforeValidator(validate_aa_unambiguous)]
+    ] = Field(
+        default=None,
+        min_length=1,
+        max_length=SpursParams.max_sequence_len,
+        description=(
+            "Optional variant sequence for automatic mutation calculation. "
+            "When provided with return_full_dms=False and mutations=None, "
+            "the system will calculate mutations from the wild-type sequence "
+            "(in 'sequence' field) to this variant sequence."
+        ),
+    )
     return_full_dms: bool = Field(
         default=True,
         description=(

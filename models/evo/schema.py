@@ -37,39 +37,84 @@ class EvoPredictLogProbRequestItem(RequestModel):
     sequence: Annotated[
         str,
         BeforeValidator(validate_dna_unambiguous),
-        Field(..., min_length=1, max_length=EvoParams.max_sequence_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=EvoParams.max_sequence_len,
+            description="A DNA sequence (A/C/G/T).",
+        ),
     ]
 
 
 class EvoPredictLogProbRequest(RequestModel):
     items: Annotated[
         list[EvoPredictLogProbRequestItem],
-        Field(min_length=1, max_length=EvoParams.batch_size),
+        Field(
+            min_length=1,
+            max_length=EvoParams.batch_size,
+            description="Batch of inputs to process in a single request. Up to 2 sequences per request.",
+        ),
     ]
 
 
 class EvoGenerateRequestParams(RequestModel):
-    max_new_tokens: int = Field(100, ge=1, le=EvoParams.max_sequence_len)
-    temperature: float = Field(0.0, ge=0.0)
-    top_k: int = Field(1, ge=1)
-    top_p: float = Field(1.0, ge=0.0, le=1.0)
-    prepend_bos: bool = Field(False)
-    seed: Optional[int] = None  # NEW: For reproducibility control
+    max_new_tokens: int = Field(
+        100,
+        ge=1,
+        le=EvoParams.max_sequence_len,
+        description="Maximum number of new tokens to generate.",
+    )
+    temperature: float = Field(
+        0.0,
+        ge=0.0,
+        description="Sampling temperature; higher values increase diversity.",
+    )
+    top_k: int = Field(
+        1,
+        ge=1,
+        description="Top-k sampling cutoff; only the k most likely tokens are sampled.",
+    )
+    top_p: float = Field(
+        1.0,
+        ge=0.0,
+        le=1.0,
+        description="Nucleus (top-p) sampling threshold.",
+    )
+    prepend_bos: bool = Field(
+        False,
+        description="Whether to prepend a BOS token before the prompt during generation.",
+    )
+    seed: Optional[int] = Field(
+        default=None,
+        description="Random seed for reproducible sampling.",
+    )
 
 
 class EvoGenerateRequestItem(RequestModel):
     prompt: Annotated[
         str,
         BeforeValidator(validate_dna_unambiguous),
-        Field(..., min_length=1, max_length=EvoParams.max_sequence_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=EvoParams.max_sequence_len,
+            description="Seed DNA sequence (A/C/G/T) from which generation continues autoregressively.",
+        ),
     ]
 
 
 class EvoGenerateRequest(RequestModel):
-    params: EvoGenerateRequestParams = EvoGenerateRequestParams()
+    params: EvoGenerateRequestParams = Field(
+        default_factory=EvoGenerateRequestParams,
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: Annotated[
         list[EvoGenerateRequestItem],
-        Field(min_length=1, max_length=EvoParams.batch_size),
+        Field(
+            min_length=1,
+            max_length=EvoParams.batch_size,
+            description="Batch of inputs to process in a single request. Up to 2 sequences per request.",
+        ),
     ]
 
 
@@ -77,17 +122,27 @@ class EvoGenerateRequest(RequestModel):
 
 
 class EvoPredictLogProbResponseResult(ResponseModel):
-    log_prob: float
+    log_prob: float = Field(
+        description="Log-likelihood of the sequence under the model.",
+    )
 
 
 class EvoPredictLogProbResponse(ResponseModel):
-    results: list[EvoPredictLogProbResponseResult]
+    results: list[EvoPredictLogProbResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )
 
 
 class EvoGenerateResponseResult(ResponseModel):
-    generated: str
-    score: float
+    generated: str = Field(
+        description="Full generated DNA sequence, including the prompt and newly generated nucleotides.",
+    )
+    score: float = Field(
+        description="Average log-probability per token of the generated sequence, reflecting model confidence.",
+    )
 
 
 class EvoGenerateResponse(ResponseModel):
-    results: list[EvoGenerateResponseResult]
+    results: list[EvoGenerateResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )

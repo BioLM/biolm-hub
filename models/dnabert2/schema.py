@@ -26,14 +26,24 @@ class DNABERT2EncodeRequestItem(RequestModel):
     sequence: Annotated[
         str,
         BeforeValidator(validate_dna_unambiguous),
-        Field(..., min_length=1, max_length=DNABERT2Params.max_sequence_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=DNABERT2Params.max_sequence_len,
+            description="A DNA sequence (A/C/G/T).",
+        ),
     ]
 
 
 class DNABERT2EncodeRequest(RequestModel):
     items: Annotated[
         list[DNABERT2EncodeRequestItem],
-        Field(..., min_length=1, max_length=DNABERT2Params.batch_size),
+        Field(
+            ...,
+            min_length=1,
+            max_length=DNABERT2Params.batch_size,
+            description="Batch of inputs to process in a single request. Up to 10 sequences per request.",
+        ),
     ]
 
 
@@ -41,14 +51,24 @@ class DNABERT2PredictLogProbRequestItem(RequestModel):
     sequence: Annotated[
         str,
         BeforeValidator(validate_dna_unambiguous),
-        Field(..., min_length=1, max_length=DNABERT2Params.max_sequence_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=DNABERT2Params.max_sequence_len,
+            description="A DNA sequence (A/C/G/T).",
+        ),
     ]
 
 
 class DNABERT2PredictLogProbRequest(RequestModel):
     items: Annotated[
         list[DNABERT2PredictLogProbRequestItem],
-        Field(..., min_length=1, max_length=DNABERT2Params.batch_size),
+        Field(
+            ...,
+            min_length=1,
+            max_length=DNABERT2Params.batch_size,
+            description="Batch of inputs to process in a single request. Up to 10 sequences per request.",
+        ),
     ]
 
 
@@ -56,16 +76,24 @@ class DNABERT2PredictLogProbRequest(RequestModel):
 
 
 class DNABERT2EncodeResponseResult(ResponseModel):
-    embedding: list[float]
+    embedding: list[float] = Field(
+        description="Mean-pooled embedding vector for the sequence."
+    )
 
 
 class DNABERT2EncodeResponse(ResponseModel):
-    results: list[DNABERT2EncodeResponseResult]
+    results: list[DNABERT2EncodeResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items."
+    )
 
 
 class DNABERT2PredictLogProbResponseResult(ResponseModel):
-    log_prob: float
+    log_prob: float = Field(
+        description="Pseudo-log-likelihood of the sequence under the model."
+    )
 
 
 class DNABERT2PredictLogProbResponse(ResponseModel):
-    results: list[DNABERT2PredictLogProbResponseResult]
+    results: list[DNABERT2PredictLogProbResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items."
+    )

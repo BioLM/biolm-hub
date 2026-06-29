@@ -70,36 +70,44 @@ class DSMGenerateRequestParams(RequestModel):
     """Parameters for DSM generation."""
 
     num_sequences: int = Field(
-        default=1, ge=1, le=32, description="Number of sequences to generate"
+        default=1, ge=1, le=32, description="Number of sequences to generate per input."
     )
     temperature: float = Field(
-        default=1.0, ge=0.1, le=2.0, description="Sampling temperature"
+        default=1.0,
+        ge=0.1,
+        le=2.0,
+        description="Sampling temperature; higher values increase diversity.",
     )
     top_k: Optional[int] = Field(
-        default=None, ge=1, description="Top-k sampling (None = disabled)"
+        default=None,
+        ge=1,
+        description="Top-k sampling cutoff; only the k most likely tokens are sampled.",
     )
     top_p: Optional[float] = Field(
-        default=None, ge=0.0, le=1.0, description="Nucleus sampling (None = disabled)"
+        default=None,
+        ge=0.0,
+        le=1.0,
+        description="Nucleus (top-p) sampling threshold.",
     )
     max_length: Optional[int] = Field(
         default=None,
         ge=10,
         le=2048,
-        description="Max sequence length (None = from input)",
+        description="Maximum length of the generated sequence.",
     )
     step_divisor: int = Field(
         default=100,
         ge=1,
         le=1000,
-        description="Step divisor for diffusion (lower = slower but better quality)",
+        description="Diffusion step divisor; lower values yield more denoising steps and better quality at higher compute cost.",
     )
     remasking: DSMRemaskingStrategy = Field(
         default=DSMRemaskingStrategy.RANDOM,
-        description="Remasking strategy for diffusion",
+        description="Remasking strategy controlling which positions are re-masked between diffusion steps.",
     )
     seed: Optional[int] = Field(
         default=None,
-        description="Random seed for reproducibility (None = time-based entropy)",
+        description="Random seed for reproducible sampling.",
     )
 
 
@@ -109,17 +117,28 @@ class DSMGenerateRequestItem(RequestModel):
     sequence: Annotated[
         str,
         BeforeValidator(validate_dsm_sequence),
-        Field(default="", max_length=DSMParams.max_sequence_len),
+        Field(
+            default="",
+            max_length=DSMParams.max_sequence_len,
+            description="Input sequence; empty = unconditional generation, `<mask>` tokens = infilling, prefix = conditional generation.",
+        ),
     ]
 
 
 class DSMGenerateRequest(RequestModel):
     """Request for DSM sequence generation."""
 
-    params: DSMGenerateRequestParams = DSMGenerateRequestParams()
+    params: DSMGenerateRequestParams = Field(
+        default_factory=DSMGenerateRequestParams,
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: Annotated[
         list[DSMGenerateRequestItem],
-        Field(min_length=1, max_length=DSMParams.generate_batch_size),
+        Field(
+            min_length=1,
+            max_length=DSMParams.generate_batch_size,
+            description="Batch of inputs to process in a single request. Up to 1 sequence per request.",
+        ),
     ]
 
 
@@ -134,7 +153,8 @@ class DSMEncodeIncludeOptions(EnhancedStringEnum):
 
 class DSMEncodeRequestParams(RequestModel):
     include: list[DSMEncodeIncludeOptions] = Field(
-        default_factory=partial(list, [DSMEncodeIncludeOptions.MEAN])
+        default_factory=partial(list, [DSMEncodeIncludeOptions.MEAN]),
+        description="Optional outputs to compute and include in the response.",
     )
 
 
@@ -142,15 +162,27 @@ class DSMEncodeRequestItem(RequestModel):
     sequence: Annotated[
         str,
         BeforeValidator(AAExtendedPlusExtra(extra=["-"])),
-        Field(..., min_length=1, max_length=DSMParams.max_sequence_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=DSMParams.max_sequence_len,
+            description="A protein sequence in single-letter amino-acid codes.",
+        ),
     ]
 
 
 class DSMEncodeRequest(RequestModel):
-    params: DSMEncodeRequestParams = DSMEncodeRequestParams()
+    params: DSMEncodeRequestParams = Field(
+        default_factory=DSMEncodeRequestParams,
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: Annotated[
         list[DSMEncodeRequestItem],
-        Field(min_length=1, max_length=DSMParams.encode_batch_size),
+        Field(
+            min_length=1,
+            max_length=DSMParams.encode_batch_size,
+            description="Batch of inputs to process in a single request. Up to 16 sequences per request.",
+        ),
     ]
 
 
@@ -161,14 +193,23 @@ class DSMScoreRequestItem(RequestModel):
     sequence: Annotated[
         str,
         BeforeValidator(validate_aa_unambiguous),
-        Field(..., min_length=1, max_length=DSMParams.max_sequence_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=DSMParams.max_sequence_len,
+            description="A protein sequence in single-letter amino-acid codes.",
+        ),
     ]
 
 
 class DSMScoreRequest(RequestModel):
     items: Annotated[
         list[DSMScoreRequestItem],
-        Field(min_length=1, max_length=DSMParams.encode_batch_size),
+        Field(
+            min_length=1,
+            max_length=DSMParams.encode_batch_size,
+            description="Batch of inputs to process in a single request. Up to 16 sequences per request.",
+        ),
     ]
 
 
@@ -178,14 +219,25 @@ class DSMScoreRequest(RequestModel):
 class DSMGenerateResponseResult(ResponseModel):
     """Result for a single generated sequence."""
 
-    sequence: str
-    log_prob: float  # Total log probability
-    perplexity: float  # exp(-log_prob / length)
-    sequence2: Optional[str] = None  # Second sequence for PPI models
+    sequence: str = Field(
+        description="Generated protein sequence in single-letter amino-acid codes."
+    )
+    log_prob: float = Field(
+        description="Pseudo-log-likelihood of the sequence under the model."
+    )
+    perplexity: float = Field(
+        description="Perplexity of the sequence under the model (lower means more likely)."
+    )
+    sequence2: Optional[str] = Field(
+        default=None,
+        description="Second generated sequence for PPI-variant outputs; None for base-model generations.",
+    )
 
 
 class DSMGenerateResponse(ResponseModel):
-    results: list[list[DSMGenerateResponseResult]]  # Nested: [batch][num_sequences]
+    results: list[list[DSMGenerateResponseResult]] = Field(
+        description="Per-input results in request order. Each inner list contains num_sequences generated sequences.",
+    )
 
 
 class DSMEncodeResponseResult(ResponseModel):
@@ -197,21 +249,42 @@ class DSMEncodeResponseResult(ResponseModel):
         },
     }
 
-    sequence_index: int
-    embeddings: Optional[list[float]] = None  # Mean pooled
-    per_residue_embeddings: Optional[list[list[float]]] = None  # [seq_len, hidden_dim]
-    cls_embeddings: Optional[list[float]] = None  # CLS token
+    sequence_index: int = Field(
+        description="Index of the corresponding input sequence within the request batch."
+    )
+    embeddings: Optional[list[float]] = Field(
+        default=None,
+        description="Mean-pooled embedding vector for the sequence.",
+    )
+    per_residue_embeddings: Optional[list[list[float]]] = Field(
+        default=None,
+        description="Per-residue embedding vectors, shape [seq_len, hidden_dim].",
+    )
+    cls_embeddings: Optional[list[float]] = Field(
+        default=None,
+        description="CLS-token embedding vector for the sequence.",
+    )
 
 
 class DSMEncodeResponse(ResponseModel):
-    results: list[DSMEncodeResponseResult]
+    results: list[DSMEncodeResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )
 
 
 class DSMScoreResponseResult(ResponseModel):
-    log_prob: float  # Total log probability
-    perplexity: float  # exp(-log_prob / length)
-    sequence_length: int
+    log_prob: float = Field(
+        description="Pseudo-log-likelihood of the sequence under the model."
+    )
+    perplexity: float = Field(
+        description="Perplexity of the sequence under the model (lower means more likely)."
+    )
+    sequence_length: int = Field(
+        description="Length of the input sequence in amino acids."
+    )
 
 
 class DSMScoreResponse(ResponseModel):
-    results: list[DSMScoreResponseResult]
+    results: list[DSMScoreResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )

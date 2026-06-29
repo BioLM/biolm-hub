@@ -15,7 +15,7 @@
      - sources.yaml applied_literature entries for real-world use cases
      - sources.yaml primary_papers for the model's own biological claims
      Access via:
-       bm r2 cat r2://biolm-modal/knowledge-base/models/{slug}/applied/papers-md/{paper}.md
+       bm r2 cat r2://biolm-public/knowledge-base/models/{slug}/applied/papers-md/{paper}.md
 -->
 
 ## Molecule Coverage

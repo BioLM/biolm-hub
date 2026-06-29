@@ -37,7 +37,7 @@ class ThermoMPNNDPredictParams(RequestModel):
 
     mode: ThermoMPNNDMode = Field(
         default=ThermoMPNNDMode.SINGLE,
-        description="Prediction mode: 'single' for single mutations, 'additive' for additive double mutations, 'epistatic' for epistatic double mutations",
+        description="Prediction mode: 'single' for individual mutation ddG, 'additive' for summed single-mutation effects, 'epistatic' for full pairwise interaction modeling.",
     )
     chain: Optional[str] = Field(
         default=None,
@@ -58,7 +58,12 @@ class ThermoMPNNDPredictRequestItem(RequestModel):
     pdb: Annotated[
         str,
         BeforeValidator(validate_pdb),
-        Field(..., min_length=1, max_length=max_pdb_str_len),
+        Field(
+            ...,
+            min_length=1,
+            max_length=max_pdb_str_len,
+            description="Input structure in PDB format.",
+        ),
     ]
     mutations: Optional[list[str]] = Field(
         default=None,
@@ -138,10 +143,16 @@ class ThermoMPNNDPredictRequestItem(RequestModel):
 
 
 class ThermoMPNNDPredictRequest(RequestModel):
-    params: ThermoMPNNDPredictParams
+    params: ThermoMPNNDPredictParams = Field(
+        description="Optional parameters controlling this action (defaults are used when omitted)."
+    )
     items: Annotated[
         list[ThermoMPNNDPredictRequestItem],
-        Field(min_length=1, max_length=1),
+        Field(
+            min_length=1,
+            max_length=1,
+            description="Batch of inputs to process in a single request. Up to 1 PDB per request.",
+        ),
     ]
 
 
@@ -151,42 +162,47 @@ class ThermoMPNNDPredictRequest(RequestModel):
 class ThermoMPNNDPredictResponseItem(ResponseModel):
     """Response item for a mutation prediction (single or double)"""
 
-    mutation: str = Field(..., description="Mutation string")
+    mutation: str = Field(
+        ...,
+        description="Mutation string in WT{pos}MUT format (single) or WT1{pos1}MUT1:WT2{pos2}MUT2 format (double).",
+    )
     position: Optional[int] = Field(
-        None, description="Residue position for single mutations (1-indexed)"
+        None, description="Residue position for single mutations (1-indexed)."
     )
     position1: Optional[int] = Field(
-        None, description="First residue position for double mutations (1-indexed)"
+        None, description="First residue position for double mutations (1-indexed)."
     )
     position2: Optional[int] = Field(
-        None, description="Second residue position for double mutations (1-indexed)"
+        None, description="Second residue position for double mutations (1-indexed)."
     )
     wildtype: Optional[str] = Field(
-        None, description="Wildtype amino acid for single mutations"
+        None, description="Wildtype amino acid for single mutations."
     )
     wildtype1: Optional[str] = Field(
-        None, description="First wildtype amino acid for double mutations"
+        None, description="First wildtype amino acid for double mutations."
     )
     wildtype2: Optional[str] = Field(
-        None, description="Second wildtype amino acid for double mutations"
+        None, description="Second wildtype amino acid for double mutations."
     )
     mutation_aa: Optional[str] = Field(
-        None, description="Mutant amino acid for single mutations"
+        None, description="Mutant amino acid for single mutations."
     )
     mutation_aa1: Optional[str] = Field(
-        None, description="First mutant amino acid for double mutations"
+        None, description="First mutant amino acid for double mutations."
     )
     mutation_aa2: Optional[str] = Field(
-        None, description="Second mutant amino acid for double mutations"
+        None, description="Second mutant amino acid for double mutations."
     )
     ddg: float = Field(
-        ..., description="Predicted change in free energy (ddG) in kcal/mol"
+        ..., description="Predicted change in free energy (ddG) in kcal/mol."
     )
     distance: Optional[float] = Field(
         None,
-        description="CA-CA distance (Angstroms) between mutations for double mutations",
+        description="CA-CA distance (Angstroms) between the two mutation sites for double mutations.",
     )
 
 
 class ThermoMPNNDPredictResponse(ResponseModel):
-    results: list[ThermoMPNNDPredictResponseItem]
+    results: list[ThermoMPNNDPredictResponseItem] = Field(
+        description="Predicted ddG results, one entry per evaluated mutation (single or double)."
+    )

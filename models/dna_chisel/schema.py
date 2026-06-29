@@ -70,7 +70,7 @@ def list_supported_restriction_enzymes() -> list[str]:
 class DnaChiselPredictRequestParams(RequestModel):
     include: list[DnaChiselFeatureOptions] = Field(
         default_factory=lambda: list(DnaChiselFeatureOptions),
-        description="List of features to include in the response.",
+        description="Optional outputs to compute and include in the response.",
     )
     species: SupportedSpecies = Field(
         default=SupportedSpecies.E_COLI,
@@ -105,15 +105,22 @@ class DnaChiselPredictRequestItem(RequestModel):
     sequence: Annotated[
         str,
         BeforeValidator(validate_dna_unambiguous),
-        Field(..., min_length=1),
+        Field(..., min_length=1, description="A DNA sequence (A/C/G/T)."),
     ]
 
 
 class DnaChiselPredictRequest(RequestModel):
-    params: DnaChiselPredictRequestParams = DnaChiselPredictRequestParams()
+    params: DnaChiselPredictRequestParams = Field(
+        default_factory=DnaChiselPredictRequestParams,
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: Annotated[
         list[DnaChiselPredictRequestItem],
-        Field(min_length=1, max_length=DnaChiselParams.batch_size),
+        Field(
+            min_length=1,
+            max_length=DnaChiselParams.batch_size,
+            description="Batch of inputs to process in a single request. Up to 1 sequence per request.",
+        ),
     ]
 
 
@@ -121,27 +128,89 @@ class DnaChiselPredictRequest(RequestModel):
 
 
 class DnaChiselPredictResponseResult(ResponseModel):
-    gc_content: Optional[float] = None
-    cai: Optional[float] = None
-    hairpin_score: Optional[float] = None
-    melting_temperature: Optional[float] = None
-    restriction_site_count: Optional[dict[str, int]] = None
-    codon_usage_entropy: Optional[float] = None
-    rare_codon_frequency: Optional[float] = None
-    homopolymer_run_length: Optional[int] = None
-    dinucleotide_frequencies: Optional[dict[str, float]] = None
-    sequence_length: Optional[int] = None
-    tata_box_count: Optional[int] = None
-    non_unique_6mer_count: Optional[int] = None
-    in_frame_stop_codon_count: Optional[int] = None
-    methionine_frequency: Optional[float] = None
-    at_skew: Optional[float] = None
-    gc_skew: Optional[float] = None
-    nucleotide_entropy: Optional[float] = None
-    tandem_repeat_count: Optional[int] = None
-    gc_content_std_dev: Optional[float] = None
-    kozak_sequence_strength: Optional[float] = None
+    gc_content: Optional[float] = Field(
+        default=None,
+        description="GC content of the sequence as a fraction (0–1).",
+    )
+    cai: Optional[float] = Field(
+        default=None,
+        description="Codon Adaptation Index (CAI) for the selected species; higher values indicate better codon optimization.",
+    )
+    hairpin_score: Optional[float] = Field(
+        default=None,
+        description="Number of potential hairpin-forming regions detected in the sequence.",
+    )
+    melting_temperature: Optional[float] = Field(
+        default=None,
+        description="Computed melting temperature of the sequence in degrees Celsius.",
+    )
+    restriction_site_count: Optional[dict[str, int]] = Field(
+        default=None,
+        description="Number of occurrences of each restriction enzyme recognition site.",
+    )
+    codon_usage_entropy: Optional[float] = Field(
+        default=None,
+        description="Shannon entropy of the codon usage distribution; higher values indicate more uniform usage.",
+    )
+    rare_codon_frequency: Optional[float] = Field(
+        default=None,
+        description="Proportion of rare codons (relative usage < 0.1) in the sequence for the selected species.",
+    )
+    homopolymer_run_length: Optional[int] = Field(
+        default=None,
+        description="Maximum length of consecutive identical nucleotides (longest homopolymer run).",
+    )
+    dinucleotide_frequencies: Optional[dict[str, float]] = Field(
+        default=None,
+        description="Relative frequencies of each possible dinucleotide pair.",
+    )
+    sequence_length: Optional[int] = Field(
+        default=None,
+        description="Length of the input DNA sequence in nucleotides.",
+    )
+    tata_box_count: Optional[int] = Field(
+        default=None,
+        description="Number of TATA box motifs found in the sequence.",
+    )
+    non_unique_6mer_count: Optional[int] = Field(
+        default=None,
+        description="Number of distinct 6-mers that appear more than once in the sequence.",
+    )
+    in_frame_stop_codon_count: Optional[int] = Field(
+        default=None,
+        description="Number of in-frame stop codons; null if sequence length is not a multiple of 3.",
+    )
+    methionine_frequency: Optional[float] = Field(
+        default=None,
+        description="Frequency of methionine in the translated protein sequence; null if sequence length is not a multiple of 3.",
+    )
+    at_skew: Optional[float] = Field(
+        default=None,
+        description="AT skew of the sequence, computed as (A - T) / (A + T).",
+    )
+    gc_skew: Optional[float] = Field(
+        default=None,
+        description="GC skew of the sequence, computed as (G - C) / (G + C).",
+    )
+    nucleotide_entropy: Optional[float] = Field(
+        default=None,
+        description="Shannon entropy of the nucleotide composition.",
+    )
+    tandem_repeat_count: Optional[int] = Field(
+        default=None,
+        description="Number of tandem repeats (homopolymers) of length >= 3.",
+    )
+    gc_content_std_dev: Optional[float] = Field(
+        default=None,
+        description="Standard deviation of GC content computed in 50 bp sliding windows.",
+    )
+    kozak_sequence_strength: Optional[float] = Field(
+        default=None,
+        description="Binary score (1.0/0.0) for whether the sequence starts with the Kozak consensus (GCCRCCATGG).",
+    )
 
 
 class DnaChiselPredictResponse(ResponseModel):
-    results: list[DnaChiselPredictResponseResult]
+    results: list[DnaChiselPredictResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )

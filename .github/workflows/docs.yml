@@ -1,0 +1,45 @@
+name: Docs site
+
+# Builds the mkdocs site and publishes it to GitHub Pages.
+#
+# DORMANT BY DEFAULT. The deploy job is gated so normal pushes don't fail while
+# Pages is disabled (the `docs` job in ci.yml already build-checks the site on
+# every push/PR, so coverage isn't lost). To go live:
+#   1. Settings → Pages → Build and deployment → Source: "GitHub Actions".
+#   2. Add a repository variable `PAGES_ENABLED` = `true`.
+# After that, every push to main publishes. A manual `workflow_dispatch` run
+# always builds + deploys (use it for the first publish).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    if: github.event_name == 'workflow_dispatch' || vars.PAGES_ENABLED == 'true'
+    name: build · deploy
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv python install 3.12
+      - run: uv sync --all-extras
+      - run: uv run mkdocs build --strict
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4

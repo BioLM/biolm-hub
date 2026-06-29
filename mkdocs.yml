@@ -25,15 +25,45 @@ theme:
 
 nav:
   - Home: index.md
-  # Quickstart, Philosophy, Contributing, and per-model API pages are wired up in W14.
+  - Quickstart: quickstart.md
+  - Models: models/        # expanded from docs/models/SUMMARY.md (generated)
+  - Philosophy: philosophy.md
+  - Contributing: contributing.md
+  - Future work: future-work.md
+
+# The per-model pages, the catalog index, the Models nav (SUMMARY.md), and the
+# Philosophy/Contributing/Future-work pages are all generated at build time by
+# docs/gen_pages.py from each model's config + knowledge graph and the root
+# Markdown — there are no committed copies to drift.
+plugins:
+  - search
+  - gen-files:
+      scripts:
+        - docs/gen_pages.py
+  - literate-nav:
+      nav_file: SUMMARY.md
 
 markdown_extensions:
   - admonition
   - pymdownx.highlight
   - pymdownx.superfences
   - pymdownx.details
+  - tables
   - toc:
       permalink: true
 
-# `docs/philosophy.md` and `docs/contributing.md` are thin includes of the root
-# PHILOSOPHY.md / CONTRIBUTING.md, wired up in W14.
+# The generator scripts live in docs/ but are tooling, not site content.
+exclude_docs: |
+  *.py
+  __pycache__/
+
+# `mkdocs build --strict` (CI) fails on warnings. Embedded knowledge-graph prose
+# carries intra-doc anchors that may not all resolve after section nesting; keep
+# anchors at info so a genuinely broken nav/page link still fails the build.
+validation:
+  omitted_files: warn
+  absolute_links: ignore
+  unrecognized_links: warn
+  links:
+    not_found: warn
+    anchors: info

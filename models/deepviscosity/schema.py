@@ -59,7 +59,7 @@ class DeepViscosityPredictRequestParams(RequestModel):
 
     include_deepsp_features: bool = Field(
         default=False,
-        description="Include 30 DeepSP spatial property features in response",
+        description="Include 30 DeepSP spatial property features in response.",
     )
 
 
@@ -73,7 +73,7 @@ class DeepViscosityPredictRequestItem(RequestModel):
             ...,
             min_length=DeepViscosityParams.min_sequence_len,
             max_length=DeepViscosityParams.max_sequence_len,
-            description="Heavy chain variable region (VH) Fv sequence",
+            description="Heavy chain variable region (VH) Fv sequence.",
         ),
     ]
     light_chain: Annotated[
@@ -83,7 +83,7 @@ class DeepViscosityPredictRequestItem(RequestModel):
             ...,
             min_length=DeepViscosityParams.min_sequence_len,
             max_length=DeepViscosityParams.max_sequence_len,
-            description="Light chain variable region (VL) Fv sequence",
+            description="Light chain variable region (VL) Fv sequence.",
         ),
     ]
 
@@ -91,10 +91,17 @@ class DeepViscosityPredictRequestItem(RequestModel):
 class DeepViscosityPredictRequest(RequestModel):
     """DeepViscosity prediction request."""
 
-    params: Optional[DeepViscosityPredictRequestParams] = None
+    params: Optional[DeepViscosityPredictRequestParams] = Field(
+        default=None,
+        description="Optional parameters controlling this action (defaults are used when omitted).",
+    )
     items: Annotated[
         list[DeepViscosityPredictRequestItem],
-        Field(min_length=1, max_length=DeepViscosityParams.batch_size),
+        Field(
+            min_length=1,
+            max_length=DeepViscosityParams.batch_size,
+            description="Batch of inputs to process in a single request. Up to 10 antibodies per request.",
+        ),
     ]
 
 
@@ -103,30 +110,32 @@ class DeepViscosityPredictResponseResult(ResponseModel):
 
     viscosity_class: str = Field(
         ...,
-        description="Predicted viscosity class: 'low' (<=20 cP) or 'high' (>20 cP)",
+        description="Predicted viscosity class: 'low' (<=20 cP) or 'high' (>20 cP).",
     )
     probability_mean: float = Field(
         ...,
         ge=0.0,
         le=1.0,
-        description="Mean predicted probability across 102 ensemble models",
+        description="Mean predicted probability across 102 ensemble models.",
     )
     probability_std: float = Field(
         ...,
         ge=0.0,
-        description="Standard deviation of predictions across ensemble",
+        description="Standard deviation of predictions across ensemble.",
     )
     is_high_viscosity: bool = Field(
         ...,
-        description="True if probability_mean >= 0.5 (high viscosity predicted)",
+        description="True if probability_mean >= 0.5 (high viscosity predicted).",
     )
     deepsp_features: Optional[dict[str, float]] = Field(
         default=None,
-        description="DeepSP spatial properties (30 features) if requested",
+        description="DeepSP spatial properties (30 features) if requested.",
     )
 
 
 class DeepViscosityPredictResponse(ResponseModel):
     """DeepViscosity prediction response."""
 
-    results: list[DeepViscosityPredictResponseResult]
+    results: list[DeepViscosityPredictResponseResult] = Field(
+        description="Per-input results, returned in the same order as the request items.",
+    )

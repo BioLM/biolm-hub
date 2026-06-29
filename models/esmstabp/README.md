@@ -240,7 +240,7 @@ Higher MAE versus the paper's 3.4 degrees C is expected: validation proteins are
 - **Determinism**: NumPy seed set to 42 at startup; RF inference is inherently deterministic
 - **External dependency**: Calls `esm2-650m` endpoint via `Cls.from_name("esm2-650m", "ESM2Model")` for embeddings. If that endpoint is down, ESMStabP cannot function.
 - **Container image**: Debian slim (no GPU drivers), ~minimal footprint. Dependencies: scikit-learn 1.3.2, joblib 1.3.2, numpy 1.23.5.
-- **Model weights**: 4 joblib files downloaded from `r2://biolm-modal/model-store/esmstabp/v1/` at container build time via `setup_download_layer`.
+- **Model weights**: 4 joblib files downloaded from `r2://biolm-public/model-store/esmstabp/v1/` at container build time via `setup_download_layer`.
 
 ## Training
 
@@ -254,7 +254,7 @@ The training pipeline:
 2. Balances the dataset by downsampling non-thermophilic proteins
 3. Extracts ESM2 layer 33 mean embeddings for all sequences (GPU)
 4. Trains 4 Random Forest models with different feature configurations (5-fold CV)
-5. Uploads trained joblib files to `r2://biolm-modal/model-store/esmstabp/v1/`
+5. Uploads trained joblib files to `r2://biolm-public/model-store/esmstabp/v1/`
 
 ### Training Results (5-fold CV)
 
