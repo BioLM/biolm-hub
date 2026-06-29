@@ -66,7 +66,6 @@ def download_model_assets(
         sub_path=sub_path,
         library_name="evo",
         init_fn=_init_evo_weights(model_name),
-        monitor_directories=["~/.cache/huggingface", "~/.cache/torch"],
     )
 
     if not result.success:

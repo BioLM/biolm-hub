@@ -138,7 +138,6 @@ def acquire_library_managed_model(
     library_name: str,
     target_dir: Path,
     init_fn: Optional[Callable[[Path], Any]] = None,
-    monitor_directories: Optional[list[str]] = None,
     env_vars: Optional[dict] = None,
     cache_to_r2: bool = True,
     required_files: Optional[list[str]] = None,
@@ -158,8 +157,6 @@ def acquire_library_managed_model(
         library_name: Name of the library managing the download
         target_dir: Directory where the model should be downloaded
         init_fn: Function that triggers the library's download (returns model path)
-        monitor_directories: Retained for caller compatibility; no longer read
-            (the bypass detector that consumed it was removed).
         env_vars: Optional dictionary of environment variables to set
         cache_to_r2: Whether to cache downloaded model to R2
         required_files: Optional list of files to validate after download
@@ -184,7 +181,6 @@ def acquire_library_managed_model(
     # Create library configuration
     library_config = LibrarySourceConfig(
         library_name=library_name,
-        monitor_directories=monitor_directories,
         env_vars=env_vars,
     )
 
@@ -468,7 +464,6 @@ def r2_then_library(
     sub_path: Optional[str] = None,
     library_name: str,
     init_fn: Callable[[Path], Any],
-    monitor_directories: Optional[list[str]] = None,
     env_vars: Optional[dict[str, str]] = None,
     required_files: Optional[list[str]] = None,
     cache_to_r2: bool = True,
@@ -483,8 +478,6 @@ def r2_then_library(
             after a source fetch so future deploys self-populate. Set False for
             libraries that manage their own out-of-tree cache and cannot be
             redirected into ``target_dir`` (e.g. ``evo``/``pro1``).
-        monitor_directories: Retained for caller compatibility; no longer read
-            (the bypass detector that consumed it was removed).
     """
     from models.commons.storage.downloads import get_model_dir_util
 
@@ -513,7 +506,6 @@ def r2_then_library(
         validation_config=ValidationConfig(required_files=required_files),
         library_config=LibrarySourceConfig(
             library_name=library_name,
-            monitor_directories=monitor_directories,
             env_vars=env_vars,
         ),
         custom_function=init_fn,

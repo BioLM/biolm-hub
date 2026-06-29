@@ -198,7 +198,7 @@ def download_model_assets(
 | Source | Wrapper | Notes |
 |--------|---------|-------|
 | HuggingFace Hub | `r2_then_hf(..., hf_repo_id=, hf_revision=)` | pin a 40-char `hf_revision`, never `"main"` |
-| A library that fetches its own weights (e.g. fair-esm) | `r2_then_library(..., library_name=, init_fn=, monitor_directories=[...])` | `init_fn(target_dir)` triggers the download |
+| A library that fetches its own weights (e.g. fair-esm) | `r2_then_library(..., library_name=, init_fn=)` | `init_fn(target_dir)` triggers the download |
 | Direct URLs (GitHub releases, custom hosts) | `r2_then_urls(..., urls=[...])` | non-HF hosted weights |
 | A tar/zip archive | `r2_then_archive(..., url=, ...)` | downloads + extracts |
 

@@ -113,7 +113,6 @@ def download_model_assets(
         hf_config = HfSourceConfig(
             repo_id=hf_repo_id,
             allow_patterns=[expected_filename],  # Download only the .pt file
-            use_auth_token=True,
         )
 
         fallback_config = AcquisitionConfig(

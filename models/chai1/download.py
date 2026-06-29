@@ -142,17 +142,11 @@ def download_model_assets(
         sub_path=sub_path,
         library_name="chai1",
         init_fn=_init_chai1_weights,
-        monitor_directories=["~/.cache/chai"],
         required_files=expected_files,
     )
 
     if not result.success:
         raise RuntimeError(f"Failed to acquire Chai1 model: {result.error_message}")
-
-    if result.bypass_detected:
-        logger.warning(
-            "Chai1 bypass detected - model downloaded to: %s", result.bypass_locations
-        )
 
     actual_path = result.actual_model_path or result.target_dir
 

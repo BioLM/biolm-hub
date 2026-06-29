@@ -237,7 +237,6 @@ AcquisitionConfig(
     hf_config=HfSourceConfig(
         repo_id="EvolutionaryScale/esmc-300m-2024-12",
         revision="a19d363f07313a10a64d08a2d6b41376a73df5c8",
-        use_auth_token=True
     )
 )
 ```
@@ -248,7 +247,6 @@ AcquisitionConfig(
     strategy=AcquisitionStrategy.LIBRARY_MANAGED,
     library_config=LibrarySourceConfig(
         library_name="esm3",
-        monitor_directories=["~/.cache/huggingface"],
         env_vars={"HF_HUB_CACHE": str(target_dir)}
     ),
     custom_function=init_library_weights
@@ -408,7 +406,6 @@ def download_model_assets(...) -> Path:
         cache_config=CacheConfig(enable_r2_cache=True),
         library_config=LibrarySourceConfig(
             library_name="some_library",
-            monitor_directories=["~/.cache/huggingface"],
         ),
         custom_function=_init_library_weights,
     )

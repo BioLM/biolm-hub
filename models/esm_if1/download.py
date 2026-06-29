@@ -74,7 +74,6 @@ def download_model_assets(
         sub_path=sub_path,
         library_name="esm",
         init_fn=_init_esm_if1_weights,
-        monitor_directories=["~/.cache/torch"],
     )
 
     if not result.success:

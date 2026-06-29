@@ -103,7 +103,6 @@ class HfSourceConfig:
     revision: Optional[str] = None
     allow_patterns: Optional[list[str]] = None
     ignore_patterns: Optional[list[str]] = None
-    use_auth_token: bool = True
     repo_type: str = "model"  # "model" or "dataset"
 
 
@@ -112,10 +111,6 @@ class LibrarySourceConfig:
     """Configuration for library-managed acquisition strategy."""
 
     library_name: str
-    # ``monitor_directories`` is accepted but no longer read (the bypass
-    # detector that consumed it was removed). Several model download.py callers
-    # still pass it, so it is retained for signature compatibility.
-    monitor_directories: Optional[list[str]] = None
     env_vars: Optional[dict[str, str]] = None
 
 
@@ -177,8 +172,6 @@ class AcquisitionResult:
     )
     files_downloaded: int = 0
     cache_hit: bool = False
-    bypass_detected: bool = False
-    bypass_locations: list[Path] = field(default_factory=list)
     acquisition_time_seconds: float = 0.0
     error_message: Optional[str] = None
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -931,8 +924,6 @@ def _acquire_library_managed(config: AcquisitionConfig) -> AcquisitionResult:
             actual_model_path=actual_model_dir,
             files_downloaded=files_downloaded,
             cache_hit=False,
-            bypass_detected=False,
-            bypass_locations=[],
             acquisition_time_seconds=time.time() - start_time,
             metadata={
                 "strategy": "library_managed",
@@ -951,8 +942,6 @@ def _acquire_library_managed(config: AcquisitionConfig) -> AcquisitionResult:
             success=False,
             target_dir=target_dir,
             error_message=error_msg,
-            bypass_detected=False,
-            bypass_locations=[],
             acquisition_time_seconds=time.time() - start_time,
             metadata={
                 "strategy": "library_managed",

@@ -175,14 +175,6 @@ def download_model_assets(
     """Download ablang2 model assets with R2 caching and library-managed fallback."""
     logger.info("AbLang2: Setting up model assets")
 
-    # Build list of directories to monitor for library bypass detection
-    monitor_dirs = ["~/.cache/ablang2", "~/.ablang2"]
-    try:
-        module_dir, _ = _get_ablang2_paths()
-        monitor_dirs.append(str(module_dir))
-    except ImportError:
-        pass
-
     required_files = [
         "ablang2_paired/model.pt",
         "ablang2_paired/hparams.json",
@@ -194,7 +186,6 @@ def download_model_assets(
         sub_path=sub_path,
         library_name="ablang2",
         init_fn=_init_ablang2_weights,
-        monitor_directories=monitor_dirs,
         required_files=required_files,
     )
 
@@ -202,13 +193,6 @@ def download_model_assets(
         raise RuntimeError(f"AbLang2 download failed: {result.error_message}") from None
 
     actual_dir = result.actual_model_path or result.target_dir
-
-    if result.bypass_detected:
-        logger.warning(
-            "Library bypass detected - weights downloaded to unexpected location"
-        )
-        if result.bypass_locations:
-            logger.warning("Bypass locations: %s", result.bypass_locations)
 
     # ---- Setup symlink for library compatibility ----
     logger.info("Setting up ablang2 library symlink...")
