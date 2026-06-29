@@ -627,6 +627,7 @@ def r2_then_archive(
     )
 
     def _acquire_archive(target_dir: Path, **_: Any) -> dict[str, Any]:
+        import shutil
         import tempfile
 
         with tempfile.TemporaryDirectory(prefix="r2_then_archive_") as tmp:
@@ -643,19 +644,26 @@ def r2_then_archive(
                 detect_archive_root_prefix(zip_path) if strip_repo_root else ""
             )
 
-            cleared: set[Path] = set()
+            # Two-phase to avoid cross-destination clobber: clear every distinct
+            # destination FIRST, then extract (overwrite=False). If a root ("")
+            # destination were cleared lazily *after* a sibling subdir was already
+            # extracted, rmtree(target_dir) would wipe that sibling. Clearing up
+            # front (idempotent via the exists-guard, so order doesn't matter) makes
+            # it safe; multiple subtrees mapped into one dir still merge (cleared once).
+            dest_dirs = {
+                (target_dir / dest_rel if dest_rel else target_dir)
+                for dest_rel in extract_subtrees.values()
+            }
+            for dest_dir in dest_dirs:
+                if dest_dir.exists():
+                    shutil.rmtree(dest_dir)
+
             for src_prefix, dest_rel in extract_subtrees.items():
                 full_prefix = f"{root_prefix}{src_prefix}"
                 dest_dir = target_dir / dest_rel if dest_rel else target_dir
-                # Only clear (rmtree) a destination the first time we write to
-                # it, so multiple subtrees mapped into one dir don't clobber.
                 extract_archive_subtree(
-                    zip_path,
-                    full_prefix,
-                    dest_dir,
-                    overwrite=dest_dir not in cleared,
+                    zip_path, full_prefix, dest_dir, overwrite=False
                 )
-                cleared.add(dest_dir)
 
         return {
             "archive_url": archive_url,
