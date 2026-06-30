@@ -57,6 +57,24 @@ class SADIEModel(ModelMixinSnap):
 
     @modal.enter(snap=True)
     def load_model(self):
+        # SADIE's HMMER aligner reads ``G3.species`` (a @property that issues an
+        # HTTP GET to https://g3.jordanrwillis.com/api/v1) to decide, per
+        # (species, chain), whether to build HMMs live from the remote G3 gene
+        # database or fall back to the bundled local ANARCI numbering HMMs. That
+        # G3 host has been decommissioned (the Heroku app behind its CNAME no
+        # longer resolves), so the property raises and every predict fails with
+        # a DNS NameResolutionError before any numbering happens.
+        #
+        # Patch ``G3.species`` to an empty list so the aligner's short-circuit
+        # (``single_species not in self.g3.species``) is always True and SADIE
+        # uses its packaged local numbering HMMs + local germline dict
+        # (sadie/numbering/germlines.py) -- a fully offline, supported path that
+        # needs no network. Germline assignment already uses the local dict, so
+        # v_gene/j_gene/identity outputs are unaffected.
+        from sadie.renumbering.clients.g3 import G3
+
+        G3.species = property(lambda _self: [])
+
         from sadie.renumbering import Renumbering
 
         self.Renumbering = Renumbering

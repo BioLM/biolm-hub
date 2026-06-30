@@ -99,7 +99,8 @@ class OmniDNAModel(ModelMixinSnap):
     def setup_model(self):
         """Load model on GPU for GPU memory snapshot with deterministic behavior."""
         import torch
-        from transformers import AutoModelForCausalLM, AutoTokenizer
+        from safetensors.torch import load_file
+        from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 
         logger.info("Loading Omni-DNA model for GPU memory snapshot...")
 
@@ -126,12 +127,23 @@ class OmniDNAModel(ModelMixinSnap):
             snapshot_dir,
         )
 
-        # Load model via from_pretrained so HF handles key remapping / weight tying
-        self.model = AutoModelForCausalLM.from_pretrained(
-            snapshot_dir,
+        # Load config and instantiate the model architecture, then load the
+        # weights directly from the local .safetensors file. We avoid
+        # AutoModelForCausalLM.from_pretrained here because the Omni-DNA
+        # safetensors files ship without a serialized metadata header, which
+        # makes transformers' from_pretrained crash reading the "format" key
+        # (metadata is None -> AttributeError). load_file sidesteps that.
+        config = AutoConfig.from_pretrained(snapshot_dir, trust_remote_code=True)
+        self.model = AutoModelForCausalLM.from_config(
+            config,
             trust_remote_code=True,
         )
         self.model.eval()
+
+        # Load the model weights from the local .safetensors file.
+        safetensors_path = snapshot_dir / "model.safetensors"
+        state_dict = load_file(str(safetensors_path))
+        self.model.load_state_dict(state_dict, strict=False)
 
         # Move model to GPU
         self.model = self.model.to(self.device, non_blocking=False)

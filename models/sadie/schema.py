@@ -84,6 +84,16 @@ class SADIEPredictRequestItem(RequestModel):
         return validate_aa_extended(value)
 
 
+def _reconstruct_sadie_request(data: dict) -> "SADIEPredictRequest":
+    """Rebuild a SADIEPredictRequest from a plain dict (pickle reconstructor).
+
+    Used by ``SADIEPredictRequest.__reduce__`` so the request crosses the Modal
+    RPC boundary as version-neutral JSON primitives rather than a live Pydantic
+    object. See ``__reduce__`` below for the full rationale.
+    """
+    return SADIEPredictRequest(**data)
+
+
 class SADIEPredictRequest(RequestModel):
     """Batch prediction request for SADIE."""
 
@@ -101,6 +111,33 @@ class SADIEPredictRequest(RequestModel):
         if not (1 <= len(value) <= SADIEParams.batch_size):
             raise ValueError(f"Must have 1 to {SADIEParams.batch_size} items.")
         return value
+
+    def __reduce__(self):
+        """Pickle as a plain dict so the request survives the v2 -> v1 boundary.
+
+        The gateway runs Pydantic v2, but the SADIE container downgrades to
+        Pydantic v1 (sadie-antibody==1.0.6 pins ``pydantic<2``). When the
+        gateway ships this request over the Modal RPC boundary, Modal pickles
+        the live Pydantic-v2 object; the v1 container then fails to unpickle it
+        (``KeyError('__fields_set__')``) because the two versions use different
+        pickle state layouts -- and the same break hits the nested ``items`` /
+        ``params`` objects recursively.
+
+        Reducing to ``(_reconstruct_sadie_request, (json_dict,))`` serializes
+        the whole tree as JSON primitives (no embedded Pydantic objects), so
+        reconstruction via the constructor works identically under v1 and v2.
+
+        NOTE FOR MAINTAINERS: the cleaner fix lives in the gateway -- it should
+        pass ``serialize_model(payload)`` (a dict) to ``.remote()`` instead of
+        the live model, which the container already handles. This override is a
+        model-local workaround because SADIE is the only Pydantic-v1 container.
+        """
+        data = (
+            self.model_dump(mode="json")
+            if hasattr(self, "model_dump")
+            else self.dict()
+        )
+        return (_reconstruct_sadie_request, (data,))
 
 
 ### SADIE Response
