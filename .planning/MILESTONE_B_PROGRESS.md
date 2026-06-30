@@ -36,6 +36,15 @@
 | esm-if1, igt5-paired, abodybuilder3-plddt, protein-mpnn | — | ⚠️ OLD path (Milestone A) | — | **RE-DEPLOY for new biolm-hub/ path** |
 | peptides | — | ⚠️ deployed but DROPPED | — | `modal app stop peptides --env biolm-models-dev` |
 
+**Batch-2 (parallel Opus workflow) — 9 PASS / 1 fix / 1 blocked:** PASS = igt5, abodybuilder3, deepviscosity,
+e1, evo, immunebuilder, prody(FIXED), temberture, thermompnn_d. **prody FIXED → exposed a SYSTEMIC commons bug:**
+OSS `storage/__init__.py` eagerly imports acquisition (→ `import requests`), so `requests` is a universal
+cold-start dep that minimal images lacked → crash-loop. Fixed in commons (`requests` in common_requirements) →
+**biotite + dna_chisel (deploy-only, never cold-start-verified) MUST be re-deployed** to bake it. prody also
+needed openmm/pdbfixer pairing. **tempro BLOCKED** (not a code bug): inference does a cross-app lookup to
+`ESM2Model` (esm2-650m/esm2-3b) — deploy those esm2 variants, then re-validate tempro. evo note: cold-start still
+fetches 3 small remote-code files from HF (trust_remote_code) — weights are R2-cached but modeling code isn't.
+
 **Batch-1 (parallel Opus workflow) — 10/10 PASS (logs-verified, served real output):** ablang2, antifold,
 mpnn (6 slugs), esm_if1, esm1v (5 variants), igbert, prostt5, omni_dna (FIXED), spurs, sadie (FIXED). Fixes
 committed: omni_dna (safetensors no `__metadata__` → AutoConfig+load_state_dict); sadie (pydantic v1↔v2 pickle
