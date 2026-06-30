@@ -36,6 +36,19 @@
 | esm-if1, igt5-paired, abodybuilder3-plddt, protein-mpnn | — | ⚠️ OLD path (Milestone A) | — | **RE-DEPLOY for new biolm-hub/ path** |
 | peptides | — | ⚠️ deployed but DROPPED | — | `modal app stop peptides --env biolm-models-dev` |
 
+**Batch-1 (parallel Opus workflow) — 10/10 PASS (logs-verified, served real output):** ablang2, antifold,
+mpnn (6 slugs), esm_if1, esm1v (5 variants), igbert, prostt5, omni_dna (FIXED), spurs, sadie (FIXED). Fixes
+committed: omni_dna (safetensors no `__metadata__` → AutoConfig+load_state_dict); sadie (pydantic v1↔v2 pickle
+`__reduce__` + dead G3 host → local HMMs). **⚠️ WATCH-ITEMS from batch 1:**
+- **esm_if1 fair-esm RUNTIME RE-DOWNLOAD** — at cold start fair-esm re-fetches the ~600MB checkpoint from the
+  CDN instead of using build-time-baked/R2 weights (caused a transient ENOSPC, self-healed). The internal repo
+  used `standard_r2_download(sub_path="checkpoints")`. **HIGH RISK for the LARGE fair-esm models (esmfold-3B,
+  msa_transformer-12B, immunefold ESM2-3B backbone)** — multi-GB runtime re-downloads → ENOSPC + very slow cold
+  start. Investigate the fair-esm bake path before/with that batch.
+- **sadie gateway-serialize (commons)** — cleaner long-term fix: gateway should pass a serialized dict to
+  `.remote()` not the live pydantic model (sadie is the only v1 container). Model-local `__reduce__` works for now.
+- esmc transient GPU-snapshot exit-139 (self-recovers).
+
 **Wave 2b runtime-PASS (logs-verified, served real output):** `esm1b` (T4, 200/112s), `dnabert2` (T4, 200/36s),
 `esmc-300m` (A10G, 200/106s) — all load from the correct snapshot/dir path (confirms the audit). ⚠️ esmc note:
 transient Modal GPU-snapshot-restore exit-139 that self-recovers (Modal retries w/o memory snapshot) — infra
