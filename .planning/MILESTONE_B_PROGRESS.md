@@ -36,6 +36,15 @@
 | esm-if1, igt5-paired, abodybuilder3-plddt, protein-mpnn | — | ⚠️ OLD path (Milestone A) | — | **RE-DEPLOY for new biolm-hub/ path** |
 | peptides | — | ⚠️ deployed but DROPPED | — | `modal app stop peptides --env biolm-models-dev` |
 
+**Batch-3 — 4/4 PASS, no fixes:** biotite, dna_chisel, prody (all cold-start CLEAN now → the commons `requests`
+fix is VALIDATED), esm2 (8m/650m/3b all load clean, real embeddings; 3b 5.4GB self-popped R2). esm2-650m+3b now
+deployed → **tempro unblocked** (re-validate it in the next batch). 🔑 **esm2 weight-resolution = the fair-esm
+fix pattern:** esm2's download `_init` AND runtime `setup_model` BOTH call `torch.hub.set_dir(target_dir)` before
+load, so the runtime finds the baked checkpoint at `<model_dir>/checkpoints/`. esm_if1 almost certainly lacks the
+RUNTIME `set_dir` → re-downloads (the fair-esm investigator is confirming + fixing). biotite quirk (non-bug):
+`generate` returns empty chain_pdb_strings (biotite 1.3.0 PDB-write header fails the startswith guard) — IDENTICAL
+to internal production, sequence extraction unaffected.
+
 **Batch-2 (parallel Opus workflow) — 9 PASS / 1 fix / 1 blocked:** PASS = igt5, abodybuilder3, deepviscosity,
 e1, evo, immunebuilder, prody(FIXED), temberture, thermompnn_d. **prody FIXED → exposed a SYSTEMIC commons bug:**
 OSS `storage/__init__.py` eagerly imports acquisition (→ `import requests`), so `requests` is a universal
