@@ -12,6 +12,18 @@
 > → **read `modal app logs` for a clean inference vs an exception**. Do NOT trust curl HTTP status alone.
 > (First casualty: zymctrl deployed "✅" but crash-looped on a tokenizer `OSError` — only logs revealed it.)
 > Wave-subagents MUST use this method. (Also in memory: feedback_modal_container_health.)
+>
+> ## ⚠️ STALE-BAKE RISK (fair-esm investigation, 2026-07-01) — verify weights are BAKED
+> Modal caches the build's `run_function` (download) layer **by content hash**. Some images first built during
+> the 06-28→06-30 acquisition refactors baked an EMPTY `/biolm-hub` (no weights). A model with an empty bake
+> still "deploys ✅" + loads, but **re-downloads its weights from the external CDN at every cold start** (slow +
+> ENOSPC on multi-GB). **esm_if1 was the confirmed case** (deployed image empty → re-downloads 1.7GB; CURRENT
+> code is CORRECT — a fresh build bakes; fix = `--force-deploy` fresh). esm2's image happens to be baked (why it
+> works). This is NOT a code bug and NOT fair-esm-specific. **VERIFY baking per model** (esp. large fair-esm:
+> esmfold-3B, msa_transformer-12B): cold-start log must have **NO** `Downloading: …fbaipublicfiles…` /external
+> re-download line, OR `modal shell <app> --cmd 'ls -la /biolm-hub/models/<slug>/v1/.../checkpoints/'` shows the
+> weight file. Optional hardening (NOT applied — breaks esm2↔esm_if1 uniformity): make `setup_model` restore
+> from R2 before the torch.hub load, so an empty bake degrades to a fast in-datacenter R2 fetch.
 
 > Live tracker for the full deploy/smoke-invoke pass (user-authorized 2026-06-30). **dev only**
 > (`biolm-models-dev`); validation = deploy + ONE live inference (goldens deferred to the final
