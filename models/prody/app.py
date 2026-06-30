@@ -41,9 +41,19 @@ image = (
         "numpy==1.26.4",
         "pandas==2.2.3",
         "openbabel-wheel==3.1.1.22",  # Python bindings for OpenBabel
+        # commons.storage.acquisition imports `requests` at cold start; this
+        # minimal algorithmic image has no transformers/hf dep to pull it in
+        # transitively, so it must be installed explicitly.
+        "requests==2.32.3",
     )
-    .run_commands(
-        "pip install git+https://github.com/openmm/pdbfixer.git@v1.8.1",
+    # PDBFixer powers the default InSty hydrogen-addition path. It needs a
+    # matching OpenMM (its hard runtime dep, which it does not pull in itself);
+    # without OpenMM ProDy's addMissingAtoms raises
+    # "Install PDBFixer and OpenMM in order to fix the protein structure".
+    # pdbfixer 1.12.0 (PyPI) requires openmm>=8.2, so they are pinned together.
+    .uv_pip_install(
+        "openmm==8.2.0",
+        "pdbfixer==1.12.0",
     )
 )
 

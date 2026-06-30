@@ -38,6 +38,12 @@ common_requirements = [
     "modal==1.3.5",
     "orjson==3.10.12",
     "pydantic==2.11.7",
+    # `requests` is a cold-start runtime dep: storage/__init__.py eagerly imports
+    # the acquisition engine (the curated public storage API), which `import
+    # requests` at module top. Models bundling transformers/hf get it transitively,
+    # but minimal algorithmic images (prody/biotite/dna_chisel) would crash-loop on
+    # ModuleNotFoundError without it — so it belongs in the base image.
+    "requests==2.32.3",
 ]
 
 
