@@ -48,6 +48,15 @@
 | esm-if1, igt5-paired, abodybuilder3-plddt, protein-mpnn | — | ⚠️ OLD path (Milestone A) | — | **RE-DEPLOY for new biolm-hub/ path** |
 | peptides | — | ⚠️ deployed but DROPPED | — | `modal app stop peptides --env biolm-models-dev` |
 
+**Batch-4 (LARGE non-fair-esm) — 8/8 PASS, 2 fixes:** tempro(now unblocked), pro1, evo2, dsm, progen2(FIXED),
+boltzgen, rf3(FIXED), chai1. Fixes committed: progen2 (self-pop archives lack tokenizer.json → fetch from
+salesforce/progen GitHub); rf3 (port-added `entity_type` kwarg atomworks rejects → removed). **Maintainer notes:**
+pro1 re-fetches Llama base from HF per deploy by design (`cache_to_r2=False` — Llama license not redistributable;
+needs HF token w/ Meta terms); rf3 schema `n_recycles ge=0` allows crashing <2 values (present in internal too —
+consider ge=2); evo2 only 1b-base enabled (7b/40b need bigger GPU + own validation). **esm_if1:** redeploy was
+cached (11s, reused a layer) → force-rebuilt with `MODAL_FORCE_BUILD=1` to guarantee the bake (in progress).
+**Batch-5 (final): esmfold-3B / msa_transformer-12B / immunefold — running** (first deploys → bake fresh).
+
 **Batch-3 — 4/4 PASS, no fixes:** biotite, dna_chisel, prody (all cold-start CLEAN now → the commons `requests`
 fix is VALIDATED), esm2 (8m/650m/3b all load clean, real embeddings; 3b 5.4GB self-popped R2). esm2-650m+3b now
 deployed → **tempro unblocked** (re-validate it in the next batch). 🔑 **esm2 weight-resolution = the fair-esm
