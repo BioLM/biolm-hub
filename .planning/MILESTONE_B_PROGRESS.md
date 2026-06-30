@@ -1,5 +1,18 @@
 # Milestone B — deploy + smoke-invoke progress tracker
 
+> ## ⚠️ VALIDATION METHOD — READ THIS (hard-won, user-confirmed 2026-06-30)
+> **A successful `modal deploy` does NOT mean the model works.** Models load weights at COLD START
+> (`@modal.enter`/`setup_model`), not at deploy. A container can **crash-loop on every request with NO
+> external signal** — curl just returns `303` then hangs to `000`/timeout, which looks like "slow", not
+> "broken". The ONLY reliable signal is the **container logs**:
+> ```
+> modal app logs <app> --env biolm-models-dev    # look for "Runner failed", Traceback, OSError, etc.
+> ```
+> So the real validation per model is: deploy → trigger a cold start (one invoke, even if curl 303s/hangs)
+> → **read `modal app logs` for a clean inference vs an exception**. Do NOT trust curl HTTP status alone.
+> (First casualty: zymctrl deployed "✅" but crash-looped on a tokenizer `OSError` — only logs revealed it.)
+> Wave-subagents MUST use this method. (Also in memory: feedback_modal_container_health.)
+
 > Live tracker for the full deploy/smoke-invoke pass (user-authorized 2026-06-30). **dev only**
 > (`biolm-models-dev`); validation = deploy + ONE live inference (goldens deferred to the final
 > biolm-hub env). Update this table as models complete so a fresh agent can resume. Deploy cmd:

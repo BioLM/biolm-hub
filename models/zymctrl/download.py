@@ -3,7 +3,7 @@ from typing import Optional
 
 from models.commons.core.logging import get_logger
 from models.commons.storage.download_helpers import r2_then_hf
-from models.commons.storage.downloads import get_model_dir_util
+from models.commons.storage.downloads import build_hf_snapshot_path, get_model_dir_util
 from models.zymctrl.config import HF_REPO_ID, HF_REVISION
 from models.zymctrl.schema import ZymCTRLParams
 
@@ -11,11 +11,16 @@ logger = get_logger(__name__)
 
 
 def get_model_dir() -> Path:
-    """Get the model directory path. Used by app.py for loading."""
-    return get_model_dir_util(
+    """Return the HF snapshot path for loading (matches where r2_then_hf places weights).
+
+    r2_then_hf downloads into a `models--<repo>/snapshots/<rev>/` subdir, so app.py must load
+    from the snapshot path, NOT the base dir — otherwise from_pretrained() fails to find the files.
+    """
+    base_dir = get_model_dir_util(
         base_model_slug=ZymCTRLParams.base_model_slug,
         weights_version=ZymCTRLParams.weights_version,
     )
+    return build_hf_snapshot_path(base_dir, HF_REPO_ID, HF_REVISION)
 
 
 def download_model_assets(
