@@ -6,6 +6,7 @@ if TYPE_CHECKING:
     from torch import Tensor
 
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.error import UnsupportedOptionError
 from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
@@ -231,7 +232,7 @@ class DSMModel(ModelMixinSnap):
         hf_revision = DSM_HF_REVISION_MAP.get(repo_key)
 
         if not hf_repo_id:
-            raise ValueError(
+            raise UnsupportedOptionError(
                 f"No HuggingFace repository mapped for model size: {self.model_size}, variant: {self.variant}"
             )
 

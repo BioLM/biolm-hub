@@ -5,7 +5,7 @@ import tempfile
 import modal
 
 from models.commons.core.decorator import modal_endpoint
-from models.commons.core.error import ValidationError400
+from models.commons.core.error import UnsupportedOptionError, ValidationError400
 from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
@@ -81,7 +81,7 @@ def prebuild_immunebuilder_models():
             )
         else:
             # This should not happen with proper enum validation
-            raise ValueError(
+            raise UnsupportedOptionError(
                 f"Unknown model type: {model_type}. "
                 f"Available types: {list(ImmuneBuilderModelTypes)}"
             )
@@ -195,7 +195,9 @@ class ImmuneBuilderModel(ModelMixinSnap):
                 weights_dir=weights_dir, use_TCRBuilder2_PLUS_weights=False
             )
         else:
-            raise ValueError(f"Invalid ImmuneBuilder Model Type: {self.model_type}")
+            raise UnsupportedOptionError(
+                f"Invalid ImmuneBuilder Model Type: {self.model_type}"
+            )
 
         load_duration = time.time() - load_start
         logger.info("Model loaded from %s in %.2fs", source, load_duration)
