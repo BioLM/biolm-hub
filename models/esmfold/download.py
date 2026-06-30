@@ -49,7 +49,10 @@ def _init_esmfold_weights(target_dir: Path) -> Path:
     reads at runtime: the folding head (``esmfold_3B_v1.pt``) and the
     ``esm2_t36_3B_UR50D`` backbone + its contact-regression companion. The backbone
     download via ``_download_model_and_regression_data`` is openfold-free (plain
-    ESM2 path), needing nothing beyond fair-esm + torch.
+    ESM2 path). The only extra import the head download needs is ``omegaconf``:
+    ``torch.hub.load_state_dict_from_url`` unpickles ``esmfold_3B_v1.pt`` whose
+    stored ``cfg`` is an OmegaConf object, so omegaconf must be importable in the
+    download layer (added via ``extra_pip_packages`` in app.py).
     """
     import torch
 

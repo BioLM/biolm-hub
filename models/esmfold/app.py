@@ -31,9 +31,10 @@ image = modal.Image.from_registry("pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
 # Setup download layer with model weights.
 # Include fair-esm so the r2_then_library fallback can fetch weights at build time
 # (the download layer runs before the main dependency install below). The init_fn
-# downloads the checkpoints only (no model construction), so fair-esm alone
-# suffices here — esmfold's full loader would import openfold, which is not (and
-# cannot cleanly be) installed in the download layer.
+# downloads the checkpoints only (no model construction), so fair-esm + omegaconf
+# suffice here (omegaconf is needed to unpickle the head checkpoint's cfg) —
+# esmfold's full loader would import openfold, which is not (and cannot cleanly be)
+# installed in the download layer.
 image = setup_download_layer(
     image,
     base_model_slug=ESMFoldParams.base_model_slug,
@@ -42,6 +43,10 @@ image = setup_download_layer(
     extra_pip_packages=[
         # fair-esm 2.0.1 from GitHub (needed for the fallback download)
         "https://github.com/facebookresearch/esm/archive/2b369911bb5b4b0dda914521b9475cad1656b2ac.zip",
+        # omegaconf is required to torch.load (unpickle) the esmfold_3B_v1.pt
+        # folding head: its stored cfg is an OmegaConf object, so the class must
+        # be importable during deserialization in _init_esmfold_weights.
+        "omegaconf==2.3.0",
     ],
 )
 # Add dependencies and packages
