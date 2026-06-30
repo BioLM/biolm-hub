@@ -377,9 +377,6 @@ class RF3Model(ModelMixinSnap):
         for comp in item.components:
             comp_spec: dict = {}
 
-            if comp.type:
-                comp_spec["entity_type"] = comp.type.value
-
             if comp.sequence:
                 comp_spec["seq"] = comp.sequence
             if comp.smiles:

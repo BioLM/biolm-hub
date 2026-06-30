@@ -10,12 +10,16 @@ Storage (public, BSD-3-Clause):
 
     https://storage.googleapis.com/sfr-progen-research/checkpoints/progen2-<v>.tar.gz
 
-Each archive is a flat tar of ``config.json`` + ``pytorch_model.bin`` +
-``tokenizer.json`` — exactly the files the *bundled* loader expects
+Each archive is a flat tar of ``config.json`` + ``pytorch_model.bin`` — exactly
+the per-variant weight files the *bundled* loader expects
 (``external/sample_utils.create_model`` -> ``ProGenForCausalLM.from_pretrained``).
 The original ``config.json`` carries the correct per-variant ``n_embd`` and
 ``vocab_size`` (32), so no config patching and no ``trust_remote_code`` swap is
 needed: the bundled architecture and its outputs are preserved exactly.
+
+The shared ``tokenizer.json`` is *not* in the checkpoint archives; it is fetched
+once from the Salesforce ProGen GitHub repo (same BSD-3-Clause release) — see
+``PROGEN2_TOKENIZER_URL``.
 
 (The ``hugohrban/progen2-*`` HF mirrors were rejected: the ``oas`` and ``BFD90``
 configs omit ``n_embd``/``vocab_size`` entirely — the bundled ProGenConfig would
@@ -67,6 +71,13 @@ logger = get_logger(__name__)
 # Public Salesforce ProGen2 checkpoint archives (BSD-3-Clause).
 GCS_CHECKPOINT_BASE = "https://storage.googleapis.com/sfr-progen-research/checkpoints"
 
+# The checkpoint archives ship only ``config.json`` + ``pytorch_model.bin``; the
+# shared ``tokenizer.json`` lives in the Salesforce ProGen GitHub repo
+# (BSD-3-Clause, same release) and is fetched once per build.
+PROGEN2_TOKENIZER_URL = (
+    "https://raw.githubusercontent.com/salesforce/progen/main/progen2/tokenizer.json"
+)
+
 # schema MODEL_TYPE value -> Salesforce archive token. Note the upstream archive
 # for BFD90 is spelled in uppercase (``progen2-BFD90.tar.gz``).
 _GCS_VARIANT_TOKEN = {
@@ -88,13 +99,30 @@ def get_model_dir():
     )
 
 
-def _stream_progen2_archive(target_dir, model_type: str) -> None:
-    """Stream one Salesforce ``.tar.gz`` and extract the loader-required files.
+def _fetch_tokenizer(target_dir) -> None:
+    """Fetch the shared ``tokenizer.json`` to the root of ``target_dir``.
 
-    ``config.json`` and ``pytorch_model.bin`` land in ``progen2_<type>/``; the
-    shared ``tokenizer.json`` lands at the root of ``target_dir``. The archive is
-    streamed through ``tarfile`` directly off the socket (no temp ``.tar.gz`` on
-    disk), so peak build disk is bounded by the extracted weights alone.
+    The checkpoint archives do not bundle the tokenizer, so it is pulled once
+    from the Salesforce ProGen GitHub repo (BSD-3-Clause).
+    """
+    import requests  # available in the Modal download layer (base_packages)
+
+    dest = target_dir / "tokenizer.json"
+    logger.info("Fetching ProGen2 tokenizer from %s", PROGEN2_TOKENIZER_URL)
+    resp = requests.get(PROGEN2_TOKENIZER_URL, timeout=(30, 120))
+    resp.raise_for_status()
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes(resp.content)
+
+
+def _stream_progen2_archive(target_dir, model_type: str) -> None:
+    """Stream one Salesforce ``.tar.gz`` and extract the per-variant weights.
+
+    ``config.json`` and ``pytorch_model.bin`` land in ``progen2_<type>/``. The
+    archive is streamed through ``tarfile`` directly off the socket (no temp
+    ``.tar.gz`` on disk), so peak build disk is bounded by the extracted weights
+    alone. (The shared ``tokenizer.json`` is fetched separately — it is not in
+    the checkpoint archives.)
     """
     import requests  # available in the Modal download layer (base_packages)
 
@@ -107,7 +135,6 @@ def _stream_progen2_archive(target_dir, model_type: str) -> None:
     destinations = {
         "config.json": variant_dir / "config.json",
         "pytorch_model.bin": variant_dir / "pytorch_model.bin",
-        "tokenizer.json": target_dir / "tokenizer.json",
     }
     extracted: set[str] = set()
 
@@ -150,6 +177,7 @@ def _download_all_progen2_assets(target_dir, **_kwargs) -> dict:
     target_dir.mkdir(parents=True, exist_ok=True)
     for model_type in ALL_MODEL_TYPES:
         _stream_progen2_archive(target_dir, model_type)
+    _fetch_tokenizer(target_dir)
     return {
         "source": "salesforce_gcs",
         "base_url": GCS_CHECKPOINT_BASE,
