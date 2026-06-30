@@ -32,6 +32,15 @@
 > Gateway for smoke-invoke: `https://biolm-biolm-models-dev--biolm-gateway-web.modal.run/api/v3/<slug>/<action>`.
 > Status: ⬜ todo · 🔵 deploying · ✅ deploy+invoke ok · 🟡 deployed (invoke pending/manual) · 🔴 failed (see notes).
 
+## ✅✅ MILESTONE B DEPLOY+VALIDATE — COMPLETE (2026-07-01)
+**All 39 SHIP models (+ dummy) deploy + runtime-validated** (cold-start log-verified, served real output) on
+the new `biolm-hub/` R2 path, dev env. **9 port-drift bugs found + fixed + committed** (all internal-repo-grounded):
+thermompnn (missing PROTEIN_MPNN_CHECKPOINT), zymctrl (HF snapshot path), omni_dna (safetensors no metadata),
+sadie (pydantic v1↔v2 pickle + dead G3 host), prody (openmm/pdbfixer) + **commons `requests`** (systemic — minimal
+images), progen2 (missing tokenizer in self-pop), rf3 (entity_type kwarg), esmfold (omegaconf in download layer).
+Plus the **fair-esm stale-bake** operational finding (esm_if1 force-rebuilt). make-check green (ruff/black/schema✓39/
+136 tests; 1 known test_cache R2 fail). **NEXT (post-campaign): see §"Post-campaign" below.**
+
 ## PER-MODEL VALIDATION CYCLE (use this — subagents too)
 1. Deploy (bg, log to file): `MODEL_SIZE=<v> MODAL_ENVIRONMENT=biolm-models-dev .venv/bin/python models/<m>/app.py --force-deploy`. Wait for `✅ App '<name>' deployed successfully`. (Build log also shows `Caching to R2 at biolm-hub/models/<slug>/...` ✅ for the new-path self-pop.)
 2. Cold-start: fire ONE invoke at the gateway (curl may 303/hang — that's fine, it just boots a container): `/api/v3/<slug>/<action>` with a minimal payload (sequence/DNA/PDB[fetch RCSB 1CRN]/EC). Wait ~60-90s.
