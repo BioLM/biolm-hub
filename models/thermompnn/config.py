@@ -32,6 +32,7 @@ ThermoMPNNResourceSpec = ModalResourceSpec(
 ### ThermoMPNN Model Checkpoints
 
 THERMOMPNN_MODEL_CHECKPOINT = "thermoMPNN_default.pt"
+PROTEIN_MPNN_CHECKPOINT = "v_48_020.pt"  # Base ProteinMPNN model
 
 # ThermoMPNN configuration:
 # - Single variant (no axes)
