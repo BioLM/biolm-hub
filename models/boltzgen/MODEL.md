@@ -216,7 +216,7 @@ The BioLM deployment allocates 8 CPU cores and 64 GB system memory alongside the
 ### Caching Behavior
 
 - **Response caching**: Due to the stochastic nature of generative design, cache hits are meaningful only for identical requests (same entities, same parameters).
-- **R2 caching**: Model checkpoints cached in R2 (`model-store/boltzgen/v1/`). HuggingFace fallback for first container builds.
+- **R2 caching**: Model checkpoints cached in R2 (`biolm-hub/models/boltzgen/v1/`). HuggingFace fallback for first container builds.
 - **Memory snapshots**: `enable_memory_snapshot=True` for faster cold starts. GPU snapshots disabled (`enable_gpu_snapshot: False`) due to the large combined model size.
 - **Molecule dictionary**: `mols.zip` extracted once during container setup and persisted for the container lifetime.
 

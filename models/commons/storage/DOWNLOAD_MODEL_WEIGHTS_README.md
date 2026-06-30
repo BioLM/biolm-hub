@@ -153,14 +153,14 @@ image = setup_download_layer(
 
 1. **setup_download_layer()** copies minimal files to container
 2. **Executes download_model_assets()** with explicit kwargs
-3. **Downloads weights** to `/model-store/` during build
+3. **Downloads weights** to `/biolm-hub/models/` during build
 4. **Creates immutable container** with weights included
 
 ### 3. Directory Structure
 
 Standard path structure:
 ```
-/model-store/
+/biolm-hub/models/
 ├── {base_model_slug}/
 │   ├── {weights_version}/
 │   │   ├── {model_variant}/        # e.g., esmc_300m
@@ -301,7 +301,7 @@ The R2 cache uses **atomic operations** to ensure consistency:
 
 ### Cache Structure
 ```
-r2://bucket/model-store/
+r2://bucket/biolm-hub/models/
 ├── esmc/v1/esmc_300m/
 │   ├── models--EvolutionaryScale--esmc-300m-2024-12/
 │   │   └── snapshots/{hash}/
@@ -315,10 +315,10 @@ r2://bucket/model-store/
 ```json
 {
     "completed_at": 1699123456.789,
-    "r2_prefix": "model-store/esmc/v1/esmc_300m",
+    "r2_prefix": "biolm-hub/models/esmc/v1/esmc_300m",
     "file_count": 15,
     "manifest_uploaded": true,
-    "manifest_key": "model-store/esmc/v1/esmc_300m/.r2_manifest.json"
+    "manifest_key": "biolm-hub/models/esmc/v1/esmc_300m/.r2_manifest.json"
 }
 ```
 
@@ -550,7 +550,7 @@ from models.commons.storage.r2_utils import R2Utils
 
 R2Utils.upload_to_r2_atomic(
     source_dir=Path('./weights'),
-    r2_prefix='model-store/new_model/v1/base'
+    r2_prefix='biolm-hub/models/new_model/v1/base'
 )
 "
 ```
@@ -590,7 +590,7 @@ R2Utils.upload_to_r2_atomic(
 
 ```bash
 # Check R2 contents
-bm r2 ls | grep "model-store/esmc"
+bm r2 ls | grep "biolm-hub/models/esmc"
 
 # Test download locally
 python -c "
@@ -604,7 +604,7 @@ print(f'Downloaded to: {result}')
 # Verify completion marker
 python -c "
 from models.commons.storage.r2_utils import R2Utils
-exists = R2Utils.check_r2_cache_exists('model-store/esmc/v1/esmc_300m')
+exists = R2Utils.check_r2_cache_exists('biolm-hub/models/esmc/v1/esmc_300m')
 print(f'Cache exists: {exists}')
 "
 
@@ -614,7 +614,7 @@ from pathlib import Path
 from models.commons.storage.r2_utils import R2Utils
 success = R2Utils.upload_to_r2_atomic(
     Path('./local_weights'),
-    'model-store/new_model/v1'
+    'biolm-hub/models/new_model/v1'
 )
 "
 ```

@@ -251,7 +251,7 @@ request = ModelRequest(
      - Training command (e.g., `modal run models/esmstabp/_train.py`)
      - Dataset source and preprocessing
      - Training results (e.g., 5-fold CV metrics)
-     - Where trained artifacts are stored (e.g., R2 model-store path)
+     - Where trained artifacts are stored (e.g., R2 biolm-hub/models path)
 
      If training is purely upstream (done by original authors, not reproducible
      within BioLM), document this in MODEL.md Training Data section instead.

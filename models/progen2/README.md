@@ -203,7 +203,7 @@ Baseline comparison (Option C): The BioLM implementation uses official pre-train
 - **Bidirectional likelihood**: Log-likelihoods are computed as the average of forward (left-to-right) and reverse (right-to-left) passes, reducing positional bias inherent in autoregressive models.
 - **Sequence truncation**: Generated sequences are truncated at the first occurrence of terminal tokens (`1` or `2`), and these tokens are stripped from the output.
 - **External code**: The `external/` directory contains model architecture code adapted from the Salesforce ProGen repository (GPT-J-based `ProGenForCausalLM`), tokenizer utilities, and sampling/likelihood functions.
-- **Weight loading**: Weights are downloaded from R2 via the declarative download system. Each variant's checkpoint is stored under `model-store/progen2/v1/checkpoints/progen2_{variant}/`, with a shared `tokenizer.json`.
+- **Weight loading**: Weights are downloaded from R2 via the declarative download system. Each variant's checkpoint is stored under `biolm-hub/models/progen2/v1/checkpoints/progen2_{variant}/`, with a shared `tokenizer.json`.
 - **Caching**: Response caching is handled outside the model container by the serving infrastructure. Note that stochastic generation means cached results are returned for identical requests, which may not be desirable -- use different seeds for fresh samples.
 
 ## License

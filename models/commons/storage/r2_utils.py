@@ -7,7 +7,7 @@ from typing import Optional
 
 from models.commons.core.logging import get_logger
 from models.commons.storage.r2 import get_r2_client
-from models.commons.util.config import r2_bucket_name
+from models.commons.util.config import r2_bucket_name, r2_model_store_dir
 
 """
 R2 Storage Utilities (Infrastructure)
@@ -668,7 +668,7 @@ class R2Utils:
         """
         Extract the R2 prefix from the target directory path.
 
-        This ensures all strategies use the same model-store structure for R2 caching.
+        This ensures all strategies use the same biolm-hub/models structure for R2 caching.
 
         Args:
             target_dir: Target directory path
@@ -677,20 +677,17 @@ class R2Utils:
             R2 prefix string (without leading slash)
 
         Examples:
-            >>> R2Utils.get_r2_prefix_from_target_dir(Path("/model-store/esm3/v1/esm3-open-small"))
-            "model-store/esm3/v1/esm3-open-small"
-
-            >>> R2Utils.get_r2_prefix_from_target_dir(Path("/models/esm2/v1"))
-            "models/esm2/v1"
+            >>> R2Utils.get_r2_prefix_from_target_dir(Path("/biolm-hub/models/esm2/v1"))
+            "biolm-hub/models/esm2/v1"
         """
-        target_str = str(target_dir)
-        if "model-store" in target_str:
-            # Extract everything after and including 'model-store'
-            idx = target_str.index("model-store")
-            return target_str[idx:].replace("\\", "/").lstrip("/")
-        else:
-            # Fallback: use the relative path from root
-            return target_str.lstrip("/")
+        # The local model dir is rooted at the configured store prefix (e.g.
+        # "biolm-hub/models"), so the R2 prefix mirrors it. Extract from the prefix.
+        target_str = str(target_dir).replace("\\", "/")
+        if r2_model_store_dir in target_str:
+            idx = target_str.index(r2_model_store_dir)
+            return target_str[idx:].lstrip("/")
+        # Fallback: relative path from root (already correct for store-rooted dirs).
+        return target_str.lstrip("/")
 
     @staticmethod
     def check_r2_cache_exists(
@@ -707,7 +704,7 @@ class R2Utils:
             True if cache exists (completion marker found)
 
         Examples:
-            >>> if R2Utils.check_r2_cache_exists("model-store/esm2/v1"):
+            >>> if R2Utils.check_r2_cache_exists("biolm-hub/models/esm2/v1"):
             ...     print("Cache exists")
         """
         try:

@@ -205,7 +205,7 @@ def download_model_assets(
     with automatic R2 caching of the extracted files for future use.
 
     Directory structure after download:
-    - model-store/tempro/v1/{esm2_size}/saved_models/
+    - biolm-hub/models/tempro/v1/{esm2_size}/saved_models/
         - ESM_650M.keras (for 650m variant)
         - ESM_3B.keras (for 3b variant)
         - ESM_15B.keras (for 15b variant)

@@ -29,17 +29,17 @@ class TestFixtureR2Path:
     def test_per_model_path(self):
         assert (
             _fixture_r2_path("models", "esm2", "encode_input.json")
-            == "test-data/models/esm2/encode_input.json"
+            == "biolm-hub/test-data/models/esm2/encode_input.json"
         )
 
     def test_shared_path_bypasses_the_per_model_prefix(self):
         assert (
             _fixture_r2_path("models", "esm2", "shared/protein/standard.fasta")
-            == "test-data/shared/protein/standard.fasta"
+            == "biolm-hub/test-data/shared/protein/standard.fasta"
         )
 
     def test_shared_path_is_slug_independent(self):
         # A shared asset resolves to the same key regardless of the calling model.
         a = _fixture_r2_path("models", "esm2", "shared/pdb/example.cif")
         b = _fixture_r2_path("finetune", "temberture", "shared/pdb/example.cif")
-        assert a == b == "test-data/shared/pdb/example.cif"
+        assert a == b == "biolm-hub/test-data/shared/pdb/example.cif"

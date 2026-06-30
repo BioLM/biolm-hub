@@ -11,7 +11,7 @@ from models.commons.storage import r2_http
 from models.commons.storage.r2 import r2_credentials_present
 from models.commons.storage.r2_utils import R2Utils
 
-PREFIX = "model-store/esm2/v1"
+PREFIX = "biolm-hub/models/esm2/v1"
 PUBLIC_URL = "https://pub-test.r2.dev"
 
 
@@ -205,9 +205,9 @@ def test_restore_refuses_path_traversal_keys(monkeypatch, tmp_path):
 
 def test_object_url_encodes_special_characters():
     url = r2_http._object_url(
-        "https://pub-test.r2.dev/", "model-store/x/v1/", "weird name#.bin"
+        "https://pub-test.r2.dev/", "biolm-hub/models/x/v1/", "weird name#.bin"
     )
-    assert url == "https://pub-test.r2.dev/model-store/x/v1/weird%20name%23.bin"
+    assert url == "https://pub-test.r2.dev/biolm-hub/models/x/v1/weird%20name%23.bin"
 
 
 def test_credentials_present_reflects_env(monkeypatch):

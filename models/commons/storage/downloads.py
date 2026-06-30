@@ -133,10 +133,10 @@ def get_model_dir_util(
 
     Examples:
         >>> get_model_dir_util("esm2", "v1")
-        Path("/model-store/esm2/v1")
+        Path("/biolm-hub/models/esm2/v1")
 
         >>> get_model_dir_util("esm_if1", "v1", sub_path="checkpoints")
-        Path("/model-store/esm_if1/v1/checkpoints")
+        Path("/biolm-hub/models/esm_if1/v1/checkpoints")
     """
     path_parts = [f"/{r2_model_store_dir}", base_model_slug, weights_version]
     if model_variant:

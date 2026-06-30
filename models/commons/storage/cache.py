@@ -45,7 +45,7 @@ def build_r2_key_for_item(
     sub3 = item_key[2]
     filename = f"{item_key}{ext}"
 
-    # e.g. model-cache/<slug>/<action>/f/2/b/<sha>.jsonbin
+    # e.g. biolm-hub/model-cache/<slug>/<action>/f/2/b/<sha>.jsonbin
     return (
         f"{r2_model_cache_dir}/{model_slug}/{model_action}/"
         f"{sub1}/{sub2}/{sub3}/{filename}"
@@ -200,7 +200,7 @@ def get_items_added_by_day(
     r2_client = get_r2_client()
 
     # 1) Build the prefix (base folder)
-    base_prefix = r2_model_cache_dir  # e.g. "model-cache"
+    base_prefix = r2_model_cache_dir  # e.g. "biolm-hub/model-cache"
     if model_slug:
         base_prefix += f"/{model_slug}"
         if model_action:

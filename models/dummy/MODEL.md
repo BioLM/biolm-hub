@@ -290,7 +290,7 @@
 
      - Training command: `modal run models/MODEL/_train.py`
      - Training data source: URL or R2 path
-     - Artifact storage: `r2://biolm-public/model-store/{slug}/v1/`
+     - Artifact storage: `r2://biolm-public/biolm-hub/models/{slug}/v1/`
 -->
 
 ## Versions & Changelog
