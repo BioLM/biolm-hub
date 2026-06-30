@@ -20,12 +20,28 @@
 > Gateway for smoke-invoke: `https://biolm-biolm-models-dev--biolm-gateway-web.modal.run/api/v3/<slug>/<action>`.
 > Status: ⬜ todo · 🔵 deploying · ✅ deploy+invoke ok · 🟡 deployed (invoke pending/manual) · 🔴 failed (see notes).
 
-## Validated so far (Wave 1)
-| Model | Variant | Deploy | Invoke | Notes |
+## PER-MODEL VALIDATION CYCLE (use this — subagents too)
+1. Deploy (bg, log to file): `MODEL_SIZE=<v> MODAL_ENVIRONMENT=biolm-models-dev .venv/bin/python models/<m>/app.py --force-deploy`. Wait for `✅ App '<name>' deployed successfully`. (Build log also shows `Caching to R2 at biolm-hub/models/<slug>/...` ✅ for the new-path self-pop.)
+2. Cold-start: fire ONE invoke at the gateway (curl may 303/hang — that's fine, it just boots a container): `/api/v3/<slug>/<action>` with a minimal payload (sequence/DNA/PDB[fetch RCSB 1CRN]/EC). Wait ~60-90s.
+3. **Verify via logs (the real signal):** `timeout 25 modal app logs <app> --env biolm-models-dev | grep -iE "Runner failed|Traceback|OSError|Can't load|Exception"` → **0 = PASS** (loaded clean); any hit = FAIL (capture the exception → fix → re-deploy).
+
+## Reconciled deploy state (2026-06-30/07-01)
+| Model | Variant | Deploy | Runtime-verified (logs) | Notes |
 |---|---|---|---|---|
-| esm2 | 150m | ✅ | ✅ | r2_then_library; self-pop to biolm-hub/models/esm2/v1; encode → 640-dim embeddings |
-| zymctrl | (single) | ✅ | 🔵 | r2_then_hf snapshot (5.5GB) → new path; generate invoke in flight |
-| thermompnn | (single) | ✅ | ⬜ | r2_then_urls micromamba; FIXED missing PROTEIN_MPNN_CHECKPOINT; needs PDB input to invoke |
+| esm2 | 150m | ✅ new path | ✅ | r2_then_library; encode → 640-dim embeddings (full invoke ok) |
+| zymctrl | single | ✅ new path | ✅ | **FIXED snapshot-path bug** (get_model_dir→build_hf_snapshot_path); clean memory-snapshot restore, 0 errors |
+| thermompnn | single | ✅ new path | ⬜ | **FIXED missing PROTEIN_MPNN_CHECKPOINT**; deploy ok; NOT yet log-verified at cold start (PDB-input predict) |
+| biotite | single | ✅ (Wave2a) | ⬜ | weightless; not log-verified |
+| dna_chisel | single | ✅ (Wave2a) | ⬜ | weightless; not log-verified |
+| esm-if1, igt5-paired, abodybuilder3-plddt, protein-mpnn | — | ⚠️ OLD path (Milestone A) | — | **RE-DEPLOY for new biolm-hub/ path** |
+| peptides | — | ⚠️ deployed but DROPPED | — | `modal app stop peptides --env biolm-models-dev` |
+
+**Snapshot-bug audit (r2_then_hf):** zymctrl was the ONLY victim. dnabert2/esmc/omni_dna/spurs/dsm/e1 all
+resolve the snapshot in app.py already (verified) — OK, no fix. igt5/esm1b/esm1v/igbert/prostt5 use the
+canonical get_model_dir pattern — OK.
+
+**Wave-2a lesson:** a subagent died after 2/5 deploys (deploys are slow → subagents time out/die on big
+batches). Use SMALL batches (2-3 models) per subagent; report incrementally.
 
 ## Wave 2 — CPU + T4 (small) — ⬜
 ablang2 (CPU) · antifold (CPU) · biotite (CPU, weightless) · dna_chisel (CPU, weightless) · dnabert2 (T4) ·
