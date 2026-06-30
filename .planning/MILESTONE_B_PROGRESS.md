@@ -36,6 +36,11 @@
 | esm-if1, igt5-paired, abodybuilder3-plddt, protein-mpnn | — | ⚠️ OLD path (Milestone A) | — | **RE-DEPLOY for new biolm-hub/ path** |
 | peptides | — | ⚠️ deployed but DROPPED | — | `modal app stop peptides --env biolm-models-dev` |
 
+**Wave 2b runtime-PASS (logs-verified, served real output):** `esm1b` (T4, 200/112s), `dnabert2` (T4, 200/36s),
+`esmc-300m` (A10G, 200/106s) — all load from the correct snapshot/dir path (confirms the audit). ⚠️ esmc note:
+transient Modal GPU-snapshot-restore exit-139 that self-recovers (Modal retries w/o memory snapshot) — infra
+quirk, not a code bug; watch across cold starts.
+
 **Snapshot-bug audit (r2_then_hf):** zymctrl was the ONLY victim. dnabert2/esmc/omni_dna/spurs/dsm/e1 all
 resolve the snapshot in app.py already (verified) — OK, no fix. igt5/esm1b/esm1v/igbert/prostt5 use the
 canonical get_model_dir pattern — OK.
