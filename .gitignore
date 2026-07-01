@@ -37,3 +37,4 @@ site/
 
 # NOTE: .planning/ is intentionally NOT ignored — it is tracked in the private repo
 # during development and removed (with git history) before the repo goes public.
+scratchpad/
