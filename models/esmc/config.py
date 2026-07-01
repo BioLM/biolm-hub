@@ -11,10 +11,10 @@ from models.commons.model.tag import (
 from models.esmc.schema import (
     ESMCEncodeRequest,
     ESMCEncodeResponse,
+    ESMCLogProbRequest,
+    ESMCLogProbResponse,
     ESMCModelSizes,
     ESMCParams,
-    ESMCPredictLogProbRequest,
-    ESMCPredictLogProbResponse,
     ESMCPredictRequest,
     ESMCPredictResponse,
 )
@@ -77,8 +77,8 @@ MODEL_FAMILY = ModelFamily(
         ),
         ActionSchemaMap(
             name=ModelActions.LOG_PROB,
-            request_schema=ESMCPredictLogProbRequest,
-            response_schema=ESMCPredictLogProbResponse,
+            request_schema=ESMCLogProbRequest,
+            response_schema=ESMCLogProbResponse,
         ),
     ],
     # Single axis: MODEL_SIZE — 300m only (600m excluded, non-commercial license)

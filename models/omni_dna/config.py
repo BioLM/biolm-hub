@@ -15,10 +15,10 @@ from models.commons.model.tag import (
 from models.omni_dna.schema import (
     OmniDNAEncodeRequest,
     OmniDNAEncodeResponse,
+    OmniDNALogProbRequest,
+    OmniDNALogProbResponse,
     OmniDNAModelSizes,
     OmniDNAParams,
-    OmniDNAPredictLogProbRequest,
-    OmniDNAPredictLogProbResponse,
 )
 
 ### Static configuration values
@@ -101,8 +101,8 @@ MODEL_FAMILY = ModelFamily(
         ),
         ActionSchemaMap(
             name=ModelActions.LOG_PROB,
-            request_schema=OmniDNAPredictLogProbRequest,
-            response_schema=OmniDNAPredictLogProbResponse,
+            request_schema=OmniDNALogProbRequest,
+            response_schema=OmniDNALogProbResponse,
         ),
     ],
     # Single axis: MODEL_SIZE with values 20m, 60m, 116m, 300m, 700m, 1b

@@ -13,7 +13,7 @@ from models.e1.fixture import (
     PREDICT_INPUT,
     PREDICT_OUTPUT_TPL,
 )
-from models.e1.schema import E1PredictLogProbRequest, E1PredictLogProbRequestItem
+from models.e1.schema import E1LogProbRequest, E1LogProbRequestItem
 
 # E1 test suite - multiple actions, multiple test cases per action
 test_suite = TestSuite(
@@ -56,8 +56,8 @@ test_suite = TestSuite(
                 ActionTestCase(
                     action_name=ModelActions.LOG_PROB,
                     # Programmatic input - create data on the fly
-                    input_fixture=E1PredictLogProbRequest(
-                        items=[E1PredictLogProbRequestItem(sequence=STANDARD_PROTEIN)]
+                    input_fixture=E1LogProbRequest(
+                        items=[E1LogProbRequestItem(sequence=STANDARD_PROTEIN)]
                     ),
                     # Use shared validator from commons
                     validator=_validate_log_prob,
@@ -65,9 +65,9 @@ test_suite = TestSuite(
                 # Predict log prob with context sequences (retrieval-augmented mode)
                 ActionTestCase(
                     action_name=ModelActions.LOG_PROB,
-                    input_fixture=E1PredictLogProbRequest(
+                    input_fixture=E1LogProbRequest(
                         items=[
-                            E1PredictLogProbRequestItem(
+                            E1LogProbRequestItem(
                                 sequence=STANDARD_PROTEIN,
                                 context_sequences=[
                                     "MPSSKEMMSQALKATFSGFTKEQQRLGIPKDPRQWTETHVRDWVMWAVNEFSLKGVDFQKL",

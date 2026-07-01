@@ -11,10 +11,10 @@ from models.commons.model.tag import (
 from models.e1.schema import (
     E1EncodeRequest,
     E1EncodeResponse,
+    E1LogProbRequest,
+    E1LogProbResponse,
     E1ModelSizes,
     E1Params,
-    E1PredictLogProbRequest,
-    E1PredictLogProbResponse,
     E1PredictRequest,
     E1PredictResponse,
 )
@@ -89,8 +89,8 @@ MODEL_FAMILY = ModelFamily(
         ),
         ActionSchemaMap(
             name=ModelActions.LOG_PROB,
-            request_schema=E1PredictLogProbRequest,
-            response_schema=E1PredictLogProbResponse,
+            request_schema=E1LogProbRequest,
+            response_schema=E1LogProbResponse,
         ),
     ],
     # Single axis: MODEL_SIZE with values 150m, 300m, 600m

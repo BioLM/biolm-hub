@@ -33,7 +33,7 @@ class EvoModelVariants(EnhancedStringEnum):
 ### Evo Requests
 
 
-class EvoPredictLogProbRequestItem(RequestModel):
+class EvoLogProbRequestItem(RequestModel):
     sequence: Annotated[
         str,
         BeforeValidator(validate_dna_unambiguous),
@@ -46,9 +46,9 @@ class EvoPredictLogProbRequestItem(RequestModel):
     ]
 
 
-class EvoPredictLogProbRequest(RequestModel):
+class EvoLogProbRequest(RequestModel):
     items: Annotated[
-        list[EvoPredictLogProbRequestItem],
+        list[EvoLogProbRequestItem],
         Field(
             min_length=1,
             max_length=EvoParams.batch_size,
@@ -121,14 +121,14 @@ class EvoGenerateRequest(RequestModel):
 ### Evo Responses
 
 
-class EvoPredictLogProbResponseResult(ResponseModel):
+class EvoLogProbResponseResult(ResponseModel):
     log_prob: float = Field(
         description="Log-likelihood of the sequence under the model.",
     )
 
 
-class EvoPredictLogProbResponse(ResponseModel):
-    results: list[EvoPredictLogProbResponseResult] = Field(
+class EvoLogProbResponse(ResponseModel):
+    results: list[EvoLogProbResponseResult] = Field(
         description="Per-input results, returned in the same order as the request items.",
     )
 

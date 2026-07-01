@@ -115,7 +115,7 @@ Compute total log-probability of an unmasked sequence under the model.
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
-| `items` | list[ESMCPredictLogProbRequestItem] | (required) | 1--8 items | Unmasked sequences |
+| `items` | list[ESMCLogProbRequestItem] | (required) | 1--8 items | Unmasked sequences |
 | `items[].sequence` | str | (required) | 1--2048 chars | Amino acid sequence (standard 20 only) |
 
 **Response:**
@@ -202,13 +202,13 @@ request = ESMCPredictRequest(
 
 ```python
 from models.esmc.schema import (
-    ESMCPredictLogProbRequest,
-    ESMCPredictLogProbRequestItem,
+    ESMCLogProbRequest,
+    ESMCLogProbRequestItem,
 )
 
-request = ESMCPredictLogProbRequest(
+request = ESMCLogProbRequest(
     items=[
-        ESMCPredictLogProbRequestItem(
+        ESMCLogProbRequestItem(
             sequence="TPSSKEMMSQALKATFSGFTKEQQRLGIPKDPRQWTETHVRDWVMWAVNEFSLKGVDFQKF"
         )
     ],

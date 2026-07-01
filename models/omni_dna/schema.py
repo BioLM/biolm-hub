@@ -76,7 +76,7 @@ class OmniDNAEncodeRequest(RequestModel):
     ]
 
 
-class OmniDNAPredictLogProbRequestItem(RequestModel):
+class OmniDNALogProbRequestItem(RequestModel):
     sequence: Annotated[
         str,
         BeforeValidator(validate_dna_unambiguous),
@@ -89,9 +89,9 @@ class OmniDNAPredictLogProbRequestItem(RequestModel):
     ]
 
 
-class OmniDNAPredictLogProbRequest(RequestModel):
+class OmniDNALogProbRequest(RequestModel):
     items: Annotated[
-        list[OmniDNAPredictLogProbRequestItem],
+        list[OmniDNALogProbRequestItem],
         Field(
             ...,
             min_length=1,
@@ -104,12 +104,6 @@ class OmniDNAPredictLogProbRequest(RequestModel):
 ### Omni-DNA Responses
 
 
-class OmniDNAEncodeResponseEmbedding(RequestModel):
-    embedding: list[float] = Field(
-        description="Embedding vector for the sequence.",
-    )
-
-
 class OmniDNAEncodeResponseResult(ResponseModel):
     model_config = {
         "populate_by_name": True,  # Ensures alias names work as expected
@@ -119,13 +113,13 @@ class OmniDNAEncodeResponseResult(ResponseModel):
         },
     }
 
-    mean: Optional[list[OmniDNAEncodeResponseEmbedding]] = Field(
+    mean: Optional[list[float]] = Field(
         default=None,
-        description='Mean-pooled embeddings over non-padded BPE tokens; present when "mean" is in params.include.',
+        description='Mean-pooled embedding vector over non-padded BPE tokens; present when "mean" is in params.include.',
     )
-    last: Optional[list[OmniDNAEncodeResponseEmbedding]] = Field(
+    last: Optional[list[float]] = Field(
         default=None,
-        description='Last-token embeddings from the final hidden layer; present when "last" is in params.include.',
+        description='Last-token embedding vector from the final hidden layer; present when "last" is in params.include.',
     )
 
 
@@ -135,13 +129,13 @@ class OmniDNAEncodeResponse(ResponseModel):
     )
 
 
-class OmniDNAPredictLogProbResponseResult(ResponseModel):
+class OmniDNALogProbResponseResult(ResponseModel):
     log_prob: float = Field(
         description="Log-likelihood of the sequence under the model.",
     )
 
 
-class OmniDNAPredictLogProbResponse(ResponseModel):
-    results: list[OmniDNAPredictLogProbResponseResult] = Field(
+class OmniDNALogProbResponse(ResponseModel):
+    results: list[OmniDNALogProbResponseResult] = Field(
         description="Per-input results, returned in the same order as the request items.",
     )

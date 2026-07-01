@@ -104,7 +104,7 @@ class ESMCPredictRequest(RequestModel):
     ]
 
 
-class ESMCPredictLogProbRequestItem(RequestModel):
+class ESMCLogProbRequestItem(RequestModel):
     sequence: Annotated[
         str,
         BeforeValidator(validate_aa_unambiguous),
@@ -117,9 +117,9 @@ class ESMCPredictLogProbRequestItem(RequestModel):
     ]
 
 
-class ESMCPredictLogProbRequest(RequestModel):
+class ESMCLogProbRequest(RequestModel):
     items: Annotated[
-        list[ESMCPredictLogProbRequestItem],
+        list[ESMCLogProbRequestItem],
         Field(
             min_length=1,
             max_length=ESMCParams.batch_size,
@@ -196,13 +196,13 @@ class ESMCPredictResponse(ResponseModel):
     )
 
 
-class ESMCPredictLogProbResponseResult(ResponseModel):
+class ESMCLogProbResponseResult(ResponseModel):
     log_prob: float = Field(
         description="Pseudo-log-likelihood of the sequence under the model.",
     )
 
 
-class ESMCPredictLogProbResponse(ResponseModel):
-    results: list[ESMCPredictLogProbResponseResult] = Field(
+class ESMCLogProbResponse(ResponseModel):
+    results: list[ESMCLogProbResponseResult] = Field(
         description="Per-input results, returned in the same order as the request items.",
     )

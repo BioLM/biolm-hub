@@ -64,7 +64,7 @@ Currently, only the **Evo 1.5 8k Base** variant is enabled. Evo 1.5 was trained 
 
 Computes the total log-probability of each DNA sequence under Evo's autoregressive distribution. Uses `evo.scoring.score_sequences()` with sum reduction over positions.
 
-**Request Schema**: `EvoPredictLogProbRequest`
+**Request Schema**: `EvoLogProbRequest`
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
@@ -72,7 +72,7 @@ Computes the total log-probability of each DNA sequence under Evo's autoregressi
 
 **Batch limit**: 1-2 items per request.
 
-**Response Schema**: `EvoPredictLogProbResponse`
+**Response Schema**: `EvoLogProbResponse`
 
 ```json
 {
@@ -125,14 +125,14 @@ The `generated` field contains only the newly generated continuation (the prompt
 
 ```python
 from models.evo.schema import (
-    EvoPredictLogProbRequest,
-    EvoPredictLogProbRequestItem,
+    EvoLogProbRequest,
+    EvoLogProbRequestItem,
 )
 
-request = EvoPredictLogProbRequest(
+request = EvoLogProbRequest(
     items=[
-        EvoPredictLogProbRequestItem(sequence="ACGTACGTACGTACGT"),
-        EvoPredictLogProbRequestItem(sequence="ATGATGATGATGATG"),
+        EvoLogProbRequestItem(sequence="ACGTACGTACGTACGT"),
+        EvoLogProbRequestItem(sequence="ATGATGATGATGATG"),
     ]
 )
 ```

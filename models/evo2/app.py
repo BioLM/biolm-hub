@@ -30,11 +30,11 @@ from models.evo2.schema import (
     Evo2GenerateRequest,
     Evo2GenerateResponse,
     Evo2GenerateResponseResult,
+    Evo2LogProbRequest,
+    Evo2LogProbResponse,
+    Evo2LogProbResponseResult,
     Evo2ModelVariants,
     Evo2Params,
-    Evo2PredictLogProbRequest,
-    Evo2PredictLogProbResponse,
-    Evo2PredictLogProbResponseResult,
 )
 
 logger = get_logger(__name__)
@@ -259,8 +259,8 @@ class Evo2Model(ModelMixinSnap):
     @modal.method()
     @modal_endpoint(app_name=app_name)
     def log_prob(
-        self, payload: Evo2PredictLogProbRequest
-    ) -> Evo2PredictLogProbResponse:
+        self, payload: Evo2LogProbRequest
+    ) -> Evo2LogProbResponse:
         """
         Computes the total log-probability of each DNA sequence by summing
         over all positions. This uses the model's built-in .score_sequences()
@@ -278,8 +278,8 @@ class Evo2Model(ModelMixinSnap):
             # When True, the average of the forward and reverse complement scores is returned.
         )
         # Convert floats to the response format
-        results = [Evo2PredictLogProbResponseResult(log_prob=float(x)) for x in scores]
-        return Evo2PredictLogProbResponse(results=results)
+        results = [Evo2LogProbResponseResult(log_prob=float(x)) for x in scores]
+        return Evo2LogProbResponse(results=results)
 
     @modal.method()
     @modal_endpoint(app_name=app_name)

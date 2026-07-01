@@ -94,7 +94,7 @@ class Evo2EncodeRequest(RequestModel):
     ]
 
 
-class Evo2PredictLogProbRequestItem(RequestModel):
+class Evo2LogProbRequestItem(RequestModel):
     sequence: Annotated[
         str,
         BeforeValidator(validate_dna_unambiguous),
@@ -107,9 +107,9 @@ class Evo2PredictLogProbRequestItem(RequestModel):
     ]
 
 
-class Evo2PredictLogProbRequest(RequestModel):
+class Evo2LogProbRequest(RequestModel):
     items: Annotated[
-        list[Evo2PredictLogProbRequestItem],
+        list[Evo2LogProbRequestItem],
         Field(
             ...,
             min_length=1,
@@ -208,14 +208,14 @@ class Evo2EncodeResponse(ResponseModel):
     )
 
 
-class Evo2PredictLogProbResponseResult(ResponseModel):
+class Evo2LogProbResponseResult(ResponseModel):
     log_prob: float = Field(
         description="Log-likelihood of the sequence under the model."
     )
 
 
-class Evo2PredictLogProbResponse(ResponseModel):
-    results: list[Evo2PredictLogProbResponseResult] = Field(
+class Evo2LogProbResponse(ResponseModel):
+    results: list[Evo2LogProbResponseResult] = Field(
         description="Per-input results, returned in the same order as the request items."
     )
 

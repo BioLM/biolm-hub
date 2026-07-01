@@ -13,10 +13,10 @@ from models.evo2.schema import (
     Evo2EncodeResponse,
     Evo2GenerateRequest,
     Evo2GenerateResponse,
+    Evo2LogProbRequest,
+    Evo2LogProbResponse,
     Evo2ModelVariants,
     Evo2Params,
-    Evo2PredictLogProbRequest,
-    Evo2PredictLogProbResponse,
 )
 
 ### Static configuration values
@@ -122,8 +122,8 @@ MODEL_FAMILY = ModelFamily(
         ),
         ActionSchemaMap(
             name=ModelActions.LOG_PROB,
-            request_schema=Evo2PredictLogProbRequest,
-            response_schema=Evo2PredictLogProbResponse,
+            request_schema=Evo2LogProbRequest,
+            response_schema=Evo2LogProbResponse,
         ),
         ActionSchemaMap(
             name=ModelActions.GENERATE,

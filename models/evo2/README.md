@@ -95,7 +95,7 @@ Extracts per-layer embeddings from specified transformer blocks. Returns mean-po
 
 Computes the total log-probability of each DNA sequence under Evo 2's autoregressive distribution.
 
-**Request Schema**: `Evo2PredictLogProbRequest`
+**Request Schema**: `Evo2LogProbRequest`
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
@@ -103,7 +103,7 @@ Computes the total log-probability of each DNA sequence under Evo 2's autoregres
 
 **Batch limit**: 1 item per request.
 
-**Response Schema**: `Evo2PredictLogProbResponse`
+**Response Schema**: `Evo2LogProbResponse`
 
 ```json
 {
@@ -164,10 +164,10 @@ encode_request = Evo2EncodeRequest(
 )
 
 # Score DNA sequences
-from models.evo2.schema import Evo2PredictLogProbRequest, Evo2PredictLogProbRequestItem
+from models.evo2.schema import Evo2LogProbRequest, Evo2LogProbRequestItem
 
-logprob_request = Evo2PredictLogProbRequest(
-    items=[Evo2PredictLogProbRequestItem(sequence="ATGATGATGATGATG")]
+logprob_request = Evo2LogProbRequest(
+    items=[Evo2LogProbRequestItem(sequence="ATGATGATGATGATG")]
 )
 
 # Generate DNA sequences with seed for reproducibility

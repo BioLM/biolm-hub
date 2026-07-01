@@ -17,11 +17,11 @@ from models.evo.schema import (
     EvoGenerateRequest,
     EvoGenerateResponse,
     EvoGenerateResponseResult,
+    EvoLogProbRequest,
+    EvoLogProbResponse,
+    EvoLogProbResponseResult,
     EvoModelVariants,
     EvoParams,
-    EvoPredictLogProbRequest,
-    EvoPredictLogProbResponse,
-    EvoPredictLogProbResponseResult,
 )
 
 logger = get_logger(__name__)
@@ -127,7 +127,7 @@ class EvoModel(ModelMixinSnap):
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def log_prob(self, payload: EvoPredictLogProbRequest) -> EvoPredictLogProbResponse:
+    def log_prob(self, payload: EvoLogProbRequest) -> EvoLogProbResponse:
         """
         Sums the log probability of each DNA sequence.
         This calls evo.scoring.score_sequences(...), which:
@@ -147,8 +147,8 @@ class EvoModel(ModelMixinSnap):
             device=self.device,
         )
 
-        results = [EvoPredictLogProbResponseResult(log_prob=lp) for lp in scores]
-        return EvoPredictLogProbResponse(results=results)
+        results = [EvoLogProbResponseResult(log_prob=lp) for lp in scores]
+        return EvoLogProbResponse(results=results)
 
     @modal.method()
     @modal_endpoint(app_name=app_name)

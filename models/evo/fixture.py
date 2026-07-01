@@ -5,8 +5,8 @@ from models.evo.config import MODEL_FAMILY
 from models.evo.schema import (
     EvoGenerateRequest,
     EvoGenerateRequestItem,
-    EvoPredictLogProbRequest,
-    EvoPredictLogProbRequestItem,
+    EvoLogProbRequest,
+    EvoLogProbRequestItem,
 )
 
 LOGPROB_INPUT = "logprob_input.json"
@@ -27,10 +27,10 @@ fixture_generation_suite = TestSuite(
                     action_name=ModelActions.LOG_PROB,
                     input_filename_template=LOGPROB_INPUT,
                     # Programmatic input - will be written as logprob_input.json
-                    input_fixture=EvoPredictLogProbRequest(
+                    input_fixture=EvoLogProbRequest(
                         items=[
-                            EvoPredictLogProbRequestItem(sequence="ACGTAC"),
-                            EvoPredictLogProbRequestItem(sequence="ACGTACGTAC"),
+                            EvoLogProbRequestItem(sequence="ACGTAC"),
+                            EvoLogProbRequestItem(sequence="ACGTACGTAC"),
                         ]
                     ),
                     expected_output_fixture=LOGPROB_OUTPUT,

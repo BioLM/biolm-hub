@@ -165,11 +165,11 @@ predict_request = E1PredictRequest(
 )
 
 # Score log probability with context
-from models.e1.schema import E1PredictLogProbRequest, E1PredictLogProbRequestItem
+from models.e1.schema import E1LogProbRequest, E1LogProbRequestItem
 
-log_prob_request = E1PredictLogProbRequest(
+log_prob_request = E1LogProbRequest(
     items=[
-        E1PredictLogProbRequestItem(
+        E1LogProbRequestItem(
             sequence="TPSSKEMMSQALKATFSGFTKEQQRLGIPKDPRQWTETHVRDWVMWAVNEFSLKGVDFQKF",
             context_sequences=["MPSSKEMMSQALKATFSGFTKEQQRLGIPKDPRQWTETHVRDWVMWAVNEFSLKGVDFQKL"],
         )

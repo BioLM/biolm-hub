@@ -95,7 +95,7 @@ Computes a pseudo-likelihood log-probability for each input DNA sequence. For ea
 
 **Batch limit**: 1-10 items per request.
 
-**Request schema**: `DNABERT2PredictLogProbRequest` containing a list of `DNABERT2PredictLogProbRequestItem`.
+**Request schema**: `DNABERT2LogProbRequest` containing a list of `DNABERT2LogProbRequestItem`.
 
 **Response:**
 
@@ -113,7 +113,7 @@ Computes a pseudo-likelihood log-probability for each input DNA sequence. For ea
 |-------|------|-------------|
 | `log_prob` | float | Pseudo-likelihood log-probability (sum of per-position masked log-probs); higher values indicate the sequence is more "natural" according to the model |
 
-**Response schema**: `DNABERT2PredictLogProbResponse` containing a list of `DNABERT2PredictLogProbResponseResult`.
+**Response schema**: `DNABERT2LogProbResponse` containing a list of `DNABERT2LogProbResponseResult`.
 
 ## Usage Examples
 
@@ -134,21 +134,21 @@ request = DNABERT2EncodeRequest(
 
 ```python
 from models.dnabert2.schema import (
-    DNABERT2PredictLogProbRequest,
-    DNABERT2PredictLogProbRequestItem,
+    DNABERT2LogProbRequest,
+    DNABERT2LogProbRequestItem,
 )
 
 # Score DNA sequences via pseudo-likelihood
 # Compare reference vs. variant to assess mutation impact
-reference_request = DNABERT2PredictLogProbRequest(
+reference_request = DNABERT2LogProbRequest(
     items=[
-        DNABERT2PredictLogProbRequestItem(sequence="ACGTACGTACGTACGT"),
+        DNABERT2LogProbRequestItem(sequence="ACGTACGTACGTACGT"),
     ]
 )
 
-variant_request = DNABERT2PredictLogProbRequest(
+variant_request = DNABERT2LogProbRequest(
     items=[
-        DNABERT2PredictLogProbRequestItem(sequence="ACGTTCGTACGTACGT"),
+        DNABERT2LogProbRequestItem(sequence="ACGTTCGTACGTACGT"),
     ]
 )
 # delta = variant_log_prob - reference_log_prob

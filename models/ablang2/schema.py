@@ -199,8 +199,8 @@ class AbLang2LogProbRequest(RequestModel):
 
 
 class AbLang2RescodingResult(ResponseModel):
-    rescoding: list[list[float]] = Field(
-        description="Per-residue embedding matrix of shape [num_positions, embed_dim], one row per residue in the paired sequence."
+    residue_embeddings: list[list[float]] = Field(
+        description="Per-residue embedding vectors."
     )
 
 
@@ -218,7 +218,7 @@ class AbLang2RescodingResponse(ResponseModel):
 
 
 class AbLang2SeqcodingResult(ResponseModel):
-    seqcoding: list[float] = Field(
+    embeddings: list[float] = Field(
         description="Germline-debiased sequence-level embedding vector for the antibody pair."
     )
 
@@ -233,8 +233,8 @@ class AbLang2SeqcodingResponse(ResponseModel):
 
 
 class AbLang2LikelihoodResult(ResponseModel):
-    likelihood: list[list[float]] = Field(
-        description="Per-position logits over the model vocabulary (20 canonical amino acids); shape [L, 20] where L is the total paired sequence length."
+    logits: list[list[float]] = Field(
+        description="Per-position logits over the model vocabulary."
     )
     sequence_tokens: list[str] = Field(
         description="Per-position input tokens, aligned with the logits."
@@ -252,11 +252,11 @@ class _AbLang2LikelihoodResponse(ResponseModel):
 
 AbLang2PredictResponse = _AbLang2LikelihoodResponse  # Alias to conform to ModelActions
 
-### AbLang2 Restore Response
+### AbLang2 Generate Response
 
 
-class AbLang2RestoreItem(RequestModel):
-    # Restore output mirrors the canonical antibody field names.
+class AbLang2GenerateResponseResult(RequestModel):
+    # Generate output mirrors the canonical antibody field names.
     heavy_chain: str = Field(
         description="Restored heavy-chain amino-acid sequence with all masked positions filled."
     )
@@ -265,13 +265,10 @@ class AbLang2RestoreItem(RequestModel):
     )
 
 
-class _AbLang2RestoreResponse(ResponseModel):
-    results: list[AbLang2RestoreItem] = Field(
+class AbLang2GenerateResponse(ResponseModel):
+    results: list[AbLang2GenerateResponseResult] = Field(
         description="Per-input results, returned in the same order as the request items."
     )
-
-
-AbLang2GenerateResponse = _AbLang2RestoreResponse  # Alias to conform to ModelActions
 
 ### AbLang2 Log Prob Response
 

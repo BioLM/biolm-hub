@@ -11,10 +11,10 @@ from models.commons.model.tag import (
 from models.evo.schema import (
     EvoGenerateRequest,
     EvoGenerateResponse,
+    EvoLogProbRequest,
+    EvoLogProbResponse,
     EvoModelVariants,
     EvoParams,
-    EvoPredictLogProbRequest,
-    EvoPredictLogProbResponse,
 )
 
 ### Evo Modal Resource Specs
@@ -80,8 +80,8 @@ MODEL_FAMILY = ModelFamily(
     action_schemas=[
         ActionSchemaMap(
             name=ModelActions.LOG_PROB,
-            request_schema=EvoPredictLogProbRequest,
-            response_schema=EvoPredictLogProbResponse,
+            request_schema=EvoLogProbRequest,
+            response_schema=EvoLogProbResponse,
         ),
         ActionSchemaMap(
             name=ModelActions.GENERATE,

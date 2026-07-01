@@ -24,11 +24,11 @@ from models.esmc.schema import (
     ESMCEncodeRequest,
     ESMCEncodeResponse,
     ESMCEncodeResponseResult,
+    ESMCLogProbRequest,
+    ESMCLogProbResponse,
+    ESMCLogProbResponseResult,
     ESMCModelSizes,
     ESMCParams,
-    ESMCPredictLogProbRequest,
-    ESMCPredictLogProbResponse,
-    ESMCPredictLogProbResponseResult,
     ESMCPredictRequest,
     ESMCPredictResponse,
     ESMCPredictResponseResult,
@@ -297,8 +297,8 @@ class ESMCModel(ModelMixinSnap):
     @modal.method()
     @modal_endpoint(app_name=app_name)
     def log_prob(
-        self, payload: ESMCPredictLogProbRequest
-    ) -> ESMCPredictLogProbResponse:
+        self, payload: ESMCLogProbRequest
+    ) -> ESMCLogProbResponse:
         """
         Computes the total log-prob of an unmasked sequence under ESM C.
         Sums over the canonical 20 amino acids only, ignoring positions with
@@ -335,9 +335,9 @@ class ESMCModel(ModelMixinSnap):
 
         # Convert to structured response
         results = [
-            ESMCPredictLogProbResponseResult(log_prob=lp) for lp in all_log_probs
+            ESMCLogProbResponseResult(log_prob=lp) for lp in all_log_probs
         ]
-        return ESMCPredictLogProbResponse(results=results)
+        return ESMCLogProbResponse(results=results)
 
 
 if __name__ == "__main__":

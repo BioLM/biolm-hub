@@ -326,7 +326,7 @@ class TemBERTureModel(ModelMixinSnap):
                     if TemBERTureEncodeIncludeOptions.PER_RESIDUE in include:
                         # Per-token embeddings
                         per_residue_embeddings = seq_embeddings.cpu().tolist()
-                        result_dict["per_residue_embeddings"] = per_residue_embeddings
+                        result_dict["residue_embeddings"] = per_residue_embeddings
 
                     if TemBERTureEncodeIncludeOptions.CLS in include:
                         # CLS token embedding
@@ -400,7 +400,7 @@ class TemBERTureModel(ModelMixinSnap):
 
             # Process predictions based on model type
             for j, pred in enumerate(logits):
-                result_dict = {"prediction": float(pred)}
+                result_dict = {"score": float(pred)}
 
                 if self.model_type == TemBERTureModelTypes.CLASSIFIER:
                     # Apply sigmoid and convert to classification
@@ -410,7 +410,7 @@ class TemBERTureModel(ModelMixinSnap):
                     )
                     result_dict["classification"] = classification
                     # Return probability instead of logit
-                    result_dict["prediction"] = float(prob)
+                    result_dict["score"] = float(prob)
                     logger.info(
                         "Sequence %s: %s (prob: %.4f)", j + 1, classification, prob
                     )

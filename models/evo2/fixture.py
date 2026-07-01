@@ -10,8 +10,8 @@ from models.evo2.schema import (
     Evo2GenerateRequest,
     Evo2GenerateRequestItem,
     Evo2GenerateRequestParams,
-    Evo2PredictLogProbRequest,
-    Evo2PredictLogProbRequestItem,
+    Evo2LogProbRequest,
+    Evo2LogProbRequestItem,
 )
 
 ENCODE_INPUT = "encode_input.json"
@@ -65,9 +65,9 @@ def generate():
     generator.add_test_case(
         ActionTestCase(
             action_name=ModelActions.LOG_PROB,
-            input_fixture=Evo2PredictLogProbRequest(
+            input_fixture=Evo2LogProbRequest(
                 items=[
-                    Evo2PredictLogProbRequestItem(sequence="ACGTACGTAC"),
+                    Evo2LogProbRequestItem(sequence="ACGTACGTAC"),
                 ]
             ),
             input_filename_template=LOGPROB_INPUT,

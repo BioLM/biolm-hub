@@ -5,8 +5,8 @@ from models.dnabert2.config import MODEL_FAMILY
 from models.dnabert2.schema import (
     DNABERT2EncodeRequest,
     DNABERT2EncodeRequestItem,
-    DNABERT2PredictLogProbRequest,
-    DNABERT2PredictLogProbRequestItem,
+    DNABERT2LogProbRequest,
+    DNABERT2LogProbRequestItem,
 )
 
 ENCODE_INPUT = "encode_input.json"
@@ -53,10 +53,10 @@ def generate():
     generator.add_test_case(
         ActionTestCase(
             action_name=ModelActions.LOG_PROB,
-            input_fixture=DNABERT2PredictLogProbRequest(
+            input_fixture=DNABERT2LogProbRequest(
                 items=[
-                    DNABERT2PredictLogProbRequestItem(sequence="ACGT"),
-                    DNABERT2PredictLogProbRequestItem(sequence="ACGTACGT"),
+                    DNABERT2LogProbRequestItem(sequence="ACGT"),
+                    DNABERT2LogProbRequestItem(sequence="ACGTACGT"),
                 ]
             ),
             input_filename_template=LOGPROB_INPUT,

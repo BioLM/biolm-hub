@@ -76,8 +76,8 @@ Returns embeddings for each DNA sequence. Embeddings are extracted from the fina
 {
   "results": [
     {
-      "mean": [{"embedding": [0.012, -0.034, ...]}],
-      "last": [{"embedding": [0.008, -0.021, ...]}]
+      "mean": [0.012, -0.034, ...],
+      "last": [0.008, -0.021, ...]
     }
   ]
 }
@@ -89,7 +89,7 @@ Fields are omitted when not included in the `include` parameter.
 
 Computes the total log-probability of each DNA sequence under the auto-regressive model. The model processes the batch in one forward pass, applies log-softmax over the entire vocabulary, and sums the log probabilities corresponding to the actual tokens (ignoring padded positions).
 
-**Request Schema**: `OmniDNAPredictLogProbRequest`
+**Request Schema**: `OmniDNALogProbRequest`
 
 | Parameter | Type | Default | Range | Description |
 |-----------|------|---------|-------|-------------|
@@ -97,7 +97,7 @@ Computes the total log-probability of each DNA sequence under the auto-regressiv
 
 **Batch limit**: 1--2 items per request.
 
-**Response Schema**: `OmniDNAPredictLogProbResponse`
+**Response Schema**: `OmniDNALogProbResponse`
 
 ```json
 {
@@ -129,12 +129,12 @@ encode_request = OmniDNAEncodeRequest(
 
 # Score DNA sequences
 from models.omni_dna.schema import (
-    OmniDNAPredictLogProbRequest,
-    OmniDNAPredictLogProbRequestItem,
+    OmniDNALogProbRequest,
+    OmniDNALogProbRequestItem,
 )
 
-logprob_request = OmniDNAPredictLogProbRequest(
-    items=[OmniDNAPredictLogProbRequestItem(sequence="ATGATGATGATGATG")]
+logprob_request = OmniDNALogProbRequest(
+    items=[OmniDNALogProbRequestItem(sequence="ATGATGATGATGATG")]
 )
 ```
 

@@ -187,7 +187,7 @@ class E1PredictRequest(RequestModel):
     ]
 
 
-class E1PredictLogProbRequestItem(RequestModel):
+class E1LogProbRequestItem(RequestModel):
     """Single item for log probability prediction.
 
     Args:
@@ -222,9 +222,9 @@ class E1PredictLogProbRequestItem(RequestModel):
         return _validate_context_list(v, residue_validator=validate_aa_unambiguous)
 
 
-class E1PredictLogProbRequest(RequestModel):
+class E1LogProbRequest(RequestModel):
     items: Annotated[
-        list[E1PredictLogProbRequestItem],
+        list[E1LogProbRequestItem],
         Field(
             min_length=1,
             max_length=E1Params.batch_size,
@@ -311,13 +311,13 @@ class E1PredictResponse(ResponseModel):
     )
 
 
-class E1PredictLogProbResponseResult(ResponseModel):
+class E1LogProbResponseResult(ResponseModel):
     log_prob: float = Field(
         description="Pseudo-log-likelihood of the sequence under the model.",
     )
 
 
-class E1PredictLogProbResponse(ResponseModel):
-    results: list[E1PredictLogProbResponseResult] = Field(
+class E1LogProbResponse(ResponseModel):
+    results: list[E1LogProbResponseResult] = Field(
         description="Per-input results, returned in the same order as the request items.",
     )

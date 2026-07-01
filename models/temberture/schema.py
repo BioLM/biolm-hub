@@ -117,9 +117,9 @@ class TemBERTureEncodeResponseResult(ResponseModel):
         default=None,
         description="Mean-pooled embedding vector for the sequence (present when 'mean' is requested).",
     )
-    per_residue_embeddings: Optional[list[list[float]]] = Field(
+    residue_embeddings: Optional[list[list[float]]] = Field(
         default=None,
-        description="Per-residue embedding vectors (present when 'per_residue' is requested).",
+        description="Per-residue embedding vectors.",
     )
     cls_embeddings: Optional[list[float]] = Field(
         default=None,
@@ -134,8 +134,8 @@ class TemBERTureEncodeResponse(ResponseModel):
 
 
 class TemBERTurePredictResponseResult(ResponseModel):
-    prediction: float = Field(
-        description="Thermophilicity probability (0-1) in classifier mode, or melting temperature in degrees C in regression mode.",
+    score: float = Field(
+        description="Thermophilicity probability (0-1) in classifier mode, or melting temperature in degrees Celsius in regression mode.",
     )
     classification: Optional[str] = Field(
         default=None,

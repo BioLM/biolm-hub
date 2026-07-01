@@ -23,13 +23,12 @@ from models.omni_dna.schema import (
     OmniDNAEncodeIncludeOptions,
     OmniDNAEncodeRequest,
     OmniDNAEncodeResponse,
-    OmniDNAEncodeResponseEmbedding,
     OmniDNAEncodeResponseResult,
+    OmniDNALogProbRequest,
+    OmniDNALogProbResponse,
+    OmniDNALogProbResponseResult,
     OmniDNAModelSizes,
     OmniDNAParams,
-    OmniDNAPredictLogProbRequest,
-    OmniDNAPredictLogProbResponse,
-    OmniDNAPredictLogProbResponseResult,
 )
 
 logger = get_logger(__name__)
@@ -216,22 +215,16 @@ class OmniDNAModel(ModelMixinSnap):
         for i in range(batch_size):
             result_data = {}
             if mean_embeddings_list:
-                result_data["mean"] = [
-                    OmniDNAEncodeResponseEmbedding(embedding=mean_embeddings_list[i])
-                ]
+                result_data["mean"] = mean_embeddings_list[i]
             if last_embeddings_list:
-                result_data["last"] = [
-                    OmniDNAEncodeResponseEmbedding(embedding=last_embeddings_list[i])
-                ]
+                result_data["last"] = last_embeddings_list[i]
             results.append(OmniDNAEncodeResponseResult(**result_data))
 
         return OmniDNAEncodeResponse(results=results)
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def log_prob(
-        self, payload: OmniDNAPredictLogProbRequest
-    ) -> OmniDNAPredictLogProbResponse:
+    def log_prob(self, payload: OmniDNALogProbRequest) -> OmniDNALogProbResponse:
         """
         Computes the total log-probability of each input DNA sequence under the model's auto-regressive
         distribution in a batched manner. We sum over *all* tokens in the BPE-tokenized sequence
@@ -287,11 +280,10 @@ class OmniDNAModel(ModelMixinSnap):
         seq_log_probs = (gathered * valid_mask).sum(dim=1)  # shape: [B]
 
         results = [
-            OmniDNAPredictLogProbResponseResult(log_prob=float(lp))
-            for lp in seq_log_probs
+            OmniDNALogProbResponseResult(log_prob=float(lp)) for lp in seq_log_probs
         ]
 
-        return OmniDNAPredictLogProbResponse(results=results)
+        return OmniDNALogProbResponse(results=results)
 
 
 if __name__ == "__main__":

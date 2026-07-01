@@ -160,7 +160,7 @@ Request
   |-- 3. Forward pass -> logits
   |-- 4. For each query position: log-softmax over canonical 20 AA
   |-- 5. Sum log P(residue_i) across all positions
-  |-- 6. Return E1PredictLogProbResponse
+  |-- 6. Return E1LogProbResponse
 ```
 
 ### Memory & Compute Profile

@@ -25,11 +25,11 @@ from models.e1.schema import (
     E1EncodeRequest,
     E1EncodeResponse,
     E1EncodeResponseResult,
+    E1LogProbRequest,
+    E1LogProbResponse,
+    E1LogProbResponseResult,
     E1ModelSizes,
     E1Params,
-    E1PredictLogProbRequest,
-    E1PredictLogProbResponse,
-    E1PredictLogProbResponseResult,
     E1PredictRequest,
     E1PredictResponse,
     E1PredictResponseResult,
@@ -455,7 +455,7 @@ class E1Model(ModelMixin):
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def log_prob(self, payload: E1PredictLogProbRequest) -> E1PredictLogProbResponse:
+    def log_prob(self, payload: E1LogProbRequest) -> E1LogProbResponse:
         """
         Computes the total log-prob of an unmasked sequence under E1.
         Sums over the canonical 20 amino acids only, ignoring positions with
@@ -505,8 +505,8 @@ class E1Model(ModelMixin):
             all_log_probs.append(log_prob_sum)
 
         # Convert to structured response
-        results = [E1PredictLogProbResponseResult(log_prob=lp) for lp in all_log_probs]
-        return E1PredictLogProbResponse(results=results)
+        results = [E1LogProbResponseResult(log_prob=lp) for lp in all_log_probs]
+        return E1LogProbResponse(results=results)
 
 
 if __name__ == "__main__":

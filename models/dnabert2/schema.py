@@ -50,7 +50,7 @@ class DNABERT2EncodeRequest(RequestModel):
     ]
 
 
-class DNABERT2PredictLogProbRequestItem(RequestModel):
+class DNABERT2LogProbRequestItem(RequestModel):
     sequence: Annotated[
         str,
         BeforeValidator(validate_dna_unambiguous),
@@ -63,9 +63,9 @@ class DNABERT2PredictLogProbRequestItem(RequestModel):
     ]
 
 
-class DNABERT2PredictLogProbRequest(RequestModel):
+class DNABERT2LogProbRequest(RequestModel):
     items: Annotated[
-        list[DNABERT2PredictLogProbRequestItem],
+        list[DNABERT2LogProbRequestItem],
         Field(
             ...,
             min_length=1,
@@ -90,13 +90,13 @@ class DNABERT2EncodeResponse(ResponseModel):
     )
 
 
-class DNABERT2PredictLogProbResponseResult(ResponseModel):
+class DNABERT2LogProbResponseResult(ResponseModel):
     log_prob: float = Field(
         description="Pseudo-log-likelihood of the sequence under the model."
     )
 
 
-class DNABERT2PredictLogProbResponse(ResponseModel):
-    results: list[DNABERT2PredictLogProbResponseResult] = Field(
+class DNABERT2LogProbResponse(ResponseModel):
+    results: list[DNABERT2LogProbResponseResult] = Field(
         description="Per-input results, returned in the same order as the request items."
     )

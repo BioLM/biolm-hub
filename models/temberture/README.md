@@ -64,7 +64,7 @@ Extract embeddings from protein sequences using the TemBERTure fine-tuned model.
     {
       "sequence_index": 0,
       "embeddings": [0.1, 0.2, ...],
-      "per_residue_embeddings": [[0.1, ...], ...],
+      "residue_embeddings": [[0.1, ...], ...],
       "cls_embeddings": [0.1, 0.2, ...]
     }
   ]
@@ -87,7 +87,7 @@ Predict thermophilicity (classifier) or melting temperature (regression) for pro
 {
   "results": [
     {
-      "prediction": 0.85,
+      "score": 0.85,
       "classification": "Thermophilic"
     }
   ]
@@ -100,7 +100,7 @@ Predict thermophilicity (classifier) or melting temperature (regression) for pro
 {
   "results": [
     {
-      "prediction": 72.5
+      "score": 72.5
     }
   ]
 }

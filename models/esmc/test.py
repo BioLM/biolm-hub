@@ -11,7 +11,7 @@ from models.esmc.fixture import (
     PREDICT_INPUT,
     PREDICT_OUTPUT_TPL,
 )
-from models.esmc.schema import ESMCPredictLogProbRequest, ESMCPredictLogProbRequestItem
+from models.esmc.schema import ESMCLogProbRequest, ESMCLogProbRequestItem
 
 # ESM-C test suite - multiple actions, multiple test cases per action
 test_suite = TestSuite(
@@ -46,8 +46,8 @@ test_suite = TestSuite(
                 ActionTestCase(
                     action_name=ModelActions.LOG_PROB,
                     # Programmatic input - create data on the fly
-                    input_fixture=ESMCPredictLogProbRequest(
-                        items=[ESMCPredictLogProbRequestItem(sequence=STANDARD_PROTEIN)]
+                    input_fixture=ESMCLogProbRequest(
+                        items=[ESMCLogProbRequestItem(sequence=STANDARD_PROTEIN)]
                     ),
                     # Use shared validator from commons
                     validator=_validate_log_prob,

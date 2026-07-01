@@ -19,10 +19,10 @@ from models.dnabert2.schema import (
     DNABERT2EncodeRequest,
     DNABERT2EncodeResponse,
     DNABERT2EncodeResponseResult,
+    DNABERT2LogProbRequest,
+    DNABERT2LogProbResponse,
+    DNABERT2LogProbResponseResult,
     DNABERT2Params,
-    DNABERT2PredictLogProbRequest,
-    DNABERT2PredictLogProbResponse,
-    DNABERT2PredictLogProbResponseResult,
 )
 
 if TYPE_CHECKING:
@@ -185,8 +185,8 @@ class DNABERT2Model(ModelMixinSnap):
     @modal.method()
     @modal_endpoint(app_name=app_name)
     def log_prob(
-        self, payload: DNABERT2PredictLogProbRequest
-    ) -> DNABERT2PredictLogProbResponse:
+        self, payload: DNABERT2LogProbRequest
+    ) -> DNABERT2LogProbResponse:
         """
         Computes a pseudo-likelihood log probability for each input DNA sequence
         using vectorized masking + MLM logits from AutoModelForMaskedLM.
@@ -217,7 +217,7 @@ class DNABERT2Model(ModelMixinSnap):
                 if input_ids[i].item() not in all_special_ids
             ]
             if not valid_positions:
-                results.append(DNABERT2PredictLogProbResponseResult(log_prob=0.0))
+                results.append(DNABERT2LogProbResponseResult(log_prob=0.0))
                 continue
 
             # valid_positions_tensor must be on the same device as input_ids
@@ -257,10 +257,10 @@ class DNABERT2Model(ModelMixinSnap):
 
             sequence_log_prob = token_log_probs.sum().item()
             results.append(
-                DNABERT2PredictLogProbResponseResult(log_prob=sequence_log_prob)
+                DNABERT2LogProbResponseResult(log_prob=sequence_log_prob)
             )
 
-        return DNABERT2PredictLogProbResponse(results=results)
+        return DNABERT2LogProbResponse(results=results)
 
 
 if __name__ == "__main__":

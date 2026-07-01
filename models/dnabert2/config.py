@@ -11,9 +11,9 @@ from models.commons.model.tag import (
 from models.dnabert2.schema import (
     DNABERT2EncodeRequest,
     DNABERT2EncodeResponse,
+    DNABERT2LogProbRequest,
+    DNABERT2LogProbResponse,
     DNABERT2Params,
-    DNABERT2PredictLogProbRequest,
-    DNABERT2PredictLogProbResponse,
 )
 
 ### Static configuration values
@@ -53,8 +53,8 @@ MODEL_FAMILY = ModelFamily(
         ),
         ActionSchemaMap(
             name=ModelActions.LOG_PROB,
-            request_schema=DNABERT2PredictLogProbRequest,
-            response_schema=DNABERT2PredictLogProbResponse,
+            request_schema=DNABERT2LogProbRequest,
+            response_schema=DNABERT2LogProbResponse,
         ),
     ],
     # No variants - single model

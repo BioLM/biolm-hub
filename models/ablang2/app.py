@@ -10,6 +10,7 @@ from models.ablang2.schema import (
     AbLang2EncodeRequest,
     AbLang2GenerateRequest,
     AbLang2GenerateResponse,
+    AbLang2GenerateResponseResult,
     AbLang2LikelihoodResult,
     AbLang2LogProbRequest,
     AbLang2LogProbResponse,
@@ -19,7 +20,6 @@ from models.ablang2.schema import (
     AbLang2PredictResponse,
     AbLang2RescodingResponse,
     AbLang2RescodingResult,
-    AbLang2RestoreItem,
     AbLang2SeqcodingResponse,
     AbLang2SeqcodingResult,
 )
@@ -207,7 +207,7 @@ class AbLang2Model(ModelMixinSnap):
             results = []
             for emb_vector in raw_output:
                 results.append(
-                    AbLang2SeqcodingResult(seqcoding=emb_vector.astype(float).tolist())
+                    AbLang2SeqcodingResult(embeddings=emb_vector.astype(float).tolist())
                 )
 
             return AbLang2SeqcodingResponse(results=results)
@@ -228,7 +228,7 @@ class AbLang2Model(ModelMixinSnap):
                 aligned_data = raw_output.aligned_embeds  # shape [B, L, embed_dim]
                 for i in range(len(aligned_data)):
                     row = aligned_data[i].astype(float).tolist()
-                    results.append(AbLang2RescodingResult(rescoding=row))
+                    results.append(AbLang2RescodingResult(residue_embeddings=row))
 
                 if hasattr(raw_output, "number_alignment"):
                     number_alignment = list(raw_output.number_alignment)
@@ -238,7 +238,7 @@ class AbLang2Model(ModelMixinSnap):
                 for per_item_matrix in raw_output:
                     results.append(
                         AbLang2RescodingResult(
-                            rescoding=per_item_matrix.astype(float).tolist()
+                            residue_embeddings=per_item_matrix.astype(float).tolist()
                         )
                     )
 
@@ -267,7 +267,7 @@ class AbLang2Model(ModelMixinSnap):
             canonical_logits_matrix = logits_matrix[:, 1:21]
             results.append(
                 AbLang2LikelihoodResult(
-                    likelihood=canonical_logits_matrix.astype(float).tolist(),
+                    logits=canonical_logits_matrix.astype(float).tolist(),
                     sequence_tokens=list(f"<{item.heavy_chain}>|<{item.light_chain}>"),
                     vocab_tokens=self.vocab_tokens,
                 )
@@ -291,7 +291,9 @@ class AbLang2Model(ModelMixinSnap):
         results = []
         for seq_str in raw_output:
             heavy, light = (part.strip("<>") for part in seq_str.split("|"))
-            results.append(AbLang2RestoreItem(heavy_chain=heavy, light_chain=light))
+            results.append(
+                AbLang2GenerateResponseResult(heavy_chain=heavy, light_chain=light)
+            )
 
         return AbLang2GenerateResponse(results=results)
 

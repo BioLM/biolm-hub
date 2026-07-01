@@ -70,7 +70,7 @@ Generates sequence-level (`seqcoding`) or residue-level (`rescoding`) embeddings
 {
   "results": [
     {
-      "seqcoding": [0.012, -0.034, ...]
+      "embeddings": [0.012, -0.034, ...]
     }
   ]
 }
@@ -82,7 +82,7 @@ Generates sequence-level (`seqcoding`) or residue-level (`rescoding`) embeddings
 {
   "results": [
     {
-      "rescoding": [[0.012, -0.034, ...], ...]
+      "residue_embeddings": [[0.012, -0.034, ...], ...]
     }
   ],
   "number_alignment": null
@@ -108,7 +108,7 @@ Returns per-position logits over the 20 canonical amino acids for paired antibod
 {
   "results": [
     {
-      "likelihood": [[0.1, -0.3, ...], ...],
+      "logits": [[0.1, -0.3, ...], ...],
       "sequence_tokens": ["<", "Q", "V", ...],
       "vocab_tokens": ["A", "R", "N", ...]
     }
@@ -116,7 +116,7 @@ Returns per-position logits over the 20 canonical amino acids for paired antibod
 }
 ```
 
-`likelihood` shape is `[L, 20]` where L is the total paired sequence length and 20 is the canonical amino acid vocabulary. Values are raw logits (not probabilities); use `log_softmax` to obtain log-probabilities.
+`logits` shape is `[L, 20]` where L is the total paired sequence length and 20 is the canonical amino acid vocabulary. Values are raw logits (not probabilities); use `log_softmax` to obtain log-probabilities.
 
 **Schema classes**: `AbLang2PredictRequest` -> `AbLang2PredictResponse`
 
