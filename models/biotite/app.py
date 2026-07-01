@@ -372,7 +372,7 @@ if __name__ == "__main__":
     Usage:
         python models/biotite/app.py
 
-        # Force deploy to "biolm-models-dev" or "biolm-models" environment:
+        # Force deploy to "biolm-hub-dev" or "biolm-hub" environment:
         python models/biotite/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

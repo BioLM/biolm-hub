@@ -272,16 +272,16 @@ def ls(
 
     Examples:
         # List contents of default bucket root
-        bm r2 ls
+        bh r2 ls
 
         # List specific model directory
-        bm r2 ls r2://biolm-public/model-store/esm2
+        bh r2 ls r2://biolm-public/model-store/esm2
 
         # List all contents recursively
-        bm r2 ls r2://biolm-public/model-store/esm2 --recursive
+        bh r2 ls r2://biolm-public/model-store/esm2 --recursive
 
         # List test data directory
-        bm r2 ls r2://biolm-public/test-data
+        bh r2 ls r2://biolm-public/test-data
     """
     try:
         if path:
@@ -312,13 +312,13 @@ def download(
 
     Examples:
         # Download a single file to the current directory
-        bm r2 download r2://biolm-public/test-data/foo.json .
+        bh r2 download r2://biolm-public/test-data/foo.json .
 
         # Download an entire prefix to ./tmp
-        bm r2 download r2://biolm-public/test-data/ ./tmp
+        bh r2 download r2://biolm-public/test-data/ ./tmp
 
         # Preview a download without writing anything
-        bm r2 download r2://biolm-public/test-data/ ./tmp --dry-run
+        bh r2 download r2://biolm-public/test-data/ ./tmp --dry-run
     """
     try:
         if not source.startswith("r2://"):
@@ -329,7 +329,7 @@ def download(
         if destination.startswith("r2://"):
             console.print(
                 "[red]Error: destination must be a local path. "
-                "`bm r2` is read-only and cannot write to R2.[/red]"
+                "`bh r2` is read-only and cannot write to R2.[/red]"
             )
             raise typer.Exit(1)
 
@@ -412,16 +412,16 @@ def cat(
 
     Examples:
         # Display a configuration file
-        bm r2 cat r2://biolm-public/test-data/models/chai1/input.json
+        bh r2 cat r2://biolm-public/test-data/models/chai1/input.json
 
         # Pipe output to jq for JSON processing
-        bm r2 cat r2://biolm-public/test-data/models/chai1/input.json | jq '.params'
+        bh r2 cat r2://biolm-public/test-data/models/chai1/input.json | jq '.params'
 
         # Pipe to grep for searching
-        bm r2 cat r2://biolm-public/test-data/models/chai1/input.json | grep "name"
+        bh r2 cat r2://biolm-public/test-data/models/chai1/input.json | grep "name"
 
         # View with less for pagination
-        bm r2 cat r2://biolm-public/test-data/models/chai1/input.json | less
+        bh r2 cat r2://biolm-public/test-data/models/chai1/input.json | less
     """
     import sys
 
@@ -446,7 +446,7 @@ def cat(
         if _check_if_directory(r2_client, bucket, key):
             print(f"Error: Path is a directory: {path}", file=sys.stderr)
             print("The cat command only works with individual files", file=sys.stderr)
-            print("Use 'bm r2 ls' to list directory contents", file=sys.stderr)
+            print("Use 'bh r2 ls' to list directory contents", file=sys.stderr)
             raise typer.Exit(1)
 
         # Now check if the object exists as a file
@@ -491,13 +491,13 @@ def du(  # noqa: C901
 
     Examples:
         # Display directory-level totals
-        bm r2 du r2://biolm-public/model-store/
+        bh r2 du r2://biolm-public/model-store/
 
         # Display directory-level totals for a specific subfolder
-        bm r2 du r2://biolm-public/model-store/esm2/
+        bh r2 du r2://biolm-public/model-store/esm2/
 
         # Display directory size with file-level details
-        bm r2 du r2://biolm-public/model-store/esm2/ --per-file
+        bh r2 du r2://biolm-public/model-store/esm2/ --per-file
     """
     try:
         bucket, prefix = format_r2_path(path)
@@ -614,16 +614,16 @@ def download_outputs(
 
     Examples:
         # Download RF3 test fixture outputs
-        bm r2 download-outputs --model rf3
+        bh r2 download-outputs --model rf3
 
         # Download RFD3 outputs with dry-run
-        bm r2 download-outputs --model rfd3 --dry-run
+        bh r2 download-outputs --model rfd3 --dry-run
 
         # Download to custom directory
-        bm r2 download-outputs --model chai1 --output-dir ./my_outputs
+        bh r2 download-outputs --model chai1 --output-dir ./my_outputs
 
         # Preview what would be downloaded
-        bm r2 download-outputs --model boltz --dry-run
+        bh r2 download-outputs --model boltz --dry-run
     """
     try:
         # Determine output directory

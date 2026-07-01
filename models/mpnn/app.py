@@ -306,7 +306,7 @@ if __name__ == "__main__":
     Usage:
         MODEL_TYPE="protein" python models/mpnn/app.py
 
-        # Deploy to dev (biolm-models-dev) or prod (biolm-models) environment:
+        # Deploy to dev (biolm-hub-dev) or prod (biolm-hub) environment:
         MODEL_TYPE="protein" python models/mpnn/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

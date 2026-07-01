@@ -31,7 +31,7 @@ def catalog_enabled() -> bool:
     Off by default (the deployed gateway is API-only — W8). Set
     ``BIOLM_GATEWAY_CATALOG`` to a truthy value (``1``/``true``/``yes``) to also
     mount ``/catalog`` on the deployment, turning it into a hosted web app.
-    (``bm serve`` always mounts the catalog locally regardless of this flag.)
+    (``bh serve`` always mounts the catalog locally regardless of this flag.)
     """
     return os.getenv("BIOLM_GATEWAY_CATALOG", "").strip().lower() in {
         "1",

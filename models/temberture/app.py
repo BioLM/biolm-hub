@@ -430,7 +430,7 @@ if __name__ == "__main__":
         MODEL_TYPE="classifier" python models/temberture/app.py
         MODEL_TYPE="regression" python models/temberture/app.py
 
-        # Force deploy to "biolm-models-dev" (dev) or "biolm-models" (prod) environment:
+        # Force deploy to "biolm-hub-dev" (dev) or "biolm-hub" (prod) environment:
         MODEL_TYPE="classifier" python models/temberture/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

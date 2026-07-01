@@ -482,7 +482,7 @@ if __name__ == "__main__":
     Usage:
         MODEL_SIZE="650m" python models/esm2/app.py
 
-        # Force deploy to "biolm-models-dev" or "biolm-models" environment:
+        # Force deploy to "biolm-hub-dev" or "biolm-hub" environment:
         MODEL_SIZE="650m" python models/esm2/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

@@ -5,24 +5,24 @@ Get from a clean clone to a running model in a few commands.
 ## 1. Install
 
 ```bash
-git clone https://github.com/BioLM/biolm-models
-cd biolm-models
+git clone https://github.com/BioLM/biolm-hub
+cd biolm-hub
 make install      # creates the venv and installs everything via uv
 ```
 
-`make install` builds a virtualenv, installs the framework and the `bm` CLI, and sets up the
+`make install` builds a virtualenv, installs the framework and the `bh` CLI, and sets up the
 pre-commit hooks.
 
 ## 2. Configure your accounts
 
 ```bash
-bm setup
+bh setup
 ```
 
-`bm setup` checks your environment and tells you exactly what to fix:
+`bh setup` checks your environment and tells you exactly what to fix:
 
 - **[Modal](https://modal.com)** is required — it's where models deploy and run. If you're not
-  authenticated, `bm setup` points you at `modal token new`.
+  authenticated, `bh setup` points you at `modal token new`.
 - **Cloudflare R2** is optional. Public model weights are pulled from a read-only bucket by default,
   so the happy path needs no credentials beyond Modal. Configure R2 only if you want to cache weights
   or responses in your own bucket.
@@ -30,7 +30,7 @@ bm setup
 ## 3. Deploy a model
 
 ```bash
-bm deploy esm2
+bh deploy esm2
 ```
 
 This deploys [ESM-2](models/esm2.md) to *your* Modal workspace. The first deploy pulls the weights
@@ -49,14 +49,14 @@ request and response schema, then POST to your deployed endpoint.
 
 ```bash
 pip install '.[serve]'
-bm serve
+bh serve
 ```
 
-`bm serve` runs a local catalog web app that lists every model and lets you fill in a form and run
+`bh serve` runs a local catalog web app that lists every model and lets you fill in a form and run
 inference against your deployed endpoints — no gateway deployment required.
 
 !!! warning "Deployed endpoints are unauthenticated"
-    A deployed model, a deployed gateway, or `bm serve --host 0.0.0.0` exposes inference **without
+    A deployed model, a deployed gateway, or `bh serve --host 0.0.0.0` exposes inference **without
     authentication**, and every call bills *your* Modal account. Don't expose them on a public
     network without putting your own access control in front.
 

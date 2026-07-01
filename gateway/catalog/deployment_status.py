@@ -32,7 +32,7 @@ _cache: dict[Optional[str], tuple[float, Optional[set[str]]]] = {}
 def _modal_executable() -> str:
     """Path to the ``modal`` CLI — prefer the one next to the running interpreter.
 
-    When invoked via ``.venv/bin/bm`` the venv isn't on PATH, so a bare ``modal``
+    When invoked via ``.venv/bin/bh`` the venv isn't on PATH, so a bare ``modal``
     would not resolve; ``modal`` lives alongside ``python`` in the same bin dir.
     Falls back to ``"modal"`` on PATH otherwise.
     """

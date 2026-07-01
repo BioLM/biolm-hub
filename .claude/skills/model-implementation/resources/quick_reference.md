@@ -24,9 +24,9 @@ make check                                  # style + mypy + unit — MANDATORY 
 make test-unit                              # fast unit tests only (no Modal/R2)
 
 # Optional local deploy + tests (need a Modal account):
-MODAL_ENVIRONMENT=biolm-models-dev python models/<model>/fixture.py   # generate fixtures FIRST
-MODAL_ENVIRONMENT=biolm-models-dev python -m pytest models/<model>/test.py -m integration
-MODAL_ENVIRONMENT=biolm-models-dev bm deploy <model> --force          # deploy a variant
+MODAL_ENVIRONMENT=biolm-hub-dev python models/<model>/fixture.py   # generate fixtures FIRST
+MODAL_ENVIRONMENT=biolm-hub-dev python -m pytest models/<model>/test.py -m integration
+MODAL_ENVIRONMENT=biolm-hub-dev bh deploy <model> --force          # deploy a variant
 
 # The full deploy + integration/deployment matrix is maintainer-gated in CI
 # (a maintainer applies the `deploy-approved` label) — you do not need to run it.

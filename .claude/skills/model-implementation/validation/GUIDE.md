@@ -87,10 +87,10 @@ This builds the Modal container locally, loads the model, and validates basic in
 If you want to verify a live endpoint before PR:
 
 ```bash
-MODAL_ENVIRONMENT=biolm-models-dev bm deploy <name> --force
+MODAL_ENVIRONMENT=biolm-hub-dev bh deploy <name> --force
 ```
 
-The full deploy + integration + deployment test matrix runs in CI under the `deploy-approved` label — you do not need to run this before submitting a PR. Once a maintainer approves and applies the label, CI deploys to `biolm-models-dev` and runs the full test suite.
+The full deploy + integration + deployment test matrix runs in CI under the `deploy-approved` label — you do not need to run this before submitting a PR. Once a maintainer approves and applies the label, CI deploys to `biolm-hub-dev` and runs the full test suite.
 
 > **Note:** Pushing new commits to an approved PR automatically removes the `deploy-approved` label. Ping a maintainer to re-approve after your last push.
 

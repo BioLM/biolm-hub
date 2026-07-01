@@ -34,7 +34,7 @@
 # bounded only by your review, so review the full diff before labeling.
 #
 # Required secrets (store on the `modal-dev` Environment):
-#   MODAL_TOKEN_ID / MODAL_TOKEN_SECRET  — Modal auth (deploys to biolm-models-dev)
+#   MODAL_TOKEN_ID / MODAL_TOKEN_SECRET  — Modal auth (deploys to biolm-hub-dev)
 #   R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY / R2_REGION / R2_ENDPOINT
 #       — Cloudflare R2 read creds, so the local test process can load golden
 #         fixtures (mapped to the AWS_* env vars the storage client reads).
@@ -57,7 +57,7 @@ env:
   # The `detect` job's `if:` hardcodes this label name (the `env` context isn't
   # available in a job-level `if:`) — keep the two in sync if it ever changes.
   APPROVAL_LABEL: deploy-approved
-  MODAL_ENVIRONMENT: biolm-models-dev
+  MODAL_ENVIRONMENT: biolm-hub-dev
 
 jobs:
   # Commit-binding: any push to the PR revokes approval, forcing re-review of
@@ -155,7 +155,7 @@ jobs:
           MODEL: ${{ matrix.model }}
           MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
           MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
-        run: uv run bm deploy "$MODEL" --force
+        run: uv run bh deploy "$MODEL" --force
 
       - name: Integration tests — ${{ matrix.model }}
         env:

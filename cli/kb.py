@@ -95,8 +95,8 @@ def status_cmd(
     Displays a matrix of which models have sources.yaml, docs, and R2 artifacts.
 
     Examples:
-        bm kb status
-        bm kb status esm2
+        bh kb status
+        bh kb status esm2
     """
     slugs = [model] if model else _get_all_model_slugs()
 
@@ -162,8 +162,8 @@ def validate_cmd(  # noqa: C901
     missing documentation files, R2 path formatting, and pending uploads.
 
     Examples:
-        bm kb validate
-        bm kb validate esm2
+        bh kb validate
+        bh kb validate esm2
     """
     slugs = [model] if model else _get_all_model_slugs()
     total_errors = 0
@@ -344,8 +344,8 @@ def sources_cmd(
     """Display sources.yaml summary for a model.
 
     Examples:
-        bm kb sources esm2
-        bm kb sources boltz
+        bh kb sources esm2
+        bh kb sources boltz
     """
     sources = _load_sources(model)
 

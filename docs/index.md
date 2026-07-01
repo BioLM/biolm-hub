@@ -1,4 +1,4 @@
-# biolm-models
+# biolm-hub
 
 A standardized, **agent-first** catalog of open biological ML models that deploy on
 [Modal](https://modal.com) in a couple of commands.
@@ -11,10 +11,10 @@ off the shelf and run.
 ## Five-minute success
 
 ```bash
-git clone https://github.com/BioLM/biolm-models
-cd biolm-models
-bm setup          # checks your Modal + R2 config and tells you what to do
-bm deploy esm2    # deploys the model to your Modal workspace
+git clone https://github.com/BioLM/biolm-hub
+cd biolm-hub
+bh setup          # checks your Modal + R2 config and tells you what to do
+bh deploy esm2    # deploys the model to your Modal workspace
 # → run inference
 ```
 
@@ -23,7 +23,7 @@ bm deploy esm2    # deploys the model to your Modal workspace
 - **`models/`** — each model with a uniform layout (`app.py`, `config.py`, `schema.py`, `test.py`)
   plus a machine-readable **knowledge graph** (`sources.yaml`, `comparison.yaml`, `README.md`,
   `MODEL.md`, `BIOLOGY.md`): when to use it, training data, benchmarks, license, alternatives.
-- **`cli/`** — the `bm` tool: `setup`, `deploy`, `serve`, `r2`.
+- **`cli/`** — the `bh` tool: `setup`, `deploy`, `serve`, `r2`.
 - **`gateway/`** — a unified inference endpoint + a catalog web app.
 - Uniform **action verbs** (`predict`, `fold`, `encode`, `generate`, `score`, `log_prob`), uniform
   schemas, structured logging, and a consistent error taxonomy — so an agent that learns one model

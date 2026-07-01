@@ -270,6 +270,7 @@ class AbLang2GenerateResponse(ResponseModel):
         description="Per-input results, returned in the same order as the request items."
     )
 
+
 ### AbLang2 Log Prob Response
 
 

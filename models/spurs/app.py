@@ -312,7 +312,7 @@ if __name__ == "__main__":
     Usage:
         python models/spurs/app.py
 
-        # Force deploy to dev (biolm-models-dev) or production (biolm-models):
+        # Force deploy to dev (biolm-hub-dev) or production (biolm-hub):
         python models/spurs/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

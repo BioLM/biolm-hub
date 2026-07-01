@@ -2,8 +2,8 @@
 
 Run from the repo root:
 
-    MODAL_ENVIRONMENT=biolm-models-dev python -m gateway.deploy_gateway          # bare
-    MODAL_ENVIRONMENT=biolm-models-dev python -m gateway.deploy_gateway --cache  # cached
+    MODAL_ENVIRONMENT=biolm-hub-dev python -m gateway.deploy_gateway          # bare
+    MODAL_ENVIRONMENT=biolm-hub-dev python -m gateway.deploy_gateway --cache  # cached
 
 (``modal deploy gateway/server.py`` also works; this entrypoint just adds the
 ``--cache`` switch and clearer logging.)

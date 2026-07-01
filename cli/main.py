@@ -1,4 +1,4 @@
-"""BioLM Models CLI (``bm``).
+"""BioLM Models CLI (``bh``).
 
 Command-line tools for deploying and running BioLM models on Modal.
 """
@@ -19,7 +19,7 @@ from cli.setup import setup_cmd
 
 console = Console()
 app = typer.Typer(
-    name="bm",
+    name="bh",
     help="BioLM command-line tools for model management and infrastructure.",
     no_args_is_help=True,
     add_completion=False,
@@ -109,7 +109,7 @@ def display_cli_help() -> None:
 
     footer = Padding(
         Text(
-            "Run 'bm COMMAND --help' for more information on a command.", style="italic"
+            "Run 'bh COMMAND --help' for more information on a command.", style="italic"
         ),
         (1, 0),
     )

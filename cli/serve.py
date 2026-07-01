@@ -1,4 +1,4 @@
-"""``bm serve`` — launch a local web app to browse and run your models.
+"""``bh serve`` — launch a local web app to browse and run your models.
 
 This runs entirely on your machine. It does **not** require deploying the
 gateway: it serves the catalog UI and, in-process, reuses the routing logic to
@@ -41,8 +41,8 @@ def serve_cmd(
         from gateway.routing import build_gateway_app
     except ImportError as e:
         raise typer.BadParameter(
-            f"`bm serve` needs the web extras ({e.name}). "
-            'Install them with: pip install "biolm-models[serve]"'
+            f"`bh serve` needs the web extras ({e.name}). "
+            'Install them with: pip install "biolm-hub[serve]"'
         ) from e
 
     # Target a specific Modal environment for both model calls and the

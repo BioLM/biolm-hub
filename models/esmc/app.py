@@ -296,9 +296,7 @@ class ESMCModel(ModelMixinSnap):
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def log_prob(
-        self, payload: ESMCLogProbRequest
-    ) -> ESMCLogProbResponse:
+    def log_prob(self, payload: ESMCLogProbRequest) -> ESMCLogProbResponse:
         """
         Computes the total log-prob of an unmasked sequence under ESM C.
         Sums over the canonical 20 amino acids only, ignoring positions with
@@ -334,9 +332,7 @@ class ESMCModel(ModelMixinSnap):
             all_log_probs.append(log_prob_sum)
 
         # Convert to structured response
-        results = [
-            ESMCLogProbResponseResult(log_prob=lp) for lp in all_log_probs
-        ]
+        results = [ESMCLogProbResponseResult(log_prob=lp) for lp in all_log_probs]
         return ESMCLogProbResponse(results=results)
 
 
@@ -345,7 +341,7 @@ if __name__ == "__main__":
     Usage:
         MODEL_SIZE="300m" python models/esmc/app.py
 
-        # Force deploy to "biolm-models-dev" or "biolm-models" environment:
+        # Force deploy to "biolm-hub-dev" or "biolm-hub" environment:
         MODEL_SIZE="300m" python models/esmc/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

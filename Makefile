@@ -14,7 +14,7 @@ install:
 	uv venv --python $(shell cat .python-version)
 	uv sync --all-extras
 	@if [ -d .venv ]; then .venv/bin/pre-commit install --install-hooks || true; fi
-	@echo "✅ Installed. Run 'bm setup' to check your Modal/R2 config."
+	@echo "✅ Installed. Run 'bh setup' to check your Modal/R2 config."
 
 # Run all formatting + lint hooks (ruff, black, basic hygiene). Falls back to ruff+black if pre-commit is absent.
 style:

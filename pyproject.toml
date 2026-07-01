@@ -1,5 +1,5 @@
 [project]
-name = "biolm-models"
+name = "biolm-hub"
 version = "0.1.0"
 description = "A standardized, agent-first catalog of open biological ML models that deploy on Modal in a couple of commands."
 authors = [{ name = "BioLM" }]
@@ -21,8 +21,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Local web app for `bm serve` (catalog UI + in-process routing). Opt-in so the
-# core CLI stays light: `pip install "biolm-models[serve]"`. fastapi is pinned to
+# Local web app for `bh serve` (catalog UI + in-process routing). Opt-in so the
+# core CLI stays light: `pip install "biolm-hub[serve]"`. fastapi is pinned to
 # match the gateway's Modal image — the catalog generator scans version-sensitive
 # FastAPI route internals (route.body_field.type_, removed in newer FastAPI).
 serve = [
@@ -33,7 +33,7 @@ serve = [
 
 # Documentation site (`make docs`). The site is generated at build time from each
 # model's config + knowledge graph by docs/gen_pages.py — there are no committed
-# per-model doc pages to keep in sync. Opt-in: `pip install "biolm-models[docs]"`.
+# per-model doc pages to keep in sync. Opt-in: `pip install "biolm-hub[docs]"`.
 docs = [
     "mkdocs-material>=9.5.0,<10.0.0",
     # Pinned to the last releases before these plugins took a hard dependency on
@@ -66,12 +66,12 @@ mypy-types = [
 ]
 
 [project.scripts]
-bm = "cli.main:app"
+bh = "cli.main:app"
 
 [project.urls]
-Homepage = "https://github.com/BioLM/biolm-models"
-Documentation = "https://github.com/BioLM/biolm-models"
-Repository = "https://github.com/BioLM/biolm-models"
+Homepage = "https://github.com/BioLM/biolm-hub"
+Documentation = "https://github.com/BioLM/biolm-hub"
+Repository = "https://github.com/BioLM/biolm-hub"
 
 [build-system]
 requires = ["setuptools>=68", "wheel"]

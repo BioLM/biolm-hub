@@ -1,4 +1,4 @@
-"""``bm cache`` — inspect response-caching configuration.
+"""``bh cache`` — inspect response-caching configuration.
 
 Response caching has two tiers — a short-term ``modal.Dict`` cache and a
 long-term gzip cache in R2 — and **both are OFF by default**. Caching is a
@@ -8,10 +8,10 @@ there is no local cache state to toggle here.
 
 To turn caching on for a deployment, bake the flag in at deploy time:
 
-    bm deploy esm2 --cache          # one-off
-    BIOLM_CACHE_ENABLED=1 bm deploy esm2   # equivalent
+    bh deploy esm2 --cache          # one-off
+    BIOLM_CACHE_ENABLED=1 bh deploy esm2   # equivalent
 
-``bm cache status`` reports whether the next ``bm deploy`` (in this shell) would
+``bh cache status`` reports whether the next ``bh deploy`` (in this shell) would
 bake caching in, and explains how to change it.
 """
 
@@ -29,7 +29,7 @@ cache_app = typer.Typer(
     add_completion=False,
 )
 
-# Mirrors models.commons.util.config.cache_enabled — kept local so `bm cache`
+# Mirrors models.commons.util.config.cache_enabled — kept local so `bh cache`
 # stays import-light (no modal import just to read one env var).
 _TRUTHY = {"1", "true", "yes"}
 
@@ -41,7 +41,7 @@ def _enabled() -> bool:
 def _show_status() -> None:
     if _enabled():
         console.print(
-            "Response caching: [green]ON[/green] for the next `bm deploy` in this "
+            "Response caching: [green]ON[/green] for the next `bh deploy` in this "
             f"shell [dim](BIOLM_CACHE_ENABLED={os.environ['BIOLM_CACHE_ENABLED']})[/dim]"
         )
     else:
@@ -54,7 +54,7 @@ def _show_status() -> None:
         "\n[dim]Caching is a deploy-time setting with two tiers (modal.Dict "
         "short-term + R2 long-term), both off by default. Enable it for a "
         "deployment with:[/dim]\n"
-        "  [cyan]bm deploy <model> --cache[/cyan]\n"
+        "  [cyan]bh deploy <model> --cache[/cyan]\n"
         "[dim]Disable (the default) with [/dim][cyan]--no-cache[/cyan][dim], or "
         "set BIOLM_CACHE_ENABLED in your environment before deploying.[/dim]"
     )
@@ -62,7 +62,7 @@ def _show_status() -> None:
 
 @cache_app.callback()
 def _default(ctx: typer.Context) -> None:
-    """Show cache status when `bm cache` is run with no subcommand."""
+    """Show cache status when `bh cache` is run with no subcommand."""
     if ctx.invoked_subcommand is None:
         _show_status()
 

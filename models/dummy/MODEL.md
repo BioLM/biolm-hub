@@ -10,9 +10,9 @@
 
      Primary sources: Use sources.yaml primary_papers and source_repos.
      Access paper content via:
-       bm r2 cat r2://biolm-public/knowledge-base/models/{slug}/primary/papers-md/{paper}.md
+       bh r2 cat r2://biolm-public/knowledge-base/models/{slug}/primary/papers-md/{paper}.md
      Or download locally:
-       bm r2 download r2://biolm-public/knowledge-base/models/{slug}/ /tmp/kb/{slug}/
+       bh r2 download r2://biolm-public/knowledge-base/models/{slug}/ /tmp/kb/{slug}/
 
      Sections marked [OPTIONAL] should be INCLUDED if relevant and REMOVED
      (not left empty) if not applicable.

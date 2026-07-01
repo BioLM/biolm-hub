@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Guidance for AI coding agents (and humans) working in **biolm-models** — a standardized,
+Guidance for AI coding agents (and humans) working in **biolm-hub** — a standardized,
 agent-first catalog of open biological ML models that deploy on [Modal](https://modal.com).
 
 The whole point of this repo is **uniformity**: the diff between any two models should be the
@@ -20,8 +20,8 @@ one that lands in house style.
 | `models/<name>/` | One model: `app.py` (Modal app + action methods), `config.py` (`ModelFamily`: variants, action→schema map, `modal_class_name`), `schema.py` (request/response Pydantic models), `test.py` (`TestSuite`), `download.py` (weights, if any), and the knowledge graph (`sources.yaml`, `comparison.yaml`, `README.md`, `MODEL.md`, `BIOLOGY.md`). |
 | `models/commons/` | The shared framework: config, decorators, Modal image helpers, R2 storage/download, the base Pydantic models, logging, the error taxonomy, and the testing harness. Changes here ripple to every model — change with care. |
 | `models/dummy/` | The template. Start a new model by copying it. |
-| `cli/` | The `bm` CLI (`setup`, `deploy`, `serve`, `cache`, `r2`, `kb`). |
-| `gateway/` | A unified inference endpoint + the catalog web app (`bm serve`). |
+| `cli/` | The `bh` CLI (`setup`, `deploy`, `serve`, `cache`, `r2`, `kb`). |
+| `gateway/` | A unified inference endpoint + the catalog web app (`bh serve`). |
 | `docs/` | The mkdocs site. Per-model pages are **generated** from each model's config + knowledge graph by `docs/gen_pages.py` — don't hand-write per-model doc pages. |
 | `tooling/` | Repo-quality tooling (e.g. the schema-description consistency checker). |
 
@@ -79,11 +79,11 @@ full flow.
 ## Deploying
 
 ```bash
-bm setup                 # checks Modal (required) + R2 (optional) config
-bm deploy <model>        # deploys to your Modal workspace
+bh setup                 # checks Modal (required) + R2 (optional) config
+bh deploy <model>        # deploys to your Modal workspace
 ```
 
-Deployed endpoints — and `bm serve --host 0.0.0.0` — are **unauthenticated** and bill your Modal
+Deployed endpoints — and `bh serve --host 0.0.0.0` — are **unauthenticated** and bill your Modal
 account. Don't expose them publicly without your own access control.
 
 ## More

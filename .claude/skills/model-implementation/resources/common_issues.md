@@ -49,5 +49,5 @@ this is the fuller set.
 14. **Wrong resource tier.** Start with the smallest GPU tier that fits; bump only on OOM.
 15. **Editing `models/commons/`.** It is read-only during model work — a change there affects every
     model. If commons genuinely needs something, raise it as a separate change.
-16. **Hand-uploading test data.** `bm r2` is read-only; fixture upload is handled by
+16. **Hand-uploading test data.** `bh r2` is read-only; fixture upload is handled by
     `FixtureGenerator`. Never try to upload fixtures manually.

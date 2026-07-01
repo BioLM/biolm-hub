@@ -1,4 +1,4 @@
-<h1 align="center">biolm-models</h1>
+<h1 align="center">biolm-hub</h1>
 
 <p align="center">
   A standardized, <b>agent-first</b> catalog of open biological ML models that deploy on
@@ -11,23 +11,23 @@ Implementing a bio-ML model used to be a moat — research code is dependency he
 fragile. Coding agents have commoditized that work. What's still missing is a **clean, uniform,
 documented, deploy-anywhere** substrate so nobody has to reinvent the wheel.
 
-`biolm-models` is that substrate: every model has the same layout, the same action verbs, the same
+`biolm-hub` is that substrate: every model has the same layout, the same action verbs, the same
 schemas, and a machine-readable knowledge graph — so an agent (or a human) can pull any model off the
 shelf and run it.
 
 ## Quickstart — five-minute success
 
 ```bash
-git clone https://github.com/BioLM/biolm-models
-cd biolm-models
+git clone https://github.com/BioLM/biolm-hub
+cd biolm-hub
 make install      # creates the venv and installs everything (uv)
 
-bm setup          # checks your Modal + R2 config and tells you exactly what to fix
-bm deploy esm2    # deploys ESM-2 to your Modal workspace
+bh setup          # checks your Modal + R2 config and tells you exactly what to fix
+bh deploy esm2    # deploys ESM-2 to your Modal workspace
 # → run inference against your endpoint
 ```
 
-`bm setup` walks you through configuring [Modal](https://modal.com) (`modal token new`) and, if you
+`bh setup` walks you through configuring [Modal](https://modal.com) (`modal token new`) and, if you
 want to cache weights/responses in your own bucket, your Cloudflare R2 credentials. Public model
 weights are pulled from a read-only bucket by default, so the happy path needs no credentials beyond
 Modal.
@@ -38,7 +38,7 @@ Modal.
 |------|------|
 | `models/<name>/` | One model, uniform layout — `app.py`, `config.py`, `schema.py`, `test.py` — plus a **knowledge graph**: `sources.yaml` (license, papers, source repos), `comparison.yaml` (when to use / alternatives), `README.md`, `MODEL.md`, `BIOLOGY.md`. |
 | `models/commons/` | The shared framework: config, decorators, Modal image helpers, R2 storage/download, testing. |
-| `cli/` | The `bm` tool — `setup`, `deploy`, `serve`, `r2`. |
+| `cli/` | The `bh` tool — `setup`, `deploy`, `serve`, `r2`. |
 | `gateway/` | A unified inference endpoint and a catalog web app (run inference from the browser). |
 
 ## Why it's "agent-first"

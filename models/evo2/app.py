@@ -258,9 +258,7 @@ class Evo2Model(ModelMixinSnap):
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def log_prob(
-        self, payload: Evo2LogProbRequest
-    ) -> Evo2LogProbResponse:
+    def log_prob(self, payload: Evo2LogProbRequest) -> Evo2LogProbResponse:
         """
         Computes the total log-probability of each DNA sequence by summing
         over all positions. This uses the model's built-in .score_sequences()

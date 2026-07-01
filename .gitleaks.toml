@@ -3,7 +3,7 @@
 # gate doesn't false-positive on them. Secrets themselves never live in this repo —
 # they live in the Modal/GitHub secret stores — so a clean tree should pass.
 
-title = "biolm-models secret scan"
+title = "biolm-hub secret scan"
 
 [extend]
 useDefault = true

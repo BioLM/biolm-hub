@@ -184,9 +184,7 @@ class DNABERT2Model(ModelMixinSnap):
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def log_prob(
-        self, payload: DNABERT2LogProbRequest
-    ) -> DNABERT2LogProbResponse:
+    def log_prob(self, payload: DNABERT2LogProbRequest) -> DNABERT2LogProbResponse:
         """
         Computes a pseudo-likelihood log probability for each input DNA sequence
         using vectorized masking + MLM logits from AutoModelForMaskedLM.
@@ -256,9 +254,7 @@ class DNABERT2Model(ModelMixinSnap):
             token_log_probs = log_probs[rows, original_tokens]  # [num_valid]
 
             sequence_log_prob = token_log_probs.sum().item()
-            results.append(
-                DNABERT2LogProbResponseResult(log_prob=sequence_log_prob)
-            )
+            results.append(DNABERT2LogProbResponseResult(log_prob=sequence_log_prob))
 
         return DNABERT2LogProbResponse(results=results)
 

@@ -566,7 +566,7 @@ R2Utils.upload_to_r2_atomic(
 
 ```bash
 # Check R2 contents
-bm r2 ls | grep "biolm-hub/model-weights/models/esmc"
+bh r2 ls | grep "biolm-hub/model-weights/models/esmc"
 
 # Test download locally
 python -c "

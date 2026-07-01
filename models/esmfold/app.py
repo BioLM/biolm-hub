@@ -214,7 +214,7 @@ if __name__ == "__main__":
     Usage:
         python models/esmfold/app.py
 
-        # Force deploy to the dev (biolm-models-dev) or prod (biolm-models) environment:
+        # Force deploy to the dev (biolm-hub-dev) or prod (biolm-hub) environment:
         python models/esmfold/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

@@ -7,7 +7,7 @@ through the same routing logic that programmatic callers use.
 
 :func:`mount_catalog` adds ``/static``, ``/catalog`` and ``/catalog/{slug}`` to an
 app already built by :func:`gateway.routing.build_gateway_app`. It's used by
-``bm serve`` (local web app) and can be opted into on a deployed gateway via
+``bh serve`` (local web app) and can be opted into on a deployed gateway via
 ``BIOLM_GATEWAY_CATALOG`` (see ``gateway/server.py``).
 """
 
@@ -45,7 +45,7 @@ def mount_catalog(
             (e.g. a remote deployed gateway). Empty = same-origin (the default),
             so the forms POST back to this app.
         check_deployment_status: Query Modal for deployed/undeployed status.
-            True for ``bm serve`` (works locally). False on a deployed gateway,
+            True for ``bh serve`` (works locally). False on a deployed gateway,
             where the container has no Modal CLI credentials (the query would
             always fail) and per-request subprocess spawns are a needless risk —
             the catalog then renders without deployment badges.

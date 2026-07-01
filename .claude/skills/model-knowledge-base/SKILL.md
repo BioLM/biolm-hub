@@ -1,13 +1,13 @@
 ---
 name: model-knowledge-base
-description: Author the five knowledge-graph files (sources.yaml, comparison.yaml, README.md, MODEL.md, BIOLOGY.md) for a model in biolm-models. Use when adding a new model or improving existing documentation for a model whose sources are publicly available on arXiv/bioRxiv/GitHub/HuggingFace.
+description: Author the five knowledge-graph files (sources.yaml, comparison.yaml, README.md, MODEL.md, BIOLOGY.md) for a model in biolm-hub. Use when adding a new model or improving existing documentation for a model whose sources are publicly available on arXiv/bioRxiv/GitHub/HuggingFace.
 ---
 
 # Model Knowledge Base
 
 ## Purpose
 
-Author the five knowledge-graph files required for every model in `biolm-models`. These files are
+Author the five knowledge-graph files required for every model in `biolm-hub`. These files are
 not optional -- see `CONTRIBUTING.md`. The standard layout is:
 
 ```

@@ -14,18 +14,18 @@ Unified deployment script for BioLM models.
 This script handles both single-variant and multi-variant model deployments
 by leveraging the ModelFamily configuration defined in each model's config.py.
 
-Usage via bm CLI:
+Usage via bh CLI:
     # Deploy a single model (all variants)
-    bm deploy esm2
+    bh deploy esm2
 
     # Deploy with force flag
-    bm deploy esm2 --force
+    bh deploy esm2 --force
 
     # Deploy specific variant
-    bm deploy esm2 --variant MODEL_SIZE=150m
+    bh deploy esm2 --variant MODEL_SIZE=150m
 
     # Deploy multiple models
-    bm deploy esm2 esmc esmfold --force
+    bh deploy esm2 esmc esmfold --force
 """
 
 console = Console()
@@ -261,11 +261,11 @@ def deploy_cmd(
     Deploy one or more BioLM models.
 
     Examples:
-        bm deploy esm2
-        bm deploy esm2 --force
-        bm deploy esm2 --variant MODEL_SIZE=150m
-        bm deploy esm2 --cache          # enable response caching for this deploy
-        bm deploy esm2 esmc esmfold --force
+        bh deploy esm2
+        bh deploy esm2 --force
+        bh deploy esm2 --variant MODEL_SIZE=150m
+        bh deploy esm2 --cache          # enable response caching for this deploy
+        bh deploy esm2 esmc esmfold --force
     """
 
     # Consolidate force flags

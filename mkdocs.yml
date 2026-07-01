@@ -1,7 +1,7 @@
-site_name: biolm-models
+site_name: biolm-hub
 site_description: A standardized, agent-first catalog of open biological ML models that deploy on Modal.
-repo_url: https://github.com/BioLM/biolm-models
-repo_name: BioLM/biolm-models
+repo_url: https://github.com/BioLM/biolm-hub
+repo_name: BioLM/biolm-hub
 edit_uri: ""
 
 theme:

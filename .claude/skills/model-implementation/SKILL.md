@@ -1,13 +1,13 @@
 ---
 name: model-implementation
-description: Complete workflow for implementing new biological models on biolm-models. Use when adding a model from a paper, HuggingFace, or GitHub. Covers investigation, implementation, validation, and documentation.
+description: Complete workflow for implementing new biological models on biolm-hub. Use when adding a model from a paper, HuggingFace, or GitHub. Covers investigation, implementation, validation, and documentation.
 ---
 
 # BioLM Model Implementation Workflow
 
 ## Purpose
 
-This skill guides implementing new biological language models in the `biolm-models` catalog.
+This skill guides implementing new biological language models in the `biolm-hub` catalog.
 
 Use for:
 - New model implementation from a paper / HuggingFace / GitHub

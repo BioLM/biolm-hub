@@ -1,6 +1,6 @@
-# PR Management for biolm-models
+# PR Management for biolm-hub
 
-Patterns for managing PRs across the biolm-models repo — predicting CI impact, debugging failures, reading logs, and verifying model deployments.
+Patterns for managing PRs across the biolm-hub repo — predicting CI impact, debugging failures, reading logs, and verifying model deployments.
 
 ## HARD RULES (Non-Negotiable)
 
@@ -26,10 +26,10 @@ These rules override ALL other guidance. Violating them wastes CI time and delay
 
 ```bash
 # Find ephemeral app for the model being tested
-MODAL_ENVIRONMENT=biolm-models-dev modal app list 2>&1 | grep "ephemeral" | grep "<model-name>"
+MODAL_ENVIRONMENT=biolm-hub-dev modal app list 2>&1 | grep "ephemeral" | grep "<model-name>"
 
 # Stream its logs
-timeout 120 bash -c 'MODAL_ENVIRONMENT=biolm-models-dev modal app logs <app-id> 2>&1'
+timeout 120 bash -c 'MODAL_ENVIRONMENT=biolm-hub-dev modal app logs <app-id> 2>&1'
 
 # Key patterns to look for:
 #   "Runner failed with exception:" — actual Python traceback
@@ -45,7 +45,7 @@ The repo has two separate workflows with different triggers:
 | Workflow | File | Trigger | Secrets | What it does |
 |----------|------|---------|---------|--------------|
 | **CI** | `ci.yml` | Every push / PR open | None | Style, mypy, unit tests, docs build |
-| **Gated Deploy & Test** | `deploy.yml` | Maintainer applies `deploy-approved` label | Modal + R2 | Detects changed models, deploys to `biolm-models-dev`, runs integration + deployment tests |
+| **Gated Deploy & Test** | `deploy.yml` | Maintainer applies `deploy-approved` label | Modal + R2 | Detects changed models, deploys to `biolm-hub-dev`, runs integration + deployment tests |
 
 **Key implication:** Opening or pushing to a PR NEVER triggers model deploys automatically. The deploy+test matrix only runs after a maintainer explicitly applies `deploy-approved`. Any new push to the PR auto-removes the label, forcing re-review of the new code before it can be re-approved.
 
@@ -117,11 +117,11 @@ run_id=$(gh run list --branch <branch> --json databaseId,name --jq \
   '[.[] | select(.name=="CI")][0].databaseId')
 
 # List failed jobs
-gh api "repos/BioLM/biolm-models/actions/runs/$run_id/jobs?per_page=100" \
+gh api "repos/BioLM/biolm-hub/actions/runs/$run_id/jobs?per_page=100" \
   --jq '.jobs[] | select(.conclusion=="failure" and (.name | test("Integration"))) | "\(.id)|\(.name | sub(".*- "; ""))"'
 
 # Get logs for a specific job
-gh api "repos/BioLM/biolm-models/actions/jobs/<JOB_ID>/logs"
+gh api "repos/BioLM/biolm-hub/actions/jobs/<JOB_ID>/logs"
 ```
 
 ## Real-Time Failure Triage
@@ -164,7 +164,7 @@ Follow IN ORDER. Do NOT skip to action.
 ### Efficiency Trick: Local Fixture Regen + Surgical CI Retrigger
 
 When a model fails due to fixture mismatch (model works but outputs differ from golden files):
-1. Regenerate fixtures **locally**: `MODAL_ENVIRONMENT=biolm-models-dev python models/MODEL/fixture.py`
+1. Regenerate fixtures **locally**: `MODAL_ENVIRONMENT=biolm-hub-dev python models/MODEL/fixture.py`
 2. Fixtures upload directly to R2 — no code commit needed
 3. Surgically retrigger ONLY the failed CI jobs: `gh run rerun <id> --failed`
 4. The retrigger pulls fresh fixtures from R2 and should pass
@@ -179,7 +179,7 @@ The most effective debugging approach requires PARALLEL monitoring of two output
 
 ```
 1. DEPLOY the model:
-   MODAL_ENVIRONMENT=biolm-models-dev bm deploy MODEL
+   MODAL_ENVIRONMENT=biolm-hub-dev bh deploy MODEL
 
 2. RUN the test IN THE BACKGROUND so you can simultaneously monitor logs:
    # Run test in background, capture output
@@ -187,12 +187,12 @@ The most effective debugging approach requires PARALLEL monitoring of two output
    TEST_PID=$!
 
 3. IMMEDIATELY find the ephemeral app (it only exists while the test is running):
-   MODAL_ENVIRONMENT=biolm-models-dev modal app list 2>&1 | grep "ephemeral" | grep "MODEL"
+   MODAL_ENVIRONMENT=biolm-hub-dev modal app list 2>&1 | grep "ephemeral" | grep "MODEL"
    # Note: the app name contains the model name. Apps disappear shortly after
    # the test ends, so you must capture the app-id NOW.
 
 4. STREAM the Modal container logs with a timeout:
-   timeout 120 bash -c 'MODAL_ENVIRONMENT=biolm-models-dev modal app logs <app-id> 2>&1' | tee /tmp/modal_logs.log
+   timeout 120 bash -c 'MODAL_ENVIRONMENT=biolm-hub-dev modal app logs <app-id> 2>&1' | tee /tmp/modal_logs.log
 
 5. WAIT for the test to finish and READ its output:
    wait $TEST_PID
@@ -224,7 +224,7 @@ Since you operate in a single terminal, use `run_in_background` for the test, th
 
 ```bash
 # Use nohup for long-running deploys
-nohup bash -c "MODAL_ENVIRONMENT=biolm-models-dev bm deploy MODEL" > /tmp/deploy.log 2>&1 &
+nohup bash -c "MODAL_ENVIRONMENT=biolm-hub-dev bh deploy MODEL" > /tmp/deploy.log 2>&1 &
 ```
 
 ## Pre-Push Checklist

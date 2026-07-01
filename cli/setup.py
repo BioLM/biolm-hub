@@ -1,4 +1,4 @@
-"""``bm setup`` — check your environment and tell you exactly what to configure.
+"""``bh setup`` — check your environment and tell you exactly what to configure.
 
 Verifies the prerequisites for deploying models to **your own** Modal workspace
 and reports, in one place, what is ready and what (if anything) you still need to
@@ -8,7 +8,7 @@ What it checks:
   • **Modal authentication** (required) — a token in ``~/.modal.toml`` or the
     ``MODAL_TOKEN_ID`` / ``MODAL_TOKEN_SECRET`` environment variables.
   • **Cloudflare R2 credentials** (optional) — only needed to use the local
-    ``bm r2`` browser or to cache weights/responses into *your own* bucket via
+    ``bh r2`` browser or to cache weights/responses into *your own* bucket via
     ``BIOLM_R2_BUCKET``. Public model weights are served from a read-only public
     bucket, so the happy path ("deploy esm2 and run inference") needs nothing
     beyond a Modal account.
@@ -27,7 +27,7 @@ from rich.table import Table
 console = Console()
 
 # Default read-only public bucket (mirrors models.commons.util.config). Read
-# directly here so `bm setup` stays import-light and modal-free.
+# directly here so `bh setup` stays import-light and modal-free.
 _DEFAULT_BUCKET = "biolm-public"
 
 
@@ -63,9 +63,9 @@ def _modal_status() -> tuple[bool, str]:
 
 
 def _r2_local_status() -> tuple[bool, dict[str, bool]]:
-    """Return (all-present, per-var presence) for the local ``bm r2`` creds.
+    """Return (all-present, per-var presence) for the local ``bh r2`` creds.
 
-    These power the *local* R2 client only (``bm r2`` browsing and caching to
+    These power the *local* R2 client only (``bh r2`` browsing and caching to
     your own bucket). They are unrelated to the Modal-side ``cloudflare-r2``
     secret used inside deployed containers. ``AWS_REGION`` is optional.
     """
@@ -99,7 +99,7 @@ def setup_cmd() -> None:
         table.add_row(
             "✅",
             "R2 (local)",
-            "[green]configured[/green] — `bm r2` browsing enabled",
+            "[green]configured[/green] — `bh r2` browsing enabled",
         )
     else:
         missing = ", ".join(k for k, v in r2_present.items() if not v)
@@ -111,7 +111,7 @@ def setup_cmd() -> None:
 
     table.add_row("", "Model bucket", f"{bucket} [dim](read-only public weights)[/dim]")
 
-    console.print(Panel(table, title="[bold]bm setup[/bold]", border_style="blue"))
+    console.print(Panel(table, title="[bold]bh setup[/bold]", border_style="blue"))
 
     # Actionable guidance for anything that isn't ready.
     if not modal_ok:
@@ -122,7 +122,7 @@ def setup_cmd() -> None:
                 "[dim](already installed via `make install`)[/dim]\n"
                 "  2. [cyan]modal token new[/cyan]     "
                 "[dim](opens your browser to authenticate)[/dim]\n\n"
-                "Then re-run [cyan]bm setup[/cyan].",
+                "Then re-run [cyan]bh setup[/cyan].",
                 title="[red]Modal not configured[/red]",
                 border_style="red",
             )
@@ -133,12 +133,12 @@ def setup_cmd() -> None:
             "[dim]R2 is optional. The default bucket "
             f"([bold]{bucket}[/bold]) is read-only and serves public weights "
             "with no credentials. Set AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY "
-            "and R2_ENDPOINT only if you want to use `bm r2` or cache into your "
+            "and R2_ENDPOINT only if you want to use `bh r2` or cache into your "
             "own bucket via BIOLM_R2_BUCKET.[/dim]"
         )
 
     if modal_ok:
-        console.print("\n[green]You're ready.[/green] Try: [cyan]bm deploy esm2[/cyan]")
+        console.print("\n[green]You're ready.[/green] Try: [cyan]bh deploy esm2[/cyan]")
     else:
         # Non-zero exit so scripts/CI can gate on a clean setup.
         raise typer.Exit(1)

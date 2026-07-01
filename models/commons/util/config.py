@@ -95,8 +95,8 @@ huggingface_api_token_secret = modal.Secret.from_name(huggingface_api_token_secr
 # The deploy targets used by CI. The non-prod ("dev") environment runs PR
 # smoke/comprehensive checks; the prod environment serves the public catalog.
 # Override-free defaults match the names CI deploys to.
-dev_environment_name = "biolm-models-dev"
-prod_environment_name = "biolm-models"
+dev_environment_name = "biolm-hub-dev"
+prod_environment_name = "biolm-hub"
 deployed_environment_names = [dev_environment_name, prod_environment_name]
 
 

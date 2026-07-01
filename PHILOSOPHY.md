@@ -1,6 +1,6 @@
 # Philosophy
 
-`biolm-models` exists because the hard part of bio-ML has moved. Implementing a model used to be the
+`biolm-hub` exists because the hard part of bio-ML has moved. Implementing a model used to be the
 moat — fragile research code, undocumented dependencies, one-off serving. Coding agents have made
 that work cheap. The remaining, durable value is **not making everyone reinvent the wheel**: a clean,
 standardized, deploy-anywhere catalog that an agent or human can pull from and run.
@@ -10,7 +10,7 @@ interface that an agent can use reliably is also one a human can use reliably.
 
 ## Principles
 
-1. **Ergonomics first — "five-minute success."** `git clone` → `bm setup` → `bm deploy esm2` → first
+1. **Ergonomics first — "five-minute success."** `git clone` → `bh setup` → `bh deploy esm2` → first
    inference, in three commands. If the first screen of the README doesn't get someone to a running
    model, that's a bug.
 

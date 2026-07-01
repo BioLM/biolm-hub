@@ -440,7 +440,7 @@ if __name__ == "__main__":
     Usage:
         python models/rf3/app.py
 
-        # Force deploy to "biolm-models-dev" (staging) or "biolm-models" (prod):
+        # Force deploy to "biolm-hub-dev" (staging) or "biolm-hub" (prod):
         python models/rf3/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app

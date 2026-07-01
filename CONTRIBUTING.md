@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping grow the catalog. The whole point of `biolm-models` is **uniformity** — the diff
+Thanks for helping grow the catalog. The whole point of `biolm-hub` is **uniformity** — the diff
 between any two models should be the science, not the plumbing. These are the rules that keep it that
 way. (The *why* behind them is in [`PHILOSOPHY.md`](PHILOSOPHY.md).)
 

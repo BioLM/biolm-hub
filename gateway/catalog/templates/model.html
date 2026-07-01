@@ -23,7 +23,7 @@
             {% if deployed == false %}
                 <div class="deploy-notice">
                     This model is not currently deployed, so inference will fail.
-                    Deploy it first with <code>bm deploy {{ model_info.base_model_slug }}</code>.
+                    Deploy it first with <code>bh deploy {{ model_info.base_model_slug }}</code>.
                 </div>
             {% endif %}
             {% for endpoint in model_info.endpoints %}

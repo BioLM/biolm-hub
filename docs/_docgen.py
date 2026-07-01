@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-GITHUB_BLOB = "https://github.com/BioLM/biolm-models/blob/main"
+GITHUB_BLOB = "https://github.com/BioLM/biolm-hub/blob/main"
 
 
 # --------------------------------------------------------------------------- #

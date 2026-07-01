@@ -215,7 +215,7 @@ if __name__ == "__main__":
     Usage:
         MODEL_VARIANT="v1.5-8k" python models/evo/app.py
 
-        # Force deploy to "biolm-models-dev" or "biolm-models":
+        # Force deploy to "biolm-hub-dev" or "biolm-hub":
         MODEL_VARIANT="v1.5-8k" python models/evo/app.py --force-deploy
     """
     from models.commons.modal.deployment import run_or_deploy_modal_app
