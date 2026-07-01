@@ -29,9 +29,9 @@ use_when:
   - "You are interpreting disease-causing missense mutations and want to assess whether they destabilize protein structure"
 
 dont_use_when:
-  - "You do not have a 3D structure and cannot generate one -- use TemBERTure or ESMStabP for sequence-only thermostability prediction"
+  - "You do not have a 3D structure and cannot generate one -- use TemBERTure for sequence-only thermostability prediction"
   - "You need to evaluate double or multiple simultaneous mutations -- use ThermoMPNN-D (epistatic mode) for paired mutations or SPURS for multi-mutation ddG prediction"
-  - "You need whole-protein melting temperature (Tm) rather than per-mutation ddG values -- use ESMStabP or TemBERTure for global Tm prediction"
+  - "You need whole-protein melting temperature (Tm) rather than per-mutation ddG values -- use TemBERTure for global Tm prediction"
   - "You are working with membrane proteins where stability depends on the lipid bilayer environment -- structure-based ddG models do not capture this context"
   - "You need variant effect prediction driven by evolutionary conservation rather than structural features -- use an MSA-based evolutionary conservation method for evolution-informed scoring"
   - "You want a sequence-only tool for rapid screening of millions of sequences without requiring structure prediction as a preprocessing step"
@@ -46,13 +46,10 @@ alternatives:
   - model: temberture
     when_better: "TemBERTure requires only amino acid sequence (no structure needed) and predicts global thermostability classification or Tm, making it accessible for proteins without known structures"
     when_worse: "TemBERTure provides only global thermophilic/mesophilic classification or whole-protein Tm -- no per-mutation ddG resolution, no ability to identify which specific mutations stabilize or destabilize"
-  - model: esmstabp
-    when_better: "ESMStabP predicts melting temperature from sequence alone using ESM2 embeddings, achieving R-squared 0.94 on test data; no structure required"
-    when_worse: "ESMStabP predicts global Tm, not per-mutation ddG; cannot identify specific stabilizing mutations or generate saturation mutagenesis landscapes"
 
 complements:
-  - model: boltz
-    workflow: "When no experimental structure is available, predict the 3D structure with Boltz, then use ThermoMPNN to scan for stabilizing mutations on the predicted structure -- enables structure-based stability engineering even for proteins without crystallographic data"
+  - model: chai1
+    workflow: "When no experimental structure is available, predict the 3D structure with Chai-1, then use ThermoMPNN to scan for stabilizing mutations on the predicted structure -- enables structure-based stability engineering even for proteins without crystallographic data"
     example_protocol: null
   - model: thermompnn_d
     workflow: "Use ThermoMPNN for initial single-mutation SSM scanning to identify candidate stabilizing positions, then use ThermoMPNN-D to evaluate promising pairs of mutations for synergistic (epistatic) stability improvements"

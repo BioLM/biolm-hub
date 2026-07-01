@@ -25,7 +25,7 @@ weaknesses:
   - "Enzyme-only model — cannot generate non-enzyme proteins; antibodies, structural proteins, binding proteins, and other non-catalytic proteins are outside its training distribution"
   - "Single-chain generation only — cannot design multi-subunit enzyme complexes or model intersubunit interactions"
   - "Maximum sequence length of ~1000 amino acids (1024 token limit includes EC number and control tokens) excludes very large enzymes"
-  - "No structure awareness — generates sequences without 3D geometric constraints; generated enzymes must be structurally validated with separate tools (Boltz, ESMFold)"
+  - "No structure awareness — generates sequences without 3D geometric constraints; generated enzymes must be structurally validated with separate tools (ESMFold, Chai-1)"
   - "Performance varies by EC class representation in training data — rare or recently classified EC numbers may produce lower-quality sequences"
   - "738M parameters on a T4 GPU is moderate cost; not as lightweight as CPU-only options for scoring tasks"
   - "Cannot model enzymes requiring post-translational modifications (glycosylation, phosphorylation) or metal cofactors for activity"
@@ -67,12 +67,9 @@ complements:
   - model: "esm2"
     workflow: "Generate enzyme candidates with ZymCTRL conditioned on a target EC number, then score them with ESM-2 pseudo-log-likelihood to filter for sequences that are both enzymatically plausible (low ZymCTRL perplexity) and evolutionarily plausible (high ESM-2 likelihood)"
     example_protocol: null
-  - model: "boltz"
-    workflow: "Generate enzyme sequences with ZymCTRL, then predict their 3D structures with Boltz to validate proper folding, active site geometry, and overall structural quality before experimental synthesis"
-    example_protocol: null
   - model: "progen2"
     workflow: "Use ZymCTRL for EC-conditioned enzyme generation when the target catalytic function is known, and ProGen2 for broader exploratory protein generation when exploring diverse protein families beyond a specific EC class"
     example_protocol: null
   - model: "mpnn"
-    workflow: "Generate enzyme sequences with ZymCTRL, predict structures with Boltz, then use ProteinMPNN to optimize specific regions of the enzyme (e.g., surface residues for stability) while preserving the ZymCTRL-designed core and active site"
+    workflow: "Generate enzyme sequences with ZymCTRL, predict structures with ESMFold, then use ProteinMPNN to optimize specific regions of the enzyme (e.g., surface residues for stability) while preserving the ZymCTRL-designed core and active site"
     example_protocol: null

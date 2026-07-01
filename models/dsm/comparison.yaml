@@ -46,7 +46,7 @@ dont_use_when:
   - "You need structure-conditioned sequence design from a target backbone (use mpnn for comprehensive inverse folding or esm_if1 for lightweight inverse folding)"
   - "You need the lowest-cost protein generation (use mpnn on CPU or progen2 on T4, both cheaper than DSM on A10G)"
   - "You need antibody-specific sequence generation or design (use progen2 OAS variant or antifold)"
-  - "You need the broadest protein embedding ecosystem with downstream tools (use esm2, which has ESMFold, ESMStabP, and other built-on models)"
+  - "You need the broadest protein embedding ecosystem with downstream tools (use esm2, which has ESMFold and a broad ecosystem of downstream models)"
   - "You need fast single-sequence generation where autoregressive models (ProGen2) produce results faster than iterative diffusion"
   - "You need a model with a proven experimental validation track record for generated sequences (use progen2 or zymctrl, both published with experimental evidence)"
 
@@ -71,12 +71,9 @@ complements:
   - model: "esm2"
     workflow: "Generate protein sequences with DSM (unconditional, masked infilling, or conditional), then score with ESM-2 pseudo-log-likelihood for orthogonal fitness validation — sequences scoring well under both models are more likely to be functional"
     example_protocol: null
-  - model: "boltz"
-    workflow: "Generate protein sequences with DSM, then predict 3D structures with Boltz to validate that generated sequences fold into stable, well-defined structures before experimental synthesis"
-    example_protocol: null
   - model: "zymctrl"
     workflow: "Use ZymCTRL for EC-conditioned enzyme generation when the target catalytic function is known, then use DSM's masked infilling to optimize specific regions (e.g., loops around the active site) while preserving the ZymCTRL-designed core"
     example_protocol: null
   - model: "mpnn"
-    workflow: "Use DSM for sequence-based protein generation, predict structures with Boltz, then refine sequences with MPNN for structure-conditioned optimization — combining sequence-space exploration with structure-aware design"
+    workflow: "Use DSM for sequence-based protein generation, predict structures with ESMFold, then refine sequences with MPNN for structure-conditioned optimization — combining sequence-space exploration with structure-aware design"
     example_protocol: null

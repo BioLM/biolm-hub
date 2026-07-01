@@ -29,9 +29,9 @@ use_when:
 
 dont_use_when:
   - "You only need single-mutation ddG predictions -- use the simpler ThermoMPNN model, which has lower memory requirements and equivalent single-mutation accuracy"
-  - "You do not have a 3D structure available -- use TemBERTure or ESMStabP for sequence-only thermostability assessment"
+  - "You do not have a 3D structure available -- use TemBERTure for sequence-only thermostability assessment"
   - "You need to evaluate combinations of three or more simultaneous mutations -- ThermoMPNN-D is limited to pairs; consider SPURS for multi-mutation ddG"
-  - "You need global melting temperature (Tm) rather than per-mutation ddG -- use ESMStabP or TemBERTure"
+  - "You need global melting temperature (Tm) rather than per-mutation ddG -- use TemBERTure"
   - "You are working with very long proteins where quadratic double-mutation scanning is impractical -- consider prioritizing candidate pairs using single-mutation scans first"
   - "You need evolution-based variant effect scores from multiple sequence alignments rather than structure-based stability predictions"
 
@@ -50,8 +50,8 @@ complements:
   - model: thermompnn
     workflow: "Use ThermoMPNN for fast single-mutation SSM scanning to identify the most promising stabilizing positions, then use ThermoMPNN-D to evaluate all pairwise combinations among the top candidates for epistatic synergies"
     example_protocol: null
-  - model: boltz
-    workflow: "Predict 3D structure with Boltz when no experimental structure exists, then use ThermoMPNN-D to scan for synergistic double-mutation stability improvements on the predicted structure"
+  - model: chai1
+    workflow: "Predict a 3D structure with Chai-1 when no experimental structure exists, then use ThermoMPNN-D to scan for synergistic double-mutation stability improvements on the predicted structure"
     example_protocol: null
   - model: esm2
     workflow: "Use ESM2 pseudo-log-likelihoods for rapid sequence-based mutation screening, then validate top-scoring mutation pairs with ThermoMPNN-D's structure-based epistatic ddG predictions"

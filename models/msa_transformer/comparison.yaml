@@ -15,9 +15,9 @@ weaknesses:
   - "Requires precomputed multiple sequence alignments (MSAs) as input — MSA construction via JackHMMER or HHblits takes minutes to hours per query, creating a major throughput bottleneck compared to single-sequence models"
   - "Performance degrades severely for proteins with shallow MSAs (fewer than 16 effective sequences) — orphan proteins and recently evolved proteins with few homologs produce unreliable results"
   - "Single action only (encode) — no dedicated variant scoring, masked prediction, or log-probability computation; variant analysis requires custom post-processing of embeddings or attention maps"
-  - "Contact prediction, while impressive for an unsupervised method, has been surpassed by dedicated structure prediction models (AlphaFold2, ESMFold, Boltz) that produce full atomic coordinates"
+  - "Contact prediction, while impressive for an unsupervised method, has been surpassed by dedicated structure prediction models (AlphaFold2, ESMFold, Chai-1) that produce full atomic coordinates"
   - "Fixed MSA depth handling — the model processes up to a fixed number of sequences, potentially discarding informative homologs from very deep alignments or underperforming on very sparse ones"
-  - "No structure awareness beyond what is implicitly captured by evolutionary covariation — cannot directly use 3D structural information as input unlike SaProt or ESM3"
+  - "No structure awareness beyond what is implicitly captured by evolutionary covariation — cannot directly use 3D structural information as input unlike structure-aware models such as ProstT5"
   - "Not designed for protein design or generation — purely analytical model that cannot propose novel sequences"
 
 use_when:
@@ -30,12 +30,12 @@ use_when:
 
 dont_use_when:
   - "You do not have precomputed MSAs or the computational resources to build them — use ESM2 or ESMC for instant single-sequence embedding and scoring"
-  - "You need variant effect prediction scores — use ESM1v, ESM2 log_prob, SaProt score, or PoET score, which are purpose-built for variant scoring"
-  - "You need accurate 3D protein structure prediction — use Boltz, Chai-1, or ESMFold, which produce full atomic coordinates rather than just contact maps"
+  - "You need variant effect prediction scores — use ESM1v, ESM2 log_prob, or PoET score, which are purpose-built for variant scoring"
+  - "You need accurate 3D protein structure prediction — use Chai-1, RF3, or ESMFold, which produce full atomic coordinates rather than just contact maps"
   - "You are working with orphan proteins that have no detectable homologs — MSA Transformer provides no advantage over single-sequence models when no meaningful alignment can be built"
   - "You need high-throughput processing of millions of sequences — the MSA construction bottleneck makes MSA Transformer impractical for proteome-scale analyses"
   - "You need a generative model for protein design or sequence sampling — MSA Transformer is purely analytical"
-  - "You need structure-conditioned analysis — use SaProt or ProstT5, which can directly leverage 3D structural information"
+  - "You need structure-conditioned analysis — use ProstT5, which can directly leverage structural (3Di) information"
 
 alternatives:
   - model: esm2
@@ -55,6 +55,10 @@ complements:
     workflow: "Use ESM2 for fast single-sequence embedding of large sequence databases, then apply MSA Transformer to a focused set of protein families where deep MSAs are available and co-evolutionary analysis adds value — combining throughput with depth"
     example_protocol: null
 
-  - model: boltz
-    workflow: "Use MSA Transformer for quick unsupervised contact prediction to assess protein foldability, then run Boltz on promising candidates for full atomic-level structure prediction — MSA Transformer as a fast structural pre-screen"
+  - model: chai1
+    workflow: "Use MSA Transformer for quick unsupervised contact prediction to assess protein foldability, then run Chai-1 on promising candidates for full atomic-level multi-molecule structure prediction — MSA Transformer as a fast structural pre-screen"
+    example_protocol: null
+
+  - model: esm1v
+    workflow: "Use MSA Transformer to characterize evolutionary covariation and MSA depth across a protein family, then apply ESM1v for zero-shot variant effect prediction on the same sequences — combining alignment-level context with a dedicated variant scorer"
     example_protocol: null

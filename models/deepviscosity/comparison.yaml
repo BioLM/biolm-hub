@@ -29,7 +29,7 @@ use_when:
 dont_use_when:
   - "Your molecule is not a monoclonal antibody with paired VH and VL chains -- DeepViscosity requires IMGT-numberable antibody variable domains"
   - "You are working with nanobodies, single-domain antibodies, or bispecific formats -- these are not supported by the paired VH/VL input requirement"
-  - "You need to predict general protein solubility rather than antibody-specific viscosity -- use CamSol or SoluProt instead"
+  - "You need to predict general protein solubility rather than antibody-specific viscosity -- DeepViscosity is antibody-specific; use a general solubility predictor such as SoluProt instead"
   - "You need continuous viscosity values rather than binary low/high classification -- DeepViscosity does not output viscosity in centipoise"
   - "You need to account for formulation conditions (pH, excipients, concentration) in your viscosity prediction -- the model predicts sequence-intrinsic risk only"
   - "You need predictions for non-human antibody formats that may not align well with IMGT numbering"

@@ -26,16 +26,16 @@ use_when:
   - "You want CPU-only structure prediction for cost-effective high-throughput screening of immune protein libraries without GPU infrastructure"
   - "You need nanobody (VHH) structure prediction with a model specifically trained on single-domain antibody structures from SAbDab"
   - "You need TCR structure prediction (alpha/beta chains) and want the choice between TCRBuilder2 and the updated TCRBuilder2Plus with expanded training data"
-  - "You want to provide predicted structures as input for downstream tools like ProperMAB (developability features) or AntiFold (inverse folding)"
+  - "You want to provide predicted structures as input for downstream tools like AntiFold (inverse folding) or structure-based developability analysis"
   - "You are benchmarking antibody structure prediction methods and need a well-established reference with published accuracy metrics"
 
 dont_use_when:
   - "You need the highest-accuracy antibody structure prediction and have GPU resources available -- use AbodyBuilder3 (language variant) or ImmuneFold, which leverage protein language model embeddings"
   - "You need antibody-antigen complex structure prediction -- use ImmuneFold, which accepts antigen PDB input for complex modeling"
   - "You need per-residue confidence scores (pLDDT) to assess prediction quality -- use AbodyBuilder3 or ImmuneFold, both of which provide pLDDT scores"
-  - "You need sequence-level analysis (embeddings, scoring, generation) rather than structure prediction -- use AbLang2, IgBERT, NanoBERT, or IgT5"
+  - "You need sequence-level analysis (embeddings, scoring, generation) rather than structure prediction -- use AbLang2, IgBERT, or IgT5"
   - "You need TCR-pMHC complex modeling with peptide and MHC context -- use ImmuneFold (TCR variant), which takes four-chain input including peptide and MHC"
-  - "You need general protein structure prediction for non-immune targets -- use ESMFold or Boltz"
+  - "You need general protein structure prediction for non-immune targets -- use ESMFold or Chai-1"
   - "You need the fastest possible antibody structure prediction for a single candidate -- ImmuneBuilder's OpenMM relaxation adds latency"
 
 alternatives:

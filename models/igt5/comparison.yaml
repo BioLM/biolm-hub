@@ -13,7 +13,7 @@ strengths:
 
 weaknesses:
   - "Embedding-only model (encode action only): no sequence generation, masked prediction, or log-probability scoring -- limiting utility compared to IgBERT's three actions or AbLang2's four actions"
-  - "Requires T4 GPU with 16 GB RAM for inference, making it more expensive than CPU-only models like AbLang2 and NanoBERT, and more expensive than IgBERT (6 GB RAM)"
+  - "Requires T4 GPU with 16 GB RAM for inference, making it more expensive than CPU-only models like AbLang2, and more expensive than IgBERT (6 GB RAM)"
   - "No germline debiasing in the training objective, so embeddings may conflate germline gene identity with functional properties, a known bias that AbLang2 explicitly addresses"
   - "Not specialized for nanobody (VHH) sequences; the unpaired variant can process them but lacks nanobody-specific training"
   - "Published CDR-aware benchmarks show compact fine-tuned models can surpass the 3B-parameter IgT5 by 16-25% on binding affinity prediction using 5x fewer parameters, suggesting the model may be overparameterized for some tasks"
@@ -30,10 +30,10 @@ use_when:
 dont_use_when:
   - "You need sequence generation, masked residue prediction, or log-probability scoring -- use IgBERT (generate + log_prob actions) or AbLang2 (four actions including predict and generate)"
   - "You need germline-debiased antibody representations -- use AbLang2 with focal-loss training that explicitly reduces germline bias in embeddings"
-  - "You are working with nanobody (VHH) sequences and need VHH-specific representations -- use NanoBERT, which is trained exclusively on nanobody sequences"
-  - "You need the most cost-effective antibody embeddings and GPU resources are limited -- use AbLang2 (CPU-only, 4 GB RAM) or NanoBERT (CPU-only, 2 GB RAM)"
+  - "You are working with nanobody (VHH) sequences and need VHH-specific representations -- IgT5's unpaired variant can process VHH but is not nanobody-specialized; use AntiFold or ImmuneFold for nanobody-specific structural analysis"
+  - "You need the most cost-effective antibody embeddings and GPU resources are limited -- use AbLang2 (CPU-only, 4 GB RAM)"
   - "You need 3D structure prediction -- use AbodyBuilder3, ImmuneBuilder, or ImmuneFold for structure prediction from sequence"
-  - "You need developability property predictions -- use AbLEF for HIC-RT/Fab Tm or ProperMAB for comprehensive feature extraction"
+  - "You need developability property predictions -- use DeepViscosity for antibody viscosity or TemBERTure for thermostability (Tm)"
   - "You need antibody annotation (numbering, CDR boundaries, germline assignment) -- use SADIE as a preprocessing step"
 
 alternatives:

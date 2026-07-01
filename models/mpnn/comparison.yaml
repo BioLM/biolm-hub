@@ -14,7 +14,7 @@ strengths:
   - "Autoregressive sampling with temperature control enables generation of diverse sequence libraries from a single backbone, tunable from conservative (low T) to exploratory (high T)"
   - "Most experimentally validated deep-learning inverse folding model: tested across 8+ diverse topologies including beta-barrels, TIM barrels, NTF2-like folds, and de novo antibodies"
   - "Accepts multi-chain complexes and supports fixed-residue constraints, enabling selective redesign of specific positions while preserving catalytic or binding residues"
-  - "De facto standard in the RFdiffusion/ProteinMPNN/AlphaFold2 self-consistency pipeline used by the David Baker lab and the broader protein design community"
+  - "De facto standard in the backbone-generation/ProteinMPNN/AlphaFold2 self-consistency pipeline used by the David Baker lab and the broader protein design community"
 
 weaknesses:
   - "Maximum sequence length of 1024 residues; cannot design sequences for very large proteins or extended multi-domain assemblies"
@@ -27,12 +27,12 @@ weaknesses:
   - "No built-in mechanism for multi-objective optimization (e.g., simultaneously optimizing stability, solubility, and binding)"
 
 use_when:
-  - "Designing sequences for computationally generated backbones from RFdiffusion, Chroma, or other backbone generators as part of a de novo protein design pipeline"
+  - "Designing sequences for computationally generated backbones from BoltzGen or other backbone generators as part of a de novo protein design pipeline"
   - "Redesigning enzyme sequences around a bound substrate or cofactor using the LigandMPNN variant to preserve active-site geometry"
   - "Improving protein stability, expression, or solubility by redesigning surface residues with the SolubleMPNN variant while fixing the hydrophobic core"
   - "Designing membrane protein sequences using global-membrane or per-residue-membrane variants that account for the lipid bilayer environment"
   - "Generating diverse sequence libraries for experimental screening by sampling multiple sequences at varying temperatures from a single target backbone"
-  - "Performing self-consistency validation: design sequences with MPNN, predict structures with ESMFold/Boltz/AF2, and check agreement with the target backbone"
+  - "Performing self-consistency validation: design sequences with MPNN, predict structures with ESMFold/Chai-1/AF2, and check agreement with the target backbone"
   - "Optimizing existing proteins for improved biophysical properties while preserving the overall fold, with catalytic or functional residues fixed"
   - "Antibody or nanobody CDR and framework redesign when a target backbone structure is available, especially using the LigandMPNN variant for antigen-aware design"
 
@@ -41,10 +41,9 @@ dont_use_when:
   - "You need antibody-specific inverse folding with built-in knowledge of antibody numbering, germline usage, and humanization (use AntiFold instead)"
   - "You only need a quick sequence plausibility score for an existing structure-sequence pair without generating new sequences (use ESM-IF1 for lightweight scoring)"
   - "You need to predict or optimize a specific functional property like thermostability (use ThermoMPNN for direct Tm prediction and stabilizing mutation suggestions)"
-  - "You need to generate novel backbone structures rather than sequences for existing backbones (use RFdiffusion3 or BoltzGen for structure generation)"
-  - "You need to assess toxicity or immunogenicity of designed sequences (use BioLMTox2 as a downstream filter after MPNN sequence generation)"
+  - "You need to generate novel backbone structures rather than sequences for existing backbones (use BoltzGen for structure generation)"
   - "Your target protein is intrinsically disordered or lacks a well-defined 3D structure; sequence-based models like ESM2 or ESMC are more appropriate"
-  - "You need structure prediction from sequence rather than sequence design from structure (use ESMFold, Boltz, or RF3 instead)"
+  - "You need structure prediction from sequence rather than sequence design from structure (use ESMFold, Chai-1, or RF3 instead)"
 
 alternatives:
   - model: "esm_if1"
@@ -64,14 +63,8 @@ complements:
   - model: "esmfold"
     workflow: "Self-consistency validation pipeline: design sequences with MPNN, predict their structures with ESMFold, and retain only designs where the predicted structure matches the target backbone (scRMSD < 2 A)"
     example_protocol: null
-  - model: "boltz"
-    workflow: "Use Boltz for high-accuracy structure prediction to validate MPNN designs, especially for multi-chain complexes where ESMFold may be less accurate; also use Boltz to generate input backbone structures from existing sequences before MPNN redesign"
-    example_protocol: null
-  - model: "biolmtox2"
-    workflow: "Screen MPNN-designed sequences for predicted toxicity before experimental synthesis, filtering out candidates with high toxicity scores to reduce wet-lab failure rates"
-    example_protocol: null
   - model: "biotite"
-    workflow: "Compute backbone RMSD between MPNN-designed structures (after folding with ESMFold/Boltz) and the target backbone to quantitatively assess self-consistency; also use Biotite for PDB parsing and structural analysis of input backbones"
+    workflow: "Compute backbone RMSD between MPNN-designed structures (after folding with ESMFold/Chai-1) and the target backbone to quantitatively assess self-consistency; also use Biotite for PDB parsing and structural analysis of input backbones"
     example_protocol: null
   - model: "rf3"
     workflow: "Generate or refine target backbone structures with RoseTTAFold-3 before using MPNN for sequence design; RF3 provides accurate multi-chain structure prediction that feeds into the MPNN design pipeline"

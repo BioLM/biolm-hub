@@ -14,7 +14,7 @@ strengths:
 
 weaknesses:
   - "Requires A100 40GB GPU with 64GB system RAM -- expensive infrastructure that limits accessibility for routine use or large-scale screening"
-  - "No binding affinity prediction -- produces structures and confidence scores but cannot estimate binding energies; Boltz-2 adds this capability separately"
+  - "No binding affinity prediction -- produces structures and confidence scores but cannot estimate binding energies; a dedicated affinity predictor is required for that"
   - "MSA preprocessing is recommended for best accuracy, adding minutes to hours of database search time before structure prediction can begin"
   - "Newer model with less published community validation than AlphaFold2 -- fewer independent benchmarks and downstream application studies in the literature"
   - "Membrane protein predictions remain weak due to training data bias toward soluble proteins and absence of lipid bilayer modeling"
@@ -33,16 +33,16 @@ use_when:
 
 dont_use_when:
   - "You need rapid single-chain protein structure screening -- ESMFold provides predictions in seconds without MSA, at a fraction of the cost"
-  - "You need binding affinity prediction alongside structure -- use Boltz-2, which integrates structure prediction with log10 IC50 affinity estimation"
-  - "You need de novo protein design or binder generation -- RF3 is a prediction model; use its companion RFdiffusion3 for generative design, or BoltzGen for end-to-end binder design"
+  - "You need binding affinity prediction alongside structure -- RF3 predicts structures and confidence scores but does not estimate binding affinities"
+  - "You need de novo protein design or binder generation -- RF3 is a prediction model; use BoltzGen for end-to-end binder design"
   - "GPU resources are limited and you only need protein structure prediction -- AF2 NIM on A100 80GB provides well-validated protein predictions; ESMFold on A10G provides fast screening"
   - "You need conformational ensemble modeling for intrinsically disordered proteins -- RF3 produces individual conformations, not thermodynamically weighted ensembles"
   - "You need the most extensively validated predictions for publication -- AlphaFold2 has the broadest published benchmark literature and may be preferred by reviewers"
 
 alternatives:
-  - model: boltz
-    when_better: "Boltz-2 adds binding affinity prediction (log10 IC50) and pocket-constrained docking; ipSAE interface metric corrects for chain length bias; MIT license is more permissive than BSD-3-Clause"
-    when_worse: "RF3 supports template conditioning, cyclic peptides, non-canonical amino acids via CCD codes, and has the newest architecture with potentially the highest multi-molecule accuracy"
+  - model: boltzgen
+    when_better: "BoltzGen generates novel binders and de novo designs end-to-end (backbone generation, sequence design, and affinity ranking), whereas RF3 only predicts structures of existing sequences"
+    when_worse: "BoltzGen cannot predict the native structure of an existing protein or complex; RF3 is the tool for structure prediction, and design pipelines rely on predictors like RF3 to validate BoltzGen outputs"
   - model: chai1
     when_better: "Chai-1 has more published cross-docking benchmarks; ESM embedding integration provides a single-sequence quality boost; commercially supported by Chai Discovery"
     when_worse: "RF3 supports template conditioning, cyclic peptides, and CCD codes; newer architecture potentially more accurate; BSD-3-Clause license; Baker Lab pedigree with decades of protein modeling expertise"
@@ -51,9 +51,6 @@ alternatives:
     when_worse: "Protein-only with substantially lower accuracy; no multi-molecule support; 768 residue limit; no template conditioning or diffusion sampling"
 
 complements:
-  - model: rfd3
-    workflow: "Use RFdiffusion3 to generate de novo protein structures and binder scaffolds, then validate designability with RF3 by predicting the structure of the designed sequence and computing self-consistency (scTM) -- the standard Baker Lab design-predict validation cycle"
-    example_protocol: null
   - model: mpnn
     workflow: "Use RF3-predicted structures as input to ProteinMPNN for inverse folding sequence design, then re-predict with RF3 to verify self-consistency -- the core computational protein design pipeline"
     example_protocol: null

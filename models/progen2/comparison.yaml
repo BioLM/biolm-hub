@@ -27,7 +27,7 @@ use_when:
   - "You need to generate diverse protein sequence libraries for experimental screening, ranking candidates by bidirectional log-likelihood scores"
   - "You are exploring protein sequence space around a known protein family by extending seed sequences from conserved regions"
   - "You need protein fitness scoring via log-likelihood to rank mutant libraries or guide directed evolution campaigns without task-specific training data"
-  - "You want to generate candidate enzymes for experimental testing and plan to validate with structure prediction (Boltz) and stability analysis (ESMStabP) downstream"
+  - "You want to generate candidate enzymes for experimental testing and plan to validate with structure prediction (ESMFold) and stability analysis (TemBERTure) downstream"
   - "You need a commercially licensed autoregressive protein generator for production pipelines"
 
 dont_use_when:
@@ -61,11 +61,8 @@ complements:
   - model: "esm2"
     workflow: "Generate candidate protein sequences with ProGen2, then score them with ESM-2 pseudo-log-likelihood for an orthogonal fitness assessment — sequences that score well under both models are more likely to be functional"
     example_protocol: null
-  - model: "boltz"
-    workflow: "Generate protein sequences with ProGen2, then predict their 3D structures with Boltz to verify that generated sequences adopt stable, well-defined folds before experimental testing"
-    example_protocol: null
   - model: "mpnn"
-    workflow: "Use ProGen2 to explore sequence space from a seed, predict structures of top candidates with Boltz, then use ProteinMPNN to further optimize sequences for the predicted backbones — combining sequence-based and structure-based design"
+    workflow: "Use ProGen2 to explore sequence space from a seed, predict structures of top candidates with ESMFold, then use ProteinMPNN to further optimize sequences for the predicted backbones — combining sequence-based and structure-based design"
     example_protocol: null
   - model: "zymctrl"
     workflow: "Use ZymCTRL for EC-conditioned enzyme generation when the target function is known, and ProGen2 for broader exploratory generation when the protein family is defined but not a specific EC class"

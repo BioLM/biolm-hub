@@ -40,7 +40,6 @@ dont_use_when:
   - "You need to design multi-domain constructs including Fc regions, bispecific formats, or full-length IgG engineering (AntiFold only handles variable domains)"
   - "You are working with T-cell receptors (TCRs), which have different CDR definitions and structural conventions not represented in AntiFold training data"
   - "You need general protein fitness prediction from sequence alone without structural context (use esm2 pseudo-log-likelihoods or esmc embeddings instead)"
-  - "You want to assess toxicity or immunogenicity of designed antibody sequences (use biolmtox2 for toxicity screening as a downstream filter)"
 
 alternatives:
   - model: "mpnn"
@@ -62,9 +61,6 @@ complements:
     example_protocol: null
   - model: "ablang2"
     workflow: "Generate candidate CDR sequences with AntiFold, then score them with AbLang2 sequence likelihoods to filter for sequences that are both structurally compatible and sequence-plausible"
-    example_protocol: null
-  - model: "biolmtox2"
-    workflow: "After designing antibody variants with AntiFold, screen the generated sequences through BioLMTox2 to flag candidates with potential toxicity liabilities before experimental synthesis"
     example_protocol: null
   - model: "biotite"
     workflow: "Use Biotite to compute backbone RMSD between the input structure and predicted structures of AntiFold-designed sequences, validating that designed sequences maintain the intended backbone conformation"

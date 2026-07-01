@@ -26,12 +26,12 @@ use_when:
   - "You are comparing wild-type and engineered variant sequences and want to quantify the predicted stability difference in kcal/mol"
   - "You need multi-mutation stability prediction that goes beyond additive approximations to capture synergistic or antagonistic epistatic effects"
   - "You are filtering large mutation libraries to exclude destabilizing variants before experimental screening, saving time and reagent costs"
-  - "You want to integrate stability prediction into an automated protein design pipeline alongside structure prediction (Boltz) and sequence design (ProteinMPNN)"
+  - "You want to integrate stability prediction into an automated protein design pipeline alongside structure prediction (Chai-1) and sequence design (ProteinMPNN)"
 
 dont_use_when:
   - "You do not have a 3D structure and cannot generate one -- use GEMME (MSA-based) or ESM2 pseudo-log-likelihoods for sequence-only variant scoring"
   - "You need high-precision physics-based ddG values for a single critical mutation -- use FoldX or Rosetta ddG protocols for individual high-stakes predictions"
-  - "You need global protein melting temperature (Tm) rather than per-mutation ddG -- use ESMStabP or TemBERTure"
+  - "You need global protein melting temperature (Tm) rather than per-mutation ddG -- use TemBERTure"
   - "You need variant effect prediction driven purely by evolutionary conservation signals -- use GEMME for MSA-based scoring that captures evolutionary constraint without structural bias"
   - "You are working with intrinsically disordered proteins that lack a stable reference structure for ddG calculation"
   - "You need CPU-only inference for cost-sensitive large-scale screening -- GEMME runs on CPU in under 10 minutes"

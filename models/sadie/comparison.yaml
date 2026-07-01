@@ -21,7 +21,7 @@ weaknesses:
   - "TCR gamma/delta annotation is supported but less extensively validated than alpha/beta annotation"
 
 use_when:
-  - "You need standardized numbering and region annotation as a preprocessing step before feeding antibody sequences to language models (AbLang2, IgBERT, NanoBERT, IgT5)"
+  - "You need standardized numbering and region annotation as a preprocessing step before feeding antibody sequences to language models (AbLang2, IgBERT, IgT5)"
   - "You need to extract CDR sequences from antibody variable domains for clustering, diversity analysis, or CDR-focused model training"
   - "You need germline V-gene and J-gene assignment with identity percentages for assessing somatic hypermutation levels or guiding humanization strategies"
   - "You are processing a mixed repertoire dataset and need to identify chain types, species of origin, and light chain isotype (kappa vs lambda) for each sequence"
@@ -30,11 +30,11 @@ use_when:
   - "You are building an automated antibody engineering pipeline and need a reliable annotation step that feeds into structure prediction, embedding, or design tools"
 
 dont_use_when:
-  - "You need numerical embeddings or representations of antibody sequences for ML tasks -- use AbLang2, IgBERT, NanoBERT, or IgT5 for language model embeddings"
+  - "You need numerical embeddings or representations of antibody sequences for ML tasks -- use AbLang2, IgBERT, or IgT5 for language model embeddings"
   - "You need to predict 3D antibody structures -- use AbodyBuilder3, ImmuneBuilder, or ImmuneFold for structure prediction"
   - "You need sequence generation, restoration, or scoring -- use AbLang2 or IgBERT, which provide generate and log_prob actions"
   - "You need to design antibody sequences conditioned on structure -- use AntiFold for structure-based inverse folding"
-  - "You need developability property predictions -- use AbLEF or ProperMAB for biophysical property assessment"
+  - "You need developability property predictions -- use DeepViscosity for antibody viscosity or TemBERTure for thermostability"
   - "You need gold-standard IMGT numbering for regulatory submissions -- consider IMGT/DomainGapAlign for official IMGT validation"
   - "You need to process millions of sequences at NGS scale with minimal latency -- consider local tools like ANARCI or IgBLAST for high-throughput batch processing"
 

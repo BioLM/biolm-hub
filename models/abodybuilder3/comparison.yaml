@@ -6,7 +6,7 @@ strengths:
   - "Two complementary variants: a fast CPU-only pLDDT variant for high-throughput screening and a language-enhanced L40S GPU variant that leverages ProtT5 embeddings for improved CDR accuracy"
   - "Antibody-specialized GNN architecture trained on SAbDab crystallographic structures, achieving state-of-the-art CDR loop prediction accuracy among antibody-specific methods at time of publication"
   - "Per-residue pLDDT confidence scores (0-100 scale) enable users to identify well-predicted framework regions versus uncertain CDR loops, guiding downstream interpretation"
-  - "Predicts full-atom Fv structures (backbone and side chains) in PDB format, directly usable as input for structure-based design tools (AntiFold, ProperMAB, molecular docking)"
+  - "Predicts full-atom Fv structures (backbone and side chains) in PDB format, directly usable as input for structure-based design tools (AntiFold and molecular docking)"
   - "Language variant uses ProtT5 protein language model embeddings for enhanced accuracy, particularly in CDR-H3 where sequence diversity makes purely structural approaches less effective"
   - "Fast inference compared to AlphaFold2: single-sequence prediction without MSA computation, enabling rapid structural characterization of antibody libraries"
   - "Apache-2.0 license with no commercial restrictions, from the same Exscientia/Oxford group that published IgBERT and IgT5"
@@ -27,7 +27,7 @@ use_when:
   - "You need per-residue confidence scores (pLDDT) to assess which regions of an antibody structure are reliably predicted before using them for downstream analysis"
   - "You are characterizing an antibody library at structural level and need fast throughput without MSA computation -- the pLDDT variant runs on CPU for high-volume screening"
   - "You want the highest-accuracy antibody-specific structure prediction available (language variant) for a small number of high-priority candidates"
-  - "You need structures as input for ProperMAB feature extraction to compute the 34 biophysical developability features that require 3D atomic coordinates"
+  - "You need predicted Fv structures as input for structure-based developability feature extraction (biophysical descriptors that require 3D atomic coordinates)"
 
 dont_use_when:
   - "You need to predict nanobody (VHH) structures -- use ImmuneBuilder's NanoBodyBuilder2 variant, which is specifically trained on single-domain antibody structures"
@@ -36,7 +36,7 @@ dont_use_when:
   - "You need the broadest immune protein coverage (antibodies + nanobodies + TCRs) in a single model -- use ImmuneBuilder, which has dedicated sub-models for all three"
   - "You need ESM-2-enhanced accuracy and are working with antibodies or TCRs -- use ImmuneFold, which uses ESM-2 3B representations for potentially higher CDR accuracy"
   - "You need sequence-level analysis (embeddings, scoring, generation) rather than structure prediction -- use AbLang2, IgBERT, or IgT5"
-  - "You need general protein structure prediction for non-antibody targets -- use ESMFold or Boltz"
+  - "You need general protein structure prediction for non-antibody targets -- use ESMFold or Chai-1"
 
 alternatives:
   - model: "immunebuilder"

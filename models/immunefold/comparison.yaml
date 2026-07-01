@@ -31,9 +31,9 @@ use_when:
 dont_use_when:
   - "You need CPU-only inference for high-throughput screening of large antibody libraries -- use ImmuneBuilder (all CPU) or AbodyBuilder3 pLDDT variant"
   - "You need to predict structures for hundreds or thousands of sequences and cost is a primary concern -- GPU inference cost accumulates; use ImmuneBuilder for bulk screening"
-  - "You need sequence-level analysis (embeddings, scoring, generation) rather than structure prediction -- use AbLang2, IgBERT, NanoBERT, or IgT5"
+  - "You need sequence-level analysis (embeddings, scoring, generation) rather than structure prediction -- use AbLang2, IgBERT, or IgT5"
   - "You have partial TCR sequences without all four chains (beta, alpha, peptide, MHC) -- use ImmuneBuilder's TCRBuilder2 which handles paired alpha/beta chains only"
-  - "You need general protein structure prediction for non-immune targets -- use ESMFold or Boltz"
+  - "You need general protein structure prediction for non-immune targets -- use ESMFold or Chai-1"
   - "You need a well-established model with extensive independent benchmarking and community validation -- use ImmuneBuilder or AbodyBuilder3, which have more published validation"
   - "You need structure prediction for antibody sequences shorter than the minimum length requirements (VH < 90 AA or VL < 85 AA)"
 

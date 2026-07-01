@@ -17,7 +17,7 @@ weaknesses:
   - "Requires exactly one mask token per sequence — cannot score multiple positions simultaneously or perform multi-site variant assessment in a single call"
   - "No structure awareness — purely sequence-based scoring misses structural context that can distinguish surface mutations from buried core disruptions"
   - "The 'all' variant loads all 5 models simultaneously, requiring T4 GPU and 28GB RAM — individual models are cheap but the full ensemble has higher resource requirements"
-  - "Older generation model (2021) — ESM2 and ESMC have improved training procedures, and newer methods (SaProt, PoET) outperform ESM1v on recent benchmarks"
+  - "Older generation model (2021) — ESM2 and ESMC have improved training procedures, and newer methods such as PoET outperform ESM1v on recent benchmarks"
   - "Cannot score insertions or deletions (indels) — only single-site substitution scoring is supported; PoET handles indels natively"
 
 use_when:
@@ -35,7 +35,6 @@ dont_use_when:
   - "You need structure-aware variant scoring — structure-integrated models outperform sequence-only methods; ESM1v has no structural awareness"
   - "You need MSA-conditioned variant scoring for maximum accuracy on proteins with deep evolutionary alignments — use MSA Transformer"
   - "You want the latest-generation model for new projects — use ESM2 log_prob or ESMC log_prob, which provide comparable or better variant scoring with broader functionality"
-  - "You need multimodal protein analysis combining sequence, structure, and function — use ESM3"
 
 alternatives:
   - model: esm2

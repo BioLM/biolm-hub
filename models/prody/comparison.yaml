@@ -43,9 +43,6 @@ alternatives:
     when_worse: "Biotite provides only RMSD and chain extraction -- no interaction analysis, no hydrogen bond/salt bridge detection, no energy estimates"
 
 complements:
-  - model: boltz
-    workflow: "Predict multi-chain complex structures with Boltz, then use ProDy encode to characterize all inter-chain interactions at the predicted interface -- connecting structural prediction with detailed interaction analysis"
-    example_protocol: null
   - model: spurs
     workflow: "Use SPURS for stability prediction of mutations, then use ProDy to analyze how those mutations alter the interaction network within the protein structure -- combining energetic stability assessment with structural interaction characterization"
     example_protocol: null

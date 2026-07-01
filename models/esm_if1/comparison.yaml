@@ -57,9 +57,6 @@ complements:
   - model: "esm2"
     workflow: "Design sequences with ESM-IF1 from a target backbone, then score designed sequences with ESM-2 pseudo-log-likelihood to verify evolutionary plausibility and filter designs that deviate too far from natural protein distributions"
     example_protocol: null
-  - model: "boltz"
-    workflow: "When no experimental structure is available, predict a backbone structure with Boltz from an existing sequence, then use ESM-IF1 to redesign the sequence for the predicted backbone — enabling structure-based design from sequence alone"
-    example_protocol: null
   - model: "mpnn"
     workflow: "Use ESM-IF1 for rapid initial screening of many backbone candidates, then apply MPNN (with ligand-aware or solubility variants as needed) for detailed sequence design on the most promising backbones"
     example_protocol: null

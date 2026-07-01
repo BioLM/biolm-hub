@@ -14,13 +14,13 @@ strengths:
 
 weaknesses:
   - "Requires A100 80GB GPU with 64GB system RAM -- the most resource-intensive deployment tier, limiting accessibility for smaller research groups"
-  - "No binding affinity prediction -- produces structures and confidence scores but cannot estimate binding energies; Boltz-2 adds this capability"
+  - "No binding affinity prediction -- produces structures and confidence scores but cannot estimate binding energies; a dedicated affinity predictor is required for that"
   - "Single-sequence mode (without MSA or ESM embeddings) substantially reduces prediction accuracy, especially for proteins lacking close homologs in training data"
   - "Membrane protein predictions are weakened by training primarily on soluble protein structures -- no lipid bilayer context is modeled"
   - "Very short peptides (< 10 residues) lack sufficient structural context for reliable binding pose prediction within the diffusion framework"
   - "Complex macrocyclic and metalloorganic ligands may produce poor binding poses due to limited representation in training data"
   - "Produces static conformations from diffusion sampling -- does not model conformational ensembles or intrinsically disordered regions"
-  - "No dedicated interface confidence metric comparable to Boltz-2's ipSAE -- interface quality must be assessed from general pTM/pLDDT scores"
+  - "No dedicated interface confidence metric such as ipSAE -- interface quality must be assessed from general pTM/pLDDT scores"
 
 use_when:
   - "You need to predict the 3D structure of a multi-molecule complex (protein-ligand, protein-DNA, protein-RNA, or any combination) and no experimental structure is available"
@@ -32,12 +32,12 @@ use_when:
 
 dont_use_when:
   - "You only need single-chain protein structure prediction -- ESMFold is orders of magnitude faster for single proteins"
-  - "You need binding affinity predictions alongside structure -- use Boltz-2, which combines structure prediction with log10 IC50 affinity estimation"
-  - "You need de novo protein design or sequence generation -- Chai-1 is prediction-only; use RFdiffusion3 or BoltzGen for generative design tasks"
+  - "You need binding affinity predictions alongside structure -- Chai-1 predicts structures and confidence scores but does not estimate binding affinities"
+  - "You need de novo protein design or sequence generation -- Chai-1 is prediction-only; use BoltzGen for generative design tasks"
   - "Your sequences exceed 1024 residues per protein chain or 3072 bases per nucleic acid -- consider RF3 or breaking the problem into subunits"
   - "You need conformational ensemble modeling for intrinsically disordered proteins -- Chai-1 produces single static structures"
-  - "You need pocket-constrained docking where the binding site is known -- Boltz-2 supports pocket constraints; Chai-1 performs unconstrained structure prediction"
-  - "GPU resources are limited (no A100 80GB available) -- use ESMFold for single-chain proteins or Boltz on A100 40GB for multi-molecule targets"
+  - "You need pocket-constrained docking where the binding site is fixed in advance -- Chai-1 performs unconstrained structure prediction and does not accept explicit pocket constraints"
+  - "GPU resources are limited (no A100 80GB available) -- use ESMFold for single-chain proteins or RF3 on A100 40GB for multi-molecule targets"
 
 alternatives:
   - model: rf3

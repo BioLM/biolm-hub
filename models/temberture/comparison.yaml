@@ -12,10 +12,10 @@ strengths:
   - "MIT license enables unrestricted commercial use in enzyme engineering and pharmaceutical development"
 
 weaknesses:
-  - "Requires T4 GPU with 16 GB RAM for both classifier and regression variants due to the ProtBERT-BFD backbone -- significantly more resource-intensive than ESMStabP's CPU-only Random Forest"
+  - "Requires T4 GPU with 16 GB RAM for both classifier and regression variants due to the ProtBERT-BFD backbone -- significantly more resource-intensive than lightweight CPU-based stability predictors"
   - "Maximum sequence length of 512 residues is more restrictive than ESM2-based alternatives (1022 residues), excluding many larger proteins"
   - "Classification provides only binary thermophilic/non-thermophilic distinction -- does not quantify the degree of thermostability within each class"
-  - "Regression accuracy for quantitative Tm prediction has not been independently benchmarked to be superior to ESMStabP's R-squared 0.95"
+  - "Regression accuracy for quantitative Tm prediction has not been extensively benchmarked in independent studies"
   - "No per-mutation resolution -- predicts global protein stability properties without identifying which specific residues or mutations influence thermostability"
   - "ProtBERT-BFD backbone is an older protein language model compared to ESM2, potentially capturing less nuanced sequence representations"
   - "No support for organism growth temperature context that could improve prediction accuracy for proteins from characterized organisms"
@@ -29,16 +29,16 @@ use_when:
   - "You want to generate embeddings that specifically capture thermal stability features, rather than general protein representations from ESM2"
 
 dont_use_when:
-  - "You need the highest regression accuracy for Tm prediction -- ESMStabP (R-squared 0.95) likely outperforms TemBERTure's regression mode"
+  - "You need a quantitative Tm regressor whose accuracy has been extensively validated in independent studies -- TemBERTure's regression mode has limited external benchmarking to date"
   - "You need per-mutation ddG predictions to identify specific stabilizing mutations -- use ThermoMPNN or SPURS with a 3D structure"
-  - "Your sequences exceed 512 residues -- use ESMStabP (1022 residue limit) or other ESM2-based approaches"
-  - "You want CPU-only inference to minimize costs -- TemBERTure requires GPU while ESMStabP's Random Forest runs on CPU"
-  - "You need pH-dependent or formulation-specific stability predictions -- no current model on the platform supports this, but CamSol addresses pH-dependent solubility"
+  - "Your sequences exceed 512 residues -- use ESM2-based approaches, which handle longer sequences (up to ~1022 residues)"
+  - "You want CPU-only inference to minimize costs -- TemBERTure requires a GPU for its ProtBERT-BFD backbone"
+  - "You need pH-dependent or formulation-specific stability predictions -- no current model on the platform supports this"
 
 alternatives:
-  - model: esmstabp
-    when_better: "ESMStabP achieves higher Tm regression accuracy (R-squared 0.95) with CPU-only inference (after ESM2 embedding), optional OGT context, and broader sequence length support (1022 residues)"
-    when_worse: "ESMStabP depends on ESM2 as a prerequisite, provides no classification mode, and does not generate thermostability-aware embeddings; TemBERTure is self-contained with richer output options"
+  - model: thermompnn_d
+    when_better: "ThermoMPNN-D predicts per-mutation and paired-mutation ddG from a 3D structure with an explicit epistatic interaction mode, pinpointing specific stabilizing (and synergistic) mutations"
+    when_worse: "ThermoMPNN-D requires a 3D structure and predicts relative ddG rather than an absolute Tm or a global thermophilic/mesophilic classification; TemBERTure works from sequence alone"
   - model: thermompnn
     when_better: "ThermoMPNN provides per-mutation ddG predictions from 3D structure with PCC ~0.75 on Megascale, enabling identification of specific stabilizing mutations"
     when_worse: "ThermoMPNN requires a 3D structure, predicts relative ddG rather than absolute Tm or binary thermostability, and cannot classify proteins as thermophilic/non-thermophilic"
@@ -50,12 +50,9 @@ complements:
   - model: thermompnn
     workflow: "Use TemBERTure classifier for rapid thermostability screening of protein libraries, then run ThermoMPNN on the structures of promising thermophilic candidates to identify further stabilizing mutations via per-position ddG scanning"
     example_protocol: null
-  - model: camsol
-    workflow: "Use TemBERTure to assess thermostability and CamSol to assess solubility -- screening protein candidates for both thermal stability and aggregation propensity provides a more complete developability profile"
+  - model: deepviscosity
+    workflow: "For antibody or therapeutic-protein candidates, use TemBERTure to assess thermostability and DeepViscosity to flag high-viscosity, aggregation-prone candidates -- screening for both thermal stability and developability gives a more complete profile"
     example_protocol: null
   - model: esm2
     workflow: "Combine TemBERTure's thermostability-aware embeddings with ESM2's general-purpose protein embeddings as complementary feature sets for custom downstream stability prediction models"
-    example_protocol: null
-  - model: boltz
-    workflow: "Use TemBERTure to classify proteins as thermophilic/non-thermophilic, then predict structures of thermostable candidates with Boltz for structural analysis of thermostability determinants"
     example_protocol: null

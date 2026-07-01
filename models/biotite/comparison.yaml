@@ -5,7 +5,7 @@ last_updated: "2026-03-17"
 strengths:
   - "Provides two essential structural analysis utilities (RMSD computation and chain extraction) as API-accessible endpoints, enabling fully automated structure comparison pipelines without local software installation"
   - "C-alpha RMSD computation with optimal Kabsch superimposition is the gold-standard metric for quantifying structural similarity between predicted and experimental protein structures"
-  - "Multi-chain complex support for both chain extraction and paired-chain RMSD, enabling analysis of protein-protein complexes from structure prediction tools (Boltz, Chai-1)"
+  - "Multi-chain complex support for both chain extraction and paired-chain RMSD, enabling analysis of protein-protein complexes from structure prediction tools (Chai-1, RF3)"
   - "Used in 6 workflow protocols on the BioLM platform, making it one of the most-integrated utility tools for structure prediction evaluation and downstream analysis"
   - "CPU-only operation with moderate resources (2 CPUs, 8 GB RAM) -- no GPU required for structural analysis, keeping costs low"
   - "Chain extraction returns both amino acid sequence and PDB coordinate data, enabling seamless handoff to sequence-based models (ESM2) and structure-based models (ThermoMPNN)"
@@ -21,7 +21,7 @@ weaknesses:
 
 use_when:
   - "You need to evaluate predicted protein structures against experimental references by computing C-alpha RMSD after optimal superimposition"
-  - "You are benchmarking multiple structure prediction methods (Boltz, Chai-1, ESMFold, AF2 NIM) on the same target and need standardized RMSD comparisons"
+  - "You are benchmarking multiple structure prediction methods (Chai-1, ESMFold, AF2 NIM) on the same target and need standardized RMSD comparisons"
   - "You need to extract individual chains from multi-chain complex predictions for downstream analysis with sequence or structure-based models"
   - "You are building an automated structure prediction evaluation pipeline that runs without manual intervention"
   - "You need to compare conformational changes between different states of the same protein (apo vs holo, wild-type vs mutant)"
@@ -41,9 +41,6 @@ alternatives:
     when_worse: "ProDy is more complex and resource-intensive (4 CPUs, 16 GB RAM); Biotite is simpler and lighter for cases where only RMSD and chain extraction are needed"
 
 complements:
-  - model: boltz
-    workflow: "Predict multi-chain complex structure with Boltz, then use Biotite generate to extract individual chains and Biotite predict to compute RMSD against experimental reference structures for validation"
-    example_protocol: null
   - model: esm2
     workflow: "Use Biotite generate to extract chain sequences and PDB coordinates from complex structures, then analyze the extracted sequences with ESM2 encode for per-residue embeddings and variant effect scoring"
     example_protocol: null

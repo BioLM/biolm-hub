@@ -13,7 +13,7 @@ strengths:
 
 weaknesses:
   - "No germline debiasing in the training objective, so embeddings may conflate germline gene identity with functional properties -- a known bias in antibody language models that AbLang2 explicitly addresses"
-  - "Requires T4 GPU for inference (6 GB RAM per variant), which increases deployment cost compared to CPU-only models like AbLang2 and NanoBERT"
+  - "Requires T4 GPU for inference (6 GB RAM per variant), which increases deployment cost compared to CPU-only models like AbLang2"
   - "Not specialized for nanobody (VHH) sequences; the unpaired variant can process them but lacks nanobody-specific training that captures hallmark residues and extended CDR3 diversity"
   - "Two separate deployments required (paired and unpaired) to cover all use cases, doubling infrastructure if both are needed simultaneously"
   - "No predict action for per-position likelihoods (only generate for masked prediction and log_prob for global scoring) -- AbLang2 provides a richer output set"
@@ -30,11 +30,11 @@ use_when:
 
 dont_use_when:
   - "You specifically need germline-debiased representations that separate functional properties from germline gene identity -- use AbLang2 with its focal-loss training"
-  - "You are working exclusively with nanobody (VHH) sequences and need a model that captures nanobody-specific hallmark residues and extended CDR3 patterns -- use NanoBERT"
+  - "You are working exclusively with nanobody (VHH) sequences and need single-domain-specialized representations -- IgBERT's unpaired variant can process VHH but is not nanobody-specialized; use AntiFold or ImmuneFold for nanobody-specific structural analysis"
   - "You need 3D structure prediction from sequence -- use AbodyBuilder3 for Fab structures, ImmuneBuilder for antibodies/nanobodies/TCRs, or ImmuneFold for highest accuracy"
   - "You need structure-conditioned inverse folding for CDR library design -- use AntiFold, which requires a backbone structure but produces structurally compatible sequences"
   - "You need to analyze non-antibody proteins or compare antibodies with other protein families -- use ESM-2, which covers the full protein universe"
-  - "You need developability property predictions (HIC-RT, Tm, viscosity features) rather than general embeddings or sequence scoring -- use AbLEF or ProperMAB"
+  - "You need developability property predictions (viscosity, thermostability) rather than general embeddings or sequence scoring -- use DeepViscosity for antibody viscosity or TemBERTure for thermostability (Tm)"
   - "You want embedding-only analysis with the best possible T5-architecture representations -- use IgT5, the companion model from the same paper"
 
 alternatives:
