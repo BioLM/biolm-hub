@@ -25,7 +25,7 @@ def get_model_dir() -> Path:
     The runtime loader does ``torch.hub.set_dir(this)`` and fair-esm then reads
     ``<this>/checkpoints/esmfold_3B_v1.pt`` plus the ``esm2_t36_3B_UR50D`` backbone
     (and its contact-regression companion) — the exact on-disk layout the download
-    writes and caches to R2 (R2 prefix ``biolm-hub/models/esmfold/v1/``).
+    writes and caches to R2 (R2 prefix ``biolm-hub/model-weights/models/esmfold/v1/``).
     """
     return get_model_dir_util(
         base_model_slug=ESMFoldParams.base_model_slug,

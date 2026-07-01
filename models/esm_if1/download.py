@@ -22,7 +22,7 @@ def get_model_dir() -> Path:
     ``<this>/checkpoints/esm_if1_gvp4_t16_142M_UR50.pt`` — the exact on-disk layout
     the download writes and caches to R2. There is NO ``checkpoints`` sub_path on
     this dir: fair-esm creates the ``checkpoints/`` subdir itself under the hub
-    dir, so the cached/restored R2 prefix is ``biolm-hub/models/esm-if1/v1/`` (which
+    dir, so the cached/restored R2 prefix is ``biolm-hub/model-weights/models/esm-if1/v1/`` (which
     contains ``checkpoints/<id>.pt``).
     """
     return get_model_dir_util(

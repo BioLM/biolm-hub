@@ -6,11 +6,12 @@ import modal
 # The bucket defaults to the public OSS bucket and may be overridden via the
 # BIOLM_R2_BUCKET environment variable. All artifacts are namespaced under a
 # `biolm-hub/` prefix (the bucket is shared with other BioLM public assets) and
-# mirror the repo layout: weights at biolm-hub/models/<slug>/<weights_version>/,
-# golden fixtures at biolm-hub/test-data/, response cache at biolm-hub/model-cache/.
+# mirror the repo layout under uniform top-level dirs: weights at
+# biolm-hub/model-weights/models/<slug>/<weights_version>/, golden fixtures at
+# biolm-hub/test-data/models/<slug>/, response cache at biolm-hub/model-cache/models/<slug>/.
 r2_bucket_name = os.getenv("BIOLM_R2_BUCKET", "biolm-public")
-r2_model_store_dir = "biolm-hub/models"
-r2_model_cache_dir = "biolm-hub/model-cache"
+r2_model_store_dir = "biolm-hub/model-weights/models"
+r2_model_cache_dir = "biolm-hub/model-cache/models"
 r2_test_data_dir = "biolm-hub/test-data"
 
 # Public read URL for the OSS bucket — Cloudflare R2's "Public Development URL".

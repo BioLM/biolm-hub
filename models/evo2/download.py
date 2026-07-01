@@ -48,7 +48,7 @@ def download_model_assets(
     2. Fallback: Download from HuggingFace Hub and cache to R2 for future use
 
     The R2 structure preserves HF's cache directory layout (from original manual upload):
-    biolm-hub/models/evo2/v1/{variant}/models--{repo}/snapshots/{hash}/{filename}.pt
+    biolm-hub/model-weights/models/evo2/v1/{variant}/models--{repo}/snapshots/{hash}/{filename}.pt
 
     This nested structure comes from how HuggingFace Hub organizes its cache and was
     preserved when the weights were manually uploaded to R2 using get_params.py.

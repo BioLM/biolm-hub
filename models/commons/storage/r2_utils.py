@@ -668,7 +668,7 @@ class R2Utils:
         """
         Extract the R2 prefix from the target directory path.
 
-        This ensures all strategies use the same biolm-hub/models structure for R2 caching.
+        This ensures all strategies use the same biolm-hub/model-weights/models structure for R2 caching.
 
         Args:
             target_dir: Target directory path
@@ -677,11 +677,11 @@ class R2Utils:
             R2 prefix string (without leading slash)
 
         Examples:
-            >>> R2Utils.get_r2_prefix_from_target_dir(Path("/biolm-hub/models/esm2/v1"))
-            "biolm-hub/models/esm2/v1"
+            >>> R2Utils.get_r2_prefix_from_target_dir(Path("/biolm-hub/model-weights/models/esm2/v1"))
+            "biolm-hub/model-weights/models/esm2/v1"
         """
         # The local model dir is rooted at the configured store prefix (e.g.
-        # "biolm-hub/models"), so the R2 prefix mirrors it. Extract from the prefix.
+        # "biolm-hub/model-weights/models"), so the R2 prefix mirrors it. Extract from the prefix.
         target_str = str(target_dir).replace("\\", "/")
         if r2_model_store_dir in target_str:
             idx = target_str.index(r2_model_store_dir)
@@ -704,7 +704,7 @@ class R2Utils:
             True if cache exists (completion marker found)
 
         Examples:
-            >>> if R2Utils.check_r2_cache_exists("biolm-hub/models/esm2/v1"):
+            >>> if R2Utils.check_r2_cache_exists("biolm-hub/model-weights/models/esm2/v1"):
             ...     print("Cache exists")
         """
         try:
