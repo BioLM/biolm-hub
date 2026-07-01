@@ -1,5 +1,12 @@
 # REMAINING WORK — master open-items ledger
 
+> # ⛳ ON RESUME, READ `.planning/RELEASE_ROADMAP.md` FIRST.
+> That doc is the **authoritative, decision-forward resume anchor** (2026-07-01): current state, the ordered
+> release path (Phases A–E), and the ⭐ **decisions-for-you** ordered by importance with clear actions +
+> recommendations. **Milestone B is DONE** (all 38 SHIP models deploy+runtime-validated on dev; 9 bugs fixed).
+> This ledger below is HISTORICAL context — much of §1–§4 describes already-completed work; RELEASE_ROADMAP.md
+> + `MILESTONE_B_PROGRESS.md` + `MAINTAINER_LAUNCH_CHECKLIST.md` are current.
+
 > **Read this FIRST on resume.** Single source of truth for EVERYTHING not yet done. Nothing here is
 > forgotten — only deferred. Cross-references the detailed docs (`00_MASTER_PLAN`, `02_MODEL_INCLUSION_MATRIX`,
 > `03_WORKSTREAMS`, `04_TESTING_STRATEGY`, `W4_ACQUISITION_PLAN`, `W5_HARDENING_GUIDE`, `COMMONS_REQUESTS`).
