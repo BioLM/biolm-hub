@@ -477,7 +477,7 @@ def r2_then_library(
         cache_to_r2: When True (default) the library output is uploaded to R2
             after a source fetch so future deploys self-populate. Set False for
             libraries that manage their own out-of-tree cache and cannot be
-            redirected into ``target_dir`` (e.g. ``evo``/``pro1``).
+            redirected into ``target_dir`` (e.g. ``evo``).
     """
     from models.commons.storage.downloads import get_model_dir_util
 
@@ -585,12 +585,12 @@ def r2_then_archive(
     completion marker) so future deploys self-populate from R2.
 
     This replaces the hand-rolled "download zip → unzip subtree" logic that
-    several models (tempro/deepviscosity/temberture/clean) carry inline.
+    several models (deepviscosity/temberture) carry inline.
 
     Args:
         archive_url: URL of the source ``.zip`` (e.g. a GitHub archive link).
         extract_subtrees: Mapping of archive subtree prefix (relative to the
-            repo root, e.g. ``"tempro/models/"``) to a destination directory
+            repo root, e.g. ``"weights/"``) to a destination directory
             relative to ``target_dir`` (use ``""`` to extract into the root).
         strip_repo_root: When True (default) the single ``<Repo>-<ref>/`` root
             directory that GitHub archives wrap everything in is auto-detected

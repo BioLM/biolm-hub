@@ -32,7 +32,6 @@ dont_use_when:
   - "You need the highest regression accuracy for Tm prediction -- ESMStabP (R-squared 0.95) likely outperforms TemBERTure's regression mode"
   - "You need per-mutation ddG predictions to identify specific stabilizing mutations -- use ThermoMPNN or SPURS with a 3D structure"
   - "Your sequences exceed 512 residues -- use ESMStabP (1022 residue limit) or other ESM2-based approaches"
-  - "You need nanobody-specific Tm prediction -- use TEMPRO which is specifically trained on nanobody thermal stability data"
   - "You want CPU-only inference to minimize costs -- TemBERTure requires GPU while ESMStabP's Random Forest runs on CPU"
   - "You need pH-dependent or formulation-specific stability predictions -- no current model on the platform supports this, but CamSol addresses pH-dependent solubility"
 
@@ -43,9 +42,6 @@ alternatives:
   - model: thermompnn
     when_better: "ThermoMPNN provides per-mutation ddG predictions from 3D structure with PCC ~0.75 on Megascale, enabling identification of specific stabilizing mutations"
     when_worse: "ThermoMPNN requires a 3D structure, predicts relative ddG rather than absolute Tm or binary thermostability, and cannot classify proteins as thermophilic/non-thermophilic"
-  - model: tempro
-    when_better: "TEMPRO is specifically trained for nanobody Tm prediction and may capture VHH-specific stability determinants more accurately"
-    when_worse: "TEMPRO is limited to nanobodies (100-160 residues); TemBERTure handles any protein up to 512 residues with both classification and regression"
   - model: spurs
     when_better: "SPURS provides per-mutation ddG with multi-mutation epistasis, full DMS matrices, and structure-based stability prediction"
     when_worse: "SPURS requires structure and GPU; predicts relative ddG rather than absolute Tm or thermostability classification"

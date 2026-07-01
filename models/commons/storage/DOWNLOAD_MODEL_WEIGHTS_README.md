@@ -117,7 +117,7 @@ def download_model_assets(
 
 ### Models Using Modern Pattern
 
-As of now, **10 models** implement the modern pattern:
+As of now, **9 models** implement the modern pattern:
 
 | Model | Primary | Fallback | Fallback Type |
 |------|---------|----------|---------------|
@@ -130,7 +130,6 @@ As of now, **10 models** implement the modern pattern:
 | omni_dna | R2_ONLY | HUGGINGFACE_HUB | zehui127 repo |
 | immunebuilder | R2_ONLY | DIRECT_URLS | Zenodo URLs |
 | esmc | R2_ONLY | HUGGINGFACE_HUB | EvolutionaryScale repo |
-| tempro | R2_ONLY | CUSTOM | GitHub zip extraction |
 
 ## Modal Container Build Process
 
@@ -455,29 +454,6 @@ ZENODO_URLS = {
         "model_2": "https://zenodo.org/record/7258553/files/model_2",
     }
 }
-```
-
-### Custom Strategy Models (tempro)
-```python
-# TEMPRO: Downloads GitHub zip and extracts specific model variant
-def _download_tempro_zip(target_dir: Path, **kwargs) -> dict:
-    """Download TEMPRO user.zip from GitHub."""
-    model_variant = kwargs.get('model_variant', '650m')
-    # Download zip containing all model variants
-    response = requests.get(GITHUB_ZIP_URL, stream=True)
-    # ... download with progress ...
-    return {'files_downloaded': 1, 'model_variant': model_variant}
-
-def _extract_keras_model(target_dir: Path) -> None:
-    """Extract specific Keras model from zip."""
-    # Map variants to Keras files
-    KERAS_MODEL_MAPPING = {
-        "650m": "ESM_650M.keras",
-        "3b": "ESM_3B.keras",
-        "15b": "ESM_15B.keras"
-    }
-    # Extract only the needed model file
-    # Clean up zip after extraction
 ```
 
 ## Migration Guide
