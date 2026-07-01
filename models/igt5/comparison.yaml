@@ -8,7 +8,7 @@ strengths:
   - "From the same large-scale paired antibody training dataset as IgBERT (Exscientia/Kenlay et al. 2024), providing a direct architecture comparison (T5 encoder vs BERT) on identical training data"
   - "Published benchmarks show IgT5 Paired achieves 91.63% VH accuracy on paired sequence recovery, establishing it as a competitive baseline for antibody language models"
   - "HuggingFace Transformers-compatible model weights, making integration with standard ML ecosystems and transfer learning pipelines straightforward"
-  - "Permissively licensed (CC-BY-4.0 per the authoritative Zenodo deposit; permits commercial use with attribution), suitable for therapeutic antibody development"
+  - "Permissively licensed (MIT per the HuggingFace model card; permits commercial use), suitable for therapeutic antibody development"
   - "Mean-pooled or per-residue embeddings capture both sequence-level and position-level representations for flexible downstream use"
 
 weaknesses:

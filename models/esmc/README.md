@@ -4,7 +4,7 @@
 
 ## Overview
 
-ESM C (ESM Cambrian) is the latest generation of protein language models from EvolutionaryScale (2024). It provides highly effective embeddings and logits for protein sequences, surpassing older ESM2 models on many benchmarks with improved parameter efficiency. The 300M variant surpasses ESM2-650M. EvolutionaryScale also publishes a 600M variant (Cambrian Non-Commercial); it is not distributed in this catalog.
+ESM C (ESM Cambrian) is the latest generation of protein language models from EvolutionaryScale (2024). It provides highly effective embeddings and logits for protein sequences, surpassing older ESM2 models on many benchmarks with improved parameter efficiency. The 300M variant surpasses ESM2-650M. EvolutionaryScale also publishes a 600M variant (also MIT; not distributed in this catalog).
 
 Three actions are available: `encode` for extracting embeddings and logits, `predict` for masked token prediction, and `log_prob` for computing sequence fitness scores.
 
@@ -224,13 +224,13 @@ From the EvolutionaryScale blog post (2024):
 | Model | Parameters | Relative Performance |
 |-------|------------|---------------------|
 | **ESMC-300M** | 300M | Surpasses ESM2-650M |
-| ESMC-600M (upstream) | 600M | Approaches ESM2-3B (Cambrian Non-Commercial; not distributed here) |
+| ESMC-600M (upstream) | 600M | Approaches ESM2-3B (also MIT; not distributed here) |
 | ESM2-650M | 650M | Established baseline |
 | ESM2-3B | 3B | Previous best open model |
 
 ### SOTA Status
 
-ESM C represents the current state-of-the-art for open protein language models in its parameter class. The distributed 300M variant surpasses ESM2-650M. EvolutionaryScale also publishes a 600M variant (Cambrian Non-Commercial) that approaches ESM2-3B quality; it is not distributed in this catalog.
+ESM C represents the current state-of-the-art for open protein language models in its parameter class. The distributed 300M variant surpasses ESM2-650M. EvolutionaryScale also publishes a 600M variant (also MIT) that approaches ESM2-3B quality; it is not distributed in this catalog.
 
 ## Implementation Verification
 
@@ -273,9 +273,7 @@ Option A -- Numerical Reproduction: embeddings, logits, and log-probabilities fr
 
 ## License
 
-- **Model weights (ESM C)**: EvolutionaryScale Cambrian Open License Agreement ([agreement](https://www.evolutionaryscale.ai/policies/cambrian-open-license-agreement)). Requires a prominent "Built with ESM" attribution and an "ESM"-prefixed name for derivative works. See the per-model `LICENSE` file.
-- **`esm` package code**: MIT-licensed separately ([GitHub](https://github.com/evolutionaryscale/esm/blob/main/LICENSE.md)); this does not extend to the model weights.
-- **Note**: Review the Cambrian Open License Agreement before commercial use.
+- **Model weights (ESM C) and `esm` package code**: MIT License ([GitHub](https://github.com/evolutionaryscale/esm/blob/main/LICENSE.md)). The entire ESM/ESMC family was re-released under MIT by Chan Zuckerberg Biohub in May 2026, superseding the former EvolutionaryScale Cambrian Open License Agreement. No "Built with ESM" attribution or "ESM"-prefixed naming is required. See the per-model `LICENSE` file.
 
 ## References & Citations
 
@@ -299,7 +297,7 @@ Option A -- Numerical Reproduction: embeddings, logits, and log-probabilities fr
 - **Blog post**: [EvolutionaryScale ESM Cambrian](https://www.evolutionaryscale.ai/blog/esm-cambrian)
 - **Code**: [GitHub evolutionaryscale/esm](https://github.com/evolutionaryscale/esm)
 - **HuggingFace (300M)**: [EvolutionaryScale/esmc-300m-2024-12](https://huggingface.co/EvolutionaryScale/esmc-300m-2024-12)
-- **HuggingFace (600M, upstream only)**: [EvolutionaryScale/esmc-600m-2024-12](https://huggingface.co/EvolutionaryScale/esmc-600m-2024-12) _(Cambrian Non-Commercial; not distributed in this catalog)_
+- **HuggingFace (600M, upstream only)**: [EvolutionaryScale/esmc-600m-2024-12](https://huggingface.co/EvolutionaryScale/esmc-600m-2024-12) _(also MIT; not distributed in this catalog)_
 
 ---
 

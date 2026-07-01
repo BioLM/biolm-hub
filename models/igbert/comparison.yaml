@@ -9,7 +9,7 @@ strengths:
   - "Paired variant captures heavy-light chain co-evolution through joint processing with [SEP] separator, encoding the combined paratope properties that determine binding specificity"
   - "Trained on one of the largest paired antibody datasets from Exscientia, with strong published benchmarks on CDR sequence recovery, expression prediction, and pair classification tasks"
   - "Unpaired variant provides a fallback for NGS datasets where pairing information is lost, avoiding the requirement for matched heavy-light chain data"
-  - "Permissively licensed (CC-BY-4.0 per the authoritative Zenodo deposit; permits commercial use with attribution), suitable for therapeutic antibody development"
+  - "Permissively licensed (MIT per the HuggingFace model card; permits commercial use), suitable for therapeutic antibody development"
 
 weaknesses:
   - "No germline debiasing in the training objective, so embeddings may conflate germline gene identity with functional properties -- a known bias in antibody language models that AbLang2 explicitly addresses"

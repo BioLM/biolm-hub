@@ -3,20 +3,19 @@ display_name: "ESM C"
 last_updated: "2026-03-17"
 
 strengths:
-  - "Higher parameter efficiency than ESM2 — ESMC-300M surpasses ESM2-650M on multiple benchmarks with significantly fewer parameters (EvolutionaryScale's 600M variant, Cambrian Non-Commercial and not distributed here, approaches ESM2-3B quality)"
+  - "Higher parameter efficiency than ESM2 — ESMC-300M surpasses ESM2-650M on multiple benchmarks with significantly fewer parameters (EvolutionaryScale's 600M variant, also MIT and not distributed here, approaches ESM2-3B quality)"
   - "The 300M variant runs on A10G GPUs and is suitable for high-throughput screening while surpassing ESM2-650M on multiple benchmarks"
-  - "Transfer learning benchmark (Nature Scientific Reports, 2025) showed ESMC-600M (upstream; Cambrian Non-Commercial, not distributed here) offers an optimal balance between performance and efficiency, matching larger models on limited-data regimes"
+  - "Transfer learning benchmark (Nature Scientific Reports, 2025) showed ESMC-600M (upstream; also MIT, not distributed here) offers an optimal balance between performance and efficiency, matching larger models on limited-data regimes"
   - "Full action repertoire — encode (embeddings), predict (masked token prediction), and log_prob (sequence fitness scoring) — covers the same use cases as ESM2 in a single model"
   - "Trained on the latest protein databases with updated training procedures, potentially capturing more recent evolutionary patterns than ESM2 (2023 training data)"
-  - "Demonstrated strong antibody engineering results — CDR-focused fine-tuning of ESMC-600M (upstream; Cambrian Non-Commercial, not distributed here) matched or exceeded 3B-parameter antibody-specific baselines with 5x fewer parameters"
+  - "Demonstrated strong antibody engineering results — CDR-focused fine-tuning of ESMC-600M (upstream; also MIT, not distributed here) matched or exceeded 3B-parameter antibody-specific baselines with 5x fewer parameters"
   - "Supports sequences up to 2048 residues with all 20 standard amino acids plus extended characters and gaps"
   - "Applied literature shows ESMC embeddings capture emergent structural features useful for electrostatic property prediction (pKa) despite being a sequence-only model"
 
 weaknesses:
-  - "EvolutionaryScale Cambrian Open License — not MIT like ESM2; commercial use requires review of the EvolutionaryScale Cambrian Open License Agreement (including a 'Built with ESM' attribution requirement), which may restrict some deployment scenarios"
   - "Smaller ecosystem of downstream fine-tuned models compared to ESM2 — no ESMC-specific structure predictor (ESMFold uses ESM2), stability predictor, or toxicity predictor yet"
   - "Fewer independent benchmark validations than ESM2, which has been evaluated across hundreds of published studies since 2023"
-  - "Only one distributed size variant (300M) — lacks the extreme scaling range of ESM2 (8M-3B), particularly missing a CPU-friendly small variant and a maximum-quality large variant; EvolutionaryScale's 600M variant exists upstream but is Cambrian Non-Commercial and not distributed here"
+  - "Only one distributed size variant (300M) — lacks the extreme scaling range of ESM2 (8M-3B), particularly missing a CPU-friendly small variant and a maximum-quality large variant; EvolutionaryScale's 600M variant exists upstream but is also MIT and not distributed here"
   - "No structure awareness — purely sequence-based, outperformed by SaProt and ESM3 on tasks where structural information is available"
   - "Single-chain only — no explicit modeling of protein complexes or multi-chain interactions"
   - "Primary announcement is a blog post rather than a peer-reviewed paper, limiting formal methodological scrutiny"
@@ -40,7 +39,7 @@ dont_use_when:
 alternatives:
   - model: esm2
     when_better: "ESM2 has far more published benchmarks, five size variants spanning CPU-only (8M) to high-capacity (3B), MIT license with no restrictions, and an established ecosystem of downstream models (ESMFold, ESMStabP); it remains the safer default choice for production systems"
-    when_worse: "ESMC achieves comparable embedding quality with fewer parameters — the distributed 300M variant surpasses ESM2-650M, and EvolutionaryScale's upstream 600M (Cambrian Non-Commercial, not distributed here) approaches ESM2-3B quality at 5x less compute, making ESMC more cost-effective for new projects"
+    when_worse: "ESMC achieves comparable embedding quality with fewer parameters — the distributed 300M variant surpasses ESM2-650M, and EvolutionaryScale's upstream 600M (also MIT, not distributed here) approaches ESM2-3B quality at 5x less compute, making ESMC more cost-effective for new projects"
 
   - model: esm1b
     when_better: "ESM-1b is never strictly better than ESMC — ESMC improves on both architecture and training over ESM-1b's predecessor generation"

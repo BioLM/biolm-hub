@@ -5,7 +5,7 @@
 Please **do not** open a public issue for security vulnerabilities.
 
 Report them privately via GitHub's [security advisories](https://github.com/BioLM/biolm-models/security/advisories/new)
-or by email to **security@biolm.ai**. <!-- maintainers: confirm/replace this contact before launch -->
+or by email to **support+security@biolm.ai**.
 Include enough detail to reproduce the issue. We'll acknowledge your report, keep you updated on the
 fix, and credit you (if you'd like) once it's resolved.
 

@@ -20,9 +20,9 @@ from models.esmc.schema import (
 )
 
 ### Static configuration values
-# Only the 300M variant ships: the ESM C 600M weights are under EvolutionaryScale's
-# Cambrian *Non-Commercial* license, so they are excluded from this open catalog
-# (the 300M weights are Cambrian Open). See sources.yaml / LICENSE.
+# Only the 300M variant ships. The ESM C 600M weights are also MIT-licensed (the
+# whole ESM/ESMC family was re-released under MIT in 2026) but are not distributed
+# in this catalog — 300M is the chosen default. See sources.yaml / LICENSE.
 # HuggingFace repository mapping for ESMC models
 ESMC_HF_REPO_MAP = {
     ESMCModelSizes.SIZE_300M: "EvolutionaryScale/esmc-300m-2024-12",

@@ -106,7 +106,7 @@ Sources of variability:
 
 - Paired and unpaired are separate deployments (cannot mix in one request)
 - No germline debiasing (unlike AbLang2)
-- License terms not fully specified for original weights
+- MIT per the HuggingFace model card; Zenodo lists CC-BY-4.0
 - Single model size only (no size variants)
 
 ### Known Failure Modes

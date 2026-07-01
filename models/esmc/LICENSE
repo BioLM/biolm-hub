@@ -1,47 +1,34 @@
-EvolutionaryScale Cambrian Open License Agreement
+MIT License
 
-The ESM C (ESMC) 300M model weights loaded and served by this wrapper are
-licensed by EvolutionaryScale, PBC ("ES") under the EvolutionaryScale Cambrian
-Open License Agreement. The full, controlling agreement is published at:
+Copyright (c) 2026 Chan Zuckerberg Biohub, Inc.
 
-    https://www.evolutionaryscale.ai/policies/cambrian-open-license-agreement
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-The weights are NOT MIT-licensed. (The separate `esm` Python package source
-code is MIT-licensed, but that does not extend to the model weights.) Review the
-full agreement before any commercial or production use.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-Required notice
----------------
-    The ESMC 300M Model is licensed under the EvolutionaryScale Cambrian Open
-    License Agreement.
-
-"Built with ESM" attribution
-----------------------------
-You must prominently display "Built with ESM" on any application programming
-interface, model, workflow, website, user interface, blog post, about page,
-product documentation, or other media or interface that incorporates the
-Licensed Model IP.
-
-Naming of derivative works
---------------------------
-You must include "ESM" at the beginning of the title of any Derivative Works
-(without reusing the licensor's specific name together with a version number,
-model-size indication, letter, or similar designation).
-
-Notices to retain
------------------
-You must retain, in the Source form of any Derivative Works you distribute, all
-copyright, patent, trademark, and attribution notices from the Source form of
-the Licensed Model.
-
-Licensor: EvolutionaryScale, PBC.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 ---
 
-NOTE TO MAINTAINERS: This file summarizes the key obligations of the
-EvolutionaryScale Cambrian Open License Agreement (the "Built with ESM"
-attribution, the "ESM"-prefixed naming requirement, and the required notice
-line) reconstructed from the published agreement and the ESM C 300M model card.
-It is NOT the full legal text. Before this repository goes public, confirm the
-exact, current clause wording against the upstream Cambrian Open License
-Agreement and consider vendoring the complete agreement text here.
+The ESM C (ESMC) 300M and 600M model weights served by this wrapper are
+released by Chan Zuckerberg Biohub under the MIT License above. As of the
+May 2026 re-release of the ESM / ESMC family, the entire family is MIT-licensed
+for both commercial and non-commercial use; this supersedes the earlier
+EvolutionaryScale Cambrian Open License (which required "Built with ESM"
+attribution and an ESM-prefixed naming rule — no longer required under MIT).
+Redistribution and public-bucket caching are permitted; the only obligation is
+to retain the MIT copyright and permission notice above.
+
+Source: https://github.com/evolutionaryscale/esm (LICENSE.md).

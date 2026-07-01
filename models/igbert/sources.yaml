@@ -1,11 +1,12 @@
 model_slug: igbert
 display_name: IgBert
 license:
-  type: CC-BY-4.0
+  type: MIT
   url: https://zenodo.org/doi/10.5281/zenodo.10876908
-  notes: "Zenodo deposit (authoritative release linked from arXiv paper) is CC-BY-4.0.\
-    \ HuggingFace metadata says MIT but Zenodo is the canonical source. No Exscientia\
-    \ GitHub repo exists to cross-check."
+  notes: "HuggingFace model card (Exscientia/IgBert) declares \"license: mit\", which we adopt as the more permissive\
+    \ option (owner-set metadata, authoritative). A separate Zenodo deposit of the same weights (DOI\
+    \ 10.5281/zenodo.10876909) lists CC-BY-4.0. Since Exscientia is the rights-holder for both releases, we assert\
+    \ MIT and provide attribution to satisfy either license. No Exscientia GitHub repo exists to cross-check."
 molecule_types:
 - antibody
 applicable_to:

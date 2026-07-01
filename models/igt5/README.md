@@ -17,9 +17,9 @@ IgT5 is published alongside IgBERT in "Large scale paired antibody language mode
 | Training data | Large-scale antibody sequences (Exscientia) |
 | Tokenizer | T5Tokenizer (SentencePiece) |
 | Positional encoding | Relative position biases |
-| License | CC-BY-4.0 ([Zenodo](https://zenodo.org/doi/10.5281/zenodo.10876908)) |
+| License | MIT ([HuggingFace model card](https://huggingface.co/Exscientia/IgT5)) |
 
-**License note**: Zenodo deposit (the authoritative release linked from the arXiv paper) specifies CC-BY-4.0. HuggingFace metadata lists MIT, but Zenodo is the canonical source.
+**License note**: The HuggingFace model card (`Exscientia/IgT5`) declares `license: mit`, which we adopt as the more permissive option. A separate Zenodo deposit of the same weights (DOI 10.5281/zenodo.10876909) lists CC-BY-4.0; since Exscientia is the rights-holder for both releases, we assert MIT and provide attribution to satisfy either license.
 
 ## Model Variants
 
@@ -161,7 +161,7 @@ Numerical reproduction: The BioLM implementation loads official pre-trained weig
 
 ## License
 
-- **Code and weights**: CC-BY-4.0 ([Zenodo](https://zenodo.org/doi/10.5281/zenodo.10876908); HuggingFace metadata says MIT but Zenodo is the canonical source)
+- **Code and weights**: MIT ([HuggingFace model card](https://huggingface.co/Exscientia/IgT5)); a separate Zenodo deposit (DOI 10.5281/zenodo.10876909, [zenodo.org](https://zenodo.org/doi/10.5281/zenodo.10876908)) lists CC-BY-4.0 for the same weights — we adopt the more permissive MIT license per the HuggingFace card and attribute to satisfy both
 
 ## References & Citations
 

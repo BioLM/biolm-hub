@@ -90,7 +90,7 @@ ESMC works well in combination with other models on the BioLM platform:
 | Alternative | Advantage over ESMC | Disadvantage vs ESMC |
 |-------------|--------------------|--------------------|
 | ESM2-650M | Well-established, widely benchmarked | Lower parameter efficiency |
-| ESM2-3B | Larger model, more capacity | EvolutionaryScale's 600M variant (Cambrian Non-Commercial; not distributed here) approaches ESM2-3B quality; the distributed 300M variant surpasses ESM2-650M |
+| ESM2-3B | Larger model, more capacity | EvolutionaryScale's 600M variant (also MIT; not distributed here) approaches ESM2-3B quality; the distributed 300M variant surpasses ESM2-650M |
 | ESM1v | Specifically optimized for variant effects | Only variant prediction, no embeddings |
 | ProtTrans (ProtT5) | Available through HuggingFace | Older architecture, lower efficiency |
 

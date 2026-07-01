@@ -95,7 +95,7 @@ IgT5 is deterministic when seeds are set. The same input produces the same outpu
 ### Cons
 
 - Encode-only (no generate or log_prob actions)
-- CC-BY-4.0 per Zenodo (canonical); HuggingFace metadata says MIT but Zenodo takes precedence
+- MIT per the HuggingFace model card; Zenodo lists CC-BY-4.0
 - Smaller batch size (8 vs 32 for IgBERT) due to larger model footprint
 - Higher memory requirements than IgBERT (16 GB vs 6 GB)
 
