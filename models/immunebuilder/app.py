@@ -1,6 +1,8 @@
 import os
 import random
 import tempfile
+from pathlib import Path
+from typing import Any, Optional
 
 import modal
 
@@ -22,6 +24,7 @@ from models.immunebuilder.download import get_model_dir
 from models.immunebuilder.schema import (
     ImmuneBuilderModelTypes,
     ImmuneBuilderParams,
+    ImmuneBuilderPredictParams,
     ImmuneBuilderPredictRequest,
     ImmuneBuilderPredictRequestItem,
     ImmuneBuilderPredictResponse,
@@ -38,7 +41,7 @@ variant_config = parse_variant(
 model_type = variant_config["MODEL_TYPE"]
 
 
-def prebuild_immunebuilder_models():
+def prebuild_immunebuilder_models() -> None:
     """
     Pre-download ImmuneBuilder models during the build phase to avoid download
     during memory snapshot creation.
@@ -158,12 +161,17 @@ class ImmuneBuilderModel(ModelMixinSnap):
     app_username: str = modal.parameter(default="default_user")
     model_type: str = model_type
 
-    def _load_model_by_type(self, weights_dir):
+    def _load_model_by_type(self, weights_dir: Optional[Path]) -> Any:
         """Load the appropriate model based on model_type.
 
         Args:
             weights_dir: Required path to model weights directory.
                          This ensures we always use R2 cached weights when available.
+
+        Returns:
+            An ImmuneBuilder model instance (ABodyBuilder2 / NanoBodyBuilder2 /
+            TCRBuilder2); the ImmuneBuilder library ships no type stubs, so the
+            precise class can't be named here.
         """
         import time
 
@@ -204,7 +212,7 @@ class ImmuneBuilderModel(ModelMixinSnap):
         return model
 
     @modal.enter(snap=True)
-    def setup_model(self):
+    def setup_model(self) -> None:
         """Load model directly on GPU for GPU memory snapshot with deterministic behavior."""
         import time
 
@@ -305,10 +313,11 @@ class ImmuneBuilderModel(ModelMixinSnap):
         """
         inputs = self._pre_process_payload(payload)
 
-        # Set seed for reproducibility
-        self.seed_everything(payload.params.seed)
+        # Set seed for reproducibility (params is optional; fall back to defaults).
+        params = payload.params or ImmuneBuilderPredictParams()
+        self.seed_everything(params.seed)
 
-        results = []
+        results: list[ImmuneBuilderPredictResponseResult] = []
         try:
             for input in inputs:
                 with tempfile.NamedTemporaryFile(
@@ -359,7 +368,7 @@ class ImmuneBuilderModel(ModelMixinSnap):
 
         return ImmuneBuilderPredictResponse(results=results)
 
-    def seed_everything(self, seed: int = 42, deterministic: bool = True):
+    def seed_everything(self, seed: int = 42, deterministic: bool = True) -> None:
         """Set seed for reproducibility across random, NumPy, and torch.
 
         Args:

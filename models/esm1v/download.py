@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 from models.commons.core.logging import get_logger
 from models.commons.storage.download_helpers import (
@@ -17,7 +17,7 @@ from models.esm1v.schema import ESM1vParams
 logger = get_logger(__name__)
 
 
-def get_model_id(model_number: str):
+def get_model_id(model_number: str) -> Optional[str]:
     """Generate ESM1v model ID from model number (e.g. 'n1' -> 'esm1v_t33_650M_UR90S_1')."""
     if model_number == "all":
         return None  # No specific variant for "all"
@@ -57,7 +57,7 @@ def get_model_dir(model_number: str = "all") -> Path:
 def download_model_assets(
     base_model_slug: str,
     weights_version: str,
-    variant_config: Optional[dict] = None,
+    variant_config: Optional[dict[str, Any]] = None,
     sub_path: Optional[str] = None,
 ) -> Union[Path, str]:
     """Download model assets.

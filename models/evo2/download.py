@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from models.commons.core.logging import get_logger
 from models.commons.storage.acquisition import (
@@ -20,12 +20,12 @@ from models.evo2.config import (
     EVO2_HF_REPO_MAP,
     EVO2_HF_REVISION_MAP,
 )
-from models.evo2.schema import Evo2Params
+from models.evo2.schema import Evo2ModelVariants, Evo2Params
 
 logger = get_logger(__name__)
 
 
-def get_model_dir(model_variant: str):
+def get_model_dir(model_variant: str) -> Path:
 
     return get_model_dir_util(
         base_model_slug=Evo2Params.base_model_slug,
@@ -37,9 +37,9 @@ def get_model_dir(model_variant: str):
 def download_model_assets(
     base_model_slug: str,
     weights_version: str,
-    variant_config: Optional[dict] = None,
+    variant_config: Optional[dict[str, Any]] = None,
     sub_path: Optional[str] = None,
-):
+) -> str:
     """
     Download Evo2 model assets with R2 caching and HuggingFace Hub fallback.
 
@@ -62,6 +62,7 @@ def download_model_assets(
     """
     # Extract model variant from variant_config using standardized helper
     model_variant = extract_model_variant(variant_config, "MODEL_VARIANT")
+    model_variant_enum = Evo2ModelVariants(model_variant)
 
     # Get target model directory
     model_dir = get_model_dir_util(
@@ -72,9 +73,9 @@ def download_model_assets(
     )
 
     # Cache all HF-related lookups at the start to avoid duplication
-    hf_repo_id = EVO2_HF_REPO_MAP.get(model_variant)
-    hf_revision = EVO2_HF_REVISION_MAP.get(model_variant, "main")
-    expected_filename = EVO2_FILENAME_MAP.get(model_variant)
+    hf_repo_id = EVO2_HF_REPO_MAP.get(model_variant_enum)
+    hf_revision = EVO2_HF_REVISION_MAP.get(model_variant_enum, "main")
+    expected_filename = EVO2_FILENAME_MAP.get(model_variant_enum)
 
     logger.info("Evo2: Setting up model assets")
     logger.info("   Target directory: %s", model_dir)
@@ -135,6 +136,10 @@ def download_model_assets(
             f"Evo2 variant '{model_variant}' has no HF repo/filename mapping; "
             "add it to EVO2_HF_REPO_MAP and EVO2_FILENAME_MAP in config.py."
         )
+    # fallback_config is only ever built when both are truthy (see above),
+    # so this narrows their type without changing runtime behavior.
+    assert hf_repo_id is not None
+    assert expected_filename is not None
     result = download_with_fallback(primary_config, fallback_config)
 
     # ---- Final validation ----
@@ -163,7 +168,7 @@ def download_model_assets(
         elif nested_files:
             found_file = nested_files[0]  # Use first match
             # Update actual_path to point to snapshot directory for compatibility
-            actual_path = str(found_file.parent)
+            actual_path = found_file.parent
 
         if found_file:
             file_size_gb = found_file.stat().st_size / (1024**3)

@@ -95,8 +95,6 @@ class IgT5EncodeRequestItem(RequestModel):
           - If `sequence` => "unpaired"
           - Otherwise => error.
         """
-        from models.igt5.config import IgT5ModelTypes
-
         heavy, light, sequence = (
             self.heavy_chain,
             self.light_chain,

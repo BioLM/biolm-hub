@@ -26,7 +26,8 @@ def _download_pdb(pdb_id: str) -> str:
     url = f"https://files.rcsb.org/download/{pdb_id}.pdb"
     try:
         with urlopen(url, timeout=10) as response:
-            return response.read().decode("utf-8")
+            pdb_text: str = response.read().decode("utf-8")
+            return pdb_text
     except URLError as e:
         raise ValueError(f"Failed to download PDB for {pdb_id}: {e}") from e
 
@@ -46,7 +47,7 @@ fixture_generation_suite = TestSuite(
 )
 
 
-def generate():
+def generate() -> None:
     """Configures and runs the fixture generator for esm_if1 (single variant)."""
     # 1CRN: Crambin, a small (46-residue) single-chain protein — a fast, cheap
     # canonical structure for inverse folding (chain "A", matching the schema's

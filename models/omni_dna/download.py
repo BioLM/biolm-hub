@@ -1,4 +1,5 @@
-from typing import Optional
+from pathlib import Path
+from typing import Any, Optional
 
 from models.commons.core.logging import get_logger
 from models.commons.storage.download_helpers import (
@@ -7,12 +8,12 @@ from models.commons.storage.download_helpers import (
 )
 from models.commons.storage.downloads import get_model_dir_util
 from models.omni_dna.config import hf_model_name_mapping, hf_pin_revision_mapping
-from models.omni_dna.schema import OmniDNAParams
+from models.omni_dna.schema import OmniDNAModelSizes, OmniDNAParams
 
 logger = get_logger(__name__)
 
 
-def get_model_dir(model_size: str):
+def get_model_dir(model_size: str) -> Path:
 
     return get_model_dir_util(
         base_model_slug=OmniDNAParams.base_model_slug,
@@ -24,14 +25,14 @@ def get_model_dir(model_size: str):
 def download_model_assets(
     base_model_slug: str,
     weights_version: str,
-    variant_config: Optional[dict] = None,
+    variant_config: Optional[dict[str, Any]] = None,
     sub_path: Optional[str] = None,
-):
+) -> Optional[Path]:
     """Download model assets."""
     model_variant = extract_model_variant(variant_config, "MODEL_SIZE")
 
-    hf_repo_id = hf_model_name_mapping[model_variant]
-    hf_pinned_revision = hf_pin_revision_mapping[model_variant]
+    hf_repo_id = hf_model_name_mapping[OmniDNAModelSizes(model_variant)]
+    hf_pinned_revision = hf_pin_revision_mapping[OmniDNAModelSizes(model_variant)]
 
     logger.info("[Build phase] Downloading Omni-DNA '%s'", hf_repo_id)
 
@@ -57,11 +58,11 @@ def download_model_assets(
 
     if not safetensors_path.is_file():
         logger.error("Could not find model.safetensors at %s", safetensors_path)
-        return
+        return None
 
     if not config_path.is_file():
         logger.error("Could not find config.json at %s", config_path)
-        return
+        return None
 
     logger.info("[Build phase] Model files verified at %s", snapshot_dir)
     logger.info(

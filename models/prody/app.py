@@ -78,7 +78,7 @@ class ProDyModel(ModelMixin):
     app_username: str = modal.parameter(default="default_user")
 
     @modal.enter()
-    def load_model(self):
+    def load_model(self) -> None:
         """Load ProDy and set seeds for determinism."""
         import random
 

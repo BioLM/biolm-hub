@@ -1,6 +1,6 @@
 import re
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING, Optional, Union
 
 from models.boltzgen.helpers import DEFAULT_PIPELINE_STEPS
 from models.boltzgen.schema import (
@@ -10,6 +10,9 @@ from models.boltzgen.schema import (
     BoltzGenPipelineStep,
 )
 from models.commons.core.logging import get_logger
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 logger = get_logger(__name__)
 
@@ -46,7 +49,9 @@ _EXCLUDE_METRIC_COLS = {
 }
 
 
-def _find_designs_dir(output_dir: Path, steps_run: set, budget: int) -> Path:
+def _find_designs_dir(
+    output_dir: Path, steps_run: set[BoltzGenPipelineStep], budget: int
+) -> Path:
     """Locate the best available designs directory inside *output_dir*."""
     for step_guard, template in _DESIGNS_DIR_CANDIDATES:
         if step_guard is not None and step_guard not in steps_run:
@@ -62,7 +67,9 @@ def _find_designs_dir(output_dir: Path, steps_run: set, budget: int) -> Path:
     )
 
 
-def _load_metrics(output_dir: Path, steps_run: set, budget: int):
+def _load_metrics(
+    output_dir: Path, steps_run: set[BoltzGenPipelineStep], budget: int
+) -> Optional["pd.DataFrame"]:
     """Load the best available metrics CSV as a pandas DataFrame, or None."""
     if BoltzGenPipelineStep.ANALYSIS not in steps_run:
         return None
@@ -93,7 +100,9 @@ def _strip_rank_prefix(filename: str) -> str:
     return filename
 
 
-def _match_metrics_row(filename_base: str, metrics_df):
+def _match_metrics_row(
+    filename_base: str, metrics_df: "pd.DataFrame"
+) -> Optional["pd.Series"]:
     """Find the metrics row matching *filename_base*, trying three strategies."""
     if "file_name" in metrics_df.columns:
         rows = metrics_df[metrics_df["file_name"] == filename_base]
@@ -115,7 +124,7 @@ def _match_metrics_row(filename_base: str, metrics_df):
 
 
 def _extract_row_data(
-    filename: str, metrics_df
+    filename: str, metrics_df: Optional["pd.DataFrame"]
 ) -> tuple[Optional[dict[str, float]], Optional[str]]:
     """Return (metrics_dict, sequence) for a CIF file from the metrics dataframe."""
     import numpy as np
@@ -158,6 +167,11 @@ class BoltzGenPipelineMixin:
     real Modal integration tests, not mocked unit tests.
     """
 
+    # Set by the concrete Modal model class (see BoltzGenModel.setup_model);
+    # declared here so this mixin type-checks the attribute accesses below.
+    checkpoints: dict[str, str]
+    moldir: Optional[str]
+
     @staticmethod
     def _optional_configure_flags(params: BoltzGenDesignParams) -> list[str]:
         """Build optional CLI flags for ``boltzgen configure`` from *params*.
@@ -196,7 +210,9 @@ class BoltzGenPipelineMixin:
         return flags
 
     @staticmethod
-    def _append_optional_flag(flags: list[str], name: str, value) -> None:
+    def _append_optional_flag(
+        flags: list[str], name: str, value: Optional[Union[int, float, str]]
+    ) -> None:
         """Append ``[name, str(value)]`` to *flags* if *value* is truthy/not-None."""
         if value is not None:
             flags.extend([name, str(value)])
@@ -291,6 +307,7 @@ class BoltzGenPipelineMixin:
             text=True,
             bufsize=1,
         )
+        assert process.stdout is not None  # guaranteed by stdout=subprocess.PIPE
 
         output_lines = []
         try:

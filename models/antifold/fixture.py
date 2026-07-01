@@ -70,7 +70,8 @@ def _download_pdb(repo_relative_path: str) -> str:
     url = f"{_ANTIFOLD_RAW_BASE}/{repo_relative_path}"
     try:
         with urlopen(url, timeout=10) as response:
-            return response.read().decode("utf-8")
+            raw_bytes: bytes = response.read()
+            return raw_bytes.decode("utf-8")
     except URLError as e:
         raise ValueError(f"Failed to download PDB from {url}: {e}") from e
 
@@ -90,7 +91,7 @@ fixture_generation_suite = TestSuite(
 )
 
 
-def generate():
+def generate() -> None:
     """Configures and runs the fixture generator for the antifold model."""
     logger.info("Downloading canonical example PDBs from the AntiFold repo...")
     # 3HFM: HyHel-10 Fab / hen-egg-lysozyme antibody-antigen complex.

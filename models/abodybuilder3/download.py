@@ -19,7 +19,7 @@ import shutil
 import tarfile
 import tempfile
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from models.abodybuilder3.schema import AbodyBuilder3Params
 from models.commons.core.logging import get_logger
@@ -48,7 +48,7 @@ PROTT5_HF_REPO_ID = "Rostlab/prot_t5_xl_uniref50"
 PROTT5_ALLOW_PATTERNS = ["*.json", "*.model", "pytorch_model.bin"]
 
 
-def get_model_dir():
+def get_model_dir() -> Path:
 
     return get_model_dir_util(
         base_model_slug=AbodyBuilder3Params.base_model_slug,
@@ -118,7 +118,7 @@ def _download_prott5(target_dir: Path) -> None:
         shutil.rmtree(cache_meta, ignore_errors=True)
 
 
-def _download_abodybuilder3_assets(target_dir: Path, **_kwargs) -> dict:
+def _download_abodybuilder3_assets(target_dir: Path, **_kwargs: Any) -> dict[str, str]:
     """CustomSourceConfig acquisition_fn: populate the full flat asset tree."""
     target_dir.mkdir(parents=True, exist_ok=True)
     _download_checkpoints_from_zenodo(target_dir)
@@ -133,9 +133,9 @@ def _download_abodybuilder3_assets(target_dir: Path, **_kwargs) -> dict:
 def download_model_assets(
     base_model_slug: str,
     weights_version: str,
-    variant_config: Optional[dict] = None,
+    variant_config: Optional[dict[str, str]] = None,
     sub_path: Optional[str] = None,
-):
+) -> Path:
     """Download AbodyBuilder3 assets: R2 primary, Zenodo + HuggingFace fallback."""
 
     model_dir = get_model_dir_util(

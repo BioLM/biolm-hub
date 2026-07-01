@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from functools import partial
 from typing import Annotated, Optional
 
@@ -39,7 +40,7 @@ class E1ModelSizes(EnhancedStringEnum):
 def _validate_context_list(
     v: list[str] | None,
     *,
-    residue_validator,
+    residue_validator: Callable[[str], str],
     forbid_mask: bool = False,
 ) -> list[str] | None:
     """Shared validation logic for all context_sequences field_validators.

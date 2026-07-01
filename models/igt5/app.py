@@ -79,7 +79,7 @@ class IgT5Model(ModelMixinSnap):
     model_type: str = model_type
 
     @modal.enter(snap=True)
-    def setup_model(self):
+    def setup_model(self) -> None:
         """Load model directly on GPU for GPU memory snapshot with deterministic behavior."""
         import torch
         from transformers import T5EncoderModel, T5Tokenizer
@@ -94,7 +94,7 @@ class IgT5Model(ModelMixinSnap):
         self.torch = torch
         self.device = get_torch_device()
         self.model_dir = get_model_dir(model_type)
-        self.model_id = model_id_mapping[self.model_type]
+        self.model_id = model_id_mapping[IgT5ModelTypes(self.model_type)]
 
         logger.info(
             "Loading IgT5 model '%s' directly on %s from: %s",
@@ -138,13 +138,23 @@ class IgT5Model(ModelMixinSnap):
                 f"Mismatch detected: expected '{self.model_type}' but got '{request_kind}' in request."
             )
 
+        input_sequences: list[str]
         if self.model_type == IgT5ModelTypes.PAIRED:
-            input_sequences = [
-                f"{' '.join(item.heavy_chain)} </s> {' '.join(item.light_chain)}"
-                for item in payload.items
-            ]
+            input_sequences = []
+            for item in payload.items:
+                # Guaranteed non-None for paired items by
+                # IgT5EncodeRequestItem.validate_and_infer_type (the _kind check
+                # above already confirms every item matches this variant).
+                assert item.heavy_chain is not None and item.light_chain is not None
+                input_sequences.append(
+                    f"{' '.join(item.heavy_chain)} </s> {' '.join(item.light_chain)}"
+                )
         else:
-            input_sequences = [" ".join(item.sequence) for item in payload.items]
+            input_sequences = []
+            for item in payload.items:
+                # Guaranteed non-None for unpaired items; see comment above.
+                assert item.sequence is not None
+                input_sequences.append(" ".join(item.sequence))
 
         # Run encoding process
         try:

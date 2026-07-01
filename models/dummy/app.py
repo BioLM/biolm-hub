@@ -25,7 +25,7 @@ logger = get_logger(__name__)
 DEFAULT_DATA = {"hello": "world"}
 
 
-def initialize_data():
+def initialize_data() -> None:
     data_file_path = "/dummy_test_data.json"
     if not os.path.exists(data_file_path):
         with open(data_file_path, "w") as f:
@@ -66,7 +66,7 @@ class DummyModel(ModelMixinSnap):
     data_file_path = "/dummy_test_data.json"
 
     @modal.enter(snap=True)
-    def setup_model(self):
+    def setup_model(self) -> None:
         """
         Load the data from the data file into memory for GPU memory snapshot.
         """

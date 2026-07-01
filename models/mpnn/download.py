@@ -1,10 +1,11 @@
-from typing import Optional
+from pathlib import Path
+from typing import Any, Optional
 
 from models.commons.core.logging import get_logger
 from models.commons.storage import r2_then_urls
 from models.commons.storage.downloads import get_model_dir_util
-from models.mpnn.config import MPNNModelCheckpoints, MPNNModelTypes
-from models.mpnn.schema import MPNNParams
+from models.mpnn.config import MPNNModelCheckpoints
+from models.mpnn.schema import MPNNModelTypes, MPNNParams
 
 logger = get_logger(__name__)
 
@@ -30,7 +31,7 @@ MPNN_CHECKPOINT_URLS = {
 }
 
 
-def get_model_dir():
+def get_model_dir() -> Path:
 
     return get_model_dir_util(
         base_model_slug=MPNNParams.base_model_slug,
@@ -41,9 +42,9 @@ def get_model_dir():
 def download_model_assets(
     base_model_slug: str,
     weights_version: str,
-    variant_config: Optional[dict] = None,
+    variant_config: Optional[dict[str, Any]] = None,
     sub_path: Optional[str] = None,
-):
+) -> Path:
     """Download all MPNN checkpoints: R2 cache first, else the source URLs.
 
     On an R2 miss the six LigandMPNN-family checkpoints are fetched from IPD and

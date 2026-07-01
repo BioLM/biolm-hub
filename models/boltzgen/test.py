@@ -23,6 +23,8 @@ Run
     pytest models/boltzgen/test.py -m deployment --no-cov -v -s      # deployment
 """
 
+from typing import Any, Optional
+
 from models.boltzgen.config import MODEL_FAMILY
 from models.boltzgen.schema import (
     BoltzGenDesignParams,
@@ -41,7 +43,7 @@ from models.commons.testing.runner import generate_tests_from_suite
 
 # Try to import gemmi for CIF validation (only available in Modal container)
 try:
-    import gemmi  # type: ignore[import-not-found]
+    import gemmi
 
     HAS_GEMMI = True
 except ImportError:
@@ -53,7 +55,9 @@ except ImportError:
 # ---------------------------------------------------------------------------
 
 
-def validate_boltzgen_response(actual, expected=None):
+def validate_boltzgen_response(
+    actual: Any, expected: Optional[dict[str, Any]] = None
+) -> None:
     """Full-pipeline validator: requires CIF, sequence, AND metrics."""
     response = BoltzGenDesignResponse.model_validate(actual)
     assert response.results, "No results returned in response"
@@ -102,7 +106,9 @@ def validate_boltzgen_response(actual, expected=None):
     print(f"✅ Validated {len(response.results)} result(s)")
 
 
-def validate_boltzgen_fast_response(actual, expected=None):
+def validate_boltzgen_fast_response(
+    actual: Any, expected: Optional[dict[str, Any]] = None
+) -> None:
     """Fast-test validator: only requires CIF (no metrics, sequence optional).
 
     Used for design-only runs where analysis/filtering steps are skipped.

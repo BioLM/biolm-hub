@@ -3,8 +3,9 @@ from __future__ import annotations
 import os
 import sys
 import tempfile
+from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:  # pragma: no cover - used for type hints only
     import torch
@@ -80,33 +81,35 @@ class SpursRunner:
 
         # Lightning 1.9 moved LightningLoggerBase; re-create symbol if missing
         try:
-            from pytorch_lightning.loggers import (
-                LightningLoggerBase,  # type: ignore # noqa: F401
-            )
+            from pytorch_lightning.loggers import LightningLoggerBase  # noqa: F401
         except ImportError:
             try:
                 from pytorch_lightning.loggers.logger import Logger
             except ModuleNotFoundError:
-                Logger = None  # type: ignore
+                Logger = None
             else:
                 import pytorch_lightning.loggers as pl_loggers
 
                 pl_loggers.LightningLoggerBase = Logger
                 module = sys.modules.get("pytorch_lightning.loggers")
                 if module is not None:
-                    module.LightningLoggerBase = Logger
+                    # `pytorch_lightning.loggers` typeshed stub has no such
+                    # attribute; this is a runtime-only compat shim.
+                    setattr(module, "LightningLoggerBase", Logger)  # noqa: B010
 
         if not hasattr(pl_imports, "_FAIRSCALE_AVAILABLE"):
-            module_available = getattr(pl_imports, "_module_available", None)
-            if module_available is not None:
-                is_available = module_available("fairscale")
+            # `_module_available` may not exist on this pytorch_lightning
+            # version; the stub doesn't declare it, so this is untyped.
+            legacy_check: Any = getattr(pl_imports, "_module_available", None)
+            if legacy_check is not None:
+                is_available = bool(legacy_check("fairscale"))
             else:
                 try:
                     from lightning_utilities.core.imports import module_available
                 except ModuleNotFoundError:
                     is_available = False
                 else:
-                    is_available = module_available("fairscale")
+                    is_available = bool(module_available("fairscale"))
 
             pl_imports._FAIRSCALE_AVAILABLE = is_available
 
@@ -119,7 +122,7 @@ class SpursRunner:
         torch.hub.set_dir(str(self.esm2_cache_path))
 
     def _load_model(
-        self, model_dir: Path, model_cls
+        self, model_dir: Path, model_cls: Callable[[Any], Any]
     ) -> tuple[OmegaConf, torch.nn.Module]:
         OmegaConf = self._OmegaConf
         torch = self._torch
@@ -211,13 +214,15 @@ class SpursRunner:
             if structure_path.exists():
                 structure_path.unlink(missing_ok=True)
 
-    def _single_model_forward(self, parsed_batch: dict) -> torch.Tensor:
+    def _single_model_forward(self, parsed_batch: dict[str, object]) -> torch.Tensor:
         torch = self._torch
         with torch.no_grad():
             ddg_matrix = self.single_model(parsed_batch, return_logist=True)
         return ddg_matrix.cpu()
 
-    def _multi_model_forward(self, parsed_batch: dict, mutations: list[str]) -> float:
+    def _multi_model_forward(
+        self, parsed_batch: dict[str, object], mutations: list[str]
+    ) -> float:
         torch = self._torch
         mut_ids, append_tensors = self._parse_pdb_for_mutation([mutations])
         parsed_batch = parsed_batch.copy()
@@ -249,7 +254,9 @@ class SpursRunner:
         return float(value)
 
     @staticmethod
-    def _format_ddg_matrix(ddg_matrix, sequence: str) -> dict[str, object]:
+    def _format_ddg_matrix(
+        ddg_matrix: torch.Tensor, sequence: str
+    ) -> dict[str, object]:
         return {
             "values": ddg_matrix.tolist(),
             "residue_axis": list(sequence),

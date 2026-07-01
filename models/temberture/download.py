@@ -1,9 +1,10 @@
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from models.commons.core.logging import get_logger
 from models.commons.storage.acquisition import (
     AcquisitionConfig,
+    AcquisitionResult,
     AcquisitionStrategy,
     CacheConfig,
     CustomSourceConfig,
@@ -22,13 +23,12 @@ from models.commons.storage.downloads import (
     get_model_dir_util,
 )
 from models.temberture.config import (
-    TemBERTureModelTypes,
     hf_pinned_revision,
     hf_repo_id,
     temberture_github_commit,
     temberture_github_repo,
 )
-from models.temberture.schema import TemBERTureParams
+from models.temberture.schema import TemBERTureModelTypes, TemBERTureParams
 
 logger = get_logger(__name__)
 
@@ -55,7 +55,7 @@ def get_model_dir() -> Path:
 
 def _download_shared_base_model(
     base_model_slug: str, weights_version: str, base_model_dir: Path
-):
+) -> AcquisitionResult:
     """Download shared ProtBERT base model."""
 
     # Build the deterministic snapshot path for validation
@@ -125,7 +125,7 @@ def _download_shared_base_model(
     return result
 
 
-def _download_temberture_archive(target_dir: Path, **_kwargs) -> dict:
+def _download_temberture_archive(target_dir: Path, **_kwargs: Any) -> dict[str, Any]:
     """
     Download TemBERTure GitHub archive to target directory.
 
@@ -148,7 +148,7 @@ def _download_temberture_archive(target_dir: Path, **_kwargs) -> dict:
     )
 
     # Use the shared download_archive helper
-    metadata = download_archive(zip_url, zip_path)
+    metadata: dict[str, Any] = download_archive(zip_url, zip_path)
     metadata["source"] = "github_archive"
     return metadata
 
@@ -188,7 +188,7 @@ def _extract_temberture_adapters(
 
 def _download_variant_adapters(
     base_model_slug: str, weights_version: str, model_type: str
-):
+) -> AcquisitionResult:
     """Download variant-specific TemBERTure adapters to shared location with filtering."""
 
     shared_adapter_dir = get_model_dir()
@@ -196,6 +196,11 @@ def _download_variant_adapters(
         adapter_subdir = "temBERTure_CLS"
     elif model_type == TemBERTureModelTypes.REGRESSION:
         adapter_subdir = "temBERTure_TM"
+    else:
+        raise ValueError(
+            f"Unknown TemBERTure model_type '{model_type}'; expected "
+            f"'{TemBERTureModelTypes.CLASSIFIER}' or '{TemBERTureModelTypes.REGRESSION}'."
+        )
 
     def filter_func(key: str) -> bool:
         return adapter_subdir in key
@@ -241,9 +246,9 @@ def _download_variant_adapters(
 def download_model_assets(
     base_model_slug: str,
     weights_version: str,
-    variant_config: Optional[dict] = None,
+    variant_config: Optional[dict[str, Any]] = None,
     sub_path: Optional[str] = None,
-):
+) -> Path:
     """Download model assets with shared base model and variant-specific adapters."""
 
     # Extract MODEL_TYPE from variant_config

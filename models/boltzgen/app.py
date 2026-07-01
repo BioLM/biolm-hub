@@ -1,6 +1,7 @@
 import tempfile
 import warnings
 from pathlib import Path
+from typing import Any, Optional
 
 import modal
 
@@ -16,10 +17,15 @@ from models.boltzgen.helpers import (
 )
 from models.boltzgen.pipeline import BoltzGenPipelineMixin
 from models.boltzgen.schema import (
+    BoltzGenConstraint,
     BoltzGenDesignParams,
     BoltzGenDesignRequest,
+    BoltzGenDesignRequestItem,
     BoltzGenDesignResponse,
+    BoltzGenFileEntity,
+    BoltzGenLigandEntity,
     BoltzGenParams,
+    BoltzGenProteinEntity,
 )
 from models.commons.core.decorator import modal_endpoint
 from models.commons.core.error import UserError
@@ -151,7 +157,7 @@ class BoltzGenModel(BoltzGenPipelineMixin, ModelMixinSnap):
     app_username: str = modal.parameter(default="default_user")
 
     @modal.enter(snap=True)
-    def setup_model(self):  # noqa: C901
+    def setup_model(self) -> None:  # noqa: C901
         """Setup BoltzGen model and environment."""
         import sys
 
@@ -291,10 +297,13 @@ class BoltzGenModel(BoltzGenPipelineMixin, ModelMixinSnap):
             return self._run_boltzgen_pipeline(yaml_file, output_dir, params)
 
     def _convert_to_yaml_spec(
-        self, item, params: BoltzGenDesignParams, tmp_path: Path
-    ) -> dict:
+        self,
+        item: BoltzGenDesignRequestItem,
+        params: BoltzGenDesignParams,
+        tmp_path: Path,
+    ) -> dict[str, Any]:
         """Convert Pydantic request item to YAML format expected by BoltzGen."""
-        yaml_spec: dict = {"entities": []}
+        yaml_spec: dict[str, Any] = {"entities": []}
 
         for entity in item.entities:
             if entity.protein:
@@ -322,8 +331,8 @@ class BoltzGenModel(BoltzGenPipelineMixin, ModelMixinSnap):
     # -- entity converters --
 
     @staticmethod
-    def _convert_protein(p) -> dict:
-        spec: dict = {"id": p.id, "sequence": p.sequence}
+    def _convert_protein(p: BoltzGenProteinEntity) -> dict[str, Any]:
+        spec: dict[str, Any] = {"id": p.id, "sequence": p.sequence}
         if p.cyclic:
             spec["cyclic"] = True
         if p.secondary_structure:
@@ -335,8 +344,8 @@ class BoltzGenModel(BoltzGenPipelineMixin, ModelMixinSnap):
         return {"protein": spec}
 
     @staticmethod
-    def _convert_ligand(lig) -> dict:
-        spec: dict = {"id": lig.id}
+    def _convert_ligand(lig: BoltzGenLigandEntity) -> dict[str, Any]:
+        spec: dict[str, Any] = {"id": lig.id}
         if lig.ccd:
             spec["ccd"] = lig.ccd
         if lig.smiles:
@@ -346,17 +355,21 @@ class BoltzGenModel(BoltzGenPipelineMixin, ModelMixinSnap):
         return {"ligand": spec}
 
     @staticmethod
-    def _convert_file(f, tmp_path: Path) -> dict:  # noqa: C901
+    def _convert_file(  # noqa: C901
+        f: BoltzGenFileEntity, tmp_path: Path
+    ) -> dict[str, Any]:
         # Write structure content to a temp file
         file_ext = ".cif" if f.cif else ".pdb"
         file_content = f.cif or f.pdb
+        # validate_file_provided guarantees exactly one of cif/pdb is set.
+        assert file_content is not None
         temp_file = tempfile.NamedTemporaryFile(
             mode="w", suffix=file_ext, delete=False, dir=str(tmp_path)
         )
         temp_file.write(file_content)
         temp_file.close()
 
-        spec: dict = {"path": Path(temp_file.name).name}
+        spec: dict[str, Any] = {"path": Path(temp_file.name).name}
 
         if f.include:
             spec["include"] = convert_chain_selectors(f.include)
@@ -395,8 +408,8 @@ class BoltzGenModel(BoltzGenPipelineMixin, ModelMixinSnap):
     # -- constraint converter --
 
     @staticmethod
-    def _convert_constraint(c) -> dict:
-        d: dict = {}
+    def _convert_constraint(c: BoltzGenConstraint) -> dict[str, Any]:
+        d: dict[str, Any] = {}
         if c.bond:
             d["bond"] = {"atom1": c.bond.atom1, "atom2": c.bond.atom2}
         if c.contact:
@@ -406,12 +419,15 @@ class BoltzGenModel(BoltzGenPipelineMixin, ModelMixinSnap):
                 "max_distance": c.contact.max_distance,
             }
         if c.pocket:
-            pocket: dict = {"binder": c.pocket.binder, "contacts": c.pocket.contacts}
+            pocket: dict[str, Any] = {
+                "binder": c.pocket.binder,
+                "contacts": c.pocket.contacts,
+            }
             if c.pocket.max_distance:
                 pocket["max_distance"] = c.pocket.max_distance
             d["pocket"] = pocket
         if c.total_len:
-            tl: dict = {}
+            tl: dict[str, Any] = {}
             if c.total_len.min is not None:
                 tl["min"] = c.total_len.min
             if c.total_len.max is not None:
@@ -422,7 +438,9 @@ class BoltzGenModel(BoltzGenPipelineMixin, ModelMixinSnap):
     # -- reset_res_index resolution --
 
     @staticmethod
-    def _resolve_reset_res_index(item) -> list[dict] | None:
+    def _resolve_reset_res_index(
+        item: BoltzGenDesignRequestItem,
+    ) -> Optional[list[dict[str, Any]]]:
         """Determine reset_res_index from explicit settings or scaffold redesign heuristic."""
         # 1. Explicit top-level setting
         if item.reset_res_index:
@@ -441,8 +459,8 @@ class BoltzGenModel(BoltzGenPipelineMixin, ModelMixinSnap):
             and item.entities[0].file
             and item.entities[0].file.design
         ):
-            seen: set = set()
-            result = []
+            seen: set[str] = set()
+            result: list[dict[str, Any]] = []
             for ds in item.entities[0].file.design:
                 if isinstance(ds.chain, str):
                     chain_ids = [ds.chain]

@@ -121,23 +121,23 @@ class Evo2LogProbRequest(RequestModel):
 
 class Evo2GenerateRequestParams(RequestModel):
     max_new_tokens: int = Field(
-        100,
+        default=100,
         ge=1,
         le=Evo2Params.max_sequence_len,
         description="Maximum number of new tokens to generate.",
     )
     temperature: float = Field(
-        1.0,
+        default=1.0,
         ge=0.0,
         description="Sampling temperature; higher values increase diversity.",
     )
     top_k: int = Field(
-        4,
+        default=4,
         ge=1,
         description="Top-k sampling cutoff; only the k most likely tokens are sampled.",
     )
     top_p: float = Field(
-        1.0, ge=0.0, le=1.0, description="Nucleus (top-p) sampling threshold."
+        default=1.0, ge=0.0, le=1.0, description="Nucleus (top-p) sampling threshold."
     )
     seed: Optional[int] = Field(
         default=None, description="Random seed for reproducible sampling."

@@ -34,7 +34,7 @@ from models.thermompnn.schema import (
 logger = get_logger(__name__)
 
 # No variant config needed - single model
-variant_config = {}
+variant_config: dict[str, str] = {}
 
 # Build Modal container image
 image = modal.Image.micromamba(python_version="3.10")
@@ -123,7 +123,7 @@ class ThermoMPNNModel(ModelMixinSnap):
     app_username: str = modal.parameter(default="default_user")
 
     @modal.enter(snap=True)
-    def load_model(self):
+    def load_model(self) -> None:
         """
         Loads the ThermoMPNN model on CPU for memory snapshot.
 
@@ -158,7 +158,7 @@ class ThermoMPNNModel(ModelMixinSnap):
         logger.info("Completed CPU load of ThermoMPNN model for memory snapshot")
 
     @modal.enter(snap=False)
-    def setup_model(self):
+    def setup_model(self) -> None:
         """
         Transfers model to GPU after restoring from memory snapshot.
         """
@@ -188,7 +188,7 @@ class ThermoMPNNModel(ModelMixinSnap):
         Returns a list of predictions with mutation string, position, wildtype,
         mutant amino acid, and predicted ddG in kcal/mol.
         """
-        from models.thermompnn.util import predict  # type: ignore
+        from models.thermompnn.util import predict
 
         try:
             # Validate params

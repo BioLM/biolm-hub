@@ -1,11 +1,11 @@
 import io
 from typing import Any, Optional, Union
 
-import biotite  # type: ignore
-import esm  # type: ignore
+import biotite
+import esm
 import numpy as np
 import torch
-from esm.inverse_folding.gvp_transformer import GVPTransformerModel  # type: ignore
+from esm.inverse_folding.gvp_transformer import GVPTransformerModel
 
 from models.commons.core.error import ResourceNotFoundError, ValidationError400
 from models.commons.core.logging import get_logger
@@ -93,7 +93,7 @@ def _load_structure_from_string(
     return structure
 
 
-def _load_coords(pdb_string: str, chain: Optional[str]) -> tuple[np.ndarray, str]:  # type: ignore
+def _load_coords(pdb_string: str, chain: Optional[str]) -> tuple[np.ndarray, str]:
     """
     Args:
         fpath: filepath to either pdb or cif file

@@ -1,3 +1,5 @@
+from typing import Any, Optional
+
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
 from models.commons.testing.runner import generate_tests_from_suite
@@ -5,7 +7,9 @@ from models.dummy.config import MODEL_FAMILY
 from models.dummy.schema import DummySvcRequest
 
 
-def _validate_dummy_predict(actual_output: dict, _expected_output: dict = None):
+def _validate_dummy_predict(
+    actual_output: Any, _expected_output: Optional[dict[str, Any]] = None
+) -> None:
     """Custom validator for dummy model output."""
     expected_output = {
         "results": [

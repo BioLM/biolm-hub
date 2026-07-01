@@ -168,7 +168,7 @@ fixture_generation_suite = TestSuite(
 )
 
 
-def generate():
+def generate() -> None:
     """Generate fixtures for RosettaFold3 model."""
     generator = FixtureGenerator(fixture_generation_suite)
     generator.generate()

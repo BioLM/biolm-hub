@@ -144,10 +144,10 @@ class ImmuneFoldPredictRequestItem(RequestModel):
     )
 
     # Private attribute to store the inferred "kind"
-    _kind: Optional[str] = PrivateAttr()
+    _kind: Optional[ImmuneFoldModelTypes] = PrivateAttr()
 
     @model_validator(mode="after")
-    def validate_and_infer_type(cls, instance):
+    def validate_and_infer_type(self) -> "ImmuneFoldPredictRequestItem":
         """
         Infer request type and ensure valid field combos:
           - If `heavy_chain` (and optionally `light_chain`) => "antibody"
@@ -155,13 +155,13 @@ class ImmuneFoldPredictRequestItem(RequestModel):
           - Otherwise => error.
         """
         H, L, A, B, M, P, pdb = (
-            instance.heavy_chain,
-            instance.light_chain,
-            instance.tcr_alpha,
-            instance.tcr_beta,
-            instance.mhc,
-            instance.peptide,
-            instance.pdb,
+            self.heavy_chain,
+            self.light_chain,
+            self.tcr_alpha,
+            self.tcr_beta,
+            self.mhc,
+            self.peptide,
+            self.pdb,
         )
         if pdb and any([A, B, P, M]):
             raise ValueError(
@@ -179,23 +179,17 @@ class ImmuneFoldPredictRequestItem(RequestModel):
                 "for single-domain VHH antibodies use just `heavy_chain`."
             )
         if H:
-            instance._kind = ImmuneFoldModelTypes.ANTIBODY
+            self._kind = ImmuneFoldModelTypes.ANTIBODY
             # Validate antibody chain lengths (inline - no separate method needed)
             issues: list[str] = []
-            if (
-                instance.heavy_chain
-                and len(instance.heavy_chain) < ANTIBODY_MIN_HEAVY_LEN
-            ):
+            if self.heavy_chain and len(self.heavy_chain) < ANTIBODY_MIN_HEAVY_LEN:
                 issues.append(
-                    f"heavy_chain length {len(instance.heavy_chain)} is below the minimum "
+                    f"heavy_chain length {len(self.heavy_chain)} is below the minimum "
                     f"{ANTIBODY_MIN_HEAVY_LEN} residues required for antibody variable domains."
                 )
-            if (
-                instance.light_chain
-                and len(instance.light_chain) < ANTIBODY_MIN_LIGHT_LEN
-            ):
+            if self.light_chain and len(self.light_chain) < ANTIBODY_MIN_LIGHT_LEN:
                 issues.append(
-                    f"light_chain length {len(instance.light_chain)} is below the minimum "
+                    f"light_chain length {len(self.light_chain)} is below the minimum "
                     f"{ANTIBODY_MIN_LIGHT_LEN} residues required for antibody variable domains."
                 )
             if issues:
@@ -204,14 +198,14 @@ class ImmuneFoldPredictRequestItem(RequestModel):
                     "Use the TCR endpoint if you intended TCR chains."
                 )
         elif all([A, B, P, M]):
-            instance._kind = ImmuneFoldModelTypes.TCR
+            self._kind = ImmuneFoldModelTypes.TCR
         else:
             raise ValueError(
                 "Must provide either `heavy_chain` (with optional `light_chain`) OR "
                 "all of (`tcr_beta`, `tcr_alpha`, `peptide`, `mhc`), but not both."
             )
 
-        return instance
+        return self
 
 
 class ImmuneFoldPredictRequest(RequestModel):

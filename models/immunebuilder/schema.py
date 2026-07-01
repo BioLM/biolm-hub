@@ -106,7 +106,7 @@ class ImmuneBuilderPredictRequestItem(RequestModel):
     _kind2: Optional[str] = PrivateAttr()
 
     @model_validator(mode="after")
-    def validate_and_infer_type(cls, instance):
+    def validate_and_infer_type(self) -> "ImmuneBuilderPredictRequestItem":
         """
         Infer request type and ensure valid field combos:
           - If `heavy_chain` and `light_chain` => "abody"
@@ -115,10 +115,10 @@ class ImmuneBuilderPredictRequestItem(RequestModel):
           - Otherwise => error.
         """
         H, L, A, B = (
-            instance.heavy_chain,
-            instance.light_chain,
-            instance.tcr_alpha,
-            instance.tcr_beta,
+            self.heavy_chain,
+            self.light_chain,
+            self.tcr_alpha,
+            self.tcr_beta,
         )
 
         if (A or B) and (H or L):
@@ -128,19 +128,19 @@ class ImmuneBuilderPredictRequestItem(RequestModel):
             )
 
         if H and L:
-            instance._kind = ImmuneBuilderModelTypes.ABODYBUILDER2
+            self._kind = ImmuneBuilderModelTypes.ABODYBUILDER2
         elif H and not L:
-            instance._kind = ImmuneBuilderModelTypes.NANOBODYBUILDER2
+            self._kind = ImmuneBuilderModelTypes.NANOBODYBUILDER2
         elif A and B:
-            instance._kind = ImmuneBuilderModelTypes.TCRBUILDER2
-            instance._kind2 = ImmuneBuilderModelTypes.TCRBUILDER2PLUS
+            self._kind = ImmuneBuilderModelTypes.TCRBUILDER2
+            self._kind2 = ImmuneBuilderModelTypes.TCRBUILDER2PLUS
         else:
             raise ValueError(
                 "Must provide either ('heavy_chain', 'light_chain') OR "
                 "('heavy_chain' only) OR ('tcr_alpha', 'tcr_beta')."
             )
 
-        return instance
+        return self
 
 
 class ImmuneBuilderPredictRequest(RequestModel):

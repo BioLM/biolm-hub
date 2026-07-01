@@ -7,6 +7,8 @@ scope. The marker definitions mirror that config; ``addinivalue_line`` is
 idempotent, so registering them here as well is harmless when both apply.
 """
 
+import pytest
+
 MARKERS = {
     "integration": "full local app run against Modal (slower; needs a Modal env + R2)",
     "deployment": "runs against a live deployed endpoint",
@@ -17,7 +19,7 @@ MARKERS = {
 }
 
 
-def pytest_configure(config):
+def pytest_configure(config: pytest.Config) -> None:
     """Register the BioLM model-test markers for single-file pytest runs."""
     for name, description in MARKERS.items():
         config.addinivalue_line("markers", f"{name}: {description}")

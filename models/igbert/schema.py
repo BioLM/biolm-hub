@@ -91,7 +91,7 @@ class IgBertEncodeRequestItem(RequestModel):
     _kind: Optional[str] = PrivateAttr()
 
     @model_validator(mode="after")
-    def validate_and_infer_type(cls, instance):
+    def validate_and_infer_type(self) -> "IgBertEncodeRequestItem":
         """
         Infer request type and ensure valid field combos:
           - If `heavy` and `light` => "paired"
@@ -99,9 +99,9 @@ class IgBertEncodeRequestItem(RequestModel):
           - Otherwise => error.
         """
         heavy, light, sequence = (
-            instance.heavy_chain,
-            instance.light_chain,
-            instance.sequence,
+            self.heavy_chain,
+            self.light_chain,
+            self.sequence,
         )
 
         if sequence and (heavy or light):
@@ -110,19 +110,17 @@ class IgBertEncodeRequestItem(RequestModel):
                 "Pick one."
             )
 
-        from models.igbert.config import IgBertModelTypes
-
         if heavy and light:
-            instance._kind = IgBertModelTypes.PAIRED
+            self._kind = IgBertModelTypes.PAIRED
         elif sequence:
-            instance._kind = IgBertModelTypes.UNPAIRED
+            self._kind = IgBertModelTypes.UNPAIRED
         else:
             raise ValueError(
                 "Must provide either (`heavy_chain`, `light_chain`) OR `sequence`, "
                 "but not both."
             )
 
-        return instance
+        return self
 
 
 class IgBertEncodeRequest(RequestModel):
@@ -172,24 +170,23 @@ class IgBertGenerateRequestItem(RequestModel):
     _kind: Optional[str] = PrivateAttr()
 
     @model_validator(mode="after")
-    def validate_and_infer_type(cls, instance):
+    def validate_and_infer_type(self) -> "IgBertGenerateRequestItem":
         # Still do the same logic to detect paired vs. unpaired
         heavy, light, sequence = (
-            instance.heavy_chain,
-            instance.light_chain,
-            instance.sequence,
+            self.heavy_chain,
+            self.light_chain,
+            self.sequence,
         )
         if sequence and (heavy or light):
             raise ValueError(
                 "Cannot provide both `sequence` and (`heavy_chain`, `light_chain`)."
             )
-        from models.igbert.config import IgBertModelTypes
 
         if heavy and light:
-            instance._kind = IgBertModelTypes.PAIRED
+            self._kind = IgBertModelTypes.PAIRED
             sequence_to_validate = heavy + light
         elif sequence:
-            instance._kind = IgBertModelTypes.UNPAIRED
+            self._kind = IgBertModelTypes.UNPAIRED
             sequence_to_validate = sequence
         else:
             raise ValueError(
@@ -199,7 +196,7 @@ class IgBertGenerateRequestItem(RequestModel):
         SingleOrMoreOccurrencesOf(token="*")(sequence_to_validate)
         AAUnambiguousPlusExtra(extra=["*"])(sequence_to_validate)
 
-        return instance
+        return self
 
 
 class IgBertGenerateRequest(RequestModel):
@@ -223,9 +220,11 @@ class IgBertLogProbRequest(RequestModel):
 
 class IgBertEncodeResponseResult(ResponseModel):
     model_config = ConfigDict(
-        exclude_unset=True,
-        exclude_none=True,
         extra="forbid",
+        json_schema_extra={
+            "exclude_unset": True,  # Excludes unset (None) fields from the output
+            "exclude_none": True,  # Ensures that None fields do not appear in JSON
+        },
     )
 
     embeddings: Optional[list[float]] = Field(

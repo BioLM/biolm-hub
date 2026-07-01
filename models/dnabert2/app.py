@@ -79,7 +79,7 @@ class DNABERT2Model(ModelMixinSnap):
     app_username: str = modal.parameter(default="default_user")
 
     @modal.enter(snap=True)
-    def setup_model(self):
+    def setup_model(self) -> None:
         """Load model directly on GPU for GPU memory snapshot with deterministic behavior."""
         import torch
         from transformers import AutoModelForMaskedLM, AutoTokenizer

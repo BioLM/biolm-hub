@@ -1,6 +1,6 @@
 import shutil
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from models.commons.core.logging import get_logger
 from models.commons.storage.download_helpers import r2_then_urls
@@ -16,7 +16,7 @@ logger = get_logger(__name__)
 GITHUB_BASE_URL = "https://github.com/Kuhlman-Lab/ThermoMPNN/raw/main/"
 
 
-def get_model_dir():
+def get_model_dir() -> Path:
     return get_model_dir_util(
         base_model_slug=ThermoMPNNParams.base_model_slug,
         weights_version=ThermoMPNNParams.weights_version,
@@ -26,9 +26,9 @@ def get_model_dir():
 def download_model_assets(  # noqa: C901
     base_model_slug: str,
     weights_version: str,
-    variant_config: Optional[dict] = None,
+    variant_config: Optional[dict[str, Any]] = None,
     sub_path: Optional[str] = None,
-):
+) -> Path:
     """Download ThermoMPNN + ProteinMPNN checkpoints."""
     result = r2_then_urls(
         base_model_slug=base_model_slug,

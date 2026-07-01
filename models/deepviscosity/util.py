@@ -11,9 +11,18 @@ This module implements:
 import subprocess
 import tempfile
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 from models.commons.core.error import ServerError, ValidationError400
 from models.commons.core.logging import get_logger
+
+if TYPE_CHECKING:
+    # Only needed for type annotations below; numpy/sklearn are imported lazily
+    # at call time in the functions themselves to keep this module lightweight
+    # to import (e.g. for CLI/schema use that never touches numpy or sklearn).
+    import numpy as np
+    import numpy.typing as npt
+    from sklearn.preprocessing import StandardScaler
 
 logger = get_logger(__name__)
 
@@ -129,7 +138,7 @@ SCALER_PARAMS = {
 }
 
 
-def load_scaler():
+def load_scaler() -> "StandardScaler":
     """Reconstruct StandardScaler from embedded parameters.
 
     Returns:
@@ -219,7 +228,7 @@ def run_anarci(
     heavy_chain: str,
     light_chain: str,
     temp_dir: Path,
-) -> tuple[dict, dict]:
+) -> tuple[dict[str, Any], dict[str, Any]]:
     """
     Run ANARCI alignment on heavy and light chain sequences.
 
@@ -336,8 +345,8 @@ def run_anarci(
 
 
 def preprocess_sequences(
-    h_aligned: dict,
-    l_aligned: dict,
+    h_aligned: dict[str, Any],
+    l_aligned: dict[str, Any],
 ) -> str:
     """
     Preprocess aligned sequences into fixed-length representation.
@@ -377,7 +386,7 @@ def preprocess_sequences(
     return "".join(h_seq) + "".join(l_seq)
 
 
-def one_hot_encode(sequence: str):
+def one_hot_encode(sequence: str) -> "npt.NDArray[np.float32]":
     """
     One-hot encode aligned antibody sequence.
 
@@ -411,7 +420,7 @@ def one_hot_encode(sequence: str):
 def align_and_encode(
     heavy_chain: str,
     light_chain: str,
-):
+) -> "npt.NDArray[np.float32]":
     """
     Complete pipeline: align sequences and return one-hot encoded representation.
 

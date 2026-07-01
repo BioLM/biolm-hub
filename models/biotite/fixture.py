@@ -87,7 +87,7 @@ fixture_generation_suite = TestSuite(
 )
 
 
-def generate():
+def generate() -> None:
     """Configures and runs the fixture generator for biotite model"""
     generator = FixtureGenerator(fixture_generation_suite)
     generator.generate()

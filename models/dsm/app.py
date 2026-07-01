@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypedDict
 
 import modal
 
@@ -37,6 +37,14 @@ from models.dsm.schema import (
 )
 
 logger = get_logger(__name__)
+
+
+class DSMDecodedSequence(TypedDict):
+    """A single decoded sequence produced by the diffusion generation helpers."""
+
+    sequence: str
+    sequence2: str | None
+
 
 # Parse variant configuration
 variant_config = parse_variants(
@@ -163,8 +171,8 @@ app = modal.App(app_name, image=image)
 @biolm_model_class
 class DSMModel(ModelMixinSnap):
     app_username: str = modal.parameter(default="default_user")
-    model_size: DSMModelSizes = model_size
-    variant: DSMVariants = variant
+    model_size: str = model_size
+    variant: str = variant
     model_id: str = get_model_id(model_size, variant)
 
     """
@@ -175,7 +183,7 @@ class DSMModel(ModelMixinSnap):
     """
 
     @modal.enter(snap=True)
-    def setup_model(self):  # noqa: C901
+    def setup_model(self) -> None:  # noqa: C901
         # FIXME(noqa: C901): Refactor complex dynamic import logic to reduce complexity.
         """Load DSM model directly on GPU for GPU memory snapshot."""
         import sys
@@ -192,15 +200,19 @@ class DSMModel(ModelMixinSnap):
 
         # Load DSM models package
         if "dsm_models" not in sys.modules:
-            spec = importlib.util.spec_from_file_location(
+            pkg_spec = importlib.util.spec_from_file_location(
                 "dsm_models",
                 os.path.join(dsm_root, "models", "__init__.py"),
                 submodule_search_locations=[os.path.join(dsm_root, "models")],
             )
-            dsm_models_pkg = importlib.util.module_from_spec(spec)
+            if pkg_spec is None or pkg_spec.loader is None:
+                raise RuntimeError(
+                    "Could not build a module spec for the DSM 'models' package"
+                )
+            dsm_models_pkg = importlib.util.module_from_spec(pkg_spec)
             sys.modules["dsm_models"] = dsm_models_pkg
             dsm_models_pkg.__package__ = "dsm_models"
-            spec.loader.exec_module(dsm_models_pkg)
+            pkg_spec.loader.exec_module(dsm_models_pkg)
 
         # Now load modeling_dsm as part of the package
         spec = importlib.util.spec_from_file_location(
@@ -208,6 +220,10 @@ class DSMModel(ModelMixinSnap):
             os.path.join(dsm_root, "models", "modeling_dsm.py"),
             submodule_search_locations=[os.path.join(dsm_root, "models")],
         )
+        if spec is None or spec.loader is None:
+            raise RuntimeError(
+                "Could not build a module spec for dsm_models.modeling_dsm"
+            )
         modeling_dsm = importlib.util.module_from_spec(spec)
         sys.modules["dsm_models.modeling_dsm"] = modeling_dsm
         modeling_dsm.__package__ = "dsm_models"
@@ -227,11 +243,11 @@ class DSMModel(ModelMixinSnap):
         from models.commons.storage.downloads import build_hf_snapshot_path
 
         # Get HF repo ID and revision from config
-        repo_key = (self.model_size, self.variant)
+        repo_key = (DSMModelSizes(self.model_size), DSMVariants(self.variant))
         hf_repo_id = DSM_HF_REPO_MAP.get(repo_key)
         hf_revision = DSM_HF_REVISION_MAP.get(repo_key)
 
-        if not hf_repo_id:
+        if not hf_repo_id or not hf_revision:
             raise UnsupportedOptionError(
                 f"No HuggingFace repository mapped for model size: {self.model_size}, variant: {self.variant}"
             )
@@ -417,7 +433,9 @@ class DSMModel(ModelMixinSnap):
                 )
                 hidden_states = outputs.last_hidden_state  # [1, seq_len, hidden_size]
 
-                result_dict = {"sequence_index": i}
+                embeddings: list[float] | None = None
+                per_residue_embeddings: list[list[float]] | None = None
+                cls_embeddings: list[float] | None = None
 
                 # Mean pooling
                 if DSMEncodeIncludeOptions.MEAN in include:
@@ -426,22 +444,28 @@ class DSMModel(ModelMixinSnap):
                     seq_len = attention_mask.sum().item()
                     # Remove CLS and SEP
                     seq_hidden = hidden_states[0, 1 : seq_len - 1]
-                    mean_embedding = seq_hidden.mean(dim=0).cpu().tolist()
-                    result_dict["embeddings"] = mean_embedding
+                    embeddings = seq_hidden.mean(dim=0).cpu().tolist()
 
                 # Per-residue embeddings
                 if DSMEncodeIncludeOptions.PER_RESIDUE in include:
                     attention_mask = encoded["attention_mask"]
                     seq_len = attention_mask.sum().item()
-                    per_residue = hidden_states[0, 1 : seq_len - 1].cpu().tolist()
-                    result_dict["per_residue_embeddings"] = per_residue
+                    per_residue_embeddings = (
+                        hidden_states[0, 1 : seq_len - 1].cpu().tolist()
+                    )
 
                 # CLS token
                 if DSMEncodeIncludeOptions.CLS in include:
-                    cls_embedding = hidden_states[0, 0].cpu().tolist()
-                    result_dict["cls_embeddings"] = cls_embedding
+                    cls_embeddings = hidden_states[0, 0].cpu().tolist()
 
-                results.append(DSMEncodeResponseResult(**result_dict))
+                results.append(
+                    DSMEncodeResponseResult(
+                        sequence_index=i,
+                        embeddings=embeddings,
+                        per_residue_embeddings=per_residue_embeddings,
+                        cls_embeddings=cls_embeddings,
+                    )
+                )
 
         logger.info("DSM encode completed for %s sequences", len(results))
         return DSMEncodeResponse(results=results)
@@ -511,7 +535,7 @@ class DSMModel(ModelMixinSnap):
 
     def _decode_sequences(
         self, generated: "Tensor", input_tokens_batch: "Tensor"
-    ) -> list[dict[str, str | None]]:
+    ) -> list[DSMDecodedSequence]:
         """
         Decode generated token sequences into protein sequences.
 
@@ -527,7 +551,7 @@ class DSMModel(ModelMixinSnap):
             For base variants, 'sequence2' is always None.
             For PPI variants, 'sequence2' may be None if empty or if dual decoding fails.
         """
-        sequences = []
+        sequences: list[DSMDecodedSequence] = []
 
         if self.variant == DSMVariants.PPI:
             # For PPI models, use decode_dual_input to separate the two sequences
@@ -557,7 +581,7 @@ class DSMModel(ModelMixinSnap):
         num_sequences: int,
         max_length: int,
         temperature: float,
-    ) -> list[dict[str, str | None]]:
+    ) -> list[DSMDecodedSequence]:
         """Generate unconditional sequences using DSM's mask_diffusion_generate.
 
         Builds a canvas of ``max_length`` <mask> tokens so the diffusion
@@ -596,7 +620,7 @@ class DSMModel(ModelMixinSnap):
         input_sequence: str,
         num_sequences: int,
         temperature: float,
-    ) -> list[dict[str, str | None]]:
+    ) -> list[DSMDecodedSequence]:
         """Fill masked positions in a sequence.
 
         Output length equals the number of tokens in ``input_sequence``
@@ -632,7 +656,7 @@ class DSMModel(ModelMixinSnap):
         prefix: str,
         num_sequences: int,
         temperature: float,
-    ) -> list[dict[str, str | None]]:
+    ) -> list[DSMDecodedSequence]:
         """Generate sequences conditioned on a prefix.
 
         The prefix is passed as-is to the diffusion model; it may contain

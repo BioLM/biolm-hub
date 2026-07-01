@@ -91,7 +91,13 @@ EVO2_HF_REVISION_MAP = {
 # Static configuration values
 def get_build_gpu(variant: str) -> ModalGPU:
     """Get the GPU enum value for building CUDA extensions."""
-    return EVO2_VARIANT_RESOURCE_SPECS[Evo2ModelVariants(variant)].gpu
+    gpu = EVO2_VARIANT_RESOURCE_SPECS[Evo2ModelVariants(variant)].gpu
+    if gpu is None:
+        raise ValueError(
+            f"Evo2 variant '{variant}' has no GPU configured in "
+            "EVO2_VARIANT_RESOURCE_SPECS; a GPU is required to build CUDA extensions."
+        )
+    return gpu
 
 
 # Evo2 configuration:

@@ -1,3 +1,5 @@
+from typing import Any
+
 import modal
 
 from models.commons.core.decorator import modal_endpoint
@@ -70,7 +72,7 @@ class MSATransformerModel(ModelMixinSnap):
     app_username: str = modal.parameter(default="default_user")
 
     @modal.enter(snap=True)
-    def setup_model(self):
+    def setup_model(self) -> None:
         """Load model directly on GPU for GPU memory snapshot with deterministic behavior."""
         import esm
         import torch
@@ -201,7 +203,7 @@ class MSATransformerModel(ModelMixinSnap):
             raise
 
         # Extract outputs
-        result_dict: dict = {"sequence_index": sequence_index}
+        result_dict: dict[str, Any] = {"sequence_index": sequence_index}
         seq_len = len(msa[0])  # Length of aligned sequences
 
         # Representations shape: [1, num_seqs, seq_len+1, embed_dim]

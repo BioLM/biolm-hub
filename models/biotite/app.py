@@ -1,3 +1,5 @@
+from typing import Any
+
 import modal
 import numpy as np
 
@@ -57,7 +59,7 @@ class BiotiteModel(ModelMixinSnap):
     app_username: str = modal.parameter(default="default_user")
 
     @modal.enter(snap=True)
-    def setup_model(self):
+    def setup_model(self) -> None:
         from io import StringIO
 
         import biotite.structure as struc
@@ -70,7 +72,9 @@ class BiotiteModel(ModelMixinSnap):
 
         logger.info("Biotite model loaded successfully")
 
-    def extract_ca_coords(self, chain):
+    def extract_ca_coords(self, chain: Any) -> Any:
+        # `chain` is a biotite AtomArray slice; biotite ships no type stubs, so
+        # the biotite-derived types here are `Any` (see ignore_missing_imports).
         try:
             ca_atoms = chain[chain.atom_name == "CA"]
             if ca_atoms.array_length() == 0:
@@ -107,7 +111,7 @@ class BiotiteModel(ModelMixinSnap):
 
     def _extract_chains_from_pdb(  # noqa: C901
         self, pdb_str: str, chain_ids: list[str]
-    ) -> dict | None:
+    ) -> dict[str, dict[str, str]] | None:
         logger.debug("Extracting chains %s from PDB string.", chain_ids)
         import tempfile
 

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from models.commons.model.config import ActionSchemaMap, ModelFamily
 from models.commons.model.schema import ModalGPU, ModalResourceSpec, ModelActions
 from models.commons.model.tag import (
@@ -48,7 +50,7 @@ EVO_VARIANT_RESOURCE_SPECS = {
 }
 
 
-def get_build_gpu(variant: str) -> ModalGPU:
+def get_build_gpu(variant: str) -> Optional[ModalGPU]:
     """Get the GPU for building the image (used in pip_install gpu=)."""
     return EVO_VARIANT_RESOURCE_SPECS[EvoModelVariants(variant)].gpu
 
@@ -101,7 +103,9 @@ MODEL_FAMILY = ModelFamily(
         ]
     },
     # Resource spec based on variant
-    resource_function=lambda cfg: EVO_VARIANT_RESOURCE_SPECS[cfg["MODEL_VARIANT"]],
+    resource_function=lambda cfg: EVO_VARIANT_RESOURCE_SPECS[
+        EvoModelVariants(cfg["MODEL_VARIANT"])
+    ],
     # Naming function: returns (modal_app_name, public_api_slug)
     naming_function=lambda base_slug, cfg: (
         f"{base_slug}-{cfg['MODEL_VARIANT'].lower()}",

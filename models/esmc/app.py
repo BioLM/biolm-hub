@@ -89,7 +89,7 @@ app = modal.App(app_name, image=image)
 @biolm_model_class
 class ESMCModel(ModelMixinSnap):
     app_username: str = modal.parameter(default="default_user")
-    model_size: ESMCModelSizes = model_size
+    model_size: str = model_size
     model_id: str = get_model_id(model_size)
 
     """
@@ -100,7 +100,7 @@ class ESMCModel(ModelMixinSnap):
     """
 
     @modal.enter(snap=True)
-    def setup_model(self):
+    def setup_model(self) -> None:
         """
         Load ESM C model directly on GPU for GPU memory snapshot.
         """

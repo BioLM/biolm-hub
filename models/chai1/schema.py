@@ -70,7 +70,10 @@ class Chai1Molecule(RequestModel):
     )
 
     @field_validator("sequence")
-    def validate_sequence(cls, v, info: ValidationInfo):  # noqa: C901
+    @classmethod
+    def validate_sequence(  # noqa: C901
+        cls, v: Optional[str], info: ValidationInfo
+    ) -> Optional[str]:
         # FIXME(noqa: C901): Refactor to reduce complexity below the linter's threshold.
 
         if v is None:
@@ -106,7 +109,10 @@ class Chai1Molecule(RequestModel):
         return v
 
     @field_validator("smiles")
-    def validate_smiles_field(cls, v, info: ValidationInfo):
+    @classmethod
+    def validate_smiles_field(
+        cls, v: Optional[str], info: ValidationInfo
+    ) -> Optional[str]:
         """Validate the explicit smiles field when provided."""
         if v is not None:
             if len(v) > Chai1Params.max_ligand_len:
@@ -117,7 +123,10 @@ class Chai1Molecule(RequestModel):
         return v
 
     @field_validator("alignment")
-    def validate_alignment(cls, v, info: ValidationInfo):
+    @classmethod
+    def validate_alignment(
+        cls, v: Optional[dict[Chai1AlignmentDatabase, str]], info: ValidationInfo
+    ) -> Optional[dict[Chai1AlignmentDatabase, str]]:
         if v is not None:
             entity_type = info.data.get("type")
             if entity_type != Chai1EntityType.PROTEIN:
@@ -166,7 +175,8 @@ class Chai1PredictRequestParams(RequestModel):
     )
 
     @field_validator("include")
-    def force_empty_include(cls, v):
+    @classmethod
+    def force_empty_include(cls, v: list[Chai1ScoreOptions]) -> list[Chai1ScoreOptions]:
         if v:
             raise ValueError(
                 "pae/plddt scoring outputs are currently disabled. "
@@ -181,7 +191,8 @@ class Chai1PredictRequestInput(RequestModel):
     )
 
     @field_validator("molecules")
-    def validate_molecules(cls, v):
+    @classmethod
+    def validate_molecules(cls, v: list[Chai1Molecule]) -> list[Chai1Molecule]:
         if not v:
             raise ValueError("Molecules must not be empty.")
         if len(v) > Chai1Params.max_fasta_entries:

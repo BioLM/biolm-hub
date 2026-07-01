@@ -1,4 +1,5 @@
 import math
+from typing import TYPE_CHECKING
 
 import modal
 
@@ -27,6 +28,10 @@ from models.zymctrl.schema import (
 )
 
 logger = get_logger(__name__)
+
+if TYPE_CHECKING:
+    import torch
+    from transformers import GPT2LMHeadModel
 
 # Special tokens used during training (matching paper format)
 # Training format: <control tag><sep><start><ENZYME SEQUENCE><end><|endoftext|>
@@ -84,11 +89,11 @@ def remove_special_tokens(sequence: str) -> str:
 
 
 def calculate_sequence_perplexity(
-    input_ids,
-    model,
-    device,
+    input_ids: "torch.Tensor",
+    model: "GPT2LMHeadModel",
+    device: "torch.device",
     sequence_start_idx: int,
-    stop_token_ids: set | None = None,
+    stop_token_ids: set[int] | None = None,
 ) -> float:
     """Calculate perplexity for the generated amino acid sequence only.
 
@@ -160,7 +165,7 @@ class ZymCTRLModel(ModelMixinSnap):
     app_username: str = modal.parameter(default="default_user")
 
     @modal.enter(snap=True)
-    def setup_model(self):
+    def setup_model(self) -> None:
         """Load model directly on GPU for GPU memory snapshot."""
         import torch
         from transformers import AutoTokenizer, GPT2LMHeadModel

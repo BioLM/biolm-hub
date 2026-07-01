@@ -143,7 +143,7 @@ class MPNNGenerateParams(RequestModel):
     )
 
     number_of_batches: int = Field(
-        1,
+        default=1,
         ge=1,
         le=MPNNParams.num_batches,
         description=(
@@ -152,7 +152,7 @@ class MPNNGenerateParams(RequestModel):
         ),
     )
     batch_size: int = Field(
-        1,
+        default=1,
         ge=1,
         le=MPNNParams.batch_size,
         description="Number of sequences to generate per batch.",
@@ -174,7 +174,7 @@ class MPNNGenerateParams(RequestModel):
         ),
     )
     number_of_packs_per_design: Optional[int] = Field(
-        1,
+        default=1,
         ge=1,
         le=MPNNParams.sc_num_packs,
         description=(
@@ -183,13 +183,13 @@ class MPNNGenerateParams(RequestModel):
         ),
     )
     sc_num_samples: Optional[int] = Field(
-        16,
+        default=16,
         ge=1,
         le=MPNNParams.sc_num_samples,
         description="Number of diffusion samples per design used by the side-chain packer.",
     )
     sc_num_denoising_steps: Optional[int] = Field(
-        3,
+        default=3,
         ge=1,
         le=MPNNParams.sc_denoising_steps,
         description="Number of denoising steps performed by the side-chain packer per sample.",
@@ -296,12 +296,14 @@ class MPNNGenerateRequestItem(RequestModel):
     ]
 
 
-def parse_pdb_string(pdb_string):
+def parse_pdb_string(
+    pdb_string: str,
+) -> tuple[dict[str, set[tuple[str, str]]], list[str]]:
     """
     Parses a PDB string, returning a dict of chain -> set of (res_num_str, insertion_code)
     residue identifiers using PDB author numbering, and a sorted list of chain IDs found.
     """
-    chain_residues: dict[str, set] = {}
+    chain_residues: dict[str, set[tuple[str, str]]] = {}
     chains: set[str] = set()
 
     for line in pdb_string.splitlines():
@@ -339,11 +341,11 @@ def split_residue_string(s: str, field: str) -> tuple[str, int, Optional[str]]:
 
 
 def validate_residue_lists(
-    chain_residues: dict[str, set],
+    chain_residues: dict[str, set[tuple[str, str]]],
     chains: list[str],
     model_field: Optional[list[str]],
     model_field_name: str,
-):
+) -> None:
     """
     Validates that every residue string in model_field is actually present
     in the specified PDB using PDB author numbering (membership check against
@@ -380,11 +382,11 @@ class MPNNGenerateRequest(RequestModel):
     ]
 
     @model_validator(mode="after")
-    def validate_params(cls, instance):  # noqa: C901
+    def validate_params(self) -> "MPNNGenerateRequest":  # noqa: C901
         # FIXME(noqa: C901): Refactor to reduce complexity below the linter's threshold.
 
-        params = instance.params
-        items = instance.items
+        params = self.params
+        items = self.items
 
         if not items:
             raise ValueError("Items must be populated for params validation")
@@ -509,7 +511,7 @@ class MPNNGenerateRequest(RequestModel):
                             f"Mismatch: symmetry_residues {sr_list} and symmetry_weights {sw_list} do not appear to match."
                         )
 
-        return instance
+        return self
 
 
 ### MPNN Response

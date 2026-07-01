@@ -79,7 +79,7 @@ class AbLang2Model(ModelMixinSnap):
     app_username: str = modal.parameter(default="default_user")
 
     @modal.enter(snap=True)
-    def load_model(self):
+    def load_model(self) -> None:
         """
         Loads the AbLang2 model on CPU for memory snapshot.
 
@@ -154,7 +154,7 @@ class AbLang2Model(ModelMixinSnap):
                 )
 
     @modal.enter(snap=False)
-    def setup_model(self):
+    def setup_model(self) -> None:
         """
         Transfers the model to the inference device (GPU when available).
         """
@@ -204,7 +204,7 @@ class AbLang2Model(ModelMixinSnap):
                 batch_size=AbLang2Params.batch_size,
             )
 
-            results = []
+            results: list[AbLang2SeqcodingResult] = []
             for emb_vector in raw_output:
                 results.append(
                     AbLang2SeqcodingResult(embeddings=emb_vector.astype(float).tolist())
@@ -220,7 +220,7 @@ class AbLang2Model(ModelMixinSnap):
                 batch_size=AbLang2Params.batch_size,
             )
 
-            results = []
+            rescoding_results: list[AbLang2RescodingResult] = []
             number_alignment = None
 
             if hasattr(raw_output, "aligned_embeds"):
@@ -228,7 +228,9 @@ class AbLang2Model(ModelMixinSnap):
                 aligned_data = raw_output.aligned_embeds  # shape [B, L, embed_dim]
                 for i in range(len(aligned_data)):
                     row = aligned_data[i].astype(float).tolist()
-                    results.append(AbLang2RescodingResult(residue_embeddings=row))
+                    rescoding_results.append(
+                        AbLang2RescodingResult(residue_embeddings=row)
+                    )
 
                 if hasattr(raw_output, "number_alignment"):
                     number_alignment = list(raw_output.number_alignment)
@@ -236,14 +238,14 @@ class AbLang2Model(ModelMixinSnap):
             else:
 
                 for per_item_matrix in raw_output:
-                    results.append(
+                    rescoding_results.append(
                         AbLang2RescodingResult(
                             residue_embeddings=per_item_matrix.astype(float).tolist()
                         )
                     )
 
             return AbLang2RescodingResponse(
-                results=results,
+                results=rescoding_results,
                 number_alignment=number_alignment,
             )
 

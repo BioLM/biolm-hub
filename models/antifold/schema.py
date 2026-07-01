@@ -62,13 +62,13 @@ class AntiFoldValidRegions(EnhancedStringEnum):
     FWL4 = "FWL4"
 
 
-def parse_pdb_string(pdb_string):
+def parse_pdb_string(pdb_string: str) -> tuple[dict[str, int], list[str]]:
     """
     Parses a PDB string, returning a dict of chain -> count of unique residues,
     and a sorted list of the chain IDs found.
     """
-    chain_residues = {}
-    chains = set()
+    chain_residues: dict[str, set[tuple[str, str]]] = {}
+    chains: set[str] = set()
 
     for line in pdb_string.splitlines():
         if line.startswith("ATOM") or line.startswith("HETATM"):
@@ -94,7 +94,7 @@ def parse_pdb_string(pdb_string):
 def validate_chain_id(
     chains: list[str],
     chain_id: str,
-):
+) -> None:
     """
     Validates that every chain id is actually present
     in the specified PDB.
@@ -109,8 +109,8 @@ def validate_chain_id(
 def validate_positions(
     chain_counts: dict[str, int],
     regions: Union[list[AntiFoldValidRegions], list[int]],
-    chain_id,
-):
+    chain_id: str,
+) -> None:
     """
     Validates that every position in regions is actually present
     in the specified PDB.
@@ -171,14 +171,14 @@ class AntiFoldPredictRequestParams(RequestModel):
     _custom_chain_mode: Optional[bool] = PrivateAttr(default=False)
 
     @model_validator(mode="after")
-    def validate_and_infer_type(cls, instance):
+    def validate_and_infer_type(self) -> "AntiFoldPredictRequestParams":
         """
         Infer chain type and ensure valid field combos.
         """
         heavy, light, antigen = (
-            instance.heavy_chain_id,
-            instance.light_chain_id,
-            instance.antigen_chain_id,
+            self.heavy_chain_id,
+            self.light_chain_id,
+            self.antigen_chain_id,
         )
 
         if not any([heavy, light]):
@@ -192,11 +192,11 @@ class AntiFoldPredictRequestParams(RequestModel):
                 "`exclude_light` to restrict sampling to one chain"
             )
         if heavy and not light:
-            instance._custom_chain_mode = True
+            self._custom_chain_mode = True
         if antigen:
-            instance._custom_chain_mode = True
+            self._custom_chain_mode = True
 
-        return instance
+        return self
 
 
 class AntiFoldEncodeRequestParams(AntiFoldPredictRequestParams):
@@ -230,11 +230,11 @@ class AntiFoldPredictRequest(RequestModel):
     )
 
     @model_validator(mode="after")
-    def validate_params(cls, instance):  # noqa: C901
+    def validate_params(self) -> "AntiFoldPredictRequest":  # noqa: C901
         # FIXME(noqa: C901): Refactor to reduce complexity below the linter's threshold.
 
-        params = instance.params
-        items = instance.items
+        params = self.params
+        items = self.items
 
         if not items:
             raise ValueError("Items must be populated for params validation")
@@ -251,7 +251,7 @@ class AntiFoldPredictRequest(RequestModel):
             if params.antigen_chain_id:
                 validate_chain_id(chain_list, params.antigen_chain_id)
 
-        return instance
+        return self
 
 
 class AntiFoldEncodeRequest(AntiFoldPredictRequest):
@@ -317,11 +317,11 @@ class AntiFoldGenerateRequest(RequestModel):
     )
 
     @model_validator(mode="after")
-    def validate_params(cls, instance):  # noqa: C901
+    def validate_params(self) -> "AntiFoldGenerateRequest":  # noqa: C901
         # FIXME(noqa: C901): Refactor to reduce complexity below the linter's threshold.
 
-        params = instance.params
-        items = instance.items
+        params = self.params
+        items = self.items
 
         if not items:
             raise ValueError("Items must be populated for params validation")
@@ -338,7 +338,7 @@ class AntiFoldGenerateRequest(RequestModel):
             if params.antigen_chain_id:
                 validate_chain_id(chain_list, params.antigen_chain_id)
 
-        return instance
+        return self
 
 
 ### AntiFold Responses

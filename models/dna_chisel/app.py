@@ -57,11 +57,13 @@ class DnaChiselModel(ModelMixinSnap):
     app_username: str = modal.parameter(default="default_user")
 
     @modal.enter(snap=True)
-    def load_model(self):
+    def load_model(self) -> None:
 
         import dnachisel
         import primer3
-        from Bio.Restriction import __dict__ as restr_dict
+
+        # Module __dict__ used to look up enzyme classes by name; dynamic, not typed.
+        from Bio.Restriction import __dict__ as restr_dict  # type: ignore[attr-defined]
         from python_codon_tables import get_codons_table
         from scipy.stats import entropy as scipy_entropy
 
@@ -97,7 +99,7 @@ class DnaChiselModel(ModelMixinSnap):
         self._restr_dict = restr_dict
 
     @modal.enter(snap=False)
-    def setup_model(self):
+    def setup_model(self) -> None:
         logger.info(
             "%s model ready for inference from memory snapshot!",
             DnaChiselParams.display_name,
@@ -151,12 +153,14 @@ class DnaChiselModel(ModelMixinSnap):
         return float(self.tm(sequence))
 
     # 5) Restriction Site Count
-    def compute_restriction_site_count(self, sequence: str, enzymes: list[str]) -> dict:
+    def compute_restriction_site_count(
+        self, sequence: str, enzymes: list[str]
+    ) -> dict[str, int]:
         """
         Count occurrences of each enzyme's recognition pattern in the sequence.
         Each enzyme string is first converted to its recognition sequence.
         """
-        result = {}
+        result: dict[str, int] = {}
         for enzyme in enzymes:
             enzyme_obj = self._restr_dict.get(enzyme)
             if enzyme_obj is not None and hasattr(enzyme_obj, "site"):
@@ -180,7 +184,7 @@ class DnaChiselModel(ModelMixinSnap):
         ]
         if not codons:
             return 0.0
-        counts = {}
+        counts: dict[str, int] = {}
         for c in codons:
             counts[c] = counts.get(c, 0) + 1
         freqs = [val / len(codons) for val in counts.values()]
@@ -230,7 +234,7 @@ class DnaChiselModel(ModelMixinSnap):
         return int(max_run)
 
     # 9) Dinucleotide Frequencies
-    def compute_dinucleotide_frequencies(self, sequence: str) -> dict:
+    def compute_dinucleotide_frequencies(self, sequence: str) -> dict[str, float]:
         """
         Compute the frequency of each dinucleotide (2-mer) in the sequence.
         """
@@ -268,7 +272,7 @@ class DnaChiselModel(ModelMixinSnap):
         if len(sequence) < 6:
             return 0
         kmers = [sequence[i : i + 6] for i in range(len(sequence) - 5)]
-        counts = {}
+        counts: dict[str, int] = {}
         for k in kmers:
             counts[k] = counts.get(k, 0) + 1
         return int(sum(1 for c in counts.values() if c > 1))

@@ -1,4 +1,5 @@
-from typing import Optional
+from pathlib import Path
+from typing import Any, Optional
 
 from models.commons.core.logging import get_logger
 from models.commons.storage.download_helpers import (
@@ -6,8 +7,8 @@ from models.commons.storage.download_helpers import (
     r2_then_urls,
 )
 from models.commons.storage.downloads import get_model_dir_util
-from models.immunefold.config import ImmuneFoldModelTypes, model_id_mapping
-from models.immunefold.schema import ImmuneFoldParams
+from models.immunefold.config import model_id_mapping
+from models.immunefold.schema import ImmuneFoldModelTypes, ImmuneFoldParams
 
 logger = get_logger(__name__)
 
@@ -40,7 +41,7 @@ CHECKPOINT_URLS = {
 }
 
 
-def get_model_dir():
+def get_model_dir() -> Path:
 
     return get_model_dir_util(
         base_model_slug=ImmuneFoldParams.base_model_slug,
@@ -51,9 +52,9 @@ def get_model_dir():
 def download_model_assets(
     base_model_slug: str,
     weights_version: str,
-    variant_config: Optional[dict] = None,
+    variant_config: Optional[dict[str, Any]] = None,
     sub_path: Optional[str] = None,
-):
+) -> Path:
     """Download model assets: R2 cache first, else Zenodo + fair-esm, cached to R2."""
 
     # Extract MODEL_TYPE from variant_config and validate it (the variant only

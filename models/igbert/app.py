@@ -23,9 +23,11 @@ from models.igbert.download import get_model_dir, get_model_id
 from models.igbert.schema import (
     IgBertEncodeIncludeOptions,
     IgBertEncodeRequest,
+    IgBertEncodeRequestItem,
     IgBertEncodeResponse,
     IgBertEncodeResponseResult,
     IgBertGenerateRequest,
+    IgBertGenerateRequestItem,
     IgBertGenerateResponse,
     IgBertGenerateResponseResult,
     IgBertLogProbRequest,
@@ -90,7 +92,7 @@ class IgBertModel(ModelMixinSnap):
     model_type: str = model_type
 
     @modal.enter(snap=True)
-    def setup_model(self):
+    def setup_model(self) -> None:
         """Load model directly on GPU for GPU memory snapshot with deterministic behavior."""
         import torch
         from transformers import BertForMaskedLM, BertTokenizer
@@ -134,6 +136,36 @@ class IgBertModel(ModelMixinSnap):
             self.device,
         )
 
+    @staticmethod
+    def _require_paired_chains(
+        item: Union[IgBertEncodeRequestItem, IgBertGenerateRequestItem],
+    ) -> tuple[str, str]:
+        """Narrow heavy/light chains to non-None.
+
+        Schema validation (`validate_and_infer_type`) guarantees both are set
+        whenever `item._kind == IgBertModelTypes.PAIRED`; this just proves it
+        to the type checker without changing behavior for valid inputs.
+        """
+        if item.heavy_chain is None or item.light_chain is None:
+            raise ValidationError400(
+                "Paired mode requires both `heavy_chain` and `light_chain`."
+            )
+        return item.heavy_chain, item.light_chain
+
+    @staticmethod
+    def _require_sequence(
+        item: Union[IgBertEncodeRequestItem, IgBertGenerateRequestItem],
+    ) -> str:
+        """Narrow `sequence` to non-None.
+
+        Schema validation (`validate_and_infer_type`) guarantees it is set
+        whenever `item._kind == IgBertModelTypes.UNPAIRED`; this just proves it
+        to the type checker without changing behavior for valid inputs.
+        """
+        if item.sequence is None:
+            raise ValidationError400("Unpaired mode requires `sequence`.")
+        return item.sequence
+
     def _pre_process_payload(
         self, payload: Union[IgBertEncodeRequest, IgBertLogProbRequest]
     ) -> list[str]:
@@ -144,14 +176,14 @@ class IgBertModel(ModelMixinSnap):
             )
 
         if self.model_type == IgBertModelTypes.PAIRED:
-            # item.heavy_chain & item.light_chain are guaranteed non-None by schema
-            input_sequences = [
-                " ".join(item.heavy_chain) + " [SEP] " + " ".join(item.light_chain)
-                for item in payload.items
-            ]
+            input_sequences = []
+            for item in payload.items:
+                heavy, light = self._require_paired_chains(item)
+                input_sequences.append(" ".join(heavy) + " [SEP] " + " ".join(light))
         else:
-            # item.sequence is guaranteed non-None by schema
-            input_sequences = [" ".join(item.sequence) for item in payload.items]
+            input_sequences = [
+                " ".join(self._require_sequence(item)) for item in payload.items
+            ]
 
         return input_sequences
 
@@ -257,19 +289,19 @@ class IgBertModel(ModelMixinSnap):
         masked_input_texts = []
         for item in payload.items:
             if item._kind == IgBertModelTypes.PAIRED:
+                heavy, light = self._require_paired_chains(item)
                 heavy_masked_str = " ".join(
-                    c if c != "*" else self.tokenizer.mask_token
-                    for c in item.heavy_chain
+                    c if c != "*" else self.tokenizer.mask_token for c in heavy
                 )
                 light_masked_str = " ".join(
-                    c if c != "*" else self.tokenizer.mask_token
-                    for c in item.light_chain
+                    c if c != "*" else self.tokenizer.mask_token for c in light
                 )
                 input_text = heavy_masked_str + " [SEP] " + light_masked_str
 
             else:  # Unpaired
+                sequence = self._require_sequence(item)
                 seq_masked_str = " ".join(
-                    c if c != "*" else self.tokenizer.mask_token for c in item.sequence
+                    c if c != "*" else self.tokenizer.mask_token for c in sequence
                 )
                 input_text = seq_masked_str
 
@@ -333,8 +365,9 @@ class IgBertModel(ModelMixinSnap):
 
             # 6) Re-split heavy & light by their original length
             if item._kind == IgBertModelTypes.PAIRED:
-                num_heavy = len(item.heavy_chain)
-                num_light = len(item.light_chain)
+                heavy, light = self._require_paired_chains(item)
+                num_heavy = len(heavy)
+                num_light = len(light)
                 heavy_tokens = filtered_tokens[:num_heavy]
                 light_tokens = filtered_tokens[num_heavy : num_heavy + num_light]
 

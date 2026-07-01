@@ -22,7 +22,7 @@ def get_model_dir(sub_path: str | None = None) -> Path:
 def download_model_assets(
     base_model_slug: str,
     weights_version: str,
-    variant_config: dict | None = None,
+    variant_config: dict[str, str] | None = None,
     sub_path: str | None = None,
 ) -> Path:
     """Download SPURS model assets."""

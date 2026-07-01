@@ -56,7 +56,7 @@ class SADIEModel(ModelMixinSnap):
     app_username: str = modal.parameter(default="default_user")
 
     @modal.enter(snap=True)
-    def load_model(self):
+    def load_model(self) -> None:
         # SADIE's HMMER aligner reads ``G3.species`` (a @property that issues an
         # HTTP GET to https://g3.jordanrwillis.com/api/v1) to decide, per
         # (species, chain), whether to build HMMs live from the remote G3 gene
@@ -80,7 +80,7 @@ class SADIEModel(ModelMixinSnap):
         self.Renumbering = Renumbering
 
     @modal.enter(snap=False)
-    def setup_model(self):
+    def setup_model(self) -> None:
         logger.info(
             "%s model ready for inference from memory snapshot!",
             SADIEParams.display_name,

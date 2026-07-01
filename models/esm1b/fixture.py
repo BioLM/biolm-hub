@@ -77,7 +77,7 @@ fixture_generation_suite = TestSuite(
 )
 
 
-def generate():
+def generate() -> None:
     """Configures and runs the fixture generator for ESM-1b."""
     generator = FixtureGenerator(fixture_generation_suite)
     generator.generate()

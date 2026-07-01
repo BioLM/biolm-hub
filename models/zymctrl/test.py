@@ -1,3 +1,5 @@
+from typing import Any
+
 from models.commons.data.validator import aa_unambiguous
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
@@ -15,7 +17,7 @@ AA_CHARS = set(aa_unambiguous)
 
 
 def _validate_generate(
-    actual_output: dict, _expected_output: dict | None = None
+    actual_output: dict[str, Any], _expected_output: dict[str, Any] | None = None
 ) -> None:
     """Validate generate endpoint output.
 
@@ -48,7 +50,9 @@ def _validate_generate(
         assert perplexity > 0, "Perplexity should be positive"
 
 
-def _validate_encode(actual_output: dict, _expected_output: dict | None = None) -> None:
+def _validate_encode(
+    actual_output: dict[str, Any], _expected_output: dict[str, Any] | None = None
+) -> None:
     """Validate encode endpoint output."""
     assert "results" in actual_output, "Response missing 'results' key"
     assert actual_output["results"], "Results list is empty"

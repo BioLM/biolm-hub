@@ -1,3 +1,5 @@
+from typing import Any, Optional
+
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
 from models.commons.testing.runner import generate_tests_from_suite
@@ -5,7 +7,9 @@ from models.thermompnn_d.config import MODEL_FAMILY
 from models.thermompnn_d.fixture import INPUT1, INPUT2, INPUT3, INPUT4, INPUT5, INPUT6
 
 
-def _validate_thermompnn_d_predict(actual_output: dict, _expected_output: dict = None):
+def _validate_thermompnn_d_predict(
+    actual_output: dict[str, Any], _expected_output: Optional[dict[str, Any]] = None
+) -> None:
     """Validate ThermoMPNN-D predict output with mode-specific field checks."""
     assert "results" in actual_output, "Response missing 'results' key"
     assert len(actual_output["results"]) > 0, "Results list is empty"

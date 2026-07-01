@@ -96,7 +96,7 @@ app = modal.App(app_name, image=image)
 @biolm_model_class
 class E1Model(ModelMixin):
     app_username: str = modal.parameter(default="default_user")
-    model_size: E1ModelSizes = model_size
+    model_size: str = model_size
     model_id: str = get_model_id(model_size)
 
     """
@@ -107,7 +107,7 @@ class E1Model(ModelMixin):
     """
 
     @modal.enter()
-    def setup_model(self):
+    def setup_model(self) -> None:
         """
         Loads the E1 model from local weights into memory.
         """

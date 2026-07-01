@@ -29,8 +29,10 @@ from models.spurs.config import (
 )
 from models.spurs.download import get_model_dir
 from models.spurs.schema import (
+    SpursDDGMatrix,
     SpursParams,
     SpursPredictRequest,
+    SpursPredictRequestItem,
     SpursPredictResponse,
     SpursPredictResponseResult,
 )
@@ -111,7 +113,7 @@ class SpursModel(ModelMixinSnap):
     """
 
     @modal.enter(snap=True)
-    def setup_model(self):
+    def setup_model(self) -> None:
         """Load SPURS model directly for GPU memory snapshot with deterministic behavior."""
         import torch
 
@@ -212,7 +214,7 @@ class SpursModel(ModelMixinSnap):
                     )
 
             mutation_count = len(mutations) if mutations else 0
-            if mutation_count:
+            if mutations:
                 if not calculated_from_variant:
                     logger.info(
                         "  Processing item %s/%s: %s manual mutation(s)",
@@ -237,29 +239,46 @@ class SpursModel(ModelMixinSnap):
                 mutations=mutations,
             )
 
+            ddg_value_raw = runtime_result.get("ddg_value")
+            ddg_value = ddg_value_raw if isinstance(ddg_value_raw, float) else None
+
+            contributions_raw = runtime_result.get("contributions")
+            ddg_contributions = (
+                contributions_raw if isinstance(contributions_raw, dict) else None
+            )
+
+            ddg_matrix_raw = runtime_result.get("ddg_matrix")
+            ddg_matrix_dict = (
+                ddg_matrix_raw if isinstance(ddg_matrix_raw, dict) else None
+            )
+            ddg_matrix_model = (
+                SpursDDGMatrix(**ddg_matrix_dict)
+                if ddg_matrix_dict is not None
+                else None
+            )
+
             results.append(
                 SpursPredictResponseResult(
                     mutations=mutations,  # Includes auto-calculated mutations
-                    ddG=runtime_result.get("ddg_value"),
-                    ddG_contributions=runtime_result.get("contributions"),
-                    ddG_matrix=runtime_result.get("ddg_matrix"),
+                    ddG=ddg_value,
+                    ddG_contributions=ddg_contributions,
+                    ddG_matrix=ddg_matrix_model,
                 )
             )
 
-            ddg_value = runtime_result.get("ddg_value")
-            ddg_matrix = runtime_result.get("ddg_matrix")
             if ddg_value is not None:
                 logger.info("    -> ddG = %.3f kcal/mol", ddg_value)
                 if calculated_from_variant:
                     logger.info(
-                        "       (auto-calculated mutations: %s)", ", ".join(mutations)
+                        "       (auto-calculated mutations: %s)",
+                        ", ".join(mutations or []),
                     )
-            elif ddg_matrix is not None:
-                matrix_rows = len(ddg_matrix["values"])
+            elif ddg_matrix_dict is not None:
+                matrix_rows = len(ddg_matrix_dict["values"])
                 logger.info(
                     "    → ΔΔG matrix generated with shape %sx%s",
                     matrix_rows,
-                    len(ddg_matrix["amino_acid_axis"]),
+                    len(ddg_matrix_dict["amino_acid_axis"]),
                 )
 
         logger.info("SPURS prediction complete for %s items", len(results))
@@ -285,7 +304,7 @@ class SpursModel(ModelMixinSnap):
         return SpursPredictResponse(results=results)
 
     @staticmethod
-    def _extract_structure(item) -> tuple[str, str]:
+    def _extract_structure(item: SpursPredictRequestItem) -> tuple[str, str]:
         """
         Choose the provided structure representation and return its format.
 

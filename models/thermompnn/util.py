@@ -1,10 +1,11 @@
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import torch
 import torch.nn as nn
-from omegaconf import OmegaConf
+from omegaconf import DictConfig, OmegaConf
 
 # Add ThermoMPNN to path
 THERMOMPNN_DIR = Path("/root/ThermoMPNN")
@@ -21,7 +22,7 @@ def load_thermompnn(
     model_dir: Path,
     device: torch.device,
     checkpoint_name: str = "thermoMPNN_default.pt",
-):
+) -> tuple[nn.Module, DictConfig]:
     """
     Load ThermoMPNN model following the base inference script pattern.
 
@@ -109,15 +110,17 @@ def parse_mutation(mutation_str: str) -> tuple[str, int, str]:
 
 def get_chains(pdb_path: str) -> list[str]:
     """Get chain IDs from PDB file."""
-    from Bio.PDB import PDBParser
+    from Bio.PDB.PDBParser import PDBParser
 
-    parser = PDBParser(QUIET=True)
-    structure = parser.get_structure("", pdb_path)
+    parser = PDBParser(QUIET=True)  # type: ignore[no-untyped-call]  # biopython parser ctor is untyped
+    structure = parser.get_structure(  # type: ignore[no-untyped-call]  # biopython get_structure is untyped
+        "", pdb_path
+    )
     chains = [c.id for c in structure.get_chains()]
     return chains
 
 
-def get_ssm_mutations(pdb):
+def get_ssm_mutations(pdb: dict[str, Any]) -> list[Optional[str]]:
     """
     Generate site-saturation mutagenesis (SSM) mutations for all positions.
     Following base script pattern from analysis/SSM.py
@@ -128,7 +131,7 @@ def get_ssm_mutations(pdb):
     Returns:
         List of mutation strings in format 'WT{position}MUT' (0-indexed positions)
     """
-    mutation_list = []
+    mutation_list: list[Optional[str]] = []
     for seq_pos in range(len(pdb["seq"])):
         wtAA = pdb["seq"][seq_pos]
         # check for missing residues
@@ -147,7 +150,7 @@ def predict(  # noqa: C901
     pdb_path: str,
     mutations: Optional[list[str]] = None,
     chain: Optional[str] = None,
-) -> list[dict]:
+) -> list[dict[str, str | int | float]]:
     """
     Run ThermoMPNN prediction on a PDB with mutations, following base inference script pattern.
     If mutations are not provided, performs site-saturation mutagenesis (SSM) scan.
@@ -175,17 +178,19 @@ def predict(  # noqa: C901
 
     # Generate mutations: either use provided list or perform SSM scan (following base script)
     is_ssm_scan = mutations is None or len(mutations) == 0
+    mutation_list: Sequence[Optional[str]]
     if is_ssm_scan:
         # Perform site-saturation mutagenesis scan (following base script)
         mutation_list = get_ssm_mutations(mut_pdb[0])
     else:
-        # Use provided mutations
+        # Use provided mutations (guaranteed non-None here since is_ssm_scan is False)
+        assert mutations is not None
         mutation_list = mutations
 
     # Build mutation objects (following base script pattern)
     # Note: get_ssm_mutations returns 0-indexed positions (e.g., "M0V" = position 0)
     # User-provided mutations use 1-indexed chain-sequence positions (e.g., "M1V" = position 1)
-    final_mutation_list = []
+    final_mutation_list: list[Optional[Mutation]] = []
     for m in mutation_list:
         if m is None:
             final_mutation_list.append(None)

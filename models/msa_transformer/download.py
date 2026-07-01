@@ -41,7 +41,7 @@ def _init_msa_transformer_weights(target_dir: Path) -> Path:
 def download_model_assets(
     base_model_slug: str,
     weights_version: str,
-    variant_config: Optional[dict] = None,
+    variant_config: Optional[dict[str, str]] = None,
     sub_path: Optional[str] = None,
 ) -> Path:
     """Download MSA Transformer model assets."""

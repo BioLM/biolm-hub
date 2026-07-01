@@ -12,6 +12,7 @@ from models.commons.testing.config import ActionTestCase, TestSuite, VariantTest
 from models.commons.testing.fixture import FixtureGenerator
 from models.igt5.config import MODEL_FAMILY
 from models.igt5.schema import (
+    IgT5EncodeIncludeOptions,
     IgT5EncodeRequest,
     IgT5EncodeRequestItem,
     IgT5EncodeRequestParams,
@@ -36,11 +37,15 @@ def _build_fixture_generation_suite() -> TestSuite:
     these inputs to R2 alongside the generated outputs.
     """
     paired_request = IgT5EncodeRequest(
-        params=IgT5EncodeRequestParams(include=["mean", "residue"]),
+        params=IgT5EncodeRequestParams(
+            include=[IgT5EncodeIncludeOptions.MEAN, IgT5EncodeIncludeOptions.RESIDUE]
+        ),
         items=[IgT5EncodeRequestItem(heavy_chain=HEAVY_CHAIN, light_chain=LIGHT_CHAIN)],
     )
     unpaired_request = IgT5EncodeRequest(
-        params=IgT5EncodeRequestParams(include=["mean", "residue"]),
+        params=IgT5EncodeRequestParams(
+            include=[IgT5EncodeIncludeOptions.MEAN, IgT5EncodeIncludeOptions.RESIDUE]
+        ),
         items=[IgT5EncodeRequestItem(sequence=HEAVY_CHAIN)],
     )
 
@@ -78,7 +83,7 @@ def _build_fixture_generation_suite() -> TestSuite:
     )
 
 
-def generate():
+def generate() -> None:
     """Configures and runs the fixture generator for both IgT5 variants."""
     generator = FixtureGenerator(_build_fixture_generation_suite())
     # Test cases are in the TestSuite, respecting variant filtering.

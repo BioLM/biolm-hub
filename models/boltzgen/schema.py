@@ -1,5 +1,5 @@
 import re
-from typing import Annotated, Optional, Union
+from typing import Annotated, Any, Optional, Union
 
 from pydantic import BeforeValidator, Field, field_validator, model_validator
 
@@ -67,7 +67,7 @@ class _ResIndexValidatorMixin:
 
     @field_validator("res_index", mode="after", check_fields=False)
     @classmethod
-    def _check_res_index(cls, v):
+    def _check_res_index(cls, v: ResIndex) -> ResIndex:
         if v is None:
             return v
         if isinstance(v, int):
@@ -205,7 +205,9 @@ class BoltzGenDesignInsertion(RequestModel):
 
     @field_validator("insertion", mode="after")
     @classmethod
-    def _check_insertion_keys(cls, v):
+    def _check_insertion_keys(
+        cls, v: dict[str, Union[str, int]]
+    ) -> dict[str, Union[str, int]]:
         if "id" not in v:
             raise ValueError("insertion must contain an 'id' key (chain ID)")
         if "res_index" not in v:
@@ -246,7 +248,7 @@ class BoltzGenFileEntity(RequestModel):
             "Useful for removing non-essential chains like crystallographic partners."
         ),
     )
-    include_proximity: Optional[list[dict]] = Field(
+    include_proximity: Optional[list[dict[str, Any]]] = Field(
         default=None,
         description=(
             "Include residues that are spatially proximate to specified reference residues. "
@@ -310,7 +312,7 @@ class BoltzGenFileEntity(RequestModel):
             "Commonly needed in scaffold redesign workflows where the input structure has non-standard numbering."
         ),
     )
-    add_cyclization: Optional[list[dict]] = Field(
+    add_cyclization: Optional[list[dict[str, Any]]] = Field(
         default=None,
         description=(
             "Add covalent cyclization bonds (e.g. head-to-tail) to specified chains. "
@@ -328,7 +330,7 @@ class BoltzGenFileEntity(RequestModel):
     )
 
     @model_validator(mode="after")
-    def validate_file_provided(self):
+    def validate_file_provided(self) -> "BoltzGenFileEntity":
         """Validate that either CIF or PDB content is provided."""
         if not self.cif and not self.pdb:
             raise ValueError("Either 'cif' or 'pdb' must be provided for file entities")
@@ -413,7 +415,7 @@ class BoltzGenLigandEntity(RequestModel):
     )
 
     @model_validator(mode="after")
-    def validate_ligand_has_ccd_or_smiles(self):
+    def validate_ligand_has_ccd_or_smiles(self) -> "BoltzGenLigandEntity":
         """Validate that ligand entities have either SMILES or CCD."""
         if self.ccd is None and self.smiles is None:
             raise ValueError(
@@ -442,17 +444,17 @@ class BoltzGenEntity(RequestModel):
         default=None,
         description="A structure loaded from a CIF or PDB file. Use when the scaffold or reference structure is pre-determined.",
     )
-    dna: Optional[dict] = Field(
+    dna: Optional[dict[str, Any]] = Field(
         default=None,
         description="A DNA chain entity. Follows the same structure as protein entities (id, sequence, etc.).",
     )
-    rna: Optional[dict] = Field(
+    rna: Optional[dict[str, Any]] = Field(
         default=None,
         description="An RNA chain entity. Follows the same structure as protein entities (id, sequence, etc.).",
     )
 
     @model_validator(mode="after")
-    def validate_exactly_one_entity_type(self):
+    def validate_exactly_one_entity_type(self) -> "BoltzGenEntity":
         """Validate that exactly one entity type is specified."""
         entity_types = [
             self.protein,
@@ -548,7 +550,7 @@ class BoltzGenConstraint(RequestModel):
     )
 
     @model_validator(mode="after")
-    def validate_at_least_one_constraint(self):
+    def validate_at_least_one_constraint(self) -> "BoltzGenConstraint":
         """Validate that at least one constraint type is specified."""
         constraint_types = [
             self.bond,
@@ -721,7 +723,7 @@ class BoltzGenDesignParams(RequestModel):
 
     @field_validator("additional_filters", mode="after")
     @classmethod
-    def _check_additional_filters(cls, v):
+    def _check_additional_filters(cls, v: Optional[list[str]]) -> Optional[list[str]]:
         if v is None:
             return v
         normalized = []

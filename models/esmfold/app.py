@@ -97,7 +97,7 @@ class ESMFoldModel(ModelMixinSnap):
     chunk_size = ESMFoldParams.max_sequence_len
 
     @modal.enter(snap=True)
-    def setup_model(self):
+    def setup_model(self) -> None:
         """Load model directly on GPU for GPU memory snapshot with deterministic behavior."""
         import esm
         import torch

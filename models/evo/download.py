@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from models.commons.core.logging import get_logger
 from models.commons.storage.download_helpers import (
@@ -27,7 +28,7 @@ def get_model_dir(model_variant: str) -> Path:
     )
 
 
-def _init_evo_weights(model_name: str):
+def _init_evo_weights(model_name: str) -> Callable[[Path], Path]:
     """Build an init_fn that downloads ``model_name`` via the Evo library.
 
     Redirects the HF cache to ``target_dir`` first, so the Evo library's internal
@@ -52,7 +53,7 @@ def _init_evo_weights(model_name: str):
 def download_model_assets(
     base_model_slug: str,
     weights_version: str,
-    variant_config: Optional[dict] = None,
+    variant_config: Optional[dict[str, Any]] = None,
     sub_path: Optional[str] = None,
 ) -> Path:
     """Acquire Evo weights: R2 cache first, else Evo/HF download, cached back to R2."""

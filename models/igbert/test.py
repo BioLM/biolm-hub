@@ -1,3 +1,5 @@
+from typing import Any
+
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
 from models.commons.testing.runner import _validate_log_prob, generate_tests_from_suite
@@ -15,7 +17,7 @@ from models.igbert.fixture import (
 
 
 # Helper function to generate log prob input data based on model type
-def _create_paired_logprob_input():
+def _create_paired_logprob_input() -> dict[str, Any]:
     return {
         "items": [
             {
@@ -30,7 +32,7 @@ def _create_paired_logprob_input():
     }
 
 
-def _create_unpaired_logprob_input():
+def _create_unpaired_logprob_input() -> dict[str, Any]:
     return {
         "items": [
             {

@@ -7,6 +7,7 @@ from models.dna_chisel.schema import (
     DnaChiselEncodeRequestItem,
     DnaChiselEncodeRequestParams,
     DnaChiselFeatureOptions,
+    SupportedSpecies,
 )
 
 EXPLICIT_INPUT = "encode_input_explicit.json"
@@ -34,7 +35,7 @@ fixture_generation_suite = TestSuite(
                                 DnaChiselFeatureOptions.SEQUENCE_LENGTH,
                                 DnaChiselFeatureOptions.AT_SKEW,
                             ],
-                            species="e_coli",
+                            species=SupportedSpecies.E_COLI,
                             restriction_enzymes=["EcoRI"],
                         ),
                         items=[DnaChiselEncodeRequestItem(sequence="ATGCGTACG")],
@@ -56,7 +57,7 @@ fixture_generation_suite = TestSuite(
 )
 
 
-def generate():
+def generate() -> None:
     """Configures and runs the fixture generator"""
     generator = FixtureGenerator(fixture_generation_suite)
     generator.generate()

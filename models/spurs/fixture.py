@@ -48,7 +48,8 @@ def _download_cif(pdb_id: str) -> str:
     url = f"https://files.rcsb.org/download/{pdb_id}.cif"
     try:
         with urlopen(url, timeout=10) as response:
-            return response.read().decode("utf-8")
+            raw: bytes = response.read()
+            return raw.decode("utf-8")
     except URLError as e:
         raise ValueError(f"Failed to download CIF for {pdb_id}: {e}") from e
 
@@ -66,7 +67,7 @@ fixture_generation_suite = TestSuite(
 )
 
 
-def generate():
+def generate() -> None:
     """Configures and runs the fixture generator"""
     logger.info("Downloading CIF structure from RCSB...")
     ubq_cif = _download_cif(_PDB_ID)
@@ -74,10 +75,10 @@ def generate():
 
     # Variant sequence with K48R and K63R applied (0-indexed positions 47, 62),
     # for the variant_sequence auto-calculation test case (Test Case 4 below).
-    variant_sequence = list(_SAMPLE_SEQUENCE)
-    variant_sequence[47] = "R"  # K48R (0-indexed: 47)
-    variant_sequence[62] = "R"  # K63R (0-indexed: 62)
-    variant_sequence = "".join(variant_sequence)
+    variant_chars = list(_SAMPLE_SEQUENCE)
+    variant_chars[47] = "R"  # K48R (0-indexed: 47)
+    variant_chars[62] = "R"  # K63R (0-indexed: 62)
+    variant_sequence = "".join(variant_chars)
 
     # Test Case 1: single mutation prediction.
     # I44A disrupts ubiquitin's classic hydrophobic patch (Leu8/Ile44/Val70),

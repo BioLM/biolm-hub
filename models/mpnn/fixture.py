@@ -34,7 +34,8 @@ def _download_pdb(pdb_id: str) -> str:
     url = f"https://files.rcsb.org/download/{pdb_id}.pdb"
     try:
         with urlopen(url, timeout=10) as response:
-            return response.read().decode("utf-8")
+            raw_bytes: bytes = response.read()
+            return raw_bytes.decode("utf-8")
     except URLError as e:
         raise ValueError(f"Failed to download PDB for {pdb_id}: {e}") from e
 
@@ -138,7 +139,7 @@ def _build_test_cases() -> list[ActionTestCase]:
     ]
 
 
-def generate(hyper_only: bool = False):
+def generate(hyper_only: bool = False) -> None:
     """
     Configures and runs the fixture generator for MPNN model.
 
@@ -169,7 +170,7 @@ def generate(hyper_only: bool = False):
         )
 
         # Manually process only hyper variants
-        written_inputs = set()
+        written_inputs: set[str] = set()
 
         for variant in hyper_variants:
             test_cases = generator._get_matching_test_cases(

@@ -62,7 +62,8 @@ class SupportedSpecies(EnhancedStringEnum):
 @lru_cache(maxsize=1)
 def list_supported_restriction_enzymes() -> list[str]:
     """Returns all restriction enzymes available in Biopython (cached)."""
-    from Bio.Restriction import AllEnzymes
+    # AllEnzymes is built dynamically by Bio.Restriction; not visible to mypy.
+    from Bio.Restriction import AllEnzymes  # type: ignore[attr-defined]  # dynamic attr
 
     return [enzyme.__name__ for enzyme in AllEnzymes]
 

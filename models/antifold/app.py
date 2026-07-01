@@ -1,6 +1,7 @@
 import os
 import tempfile
 from pathlib import Path
+from typing import Any
 
 import modal
 
@@ -10,13 +11,16 @@ from models.antifold.schema import (
     AntiFoldEncodeIncludeOptions,
     AntiFoldEncodeRequest,
     AntiFoldEncodeResponse,
+    AntiFoldEncodeResponseResult,
     AntiFoldGenerateIncludeOptions,
     AntiFoldGenerateRequest,
     AntiFoldGenerateResponse,
+    AntiFoldGenerateResponseResult,
     AntiFoldLogProbResponse,
     AntiFoldLogProbResponseResult,
     AntiFoldParams,
     AntiFoldPredictRequest,
+    AntiFoldPredictRequestParams,
     AntiFoldScoreResponse,
 )
 from models.commons.core.decorator import modal_endpoint
@@ -37,7 +41,7 @@ from models.commons.util.device import get_torch_device
 logger = get_logger(__name__)
 
 
-def _py(x):
+def _py(x: Any) -> Any:
     import numpy as np
 
     if isinstance(x, np.integer | np.floating):
@@ -115,7 +119,7 @@ class AntiFoldModel(ModelMixinSnap):
     app_username: str = modal.parameter(default="default_user")
 
     @modal.enter(snap=True)
-    def setup_model(self):
+    def setup_model(self) -> None:
         """Load model onto device with deterministic behavior for memory snapshot."""
         import antifold.antiscripts
         import antifold.main
@@ -157,7 +161,9 @@ class AntiFoldModel(ModelMixinSnap):
 
         logger.info("AntiFold model loaded on %s.", self.device)
 
-    def _prepare_pdb_input(self, pdb_str: str, params) -> tuple[str, str, str]:
+    def _prepare_pdb_input(
+        self, pdb_str: str, params: AntiFoldPredictRequestParams
+    ) -> tuple[str, str, str]:
         """
         Creates a temporary pdb file, writes the pdb_str into it, and prepares the input DataFrame.
 
@@ -212,7 +218,7 @@ class AntiFoldModel(ModelMixinSnap):
         Returns:
         - AntiFoldEncodeResponse: The response containing encoding results.
         """
-        results_list = []
+        results_list: list[AntiFoldEncodeResponseResult] = []
         for item in payload.items:
             pdb_str = item.pdb
             # Create temporary file and input DataFrame using the helper
@@ -234,7 +240,7 @@ class AntiFoldModel(ModelMixinSnap):
                     save_flag=False,
                 )
                 embeddings = embeddings[0]
-                results = {}
+                results: dict[str, Any] = {}
                 if AntiFoldEncodeIncludeOptions.LOGITS in payload.params.include:
                     results["logits"] = logits[0][list(aa_unambiguous)].values.tolist()
                     results["vocab"] = list(aa_unambiguous)
@@ -255,7 +261,7 @@ class AntiFoldModel(ModelMixinSnap):
                     results["residue_embeddings"] = (
                         embeddings.tolist()
                     )  # shape(seq_len, 512)
-                results_list.append(results)
+                results_list.append(AntiFoldEncodeResponseResult(**results))
             finally:
                 if os.path.exists(tmp_pdb):
                     os.remove(tmp_pdb)
@@ -285,7 +291,7 @@ class AntiFoldModel(ModelMixinSnap):
         if self.torch.cuda.is_available():
             self.torch.cuda.manual_seed_all(seed)
 
-        results_list = []
+        results_list: list[AntiFoldGenerateResponseResult] = []
         for item in payload.items:
             pdb_str = item.pdb
             # Create temporary file and input DataFrame using the helper
@@ -314,7 +320,7 @@ class AntiFoldModel(ModelMixinSnap):
                     light_chain=payload.params.light_chain_id,
                 )
                 for r in results_tmp:
-                    results = {}
+                    results: dict[str, Any] = {}
                     results["sequences"] = [
                         {k: _py(v) for k, v in s.items()}
                         for s in r["sequences"]["samples"]
@@ -347,7 +353,7 @@ class AntiFoldModel(ModelMixinSnap):
                                 list(aa_unambiguous)
                             ].values.tolist()
                             results["vocab"] = list(aa_unambiguous)
-                    results_list.append(results)
+                    results_list.append(AntiFoldGenerateResponseResult(**results))
             finally:
                 if os.path.exists(tmp_pdb):
                     os.remove(tmp_pdb)

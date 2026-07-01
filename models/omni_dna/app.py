@@ -95,7 +95,7 @@ class OmniDNAModel(ModelMixinSnap):
     app_username: str = modal.parameter(default="default_user")
 
     @modal.enter(snap=True)
-    def setup_model(self):
+    def setup_model(self) -> None:
         """Load model on GPU for GPU memory snapshot with deterministic behavior."""
         import torch
         from safetensors.torch import load_file
@@ -116,8 +116,8 @@ class OmniDNAModel(ModelMixinSnap):
         model_cache_dir = get_model_dir(model_size)
 
         # Build deterministic HuggingFace snapshot path
-        hf_repo_id = hf_model_name_mapping[model_size]
-        hf_revision = hf_pin_revision_mapping[model_size]
+        hf_repo_id = hf_model_name_mapping[OmniDNAModelSizes(model_size)]
+        hf_revision = hf_pin_revision_mapping[OmniDNAModelSizes(model_size)]
         snapshot_dir = build_hf_snapshot_path(model_cache_dir, hf_repo_id, hf_revision)
 
         logger.info(

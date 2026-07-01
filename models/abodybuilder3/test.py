@@ -37,7 +37,7 @@ test_abodybuilder3_deployment = generate_tests_from_suite(
 )
 
 
-def test_plddt_response_accepts_flat_list():
+def test_plddt_response_accepts_flat_list() -> None:
     """Regression (was a latent 500 on ``plddt=True``): the fold action emits a
     flat per-residue ``list[float]`` (``output['plddt'].squeeze(0).tolist()``),
     so the response field must accept that shape — not ``list[list[float]]``."""

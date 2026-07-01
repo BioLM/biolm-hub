@@ -48,7 +48,8 @@ cache-hit path.
 import os
 import shutil
 import tarfile
-from typing import Optional
+from pathlib import Path
+from typing import Any, Optional
 
 from models.commons.core.logging import get_logger
 from models.commons.storage.acquisition import (
@@ -90,7 +91,7 @@ _GCS_VARIANT_TOKEN = {
 ALL_MODEL_TYPES = [e.value for e in ProGen2ModelTypes]
 
 
-def get_model_dir():
+def get_model_dir() -> Path:
 
     return get_model_dir_util(
         base_model_slug=ProGen2Params.base_model_slug,
@@ -99,7 +100,7 @@ def get_model_dir():
     )
 
 
-def _fetch_tokenizer(target_dir) -> None:
+def _fetch_tokenizer(target_dir: Path) -> None:
     """Fetch the shared ``tokenizer.json`` to the root of ``target_dir``.
 
     The checkpoint archives do not bundle the tokenizer, so it is pulled once
@@ -115,7 +116,7 @@ def _fetch_tokenizer(target_dir) -> None:
     dest.write_bytes(resp.content)
 
 
-def _stream_progen2_archive(target_dir, model_type: str) -> None:
+def _stream_progen2_archive(target_dir: Path, model_type: str) -> None:
     """Stream one Salesforce ``.tar.gz`` and extract the per-variant weights.
 
     ``config.json`` and ``pytorch_model.bin`` land in ``progen2_<type>/``. The
@@ -168,7 +169,7 @@ def _stream_progen2_archive(target_dir, model_type: str) -> None:
         )
 
 
-def _download_all_progen2_assets(target_dir, **_kwargs) -> dict:
+def _download_all_progen2_assets(target_dir: Path, **_kwargs: Any) -> dict[str, Any]:
     """CustomSourceConfig acquisition_fn: populate every variant + tokenizer.
 
     Always fetches the full set because all variants share one R2 prefix /
@@ -188,9 +189,9 @@ def _download_all_progen2_assets(target_dir, **_kwargs) -> dict:
 def download_model_assets(
     base_model_slug: str,
     weights_version: str,
-    variant_config: Optional[dict] = None,
+    variant_config: Optional[dict[str, Any]] = None,
     sub_path: Optional[str] = None,
-):
+) -> Path:
     """Download ProGen2 assets: filtered R2 primary, Salesforce GCS fallback."""
 
     # Extract MODEL_TYPE from variant_config

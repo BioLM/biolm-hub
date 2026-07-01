@@ -2,7 +2,7 @@
 
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:
     import prody
@@ -23,6 +23,7 @@ from models.prody.schema import (
     FrequentInteractor,
     HydrogenMethod,
     Interaction,
+    InteractionType,
     ProDyEncodeResponseResult,
     ProDyPredictResponseResult,
 )
@@ -30,7 +31,7 @@ from models.prody.schema import (
 logger = get_logger(__name__)
 
 
-def get_structure_string_and_format(item) -> tuple[str, str]:
+def get_structure_string_and_format(item: "ProDyEncodeRequestItem") -> tuple[str, str]:
     """Get structure string and format from item (pdb or cif)."""
     if item.pdb is not None:
         return item.pdb, "PDB"
@@ -208,7 +209,7 @@ def parse_structure(
 
 
 def parse_interaction_list(  # noqa: C901
-    interaction_list: list, interaction_type: str
+    interaction_list: list[Any], interaction_type: str
 ) -> list[Interaction]:
     """Parse ProDy interaction list into Interaction objects.
 
@@ -258,7 +259,7 @@ def parse_interaction_list(  # noqa: C901
 
             interactions.append(
                 Interaction(
-                    interaction_type=interaction_type,
+                    interaction_type=InteractionType(interaction_type),
                     chain1=chain1,
                     residue1=residue1,
                     atom1=atom1,
@@ -277,7 +278,9 @@ def parse_interaction_list(  # noqa: C901
 
 
 def extract_interactions(
-    interactions_obj, chain1: str | None = None, chain2: str | None = None
+    interactions_obj: "prody.Interactions",
+    chain1: str | None = None,
+    chain2: str | None = None,
 ) -> dict[str, list[Interaction]]:
     """Extract all interaction types from ProDy InSty interactions object."""
     all_interactions: dict[str, list[Interaction]] = {}
@@ -318,7 +321,9 @@ def extract_interactions(
     return all_interactions
 
 
-def interaction_sort_key(interaction: Interaction) -> tuple:
+def interaction_sort_key(
+    interaction: Interaction,
+) -> tuple[str, str, str, str, str, str, str, float]:
     """Generate sort key for interactions to ensure consistent ordering."""
     return (
         interaction.interaction_type or "",
@@ -333,7 +338,7 @@ def interaction_sort_key(interaction: Interaction) -> tuple:
 
 
 def process_chain_pair_interactions(
-    interactions_obj, chain1: str, chain2: str
+    interactions_obj: "prody.Interactions", chain1: str, chain2: str
 ) -> ChainPairInteractions:
     """Process interactions for a single chain pair."""
     pair_interactions_dict_result = extract_interactions(
@@ -428,7 +433,9 @@ def parse_frequent_interactors(
     return frequent_interactors
 
 
-def validate_structure_for_prody(structure, protein_atoms) -> tuple[bool, str | None]:
+def validate_structure_for_prody(
+    structure: "prody.Atomic", protein_atoms: Optional["prody.Atomic"]
+) -> tuple[bool, str | None]:
     """Validate structure is suitable for ProDy interaction calculation."""
     import numpy as np
 
@@ -472,7 +479,9 @@ def reinitialize_structure_after_hydrogen_addition(
     return structure, protein_atoms
 
 
-def validate_interactions_calculated(interactions_obj) -> tuple[bool, bool]:
+def validate_interactions_calculated(
+    interactions_obj: Optional["prody.Interactions"],
+) -> tuple[bool, bool]:
     """Check if ProDy Interactions object actually calculated interactions."""
     if interactions_obj is None:
         return False, False
@@ -824,12 +833,12 @@ def process_structure_for_insty(  # noqa: C901
         frequent_interactors = None
         if params.return_frequent_interactors:
             try:
-                f = StringIO()
-                with redirect_stdout(f):
+                captured_stdout = StringIO()
+                with redirect_stdout(captured_stdout):
                     interactions_obj.getFrequentInteractors(
                         contacts_min=params.frequent_interactors_min_contacts
                     )
-                output = f.getvalue()
+                output = captured_stdout.getvalue()
 
                 frequent_interactors = parse_frequent_interactors(output)
             except Exception as e:
@@ -872,6 +881,15 @@ def compute_rmsd(  # noqa: C901
     structure_b_str = item.pdb_b if item.pdb_b is not None else item.cif_b
     format_a = "PDB" if item.pdb_a is not None else "CIF"
     format_b = "PDB" if item.pdb_b is not None else "CIF"
+
+    if structure_a_str is None:
+        # Unreachable in practice: ProDyPredictRequestItem's
+        # validate_structure_a_provided guarantees exactly one of pdb_a/cif_a is set.
+        raise ValidationError400("Either pdb_a or cif_a must be provided")
+    if structure_b_str is None:
+        # Unreachable in practice: ProDyPredictRequestItem's
+        # validate_structure_b_provided guarantees exactly one of pdb_b/cif_b is set.
+        raise ValidationError400("Either pdb_b or cif_b must be provided")
 
     with tempfile.TemporaryDirectory() as tmp_dir:
         tmp_path = Path(tmp_dir)

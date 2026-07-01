@@ -73,7 +73,7 @@ class Chai1Model(ModelMixinSnap):
     app_username: str = modal.parameter(default="default_user")
 
     @modal.enter(snap=True)
-    def load_model(self):
+    def load_model(self) -> None:
         """
         Loads Chai1 environment and configuration on CPU for memory snapshot.
         Note: GPUs are not available during snap=True phase, so we only set up
@@ -152,7 +152,7 @@ class Chai1Model(ModelMixinSnap):
                 )
 
     @modal.enter(snap=False)
-    def setup_model(self):
+    def setup_model(self) -> None:
         """Set up GPU device after snapshot restore."""
         logger.info("Setting up Chai1 on GPU after snapshot restore...")
 

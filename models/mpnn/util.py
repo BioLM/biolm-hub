@@ -5,7 +5,7 @@ import random
 import shutil
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Union
+from typing import Any
 
 import numpy as np
 import torch
@@ -30,7 +30,6 @@ from .LigandMPNN.sc_utils import Packer, pack_side_chains
 
 logger = get_logger(__name__)
 
-# type: ignore
 # ruff: disable
 
 
@@ -40,8 +39,8 @@ def load_mpnn(
     checkpoint_path: Path,
     checkpoint_path_sc: Path,
     seed: int = 0,
-    ligand_mpnn_use_side_chain_context=False,
-):
+    ligand_mpnn_use_side_chain_context: bool = False,
+) -> tuple[ProteinMPNN, Packer, int]:
     """
     Loading function
     """
@@ -63,7 +62,7 @@ def load_mpnn(
         k_neighbors = checkpoint["num_edges"]
     else:
         atom_context_num = 1
-        ligand_mpnn_use_side_chain_context = 0
+        ligand_mpnn_use_side_chain_context = False
         k_neighbors = checkpoint["num_edges"]
 
     model = ProteinMPNN(
@@ -115,8 +114,8 @@ def load_mpnn(
 
 
 def infer(  # noqa: C901
-    model, model_sc, atom_context_num, args: SimpleNamespace
-) -> list[dict[str, Union[str, dict]]]:
+    model: ProteinMPNN, model_sc: Packer, atom_context_num: int, args: SimpleNamespace
+) -> list[dict[str, Any]]:
     """
     Inference function
     """
@@ -392,13 +391,13 @@ def infer(  # noqa: C901
             if args.verbose:
                 if "Y" in list(protein_dict):
                     atom_coords = protein_dict["Y"].cpu().numpy()
-                    atom_types = list(protein_dict["Y_t"].cpu().numpy())
+                    atom_types: list[Any] = list(protein_dict["Y_t"].cpu().numpy())
                     atom_mask = list(protein_dict["Y_m"].cpu().numpy())
                     number_of_atoms_parsed = np.sum(atom_mask)
                 else:
                     logger.debug("No ligand atoms parsed")
                     number_of_atoms_parsed = 0
-                    atom_types = ""
+                    atom_types = []
                     atom_coords = []
                 if number_of_atoms_parsed == 0:
                     logger.debug("No ligand atoms parsed")
@@ -483,11 +482,11 @@ def infer(  # noqa: C901
                 [restype_int_to_str[AA] for AA in feature_dict["S"][0].cpu().numpy()]
             )
             seq_np = np.array(list(native_seq))
-            seq_out_str = []
+            seq_out_parts: list[Any] = []
             for mask in protein_dict["mask_c"]:
-                seq_out_str += list(seq_np[mask.cpu().numpy()])
-                seq_out_str += [args.fasta_seq_separation]
-            seq_out_str = "".join(seq_out_str)[:-1]
+                seq_out_parts += list(seq_np[mask.cpu().numpy()])
+                seq_out_parts += [args.fasta_seq_separation]
+            seq_out_str = "".join(seq_out_parts)[:-1]
 
             output_fasta = base_folder + "/seqs/" + name + args.file_ending + ".fa"
             output_backbones = base_folder + "/backbones/"
@@ -578,7 +577,7 @@ def infer(  # noqa: C901
                 # )
 
                 for ix in range(S_stack.shape[0]):
-                    results_dict = {}
+                    results_dict: dict[str, Any] = {}
 
                     ix_suffix = ix
                     if not args.zero_indexed:
@@ -675,11 +674,11 @@ def infer(  # noqa: C901
 
                     # write fasta lines
                     seq_np = np.array(list(seq))
-                    seq_out_str = []
+                    seq_out_parts = []
                     for mask in protein_dict["mask_c"]:
-                        seq_out_str += list(seq_np[mask.cpu().numpy()])
-                        seq_out_str += [args.fasta_seq_separation]
-                    seq_out_str = "".join(seq_out_str)[:-1]
+                        seq_out_parts += list(seq_np[mask.cpu().numpy()])
+                        seq_out_parts += [args.fasta_seq_separation]
+                    seq_out_str = "".join(seq_out_parts)[:-1]
                     results_dict["sequence"] = seq_out_str
                     results_dict["overall_confidence"] = loss_np
                     results_dict["ligand_confidence"] = loss_XY_np

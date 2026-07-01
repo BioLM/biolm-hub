@@ -9,6 +9,7 @@ import json
 import os
 import tempfile
 from pathlib import Path
+from typing import Any
 
 import modal
 import numpy as np
@@ -30,7 +31,9 @@ from models.rf3.download import get_model_dir
 from models.rf3.schema import (
     RF3ConfidenceScores,
     RF3Params,
+    RF3PredictParams,
     RF3PredictRequest,
+    RF3PredictRequestInput,
     RF3PredictResponse,
     RF3PredictResponseResult,
 )
@@ -128,7 +131,7 @@ class RF3Model(ModelMixinSnap):
     app_username: str = modal.parameter(default="default_user")
 
     @modal.enter(snap=True)
-    def setup_model(self):
+    def setup_model(self) -> None:
         """Load RosettaFold3 model on GPU for GPU memory snapshot."""
         import torch
 
@@ -252,8 +255,8 @@ class RF3Model(ModelMixinSnap):
             if item_output_dir.exists():
                 all_files = list(item_output_dir.iterdir())
                 logger.debug("Found %s files in output directory", len(all_files))
-                for f in sorted(all_files)[:10]:  # Show first 10
-                    logger.debug("- %s", f.name)
+                for debug_file in sorted(all_files)[:10]:  # Show first 10
+                    logger.debug("- %s", debug_file.name)
 
             # Find all generated CIF files in output directory
             # RF3 can create files with pattern {name}_model.cif or {name}_model_{idx}.cif.gz
@@ -359,8 +362,11 @@ class RF3Model(ModelMixinSnap):
         return RF3PredictResponse(results=[results])
 
     def _create_input_specification(  # noqa: C901
-        self, item, params, temp_dir_path: Path
-    ):
+        self,
+        item: RF3PredictRequestInput,
+        params: RF3PredictParams,
+        temp_dir_path: Path,
+    ) -> list[dict[str, Any]]:
         """Convert API input to RF3 input specification JSON format.
 
         Args:
@@ -368,14 +374,14 @@ class RF3Model(ModelMixinSnap):
             params: RF3PredictParams
             temp_dir_path: Path to temporary directory for writing MSA files
         """
-        spec = {
+        spec: dict[str, Any] = {
             "name": item.name,
             "components": [],
         }
 
         # Convert components
         for comp in item.components:
-            comp_spec: dict = {}
+            comp_spec: dict[str, Any] = {}
 
             if comp.sequence:
                 comp_spec["seq"] = comp.sequence

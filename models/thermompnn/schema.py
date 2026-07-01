@@ -51,13 +51,13 @@ class ThermoMPNNPredictRequestItem(RequestModel):
     )
 
     @model_validator(mode="after")
-    def validate_mutations(cls, instance):
+    def validate_mutations(self) -> "ThermoMPNNPredictRequestItem":
         """Validate mutation format if mutations are provided"""
-        if instance.mutations is None:
-            return instance  # SSM scan will be performed
+        if self.mutations is None:
+            return self  # SSM scan will be performed
 
         alphabet = "ACDEFGHIKLMNPQRSTVWYX"
-        for mut in instance.mutations:
+        for mut in self.mutations:
             if not mut or len(mut) < 3:
                 raise ValueError(
                     f"Invalid mutation format: {mut}. Expected format: 'WT{{position}}MUT' (e.g., 'A100V')"
@@ -82,7 +82,7 @@ class ThermoMPNNPredictRequestItem(RequestModel):
                     f"Invalid mutation amino acid: {mut_aa}. Must be one of: {alphabet}"
                 )
 
-        return instance
+        return self
 
 
 class ThermoMPNNPredictRequest(RequestModel):

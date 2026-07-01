@@ -1,3 +1,5 @@
+from typing import Any, Optional
+
 from models.antifold.config import MODEL_FAMILY
 from models.antifold.fixture import (
     ENCODE_3HFM_INPUT,
@@ -20,8 +22,8 @@ from models.commons.testing.runner import generate_tests_from_suite
 
 
 def _validate_antifold_generate(
-    actual_output: dict, expected_output: dict | None = None
-):
+    actual_output: dict[str, Any], expected_output: Optional[dict[str, Any]] = None
+) -> None:
     """Custom validator for AntiFold generate method from original test_integration.py."""
     # For generate methods, we check the structure rather than exact content
     assert "results" in actual_output, "Response missing 'results' key"

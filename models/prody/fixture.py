@@ -1,3 +1,4 @@
+from typing import cast
 from urllib.error import URLError
 from urllib.request import urlopen
 
@@ -32,7 +33,7 @@ def _download_cif(pdb_id: str) -> str:
     url = f"https://files.rcsb.org/download/{pdb_id}.cif"
     try:
         with urlopen(url, timeout=10) as response:
-            return response.read().decode("utf-8")
+            return cast(str, response.read().decode("utf-8"))
     except URLError as e:
         raise ValueError(f"Failed to download CIF for {pdb_id}: {e}") from e
 
@@ -51,7 +52,7 @@ fixture_generation_suite = TestSuite(
 )
 
 
-def generate():
+def generate() -> None:
     """Configures and runs the fixture generator for prody model"""
     # Download test structures lazily (inside generate, not at module scope)
     # 3IY3: Multi-chain complex with A and B protein chains (good for multi-chain tests)

@@ -24,11 +24,11 @@ from models.esmc.schema import (
 # whole ESM/ESMC family was re-released under MIT in 2026) but are not distributed
 # in this catalog — 300M is the chosen default. See sources.yaml / LICENSE.
 # HuggingFace repository mapping for ESMC models
-ESMC_HF_REPO_MAP = {
+ESMC_HF_REPO_MAP: dict[str, str] = {
     ESMCModelSizes.SIZE_300M: "EvolutionaryScale/esmc-300m-2024-12",
 }
 # Pin specific revisions for reproducibility
-ESMC_HF_REVISION_MAP = {
+ESMC_HF_REVISION_MAP: dict[str, str] = {
     ESMCModelSizes.SIZE_300M: "a19d363f07313a10a64d08a2d6b41376a73df5c8",
 }
 

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from models.commons.core.logging import get_logger
 from models.commons.storage.download_helpers import (
@@ -13,11 +13,11 @@ from models.esmc.schema import ESMCParams
 logger = get_logger(__name__)
 
 
-def get_model_id(model_size: str):
+def get_model_id(model_size: str) -> str:
     return f"esmc_{model_size}"
 
 
-def get_model_dir(model_size: str):
+def get_model_dir(model_size: str) -> Path:
     model_id = get_model_id(model_size)
     return get_model_dir_util(
         base_model_slug=ESMCParams.base_model_slug,
@@ -29,7 +29,7 @@ def get_model_dir(model_size: str):
 def download_model_assets(
     base_model_slug: str,
     weights_version: str,
-    variant_config: Optional[dict] = None,
+    variant_config: Optional[dict[str, Any]] = None,
     sub_path: Optional[str] = None,
 ) -> Path:
     """Download ESMC model assets."""

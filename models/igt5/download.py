@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from models.commons.core.logging import get_logger
 from models.commons.storage.download_helpers import (
@@ -12,14 +12,14 @@ from models.igt5.config import (
     IGT5_HF_REVISION_MAP,
     model_id_mapping,
 )
-from models.igt5.schema import IgT5Params
+from models.igt5.schema import IgT5ModelTypes, IgT5Params
 
 logger = get_logger(__name__)
 
 
 def get_model_dir(model_type: str) -> Path:
     """Return the HuggingFace snapshot path for the given variant (used by app.py)."""
-    model_id = model_id_mapping[model_type]
+    model_id = model_id_mapping[IgT5ModelTypes(model_type)]
     base_dir = get_model_dir_util(
         base_model_slug=IgT5Params.base_model_slug,
         weights_version=IgT5Params.weights_version,
@@ -33,15 +33,15 @@ def get_model_dir(model_type: str) -> Path:
 def download_model_assets(
     base_model_slug: str,
     weights_version: str,
-    variant_config: Optional[dict] = None,
+    variant_config: Optional[dict[str, Any]] = None,
     sub_path: Optional[str] = None,
-):
+) -> Path:
     """Download model assets."""
 
     # Extract MODEL_TYPE from variant_config using standardized helper
     model_type = extract_model_variant(variant_config, "MODEL_TYPE")
 
-    model_id = model_id_mapping[model_type]
+    model_id = model_id_mapping[IgT5ModelTypes(model_type)]
 
     result = r2_then_hf(
         base_model_slug=base_model_slug,

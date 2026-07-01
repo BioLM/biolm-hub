@@ -1,3 +1,5 @@
+from typing import Any
+
 import modal
 
 from models.commons.core.decorator import modal_endpoint
@@ -72,7 +74,7 @@ class ESM1bModel(ModelMixinSnap):
     app_username: str = modal.parameter(default="default_user")
 
     @modal.enter(snap=True)
-    def setup_model(self):
+    def setup_model(self) -> None:
         """Load model directly on GPU for GPU memory snapshot with deterministic behavior."""
         import torch
         from transformers import EsmForMaskedLM, EsmTokenizer
@@ -273,7 +275,7 @@ class ESM1bModel(ModelMixinSnap):
 
         results = []
         for i, seq in enumerate(sequences):
-            result_dict = {"sequence_index": i}
+            result_dict: dict[str, Any] = {"sequence_index": i}
 
             # Get actual sequence length (excluding padding)
             seq_len = len(seq)

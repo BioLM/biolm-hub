@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 from models.chai1.schema import Chai1Params
 from models.commons.core.logging import get_logger
@@ -10,7 +10,7 @@ from models.commons.storage.downloads import get_model_dir_util
 logger = get_logger(__name__)
 
 
-def get_model_dir():
+def get_model_dir() -> Path:
 
     return get_model_dir_util(
         base_model_slug=Chai1Params.base_model_slug,
@@ -18,7 +18,7 @@ def get_model_dir():
     )
 
 
-def _create_chai1_lock_files(target_dir: Path):
+def _create_chai1_lock_files(target_dir: Path) -> None:
     """
     Post-process Chai1 downloads to ensure .download_lock files exist.
 
@@ -104,7 +104,7 @@ def _init_chai1_weights(target_dir: Path) -> Path:
         raise
 
 
-def _verify_chai1_structure(model_path: str):
+def _verify_chai1_structure(model_path: Union[str, Path]) -> None:
     """Verify Chai1 model directory structure and files."""
     models_v2_dir = Path(model_path) / "models_v2"
     if not models_v2_dir.exists():
@@ -123,9 +123,9 @@ def _verify_chai1_structure(model_path: str):
 def download_model_assets(
     base_model_slug: str,
     weights_version: str,
-    variant_config: Optional[dict] = None,
+    variant_config: Optional[dict[str, str]] = None,
     sub_path: Optional[str] = None,
-):
+) -> Path:
     """Download model assets."""
     logger.info("Chai1: Setting up model assets")
 

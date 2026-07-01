@@ -3,9 +3,11 @@ from models.commons.testing.config import ActionTestCase, TestSuite, VariantTest
 from models.commons.testing.fixture import FixtureGenerator
 from models.sadie.config import MODEL_FAMILY
 from models.sadie.schema import (
+    SADIENumbering,
     SADIEPredictRequest,
     SADIEPredictRequestItem,
     SADIEPredictRequestParams,
+    SADIERegion,
 )
 
 # Test input/output filenames (self-contained — see generate() below).
@@ -37,8 +39,8 @@ def _build_fixture_generation_suite() -> TestSuite:
     """
     predict_request = SADIEPredictRequest(
         params=SADIEPredictRequestParams(
-            scheme="chothia",
-            region_assign="imgt",
+            scheme=SADIENumbering.CHOTHIA,
+            region_assign=SADIERegion.IMGT,
             scfv=False,
             allowed_chain=["H", "K", "L"],
         ),
@@ -70,7 +72,7 @@ def _build_fixture_generation_suite() -> TestSuite:
     )
 
 
-def generate():
+def generate() -> None:
     """Configures and runs the fixture generator for the SADIE single variant."""
     generator = FixtureGenerator(_build_fixture_generation_suite())
     generator.generate()

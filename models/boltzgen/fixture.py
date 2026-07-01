@@ -82,7 +82,8 @@ def strip_water_from_cif(cif_content: str) -> str:
         st = gemmi.make_structure_from_block(block)
         st.remove_waters()
         st.update_mmcif_block(block)
-        return doc.as_string()
+        result: str = doc.as_string()
+        return result
     except Exception:
         # Fallback: line-based filtering for environments without gemmi
         lines = cif_content.split("\n")
@@ -125,7 +126,7 @@ fixture_generation_suite = TestSuite(
 )
 
 
-def generate():
+def generate() -> None:
     """
     Configures and runs the fixture generator for multiple scenarios based on boltzgen examples.
 

@@ -63,43 +63,43 @@ class RF3Component(RequestModel):
         description="Component entity type: protein, DNA, RNA, or ligand.",
     )
     sequence: Optional[str] = Field(
-        None,
+        default=None,
         max_length=RF3Params.max_sequence_len,
         description="A protein, DNA, or RNA sequence in single-letter codes (maximum 2048 characters).",
     )
     smiles: Optional[str] = Field(
-        None, description="Ligand structure as a SMILES string."
+        default=None, description="Ligand structure as a SMILES string."
     )
     ccd_code: Optional[str] = Field(
-        None, description="Chemical Component Dictionary code for a ligand."
+        default=None, description="Chemical Component Dictionary code for a ligand."
     )
     structure_path: Optional[str] = Field(
-        None,
+        default=None,
         description=(
             "Container-local path to a template structure file (CIF/PDB/SDF). "
             "Not usable by external callers; prefer structure_cif instead."
         ),
     )
     structure_cif: Optional[str] = Field(
-        None,
+        default=None,
         description="Template structure in mmCIF format (inline text). Use this to supply a structure template.",
     )
     chain_id: Optional[str] = Field(
-        None, description='Chain identifier to operate on (e.g. "A").'
+        default=None, description='Chain identifier to operate on (e.g. "A").'
     )
     msa_path: Optional[str] = Field(
-        None,
+        default=None,
         description=(
             "Container-local path to an MSA file (.a3m). "
             "Not usable by external callers; prefer msa_content or alignment instead."
         ),
     )
     msa_content: Optional[str] = Field(
-        None,
+        default=None,
         description="Multiple-sequence alignment for the query sequence, in A3M format.",
     )
     alignment: Optional[dict[RF3AlignmentDatabase, str]] = Field(
-        None, description="MSA alignments keyed by sequence database."
+        default=None, description="MSA alignments keyed by sequence database."
     )
 
     @model_validator(mode="after")
@@ -137,15 +137,16 @@ class RF3PredictParams(RequestModel):
 
     # Template parameters
     template_selection: Optional[list[str]] = Field(
-        None,
+        default=None,
         description="Atom selections for token-level templates (e.g. ['A', 'B/*/1-10']).",
     )
     ground_truth_conformer_selection: Optional[list[str]] = Field(
-        None,
+        default=None,
         description="Atom selections fixed to their ground-truth conformers (e.g. ['C', 'D']).",
     )
     cyclic_chains: Optional[list[str]] = Field(
-        None, description="Chain identifiers to model as cyclic (e.g. cyclic peptides)."
+        default=None,
+        description="Chain identifiers to model as cyclic (e.g. cyclic peptides).",
     )
 
     # Early stopping
@@ -193,7 +194,8 @@ class RF3PredictRequestInput(RequestModel):
         description="Biomolecular components that make up the complex to predict.",
     )
     bonds: Optional[list[tuple[str, str]]] = Field(
-        None, description="Custom covalent bonds as pairs of atom specifications."
+        default=None,
+        description="Custom covalent bonds as pairs of atom specifications.",
     )
 
 
@@ -221,24 +223,26 @@ class RF3ConfidenceScores(ResponseModel):
     """Confidence metrics for a prediction."""
 
     ptm: Optional[float] = Field(
-        None, description="Predicted TM-score (pTM) for the overall structure (0–1)."
+        default=None,
+        description="Predicted TM-score (pTM) for the overall structure (0–1).",
     )
     iptm: Optional[float] = Field(
-        None,
+        default=None,
         description="Interface predicted TM-score (ipTM) for multi-chain complexes (0–1).",
     )
     ranking_score: Optional[float] = Field(
-        None, description="Composite score used to rank diffusion samples."
+        default=None, description="Composite score used to rank diffusion samples."
     )
     has_clash: Optional[bool] = Field(
-        None, description="Whether the predicted structure contains steric clashes."
+        default=None,
+        description="Whether the predicted structure contains steric clashes.",
     )
     plddt: Optional[list[float]] = Field(
-        None,
+        default=None,
         description="Per-residue pLDDT confidence score (0–100; higher is more confident).",
     )
     pae: Optional[list[list[float]]] = Field(
-        None, description="Predicted aligned error (PAE) matrix, in Ångströms."
+        default=None, description="Predicted aligned error (PAE) matrix, in Ångströms."
     )
 
 

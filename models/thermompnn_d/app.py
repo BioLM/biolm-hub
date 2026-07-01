@@ -32,7 +32,7 @@ from models.thermompnn_d.schema import (
 logger = get_logger(__name__)
 
 # No variant config needed - single model
-variant_config = {}
+variant_config: dict[str, str] = {}
 
 # Build Modal container image
 image = modal.Image.micromamba(python_version="3.10")
@@ -122,7 +122,7 @@ class ThermoMPNNDModel(ModelMixinSnap):
     app_username: str = modal.parameter(default="default_user")
 
     @modal.enter(snap=True)
-    def load_model(self):
+    def load_model(self) -> None:
         """
         Loads the ThermoMPNN-D models on CPU for memory snapshot.
         Note: We load both single and epistatic models for flexibility.
@@ -163,7 +163,7 @@ class ThermoMPNNDModel(ModelMixinSnap):
         logger.info("Completed CPU load of ThermoMPNN-D models for memory snapshot")
 
     @modal.enter(snap=False)
-    def setup_model(self):
+    def setup_model(self) -> None:
         """
         Transfers models to GPU after restoring from memory snapshot.
         """
@@ -198,7 +198,7 @@ class ThermoMPNNDModel(ModelMixinSnap):
         Returns predictions with mutation string, positions, wildtype/mutant
         amino acids, predicted ddG, and CA-CA distance for double mutations.
         """
-        from models.thermompnn_d.util import predict  # type: ignore
+        from models.thermompnn_d.util import predict
 
         # params already validated by the request schema
         params = payload.params

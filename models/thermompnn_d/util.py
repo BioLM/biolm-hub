@@ -7,6 +7,7 @@ which creates snapshots during the build phase when no GPU is available.
 """
 
 import sys
+from collections.abc import Callable
 from functools import wraps
 from pathlib import Path
 from typing import Any, Optional, Union
@@ -21,20 +22,28 @@ logger = get_logger(__name__)
 
 # Monkey-patch PyTorch Lightning to load checkpoints on CPU by default.
 # Required for Modal memory snapshots (no GPU available at build time).
-_original_load_from_checkpoint = pl.LightningModule.load_from_checkpoint.__func__
+_original_load_from_checkpoint: Callable[..., Any] = (
+    pl.LightningModule.load_from_checkpoint.__func__
+)
 
 
-@classmethod
 @wraps(_original_load_from_checkpoint)
 def _cpu_load_from_checkpoint(
-    cls, checkpoint_path, *args, map_location="cpu", **kwargs
-):
+    cls: Any,
+    checkpoint_path: Any,
+    /,
+    *args: Any,
+    map_location: Any = "cpu",
+    **kwargs: Any,
+) -> Any:
     return _original_load_from_checkpoint(
         cls, checkpoint_path, *args, map_location=map_location, **kwargs
     )
 
 
-pl.LightningModule.load_from_checkpoint = _cpu_load_from_checkpoint
+# Constructed via classmethod() call (not @classmethod decorator) since this
+# function lives at module scope, not in a class body.
+pl.LightningModule.load_from_checkpoint = classmethod(_cpu_load_from_checkpoint)
 
 # Add ThermoMPNN-D to path
 THERMOMPNN_D_DIR = Path("/root/ThermoMPNN-D")
@@ -58,7 +67,14 @@ ALPHABET = "ACDEFGHIKLMNPQRSTVWYX"
 # Use functions from v2_ssm.py directly - no need to duplicate
 
 
-def run_epistatic_ssm(pdb, cfg, model, distance, threshold, batch_size):
+def run_epistatic_ssm(
+    pdb: Any,
+    cfg: Any,
+    model: nn.Module,
+    distance: float,
+    threshold: float,
+    batch_size: int,
+) -> Any:
     """Run epistatic model on double mutations using v2_ssm function."""
     # Use the v2_ssm run_epistatic_ssm function directly
     return v2_run_epistatic_ssm(pdb, cfg, model, distance, threshold, batch_size)
@@ -69,7 +85,7 @@ def load_thermompnn_d(
     device: torch.device,
     mode: str = "single",
     checkpoint_name: Optional[str] = None,
-):
+) -> tuple[nn.Module, Any]:
     """
     Load ThermoMPNN-D model based on mode.
 
@@ -110,18 +126,22 @@ def parse_mutation(
         For double: (wt1, pos1, mut_aa1, wt2, pos2, mut_aa2)
     """
     if ":" in mutation_str:
-        # Double mutation
-        parts = mutation_str.split(":")
-        if len(parts) != 2:
-            raise ValueError(f"Invalid double mutation format: {mutation_str}")
-
-        wt1, pos1, mut_aa1 = _parse_single_mut(parts[0])
-        wt2, pos2, mut_aa2 = _parse_single_mut(parts[1])
-
-        return (wt1, pos1, mut_aa1, wt2, pos2, mut_aa2)
+        return _parse_double_mut(mutation_str)
     else:
         # Single mutation
         return _parse_single_mut(mutation_str)
+
+
+def _parse_double_mut(mutation_str: str) -> tuple[str, int, str, str, int, str]:
+    """Parse double mutation string 'WT1{pos1}MUT1:WT2{pos2}MUT2'."""
+    parts = mutation_str.split(":")
+    if len(parts) != 2:
+        raise ValueError(f"Invalid double mutation format: {mutation_str}")
+
+    wt1, pos1, mut_aa1 = _parse_single_mut(parts[0])
+    wt2, pos2, mut_aa2 = _parse_single_mut(parts[1])
+
+    return (wt1, pos1, mut_aa1, wt2, pos2, mut_aa2)
 
 
 def _parse_single_mut(mut_str: str) -> tuple[str, int, str]:
@@ -149,10 +169,12 @@ def _parse_single_mut(mut_str: str) -> tuple[str, int, str]:
 
 def get_chains(pdb_path: str) -> list[str]:
     """Get chain IDs from PDB file."""
-    from Bio.PDB import PDBParser
+    from Bio.PDB.PDBParser import PDBParser
 
-    parser = PDBParser(QUIET=True)
-    structure = parser.get_structure("", pdb_path)
+    parser = PDBParser(QUIET=True)  # type: ignore[no-untyped-call]  # biopython parser ctor is untyped
+    structure = parser.get_structure(  # type: ignore[no-untyped-call]  # biopython get_structure is untyped
+        "", pdb_path
+    )
     chains = [c.id for c in structure.get_chains()]
     return chains
 
@@ -164,7 +186,7 @@ def predict_single(
     mutations: Optional[list[str]] = None,
     chain: Optional[str] = None,
     threshold: float = -0.5,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Run single mutation predictions. If mutations is None, performs SSM scan using v2_ssm functions."""
     # Load PDB
     if chain is None:
@@ -184,9 +206,9 @@ def predict_single(
         ddg_list, mut_list = format_output_single(ddg, S, threshold=threshold)
 
         # Convert to our response format
-        results = []
+        results: list[dict[str, Any]] = []
         for mut_str, pred_ddg in zip(mut_list, ddg_list, strict=False):
-            wt, position, mut_aa = parse_mutation(mut_str)
+            wt, position, mut_aa = _parse_single_mut(mut_str)
             results.append(
                 {
                     "mutation": mut_str,
@@ -209,7 +231,7 @@ def predict_single(
 
     for mut_str, pred_ddg in zip(mut_list, ddg_list, strict=False):
         if mut_str in requested_mutations:
-            wt, position, mut_aa = parse_mutation(mut_str)
+            wt, position, mut_aa = _parse_single_mut(mut_str)
             results.append(
                 {
                     "mutation": mut_str,
@@ -231,7 +253,7 @@ def predict_additive(
     chain: Optional[str] = None,
     distance: float = 5.0,
     threshold: float = -0.5,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Run additive double mutation predictions. If mutations is None, performs SSM scan using v2_ssm functions."""
     # Load PDB
     if chain is None:
@@ -256,9 +278,9 @@ def predict_additive(
         dmat = get_dmat(pdb_data)
 
         # Convert to our response format
-        results = []
+        results: list[dict[str, Any]] = []
         for mut_str, pred_ddg in zip(mut_list, ddg_list, strict=False):
-            wt1, pos1, mut_aa1, wt2, pos2, mut_aa2 = parse_mutation(mut_str)
+            wt1, pos1, mut_aa1, wt2, pos2, mut_aa2 = _parse_double_mut(mut_str)
             pos1_idx = pos1 - 1
             pos2_idx = pos2 - 1
             ca_distance = float(dmat[pos1_idx, pos2_idx])
@@ -294,7 +316,7 @@ def predict_additive(
 
     for mut_str, pred_ddg in zip(mut_list, ddg_list, strict=False):
         if mut_str in requested_mutations:
-            wt1, pos1, mut_aa1, wt2, pos2, mut_aa2 = parse_mutation(mut_str)
+            wt1, pos1, mut_aa1, wt2, pos2, mut_aa2 = _parse_double_mut(mut_str)
             pos1_idx = pos1 - 1
             pos2_idx = pos2 - 1
             ca_distance = float(dmat[pos1_idx, pos2_idx])
@@ -325,7 +347,7 @@ def predict_epistatic(  # noqa: C901
     distance: float = 5.0,
     threshold: float = -0.5,
     batch_size: int = 2048,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Run epistatic double mutation predictions. If mutations is None, performs SSM scan using v2_ssm functions."""
     # Load PDB
     if chain is None:
@@ -344,12 +366,12 @@ def predict_epistatic(  # noqa: C901
         )
 
         # Format output
-        results = []
+        results: list[dict[str, Any]] = []
         ddg_list = ddg.tolist() if isinstance(ddg, torch.Tensor) else ddg
         dmat = get_dmat(pdb_data)
 
         for mut_str, pred_ddg in zip(mut_list, ddg_list, strict=False):
-            wt1, pos1, mut_aa1, wt2, pos2, mut_aa2 = parse_mutation(mut_str)
+            wt1, pos1, mut_aa1, wt2, pos2, mut_aa2 = _parse_double_mut(mut_str)
             pos1_idx = pos1 - 1
             pos2_idx = pos2 - 1
             ca_distance = float(dmat[pos1_idx, pos2_idx])
@@ -378,7 +400,7 @@ def predict_epistatic(  # noqa: C901
     max_distance_needed = distance
     for mut_str in mutations:
         try:
-            wt1, pos1, mut_aa1, wt2, pos2, mut_aa2 = parse_mutation(mut_str)
+            wt1, pos1, mut_aa1, wt2, pos2, mut_aa2 = _parse_double_mut(mut_str)
             pos1_idx = pos1 - 1
             pos2_idx = pos2 - 1
             if (
@@ -414,7 +436,7 @@ def predict_epistatic(  # noqa: C901
 
     for mut_str, pred_ddg in zip(mut_list, ddg_list, strict=False):
         if mut_str in requested_mutations:
-            wt1, pos1, mut_aa1, wt2, pos2, mut_aa2 = parse_mutation(mut_str)
+            wt1, pos1, mut_aa1, wt2, pos2, mut_aa2 = _parse_double_mut(mut_str)
             pos1_idx = pos1 - 1
             pos2_idx = pos2 - 1
             ca_distance = float(dmat[pos1_idx, pos2_idx])
@@ -446,7 +468,7 @@ def predict(
     distance: float = 5.0,
     threshold: float = -0.5,
     batch_size: int = 2048,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """
     Run ThermoMPNN-D prediction on a PDB with mutations.
     If mutations is None, performs a site-saturation mutagenesis (SSM) scan.

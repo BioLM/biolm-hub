@@ -1,3 +1,5 @@
+from typing import Any, Optional
+
 from models.commons.model.schema import ModelActions
 from models.commons.storage.r2 import read_json_from_r2
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
@@ -12,8 +14,8 @@ from models.progen2.schema import ProGen2GenerateRequest, ProGen2Params
 
 
 def _validate_progen2_generate(
-    actual_output: dict, _expected_output: dict | None = None
-):
+    actual_output: dict[str, Any], _expected_output: Optional[dict[str, Any]] = None
+) -> None:
     """Validator that mirrors the checks in the legacy standalone test."""
     # Load the same request payload that was sent to the model
     req_path = f"{r2_test_data_dir}/models/{ProGen2Params.base_model_slug}/input.json"

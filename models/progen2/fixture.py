@@ -68,7 +68,7 @@ def _build_fixture_generation_suite() -> TestSuite:
     )
 
 
-def generate():
+def generate() -> None:
     """Configures and runs the fixture generator for ProGen2 (all variants)."""
     generator = FixtureGenerator(_build_fixture_generation_suite())
     generator.generate()

@@ -1,5 +1,5 @@
 import re
-from typing import Annotated
+from typing import Annotated, Any
 
 from pydantic import BeforeValidator, Field, field_validator, model_validator
 
@@ -69,7 +69,7 @@ class SpursPredictRequestItem(RequestModel):
         description="Input structure in mmCIF format. Provide exactly one of pdb or cif.",
     )
     chain_id: str = Field(
-        "A",
+        default="A",
         min_length=1,
         max_length=1,
         description=(
@@ -137,7 +137,7 @@ class SpursPredictRequestItem(RequestModel):
     }
 
     @field_validator("mutations", mode="before")
-    def _normalize_mutation_list(cls, value):
+    def _normalize_mutation_list(cls, value: Any) -> list[str] | None:
         if value is None:
             return None
         if isinstance(value, list):
@@ -152,7 +152,7 @@ class SpursPredictRequestItem(RequestModel):
         )
 
     @model_validator(mode="after")
-    def _validate_item(self):  # noqa: C901
+    def _validate_item(self) -> "SpursPredictRequestItem":  # noqa: C901
         if not self.pdb and not self.cif:
             raise ValueError("Either 'pdb' or 'cif' content must be supplied")
 
@@ -160,8 +160,13 @@ class SpursPredictRequestItem(RequestModel):
             raise ValueError("chain_id cannot be blank")
 
         # Extract structure sequence for validation
-        structure_text = self.pdb if self.pdb else self.cif
-        structure_format = "pdb" if self.pdb else "cif"
+        if self.pdb:
+            structure_text = self.pdb
+            structure_format = "pdb"
+        else:
+            assert self.cif is not None  # guaranteed by the check above
+            structure_text = self.cif
+            structure_format = "cif"
 
         try:
             structure_sequence = extract_sequence_for_validation(

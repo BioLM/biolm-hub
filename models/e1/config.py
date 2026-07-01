@@ -21,13 +21,17 @@ from models.e1.schema import (
 
 ### Static configuration values
 # HuggingFace repository mapping for E1 models
-E1_HF_REPO_MAP = {
+# Typed as dict[str, str] (rather than dict[E1ModelSizes, str]) because callers
+# look these up using the plain `str` model-size values produced by
+# parse_variant()/extract_model_variant(); E1ModelSizes is a StrEnum so the
+# literal enum-member keys below are str instances at runtime either way.
+E1_HF_REPO_MAP: dict[str, str] = {
     E1ModelSizes.SIZE_150M: "Synthyra/Profluent-E1-150M",
     E1ModelSizes.SIZE_300M: "Synthyra/Profluent-E1-300M",
     E1ModelSizes.SIZE_600M: "Synthyra/Profluent-E1-600M",
 }
 # Pin specific revisions for reproducibility
-E1_HF_REVISION_MAP = {
+E1_HF_REVISION_MAP: dict[str, str] = {
     E1ModelSizes.SIZE_150M: "c5845c6a08c2dcba965207974fd3cbed23bc1184",
     E1ModelSizes.SIZE_300M: "daddb06bf2e62930c0e5353c1a7d517e4db33b37",
     E1ModelSizes.SIZE_600M: "5b31cb9a229063d90fcd4c01e1eb1908fef1fbe8",

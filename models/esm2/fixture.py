@@ -2,8 +2,8 @@ from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
 from models.commons.testing.fixture import FixtureGenerator
 from models.commons.testing.shared_assets import STANDARD_PROTEIN
-from models.esm2.config import MODEL_FAMILY, ESM2ModelSizes
-from models.esm2.schema import ESM2EncodeRequest, ESM2PredictRequest
+from models.esm2.config import MODEL_FAMILY
+from models.esm2.schema import ESM2EncodeRequest, ESM2ModelSizes, ESM2PredictRequest
 
 # Fixture input/output filenames. Inputs are self-contained (inlined below), so
 # generation needs no pre-existing R2 assets — the generator writes these inputs
@@ -72,7 +72,7 @@ def _build_fixture_generation_suite() -> TestSuite:
     )
 
 
-def generate():
+def generate() -> None:
     """Configures and runs the fixture generator for ESM2-3B variant"""
     generator = FixtureGenerator(_build_fixture_generation_suite())
     # Test cases are now in the TestSuite, respecting variant filtering

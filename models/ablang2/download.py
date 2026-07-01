@@ -1,6 +1,6 @@
 import shutil
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from models.ablang2.schema import AbLang2Params
 from models.commons.core.logging import get_logger
@@ -14,7 +14,7 @@ REQUIRED_FILES = ["model.pt", "hparams.json"]
 ABLANG2_WEIGHTS_DIR_NAME = "model-weights-ablang2-paired"  # from ablang2 library
 
 
-def get_model_dir():
+def get_model_dir() -> Path:
 
     return get_model_dir_util(
         base_model_slug=AbLang2Params.base_model_slug,
@@ -40,7 +40,7 @@ def _find_weights_dir(model_dir: Path) -> Optional[Path]:
     return None
 
 
-def _copy_files(src_dir: Path, dst_dir: Path, files: list[str]):
+def _copy_files(src_dir: Path, dst_dir: Path, files: list[str]) -> None:
     """Copy files from src to dst directory"""
     dst_dir.mkdir(parents=True, exist_ok=True)
     for filename in files:
@@ -169,9 +169,9 @@ def _init_ablang2_weights(target_dir: Path) -> Path:
 def download_model_assets(
     base_model_slug: str,
     weights_version: str,
-    variant_config: Optional[dict] = None,
+    variant_config: Optional[dict[str, Any]] = None,
     sub_path: Optional[str] = None,
-):
+) -> Path:
     """Download ablang2 model assets with R2 caching and library-managed fallback."""
     logger.info("AbLang2: Setting up model assets")
 

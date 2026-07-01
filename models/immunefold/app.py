@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Any, Optional
 
 import modal
 
@@ -143,10 +144,10 @@ app = modal.App(app_name, image=image)
 @biolm_model_class
 class ImmuneFoldModel(ModelMixinSnap):
     app_username: str = modal.parameter(default="default_user")
-    model_type: str = model_type
+    model_type: ImmuneFoldModelTypes = ImmuneFoldModelTypes(model_type)
 
     @modal.enter(snap=True)
-    def setup_model(self):
+    def setup_model(self) -> None:
         """Load model directly on GPU for GPU memory snapshot with deterministic behavior."""
         import torch
         from omegaconf import DictConfig
@@ -207,7 +208,9 @@ class ImmuneFoldModel(ModelMixinSnap):
     ) -> ImmuneFoldModelTypes:
         request_kind = payload.items[0]._kind  # Just check the first one
 
-        if any(item._kind != self.model_type for item in payload.items):
+        if request_kind is None or any(
+            item._kind != self.model_type for item in payload.items
+        ):
             # Caller routed the wrong molecule type to this variant -> 400, not 500.
             raise ValidationError400(
                 f"Mismatch detected: expected '{self.model_type}' but got '{request_kind}' in request."
@@ -301,7 +304,7 @@ class ImmuneFoldModel(ModelMixinSnap):
                 mol_type = "nb"
                 if item.light_chain:
                     fasta_header = "antibody_H_L"
-                    fasta_seq = item.heavy_chain + f":{item.light_chain}"
+                    fasta_seq = f"{item.heavy_chain}:{item.light_chain}"
                     mol_type = "ab"
 
             else:
@@ -321,7 +324,7 @@ class ImmuneFoldModel(ModelMixinSnap):
                 overrides["ag"] = pdb_path
                 overrides["fasta"] = fasta_path
                 overrides["test_data"] = None
-                if payload.params.contact_idx:
+                if payload.params and payload.params.contact_idx:
                     overrides["contact_idx"] = payload.params.contact_idx
 
             with open(fasta_path, "w") as f:
@@ -352,14 +355,19 @@ class ImmuneFoldModel(ModelMixinSnap):
                 raise
         return ImmuneFoldPredictResponse(results=results)
 
-    def load_config(self, config_path: str, config_name: str, overrides: dict = None):
+    def load_config(
+        self,
+        config_path: str,
+        config_name: str,
+        overrides: Optional[dict[str, Any]] = None,
+    ) -> Any:
         """Load Hydra config, apply overrides (creating missing keys), and return updated config."""
         from types import SimpleNamespace
 
         from hydra import compose, initialize
         from omegaconf import OmegaConf
 
-        def dict_to_namespace(d):
+        def dict_to_namespace(d: Any) -> Any:
             """Recursively convert a dictionary to a SimpleNamespace."""
             if isinstance(d, dict):
                 return SimpleNamespace(
@@ -367,7 +375,7 @@ class ImmuneFoldModel(ModelMixinSnap):
                 )
             return d
 
-        def namespace_to_dict(ns):
+        def namespace_to_dict(ns: Any) -> Any:
             """Recursively convert a SimpleNamespace back to a dictionary."""
             if isinstance(ns, SimpleNamespace):
                 return {k: namespace_to_dict(v) for k, v in vars(ns).items()}
@@ -381,7 +389,7 @@ class ImmuneFoldModel(ModelMixinSnap):
         cfg_ns = dict_to_namespace(OmegaConf.to_container(cfg, resolve=True))
 
         # Apply overrides dynamically
-        def set_nested_attr(obj, keys, value):
+        def set_nested_attr(obj: Any, keys: list[str], value: Any) -> None:
             """Recursively set attributes in SimpleNamespace."""
             for key in keys[:-1]:
                 if not hasattr(obj, key):

@@ -1,5 +1,6 @@
 from models.chai1.config import MODEL_FAMILY
 from models.chai1.schema import (
+    Chai1AlignmentDatabase,
     Chai1EntityType,
     Chai1Molecule,
     Chai1PredictRequest,
@@ -67,7 +68,7 @@ _msa_alignment_request = Chai1PredictRequest(
                     type=Chai1EntityType.PROTEIN,
                     sequence=_PROTEIN_SEQUENCE,
                     alignment={
-                        "uniref90": (
+                        Chai1AlignmentDatabase.UNIREF90: (
                             f">query\n{_PROTEIN_SEQUENCE}\n"
                             f">hit1\n{_PROTEIN_SEQUENCE}\n"
                         ),
@@ -113,7 +114,7 @@ def _build_fixture_generation_suite() -> TestSuite:
     )
 
 
-def generate():
+def generate() -> None:
     """Configures and runs the fixture generator for Chai-1."""
     generator = FixtureGenerator(_build_fixture_generation_suite())
     generator.generate()

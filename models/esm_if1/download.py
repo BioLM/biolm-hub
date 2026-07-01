@@ -64,7 +64,7 @@ def _init_esm_if1_weights(target_dir: Path) -> Path:
 def download_model_assets(
     base_model_slug: str,
     weights_version: str,
-    variant_config: Optional[dict] = None,
+    variant_config: Optional[dict[str, str]] = None,
     sub_path: Optional[str] = None,
 ) -> Path:
     """Acquire ESM-IF1 weights: R2 cache first, else fair-esm download, cached back to R2."""

@@ -86,7 +86,7 @@ class ESM2Model(ModelMixinSnap):
     model_size: str = model_size
 
     @modal.enter(snap=True)
-    def setup_model(self):
+    def setup_model(self) -> None:
         """Load model directly on GPU for GPU memory snapshot with deterministic behavior."""
         import esm
         import torch
@@ -108,7 +108,7 @@ class ESM2Model(ModelMixinSnap):
         self.FastaBatchedDataset = FastaBatchedDataset
 
         # Load the model and alphabet directly on GPU
-        model_id = model_id_mapping[model_size]
+        model_id = model_id_mapping[ESM2ModelSizes(model_size)]
         logger.info("Initiating load of ESM2 model '%s' directly on GPU...", model_id)
         self.model, self.alphabet = esm.pretrained.load_model_and_alphabet_hub(model_id)
         self.model.eval()

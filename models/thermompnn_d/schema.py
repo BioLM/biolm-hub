@@ -71,14 +71,14 @@ class ThermoMPNNDPredictRequestItem(RequestModel):
     )
 
     @model_validator(mode="after")
-    def validate_mutations(cls, instance):  # noqa: C901
+    def validate_mutations(self) -> "ThermoMPNNDPredictRequestItem":  # noqa: C901
         """Validate mutation format if mutations are provided"""
-        if instance.mutations is None:
-            return instance  # No validation needed if mutations are not provided (SSM scan)
+        if self.mutations is None:
+            return self  # No validation needed if mutations are not provided (SSM scan)
 
         alphabet = "ACDEFGHIKLMNPQRSTVWYX"
 
-        for mut in instance.mutations:
+        for mut in self.mutations:
             if not mut:
                 raise ValueError("Empty mutation string")
 
@@ -139,7 +139,7 @@ class ThermoMPNNDPredictRequestItem(RequestModel):
                         f"Invalid mutation amino acid: {mut_aa}. Must be one of: {alphabet}"
                     )
 
-        return instance
+        return self
 
 
 class ThermoMPNNDPredictRequest(RequestModel):

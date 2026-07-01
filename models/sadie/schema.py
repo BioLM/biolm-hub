@@ -1,4 +1,5 @@
-from typing import Optional
+from collections.abc import Callable
+from typing import Any
 
 from pydantic import Field, StrictBool, StrictStr, validator
 
@@ -41,11 +42,11 @@ class SADIERegion(EnhancedStringEnum):
 
 
 class SADIEPredictRequestParams(RequestModel):
-    region_assign: Optional[SADIERegion] = Field(
+    region_assign: SADIERegion = Field(
         default=SADIERegion.IMGT,
         description="Region definition used to assign CDR and framework boundaries (imgt, kabat, chothia, abm, contact, or scdr).",
     )
-    scheme: Optional[SADIENumbering] = Field(
+    scheme: SADIENumbering = Field(
         default=SADIENumbering.CHOTHIA,
         description="Residue numbering scheme applied to the annotated sequence (imgt, kabat, or chothia).",
     )
@@ -59,7 +60,7 @@ class SADIEPredictRequestParams(RequestModel):
     )
 
     @validator("allowed_chain", pre=True, each_item=True)
-    def _check_allowed_chain(cls, v):
+    def _check_allowed_chain(cls, v: str) -> str:
         allowed = ["L", "H", "K", "A", "B", "G", "D"]
         v = v.upper()
         if v not in allowed:
@@ -80,11 +81,11 @@ class SADIEPredictRequestItem(RequestModel):
     )
 
     @validator("sequence", pre=True)
-    def validate_sequence(cls, value):
+    def validate_sequence(cls, value: str) -> str:
         return validate_aa_extended(value)
 
 
-def _reconstruct_sadie_request(data: dict) -> "SADIEPredictRequest":
+def _reconstruct_sadie_request(data: dict[str, Any]) -> "SADIEPredictRequest":
     """Rebuild a SADIEPredictRequest from a plain dict (pickle reconstructor).
 
     Used by ``SADIEPredictRequest.__reduce__`` so the request crosses the Modal
@@ -97,7 +98,7 @@ def _reconstruct_sadie_request(data: dict) -> "SADIEPredictRequest":
 class SADIEPredictRequest(RequestModel):
     """Batch prediction request for SADIE."""
 
-    params: Optional[SADIEPredictRequestParams] = Field(
+    params: SADIEPredictRequestParams = Field(
         default_factory=SADIEPredictRequestParams,
         description="Optional parameters controlling this action (defaults are used when omitted).",
     )
@@ -107,12 +108,18 @@ class SADIEPredictRequest(RequestModel):
     )
 
     @validator("items")
-    def validate_items(cls, value):
+    def validate_items(
+        cls, value: list[SADIEPredictRequestItem]
+    ) -> list[SADIEPredictRequestItem]:
         if not (1 <= len(value) <= SADIEParams.batch_size):
             raise ValueError(f"Must have 1 to {SADIEParams.batch_size} items.")
         return value
 
-    def __reduce__(self):
+    def __reduce__(
+        self,
+    ) -> tuple[
+        Callable[[dict[str, Any]], "SADIEPredictRequest"], tuple[dict[str, Any]]
+    ]:
         """Pickle as a plain dict so the request survives the v2 -> v1 boundary.
 
         The gateway runs Pydantic v2, but the SADIE container downgrades to

@@ -79,7 +79,7 @@ class AbodyBuilder3PredictRequestItem(RequestModel):
 
 
 class AbodyBuilder3PredictRequest(RequestModel):
-    params: Optional[AbodyBuilder3PredictRequestParams] = Field(
+    params: AbodyBuilder3PredictRequestParams = Field(
         default=AbodyBuilder3PredictRequestParams(),
         description="Optional parameters controlling this action (defaults are used when omitted).",
     )

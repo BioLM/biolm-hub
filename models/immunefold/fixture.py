@@ -80,7 +80,8 @@ def _download_pdb(pdb_id: str) -> str:
     url = f"https://files.rcsb.org/download/{pdb_id}.pdb"
     try:
         with urlopen(url, timeout=10) as response:
-            return response.read().decode("utf-8")
+            content: bytes = response.read()
+            return content.decode("utf-8")
     except URLError as e:
         raise ValueError(f"Failed to download PDB for {pdb_id}: {e}") from e
 
@@ -155,7 +156,7 @@ def _build_fixture_generation_suite() -> TestSuite:
     )
 
 
-def generate():
+def generate() -> None:
     """Configures and runs the fixture generator for both ImmuneFold variants."""
     suite = _build_fixture_generation_suite()
 

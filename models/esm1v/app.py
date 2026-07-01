@@ -82,7 +82,7 @@ class ESM1vModel(ModelMixinSnap):
     model_number: str = model_number
 
     @modal.enter(snap=True)
-    def setup_model(self):
+    def setup_model(self) -> None:
         """Load model(s) directly on GPU for GPU memory snapshot with deterministic behavior."""
         import torch
         from transformers import EsmForMaskedLM, EsmTokenizer, pipeline

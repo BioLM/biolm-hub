@@ -1,3 +1,5 @@
+from typing import Any, Optional
+
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
 from models.commons.testing.runner import generate_tests_from_suite
@@ -6,7 +8,9 @@ from models.mpnn.fixture import INPUT1
 from models.mpnn.schema import MPNNModelTypes
 
 
-def _validate_mpnn_generate(actual_output: dict, _expected_output: dict = None):
+def _validate_mpnn_generate(
+    actual_output: dict[str, Any], _expected_output: Optional[dict[str, Any]] = None
+) -> None:
     """Structural validation for MPNN generate output."""
     assert "results" in actual_output, "Response missing 'results' key"
     results = actual_output["results"]

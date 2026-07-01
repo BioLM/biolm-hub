@@ -1,4 +1,5 @@
-from typing import Optional
+from pathlib import Path
+from typing import Any, Optional
 
 from models.commons.core.logging import get_logger
 from models.commons.storage.download_helpers import (
@@ -39,7 +40,7 @@ ZENODO_URLS = {
 }
 
 
-def get_model_dir(model_type: str):
+def get_model_dir(model_type: str) -> Path:
 
     return get_model_dir_util(
         base_model_slug=ImmuneBuilderParams.base_model_slug,
@@ -51,9 +52,9 @@ def get_model_dir(model_type: str):
 def download_model_assets(
     base_model_slug: str,
     weights_version: str,
-    variant_config: Optional[dict] = None,
+    variant_config: Optional[dict[str, Any]] = None,
     sub_path: Optional[str] = None,
-):
+) -> Path:
     """Download ImmuneBuilder model assets with R2 primary and Zenodo fallback."""
     model_variant = extract_model_variant(variant_config, "MODEL_TYPE")
 

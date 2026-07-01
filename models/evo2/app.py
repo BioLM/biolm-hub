@@ -1,4 +1,5 @@
 import os
+from typing import Any
 
 import modal
 
@@ -114,10 +115,10 @@ class Evo2Model(ModelMixinSnap):
     """
 
     app_username: str = modal.parameter(default="default_user")
-    model_variant: Evo2ModelVariants = model_variant
+    model_variant: Evo2ModelVariants = Evo2ModelVariants(model_variant)
 
     @modal.enter(snap=True)
-    def load_model(self):
+    def load_model(self) -> None:
         """Prepare environment for memory snapshot without loading CUDA-dependent libraries."""
         import torch
 
@@ -136,7 +137,7 @@ class Evo2Model(ModelMixinSnap):
         logger.info("Environment prepared for Evo2 model '%s'", self.model_variant)
 
     @modal.enter(snap=False)
-    def setup_model(self):
+    def setup_model(self) -> None:
         """Load model and move to GPU after snapshot restore."""
         logger.info("Loading and setting up Evo2 model after snapshot restore...")
         from evo2 import Evo2
@@ -237,7 +238,7 @@ class Evo2Model(ModelMixinSnap):
                 row_emb_3d = emb_dict[layer_key][b, :seq_len, :]  # [L, hidden_dim]
 
                 # Prepare the output record for this layer
-                emb_record = {"layer": layer_idx}
+                emb_record: dict[str, Any] = {"layer": layer_idx}
 
                 if Evo2EncodeIncludeOptions.MEAN in includes:
                     mean_vec = row_emb_3d.mean(dim=0).cpu().tolist()

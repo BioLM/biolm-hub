@@ -125,7 +125,7 @@ class MPNNModel(ModelMixinSnap):
     model_type: str = model_type
 
     @modal.enter(snap=True)
-    def load_model(self):
+    def load_model(self) -> None:
         """
         Loads the MPNN model on CPU for memory snapshot.
         """
@@ -148,7 +148,7 @@ class MPNNModel(ModelMixinSnap):
             self.model_dir,
         )
 
-        self.model_checkpoint = MPNNModelCheckpoints[self.model_type]
+        self.model_checkpoint = MPNNModelCheckpoints[MPNNModelTypes(self.model_type)]
 
         # HyperMPNN uses the same architecture as ProteinMPNN, so use "protein_mpnn" as model_type
         # The checkpoint file is different, but the architecture is the same
@@ -174,7 +174,7 @@ class MPNNModel(ModelMixinSnap):
         )
 
     @modal.enter(snap=False)
-    def setup_model(self):
+    def setup_model(self) -> None:
         """
         Transfers model to GPU and starts billing.
         """
@@ -200,7 +200,7 @@ class MPNNModel(ModelMixinSnap):
 
         import numpy as np
 
-        from models.mpnn.util import infer  # type: ignore
+        from models.mpnn.util import infer
 
         # Set random seed for diversity (CRITICAL: must be BEFORE any sampling)
         if payload.params.seed is None:
@@ -217,7 +217,7 @@ class MPNNModel(ModelMixinSnap):
 
         # Get the correct, specific Pydantic model for this model_type
         SpecificParamsModel = mpnn_schema_map.get(
-            self.model_type, MPNNGenerateParams  # Fallback to base
+            MPNNModelTypes(self.model_type), MPNNGenerateParams  # Fallback to base
         )
 
         try:

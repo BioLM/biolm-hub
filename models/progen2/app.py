@@ -75,11 +75,11 @@ class ProGen2Model(ModelMixinSnap):
     model_type: str = model_type
 
     @modal.enter(snap=True)
-    def setup_model(self):
+    def setup_model(self) -> None:
         """Load model directly on GPU for GPU memory snapshot."""
         import torch
 
-        from models.progen2.external.sample_utils import (  # type: ignore
+        from models.progen2.external.sample_utils import (  # type: ignore[attr-defined]  # vendored external module, excluded from mypy
             create_model,
             create_tokenizer_custom,
         )
@@ -138,10 +138,10 @@ class ProGen2Model(ModelMixinSnap):
 
         import numpy as np
 
-        from models.progen2.external.likelihood_utils import (
-            run_likelihood,  # type: ignore
+        from models.progen2.external.likelihood_utils import (  # type: ignore[attr-defined]  # vendored external module, excluded from mypy
+            run_likelihood,
         )
-        from models.progen2.external.sample_utils import (  # type: ignore
+        from models.progen2.external.sample_utils import (  # type: ignore[attr-defined]  # vendored external module, excluded from mypy
             run_sample,
         )
 

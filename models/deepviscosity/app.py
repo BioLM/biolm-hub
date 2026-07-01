@@ -1,3 +1,5 @@
+from typing import Literal
+
 import modal
 import numpy as np
 
@@ -196,7 +198,7 @@ class DeepViscosityModel(ModelMixinSnap):
             prob_mean = float(np.mean(predictions))
             prob_std = float(np.std(predictions))
             is_high = prob_mean >= 0.5
-            viscosity_class = "high" if is_high else "low"
+            viscosity_class: Literal["low", "high"] = "high" if is_high else "low"
 
             # Build response
             result = DeepViscosityPredictResponseResult(

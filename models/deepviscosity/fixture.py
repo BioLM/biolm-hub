@@ -50,7 +50,7 @@ fixture_generation_suite = TestSuite(
 )
 
 
-def generate():
+def generate() -> None:
     """Configure and run the fixture generator for DeepViscosity test cases."""
     generator = FixtureGenerator(fixture_generation_suite)
 

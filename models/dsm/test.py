@@ -1,3 +1,5 @@
+from typing import Any
+
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
 from models.commons.testing.runner import generate_tests_from_suite
@@ -16,7 +18,9 @@ from models.dsm.fixture import (
 from models.dsm.schema import DSMParams
 
 
-def _validate_dsm_generate(actual_output: dict, _expected_output: dict | None = None):
+def _validate_dsm_generate(
+    actual_output: dict[str, Any], _expected_output: dict[str, Any] | None = None
+) -> None:
     """Validator for DSM generation that checks structure and basic properties."""
     assert "results" in actual_output, "Response missing 'results' key"
     assert actual_output["results"], "Results list is empty"

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from models.boltzgen.schema import BoltzGenParams
 from models.commons.core.logging import get_logger
@@ -138,9 +138,9 @@ def _download_artifact(
 def download_model_assets(
     base_model_slug: str,
     weights_version: str,
-    variant_config: Optional[dict] = None,
+    variant_config: Optional[dict[str, Any]] = None,
     sub_path: Optional[str] = None,
-):
+) -> Path:
     """Download all BoltzGen model assets.
 
     Downloads all required checkpoints and data files:

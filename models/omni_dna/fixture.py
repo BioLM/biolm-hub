@@ -1,7 +1,7 @@
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
 from models.commons.testing.fixture import FixtureGenerator
-from models.omni_dna.config import MODEL_FAMILY, OmniDNAModelSizes
+from models.omni_dna.config import MODEL_FAMILY
 from models.omni_dna.schema import (
     OmniDNAEncodeIncludeOptions,
     OmniDNAEncodeRequest,
@@ -9,6 +9,7 @@ from models.omni_dna.schema import (
     OmniDNAEncodeRequestParams,
     OmniDNALogProbRequest,
     OmniDNALogProbRequestItem,
+    OmniDNAModelSizes,
 )
 
 # Test input/output filenames. Inputs are self-contained (inlined below), so
@@ -76,7 +77,7 @@ def _build_fixture_generation_suite() -> TestSuite:
     )
 
 
-def generate():
+def generate() -> None:
     """Configures and runs the fixture generator for the Omni-DNA 1B variant."""
     generator = FixtureGenerator(_build_fixture_generation_suite())
     generator.generate()

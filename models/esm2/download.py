@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from models.commons.core.logging import get_logger
 from models.commons.storage.download_helpers import (
@@ -8,14 +9,14 @@ from models.commons.storage.download_helpers import (
 )
 from models.commons.storage.downloads import get_model_dir_util, setup_hf_cache_env
 from models.esm2.config import model_id_mapping
-from models.esm2.schema import ESM2Params
+from models.esm2.schema import ESM2ModelSizes, ESM2Params
 
 logger = get_logger(__name__)
 
 
 def get_model_id(model_size: str) -> str:
     """Generate ESM2 model ID from model size."""
-    return model_id_mapping[model_size]
+    return model_id_mapping[ESM2ModelSizes(model_size)]
 
 
 def get_model_dir(model_size: str) -> Path:
@@ -32,7 +33,7 @@ def get_model_dir(model_size: str) -> Path:
     )
 
 
-def _init_esm2_weights(model_id: str):
+def _init_esm2_weights(model_id: str) -> Callable[[Path], Path]:
     """Build a fair-esm init_fn that downloads ``model_id`` into ``target_dir/checkpoints/``.
 
     Used as the source fallback for ``r2_then_library``: on an R2 cache miss the ESM
@@ -63,7 +64,7 @@ def _init_esm2_weights(model_id: str):
 def download_model_assets(
     base_model_slug: str,
     weights_version: str,
-    variant_config: Optional[dict] = None,
+    variant_config: Optional[dict[str, Any]] = None,
     sub_path: Optional[str] = None,
 ) -> Path:
     """Acquire ESM2 weights: R2 cache first, else fair-esm download, cached back to R2."""

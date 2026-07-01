@@ -5,6 +5,8 @@ Validates that time-based seeding produces diverse outputs across multiple invoc
 (even with Modal memory snapshots) and that an explicit seed yields reproducible results.
 """
 
+from typing import Any
+
 import pytest
 
 from models.antifold.app import app
@@ -54,9 +56,9 @@ END
 """
 
 
-def extract_sequences_from_response(response: dict) -> list[str]:
+def extract_sequences_from_response(response: dict[str, Any]) -> list[str]:
     """Extract all sequences from an AntiFold generate response."""
-    sequences = []
+    sequences: list[str] = []
 
     if "results" not in response:
         return sequences
@@ -82,7 +84,7 @@ def extract_sequences_from_response(response: dict) -> list[str]:
 )
 def test_generate_diversity(
     temperature: float, num_calls: int, min_diversity_pct: float
-):
+) -> None:
     """
     Test that generate() produces diverse sequences across multiple calls.
 
@@ -123,7 +125,7 @@ def test_generate_diversity(
 
 
 @pytest.mark.integration
-def test_generate_seed_reproducibility():
+def test_generate_seed_reproducibility() -> None:
     """Test that explicit seed produces reproducible results."""
     model_class = app.registered_classes.get("AntiFoldModel")
     assert model_class is not None, "AntiFoldModel not found in app"
@@ -131,7 +133,7 @@ def test_generate_seed_reproducibility():
     with app.run():
         model = model_class()
 
-        payload = {
+        payload: dict[str, Any] = {
             "params": {
                 "heavy_chain_id": "A",
                 "num_seq_per_target": 2,
@@ -164,7 +166,7 @@ def test_generate_seed_reproducibility():
 
 
 @pytest.mark.integration
-def test_generate_default_is_diverse():
+def test_generate_default_is_diverse() -> None:
     """Test that generate() without seed produces diverse results."""
     model_class = app.registered_classes.get("AntiFoldModel")
     assert model_class is not None, "AntiFoldModel not found in app"

@@ -147,7 +147,7 @@ fixture_generation_suite = TestSuite(
 )
 
 
-def generate():
+def generate() -> None:
     """Configures and runs the fixture generator for MSA Transformer.
 
     This will:

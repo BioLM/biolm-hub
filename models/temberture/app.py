@@ -15,12 +15,10 @@ from models.commons.util.config import (
 )
 from models.commons.util.device import get_torch_device
 from models.commons.util.environment import parse_variant
-from models.temberture.config import MODEL_FAMILY
+from models.temberture.config import MODEL_FAMILY, hf_pinned_revision, hf_repo_id
 from models.temberture.download import (
     get_model_dir,
     get_shared_base_model_dir,
-    hf_pinned_revision,
-    hf_repo_id,
 )
 from models.temberture.schema import (
     TemBERTureEncodeIncludeOptions,
@@ -92,7 +90,7 @@ class TemBERTureModel(ModelMixinSnap):
     model_type: str = model_type
 
     @modal.enter(snap=True)
-    def setup_model(self):
+    def setup_model(self) -> None:
         """Load model directly on GPU for GPU memory snapshot with deterministic behavior."""
         import torch
         import torch.nn as nn
@@ -400,7 +398,7 @@ class TemBERTureModel(ModelMixinSnap):
 
             # Process predictions based on model type
             for j, pred in enumerate(logits):
-                result_dict = {"score": float(pred)}
+                result_dict: dict[str, float | str] = {"score": float(pred)}
 
                 if self.model_type == TemBERTureModelTypes.CLASSIFIER:
                     # Apply sigmoid and convert to classification

@@ -171,7 +171,7 @@ def _download_one(
     """Download a single file with progress bar (TTY) or optimized transfer (non-TTY)."""
     if console.is_terminal:
         dl_config = (
-            get_r2_transfer_config()  # type: ignore[no-untyped-call]  # untyped in models/commons/storage/r2.py
+            get_r2_transfer_config()
             if file_size > DOWNLOAD_LARGE_FILE_THRESHOLD
             else None
         )

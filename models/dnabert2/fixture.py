@@ -31,7 +31,7 @@ fixture_generation_suite = TestSuite(
 )
 
 
-def generate():
+def generate() -> None:
     """Configures and runs the fixture generator"""
     generator = FixtureGenerator(fixture_generation_suite)
 

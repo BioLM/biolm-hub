@@ -8,7 +8,7 @@ from models.commons.storage.download_helpers import (
 )
 from models.commons.storage.downloads import get_model_dir_util
 from models.dsm.config import DSM_HF_REPO_MAP, DSM_HF_REVISION_MAP
-from models.dsm.schema import DSMParams
+from models.dsm.schema import DSMModelSizes, DSMParams, DSMVariants
 
 logger = get_logger(__name__)
 
@@ -31,7 +31,7 @@ def get_model_dir(model_size: str, variant: str) -> Path:
 def download_model_assets(
     base_model_slug: str,
     weights_version: str,
-    variant_config: Optional[dict] = None,
+    variant_config: Optional[dict[str, str]] = None,
     sub_path: Optional[str] = None,
 ) -> Path:
     """Download DSM model assets."""
@@ -40,7 +40,7 @@ def download_model_assets(
     derived_variant = get_model_id(model_size, variant)
 
     # Get HF repo ID based on size and variant
-    repo_key = (model_size, variant)
+    repo_key = (DSMModelSizes(model_size), DSMVariants(variant))
     hf_repo_id = DSM_HF_REPO_MAP.get(repo_key)
     hf_revision = DSM_HF_REVISION_MAP.get(repo_key)
 

@@ -1,4 +1,4 @@
-from typing import Annotated, Any, Optional, Union
+from typing import TYPE_CHECKING, Annotated, Any, Optional, Union
 
 from pydantic import BeforeValidator, Field, field_validator, model_validator
 
@@ -9,6 +9,9 @@ from models.commons.model.pydantic import (
     RequestModel,
     ResponseModel,
 )
+
+if TYPE_CHECKING:
+    import prody
 
 ### ProDy Params
 
@@ -110,7 +113,9 @@ class ProDyEncodeRequestItem(RequestModel):
 
     @field_validator("chain_pairs")
     @classmethod
-    def validate_chain_pairs(cls, v):
+    def validate_chain_pairs(
+        cls, v: Optional[list[tuple[str, str]]]
+    ) -> Optional[list[tuple[str, str]]]:
         """Validate chain pairs format."""
         if v is None:
             return v
@@ -124,7 +129,7 @@ class ProDyEncodeRequestItem(RequestModel):
         return v
 
     @model_validator(mode="after")
-    def validate_structure_provided(self):
+    def validate_structure_provided(self) -> "ProDyEncodeRequestItem":
         """Validate that either PDB or CIF is provided."""
         if self.pdb is None and self.cif is None:
             raise ValueError("Either 'pdb' or 'cif' must be provided")
@@ -133,7 +138,7 @@ class ProDyEncodeRequestItem(RequestModel):
         return self
 
     @model_validator(mode="after")
-    def validate_chain_selection(self):
+    def validate_chain_selection(self) -> "ProDyEncodeRequestItem":
         """Validate that chain_ids and chain_pairs are consistent."""
         if self.chain_ids is not None and self.chain_pairs is not None:
             # Check that all chains in chain_pairs are in chain_ids
@@ -146,7 +151,7 @@ class ProDyEncodeRequestItem(RequestModel):
         return self
 
     @model_validator(mode="after")
-    def validate_chains_are_protein(self):  # noqa: C901
+    def validate_chains_are_protein(self) -> "ProDyEncodeRequestItem":  # noqa: C901
         """Validate that all specified chains are protein chains."""
         try:
             import tempfile
@@ -161,6 +166,10 @@ class ProDyEncodeRequestItem(RequestModel):
         # Get structure string and format
         structure_str = self.pdb if self.pdb is not None else self.cif
         structure_format = "PDB" if self.pdb is not None else "CIF"
+        if structure_str is None:
+            # Unreachable in practice: validate_structure_provided (an earlier
+            # "after" validator) guarantees exactly one of pdb/cif is set.
+            return self
 
         # Parse structure to check chain types
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -215,7 +224,7 @@ class ProDyEncodeRequestItem(RequestModel):
         return self
 
     @staticmethod
-    def _determine_molecule_type(chain_selection):
+    def _determine_molecule_type(chain_selection: "prody.Atomic") -> str:
         """Determine the type of molecule in a chain selection."""
         # Get residue names
         residues = chain_selection.getResnames()
@@ -337,7 +346,7 @@ class ProDyPredictRequestItem(RequestModel):
     )
 
     @model_validator(mode="after")
-    def validate_structure_a_provided(self):
+    def validate_structure_a_provided(self) -> "ProDyPredictRequestItem":
         """Validate that either PDB or CIF is provided for structure A."""
         if self.pdb_a is None and self.cif_a is None:
             raise ValueError("Either 'pdb_a' or 'cif_a' must be provided")
@@ -346,7 +355,7 @@ class ProDyPredictRequestItem(RequestModel):
         return self
 
     @model_validator(mode="after")
-    def validate_structure_b_provided(self):
+    def validate_structure_b_provided(self) -> "ProDyPredictRequestItem":
         """Validate that either PDB or CIF is provided for structure B."""
         if self.pdb_b is None and self.cif_b is None:
             raise ValueError("Either 'pdb_b' or 'cif_b' must be provided")
@@ -355,7 +364,7 @@ class ProDyPredictRequestItem(RequestModel):
         return self
 
     @model_validator(mode="after")
-    def validate_chains_exist(self):  # noqa: C901
+    def validate_chains_exist(self) -> "ProDyPredictRequestItem":  # noqa: C901
         """Validate that the specified chains exist and are protein chains."""
         import tempfile
         from pathlib import Path
@@ -374,6 +383,10 @@ class ProDyPredictRequestItem(RequestModel):
         # Validate chains_a in structure_a
         structure_a_str = self.pdb_a if self.pdb_a is not None else self.cif_a
         format_a = "PDB" if self.pdb_a is not None else "CIF"
+        if structure_a_str is None:
+            # Unreachable in practice: validate_structure_a_provided (an earlier
+            # "after" validator) guarantees exactly one of pdb_a/cif_a is set.
+            return self
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_path = Path(tmp_dir)
@@ -425,6 +438,10 @@ class ProDyPredictRequestItem(RequestModel):
         # Validate chains_b in structure_b
         structure_b_str = self.pdb_b if self.pdb_b is not None else self.cif_b
         format_b = "PDB" if self.pdb_b is not None else "CIF"
+        if structure_b_str is None:
+            # Unreachable in practice: validate_structure_b_provided (an earlier
+            # "after" validator) guarantees exactly one of pdb_b/cif_b is set.
+            return self
 
         with tempfile.TemporaryDirectory() as tmp_dir:
             tmp_path = Path(tmp_dir)

@@ -155,11 +155,11 @@ class AbLang2MissingSequenceItem(RequestModel):
     ]
 
     @model_validator(mode="after")
-    def validate_combined_sequence(cls, values):
-        combined = values.heavy_chain + values.light_chain
+    def validate_combined_sequence(self) -> "AbLang2MissingSequenceItem":
+        combined = self.heavy_chain + self.light_chain
         SingleOrMoreOccurrencesOf(token="*")(combined)
         AAUnambiguousPlusExtra(extra=["*"])(combined)
-        return values
+        return self
 
 
 class _AbLang2RestoreRequest(RequestModel):

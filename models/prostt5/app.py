@@ -102,7 +102,7 @@ class ProstT5Model(ModelMixinSnap):
     model_direction: str = model_direction
 
     @modal.enter(snap=True)
-    def setup_model(self):
+    def setup_model(self) -> None:
         """Load model directly on GPU for GPU memory snapshot with deterministic behavior."""
         import torch
         from transformers import (
@@ -162,7 +162,9 @@ class ProstT5Model(ModelMixinSnap):
     @modal_endpoint(app_name=app_name)
     def encode(
         self,
-        payload: (
+        # Resolved to a single concrete class at import time based on
+        # MODEL_DIRECTION; not a statically-representable type expression.
+        payload: (  # type: ignore[valid-type]  # runtime-selected Pydantic model class
             ProstT5EncodeRequestAA
             if model_direction == ProstT5Directions.AA
             else ProstT5EncodeRequestFold
@@ -180,7 +182,9 @@ class ProstT5Model(ModelMixinSnap):
     @modal_endpoint(app_name=app_name)
     def generate(
         self,
-        payload: (
+        # Resolved to a single concrete class at import time based on
+        # MODEL_DIRECTION; not a statically-representable type expression.
+        payload: (  # type: ignore[valid-type]  # runtime-selected Pydantic model class
             ProstT5GenerateRequestAA
             if model_direction == ProstT5Directions.AA
             else ProstT5GenerateRequestFold

@@ -59,29 +59,29 @@ class EvoLogProbRequest(RequestModel):
 
 class EvoGenerateRequestParams(RequestModel):
     max_new_tokens: int = Field(
-        100,
+        default=100,
         ge=1,
         le=EvoParams.max_sequence_len,
         description="Maximum number of new tokens to generate.",
     )
     temperature: float = Field(
-        0.0,
+        default=0.0,
         ge=0.0,
         description="Sampling temperature; higher values increase diversity.",
     )
     top_k: int = Field(
-        1,
+        default=1,
         ge=1,
         description="Top-k sampling cutoff; only the k most likely tokens are sampled.",
     )
     top_p: float = Field(
-        1.0,
+        default=1.0,
         ge=0.0,
         le=1.0,
         description="Nucleus (top-p) sampling threshold.",
     )
     prepend_bos: bool = Field(
-        False,
+        default=False,
         description="Whether to prepend a BOS token before the prompt during generation.",
     )
     seed: Optional[int] = Field(

@@ -1,5 +1,7 @@
 import os
 import random
+from types import ModuleType
+from typing import TYPE_CHECKING
 
 import modal
 
@@ -30,6 +32,9 @@ from models.commons.util.device import get_torch_device
 from models.commons.util.environment import parse_variant
 
 logger = get_logger(__name__)
+
+if TYPE_CHECKING:
+    import torch
 
 variant_config = parse_variant(
     env_var_name="MODEL_TYPE",
@@ -111,7 +116,7 @@ class AbodyBuilder3Model(ModelMixinSnap):
     model_type: str = model_type
     app_username: str = modal.parameter(default="default_user")
 
-    def _load_prott5_on_device(self, torch, device):
+    def _load_prott5_on_device(self, torch: ModuleType, device: "torch.device") -> None:
         """Load ProtT5 language model directly on device for GPU memory snapshot."""
 
         from abodybuilder3.language.model import ProtT5
@@ -122,7 +127,9 @@ class AbodyBuilder3Model(ModelMixinSnap):
             self.plm = ProtT5(weights_dir=f"{self.model_dir}/prott5/")
             self.plm.embedding_module = self.plm.embedding_module.to(device)
 
-    def _load_litabb3_checkpoint(self, model_type_name, device):
+    def _load_litabb3_checkpoint(
+        self, model_type_name: str, device: "torch.device"
+    ) -> None:
         """Load LitABB3 checkpoint directly on device for GPU memory snapshot."""
         from abodybuilder3.lightning_module import LitABB3
 
@@ -135,7 +142,7 @@ class AbodyBuilder3Model(ModelMixinSnap):
         logger.info("LitABB3 %s checkpoint loaded successfully on GPU", model_type_name)
 
     @modal.enter(snap=True)
-    def setup_model(self):
+    def setup_model(self) -> None:
         """Load model directly on GPU for GPU memory snapshot with deterministic behavior."""
         import torch
 
@@ -199,7 +206,8 @@ class AbodyBuilder3Model(ModelMixinSnap):
 
         results = []
 
-        self.seed_everything(payload.params.seed)
+        seed = payload.params.seed
+        self.seed_everything(seed if seed is not None else 42)
 
         try:
             for input in payload.items:
@@ -244,7 +252,7 @@ class AbodyBuilder3Model(ModelMixinSnap):
 
         return AbodyBuilder3PredictResponse(results=results)
 
-    def seed_everything(self, seed: int = 42, deterministic: bool = True):
+    def seed_everything(self, seed: int = 42, deterministic: bool = True) -> None:
         """Set seed for reproducibility across random, NumPy, torch, and PyTorch Lightning.
 
         Args:

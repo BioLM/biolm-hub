@@ -1,4 +1,5 @@
-from typing import Optional
+from pathlib import Path
+from typing import Any, Optional
 
 from models.antifold.schema import AntiFoldParams
 from models.commons.core.logging import get_logger
@@ -16,7 +17,7 @@ ANTIFOLD_WEIGHTS_URL = (
 )
 
 
-def get_model_dir():
+def get_model_dir() -> Path:
 
     return get_model_dir_util(
         base_model_slug=AntiFoldParams.base_model_slug,
@@ -27,9 +28,9 @@ def get_model_dir():
 def download_model_assets(
     base_model_slug: str,
     weights_version: str,
-    variant_config: Optional[dict] = None,
+    variant_config: Optional[dict[str, Any]] = None,
     sub_path: Optional[str] = None,
-):
+) -> Path:
     """Download AntiFold weights: R2 cache first, else the OPIG source URL.
 
     On an R2 miss the checkpoint is fetched from OPIG and cached back to R2 in

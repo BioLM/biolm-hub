@@ -1,3 +1,5 @@
+from typing import Any
+
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
 from models.commons.testing.runner import generate_tests_from_suite
@@ -10,7 +12,9 @@ from models.prody.config import MODEL_FAMILY
 # to floating-point precision in the alignment algorithm.
 
 
-def _assert_interaction_counts(expected_counts: dict, actual_counts: dict, label: str):
+def _assert_interaction_counts(
+    expected_counts: dict[str, int], actual_counts: dict[str, int], label: str
+) -> None:
     """Check interaction counts with ±1 tolerance for hydrogen bonds, exact for others."""
     for interaction_type, expected_count in expected_counts.items():
         assert (
@@ -33,7 +37,9 @@ def _assert_interaction_counts(expected_counts: dict, actual_counts: dict, label
             )
 
 
-def validate_encode_interaction_counts(actual: dict, expected: dict | None = None):
+def validate_encode_interaction_counts(
+    actual: Any, expected: dict[str, Any] | None = None
+) -> None:
     """
     Custom validator for encode tests that checks interaction counts instead of exact matches.
     This is needed because ProDy+PDBFixer can produce non-deterministic results for exact atoms,

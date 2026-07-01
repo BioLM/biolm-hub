@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Optional
 
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
@@ -8,8 +8,8 @@ from models.thermompnn.fixture import INPUT1, INPUT2, INPUT3, INPUT4
 
 
 def _validate_thermompnn_predict(
-    actual_output: dict, _expected_output: Optional[dict] = None
-):
+    actual_output: dict[str, Any], _expected_output: Optional[dict[str, Any]] = None
+) -> None:
     """Basic validation for ThermoMPNN predict output - check structure."""
     assert "results" in actual_output, "Response missing 'results' key"
     assert len(actual_output["results"]) > 0, "Results list is empty"

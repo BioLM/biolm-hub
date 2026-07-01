@@ -1,6 +1,13 @@
-from typing import Optional
+from typing import Any, Optional, Union
 
-from models.boltzgen.schema import BoltzGenPipelineStep
+from models.boltzgen.schema import (
+    BoltzGenBindingType,
+    BoltzGenChainSelector,
+    BoltzGenDesignSpec,
+    BoltzGenPipelineStep,
+    BoltzGenSecondaryStructureSpec,
+    ChainId,
+)
 from models.commons.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -45,47 +52,51 @@ DEFAULT_PIPELINE_STEPS = [
 ]
 
 
-def _chain_dict(chain) -> dict:
+def _chain_dict(chain: ChainId) -> Union[dict[str, str], list[str]]:
     """Normalize a chain field to ``{"id": chain}`` if it's a plain string."""
     return {"id": chain} if isinstance(chain, str) else chain
 
 
-def convert_chain_selectors(selectors) -> list[dict]:
+def convert_chain_selectors(
+    selectors: list[BoltzGenChainSelector],
+) -> list[dict[str, Any]]:
     """Convert a list of ChainSelector objects to boltzgen YAML format.
 
     Result format: ``[{"chain": {"id": "A", "res_index": ...}}, ...]``
     """
-    result = []
+    result: list[dict[str, Any]] = []
     for sel in selectors:
-        entry = {"chain": {"id": sel.id}}
+        entry: dict[str, Any] = {"chain": {"id": sel.id}}
         if sel.res_index is not None:
             entry["chain"]["res_index"] = sel.res_index
         result.append(entry)
     return result
 
 
-def convert_design_specs(specs) -> list[dict]:
+def convert_design_specs(specs: list[BoltzGenDesignSpec]) -> list[dict[str, Any]]:
     """Convert a list of DesignSpec objects to boltzgen YAML format.
 
     Result format: ``[{"chain": {"id": "B"}, "res_index": "26..34"}, ...]``
     """
-    result = []
+    result: list[dict[str, Any]] = []
     for ds in specs:
-        entry: dict = {"chain": _chain_dict(ds.chain)}
+        entry: dict[str, Any] = {"chain": _chain_dict(ds.chain)}
         if ds.res_index is not None:
             entry["res_index"] = ds.res_index
         result.append(entry)
     return result
 
 
-def convert_ss_specs(specs) -> list[dict]:
+def convert_ss_specs(
+    specs: list[BoltzGenSecondaryStructureSpec],
+) -> list[dict[str, Any]]:
     """Convert a list of SecondaryStructureSpec objects to boltzgen YAML format.
 
     Result format: ``[{"chain": {"id": "A"}, "loop": 1, "helix": "2..3"}, ...]``
     """
-    result = []
+    result: list[dict[str, Any]] = []
     for ss in specs:
-        entry: dict = {"chain": _chain_dict(ss.chain)}
+        entry: dict[str, Any] = {"chain": _chain_dict(ss.chain)}
         if ss.loop is not None:
             entry["loop"] = ss.loop
         if ss.helix is not None:
@@ -96,16 +107,18 @@ def convert_ss_specs(specs) -> list[dict]:
     return result
 
 
-def convert_binding_types(binding_types) -> list[dict] | str:
+def convert_binding_types(
+    binding_types: Union[str, list[BoltzGenBindingType]],
+) -> Union[list[dict[str, Any]], str]:
     """Convert binding_types to the dict format expected by boltzgen YAML.
 
     Handles both string shorthand (e.g. "all") and list-of-BindingType objects.
     """
     if isinstance(binding_types, str):
         return binding_types
-    binding_list = []
+    binding_list: list[dict[str, Any]] = []
     for bt in binding_types:
-        bt_dict: dict = {"chain": _chain_dict(bt.chain)}
+        bt_dict: dict[str, Any] = {"chain": _chain_dict(bt.chain)}
         if bt.binding is not None:
             bt_dict["binding"] = bt.binding
         if bt.not_binding is not None:
@@ -136,7 +149,7 @@ def extract_sequence_from_cif(cif_content: str) -> Optional[str]:  # noqa: C901
         if entity_poly:
             for row in entity_poly:
                 if len(row) > 0:
-                    seq = row[0].strip()
+                    seq: str = row[0].strip()
                     seq = (
                         seq.replace(";", "").replace("\n", "").replace(" ", "").strip()
                     )
