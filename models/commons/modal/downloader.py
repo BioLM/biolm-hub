@@ -36,7 +36,7 @@ def setup_download_layer(
     image: modal.Image,
     base_model_slug: str,
     weights_version: str,
-    variant_config: Optional[dict] = None,
+    variant_config: Optional[dict[str, str]] = None,
     sub_path: Optional[str] = None,
     extra_pip_packages: Optional[list[str]] = None,
 ) -> modal.Image:
@@ -217,7 +217,7 @@ def _add_minimal_commons(image: modal.Image, model_folder_name: str) -> modal.Im
 
     # Register cleanup for process exit (as a safety net)
     # This ensures the directory is cleaned up when the process exits
-    def cleanup_tmpdir():
+    def cleanup_tmpdir() -> None:
         try:
             shutil.rmtree(tmpdir, ignore_errors=True)
         except Exception:
@@ -249,9 +249,9 @@ def _run_download_with_params(
     base_model_slug: str,
     weights_version: str,
     sub_path: Optional[str] = None,
-    variant_config: Optional[dict] = None,
+    variant_config: Optional[dict[str, str]] = None,
     _source_hash: Optional[str] = None,
-):
+) -> None:
     """Execute download function with explicit parameters.
 
     The _source_hash kwarg is not used at runtime — it exists solely to bust

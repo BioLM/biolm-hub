@@ -1,4 +1,7 @@
 import re
+from collections.abc import Callable
+from enum import Enum
+from typing import Any, TypeVar
 
 aa_unambiguous = "ACDEFGHIKLMNPQRSTVWY"
 aa_extended = aa_unambiguous + "BXZUO"
@@ -192,7 +195,7 @@ def validate_smiles_with_rdkit(smiles: str) -> str:
     """
     smiles = validate_smiles(smiles)
     try:
-        from rdkit import Chem  # type: ignore[import]
+        from rdkit import Chem
     except ImportError:
         return smiles  # rdkit not available; basic check already done above
 
@@ -211,13 +214,16 @@ def validate_smiles_with_rdkit(smiles: str) -> str:
     return smiles
 
 
-def allow_str_to_enum(enum_cls):
+_EnumT = TypeVar("_EnumT", bound=Enum)
+
+
+def allow_str_to_enum(enum_cls: type[_EnumT]) -> Callable[[Any], Any]:
     """
     Returns a pydantic BeforeValidator that converts raw strings
     (or list-of-strings) to the given Enum, even in strict mode.
     """
 
-    def _convert(v):
+    def _convert(v: Any) -> Any:
         if isinstance(v, enum_cls):
             return v
         if isinstance(v, str):

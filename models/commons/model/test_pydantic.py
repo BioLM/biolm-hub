@@ -16,20 +16,20 @@ class DummyList(RequestModel):
     chains: list[str] = Field(..., min_length=1)
 
 
-def test_dummy_scalar_accepts_correct_types():
+def test_dummy_scalar_accepts_correct_types() -> None:
     assert DummyScalar(name="alpha").name == "alpha"
 
 
-def test_dummy_list_accepts_correct_types():
+def test_dummy_list_accepts_correct_types() -> None:
     assert DummyList(chains=["H", "L"]).chains == ["H", "L"]
 
 
-def test_dummy_scalar_rejects_wrong_scalar_type():
+def test_dummy_scalar_rejects_wrong_scalar_type() -> None:
     with pytest.raises(ValidationError):
         DummyScalar(name=123)  # type: ignore[arg-type]
 
 
-def test_dummy_list_rejects_wrong_list_member_type():
+def test_dummy_list_rejects_wrong_list_member_type() -> None:
     with pytest.raises(ValidationError):
         DummyList(chains=["H", 42])  # type: ignore[list-item]
 
@@ -37,19 +37,19 @@ def test_dummy_list_rejects_wrong_list_member_type():
 # 2. Core amino-acid / nucleotide validators
 
 
-def test_aa_unambiguous():
+def test_aa_unambiguous() -> None:
     assert v.validate_aa_unambiguous("ACDEFGHIKLMNP") == "ACDEFGHIKLMNP"
     with pytest.raises(ValueError):
         v.validate_aa_unambiguous("ACDZ")  # Z not allowed
 
 
-def test_aa_extended():
+def test_aa_extended() -> None:
     assert v.validate_aa_extended("ACDBXZ") == "ACDBXZ"
     with pytest.raises(ValueError):
         v.validate_aa_extended("ACD*")  # * not in extended set
 
 
-def test_dna_unambiguous():
+def test_dna_unambiguous() -> None:
     assert v.validate_dna_unambiguous("ATCG") == "ATCG"
     with pytest.raises(ValueError):
         v.validate_dna_unambiguous("ATCX")  # X not allowed
@@ -58,14 +58,14 @@ def test_dna_unambiguous():
 # 3. Validators that accept "extra" tokens
 
 
-def test_aa_unambiguous_plus_extra():
+def test_aa_unambiguous_plus_extra() -> None:
     validator = v.AAUnambiguousPlusExtra(extra=["*"])
     assert validator("ACD*EFG") == "ACD*EFG"
     with pytest.raises(ValueError):
         validator("ACD*EZ")  # Z not in unambiguous set
 
 
-def test_aa_extended_plus_extra():
+def test_aa_extended_plus_extra() -> None:
     validator = v.AAExtendedPlusExtra(extra=["-"])
     assert validator("ACD-BXZ") == "ACD-BXZ"
     with pytest.raises(ValueError):
@@ -75,14 +75,14 @@ def test_aa_extended_plus_extra():
 # 4. Token-counting helpers (Single / Multiple occurrences)
 
 
-def test_single_occurrence():
+def test_single_occurrence() -> None:
     so = v.SingleOccurrenceOf("<mask>")
     assert so("A<mask>B") == "A<mask>B"
     with pytest.raises(ValueError):
         so("A<mask>B<mask>C")
 
 
-def test_up_to_n_non_consecutive():
+def test_up_to_n_non_consecutive() -> None:
     up_to_two = v.UpToNNonConsecutiveOccurrencesOf(":", 2)
     assert up_to_two("A:B:C") == "A:B:C"
     with pytest.raises(ValueError):
@@ -94,7 +94,7 @@ def test_up_to_n_non_consecutive():
 # 5. PDB sniffer
 
 
-def test_pdb_pass_fail():
+def test_pdb_pass_fail() -> None:
     good = "ATOM      1  N   ALA A   1      11.104   8.520   2.654"
     assert validate_pdb(good) == good
     with pytest.raises(ValueError):

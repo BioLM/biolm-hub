@@ -34,7 +34,7 @@ import os
 import zipfile
 from collections.abc import Callable
 from pathlib import Path
-from typing import NamedTuple, Optional
+from typing import Any, NamedTuple, Optional
 
 import requests
 
@@ -54,7 +54,7 @@ DOWNLOAD_LARGE_FILE_THRESHOLD = 100 * 1024 * 1024  # 100MB
 
 
 def download_file_with_size_optimization(
-    r2_client, bucket_name: str, key: str, local_path: str, file_size: int = 0
+    r2_client: Any, bucket_name: str, key: str, local_path: str, file_size: int = 0
 ) -> None:
     """
     Download file with optimization for large files (>100MB).
@@ -79,7 +79,7 @@ def download_file_with_size_optimization(
 
 
 def upload_file_with_size_optimization(
-    r2_client,
+    r2_client: Any,
     bucket_name: str,
     key: str,
     local_path: str,
@@ -221,8 +221,8 @@ def _should_skip_file(
 
 
 def _filter_r2_objects(
-    r2_objects: list, filter_func: Optional[Callable[[str], bool]]
-) -> list:
+    r2_objects: list[dict[str, Any]], filter_func: Optional[Callable[[str], bool]]
+) -> list[dict[str, Any]]:
     """Filter R2 objects based on criteria."""
     # Lazy import avoids a module-load cycle (r2_utils imports downloads).
     from models.commons.storage.r2_utils import R2Utils
@@ -252,14 +252,14 @@ def _filter_r2_objects(
 
 
 def _download_single_file(
-    r2_client,
+    r2_client: Any,
     bucket_name: str,
     full_key: str,
     local_file_path: Path,
     remote_size: int,
     idx: int,
     total: int,
-):
+) -> None:
     """Download a single file from R2 with optimized configuration for large files."""
     local_file_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -589,7 +589,7 @@ def download_archive(
     headers: Optional[dict[str, str]] = None,
     verify_ssl: bool = True,
     timeout: int = 600,
-) -> dict:
+) -> dict[str, int]:
     """
     Stream a .zip archive to `destination` with progress and error cleanup.
 

@@ -26,8 +26,8 @@ non_cacheable_actions = {ModelActions.GENERATE}  # Actions we never want to cach
 def build_item_cache_key(
     model_slug: str,
     model_action: str,
-    item_dict: dict,
-    params: Optional[dict],
+    item_dict: dict[str, Any],
+    params: Optional[dict[str, Any]],
 ) -> str:
     """
     Creates a SHA256-based cache key incorporating model slug, action, item data, and params.
@@ -63,7 +63,7 @@ def build_item_cache_key(
     return hasher.hexdigest()
 
 
-def _result_item_is_cacheable(item_dict: dict) -> bool:
+def _result_item_is_cacheable(item_dict: dict[str, Any]) -> bool:
     """Return True only if item_dict contains at least one non-trivial output field.
 
     Input-only fields (the canonical request keys: sequence, sequences, id,
@@ -396,12 +396,12 @@ async def process_with_cache(
 
 
 async def _cache_check(
-    items: list,
+    items: list[BaseModel],
     params: Optional[dict[str, Any]],
     model_slug: str,
     model_action: str,
     debug_logger: DebugLogger,
-):
+) -> tuple[list[Optional[Any]], list[int], list[BaseModel]]:
     """
     Checks each item against the short-term cache, then falls back to R2.
 
@@ -422,9 +422,9 @@ async def _cache_check(
             indices_to_compute (list): The indices of items that are not cached.
             items_to_compute (list): The actual item objects that need computation.
     """
-    final_results = [None] * len(items)
-    indices_to_compute = []
-    items_to_compute = []
+    final_results: list[Optional[Any]] = [None] * len(items)
+    indices_to_compute: list[int] = []
+    items_to_compute: list[BaseModel] = []
 
     short_term_cache_updates = {}
 
@@ -470,9 +470,9 @@ async def _cache_check(
 
 async def _cache_postprocess(
     partial_response_obj: BaseModel,
-    final_results: list,
-    indices_to_compute: list,
-    items_to_compute: list,
+    final_results: list[Optional[Any]],
+    indices_to_compute: list[int],
+    items_to_compute: list[BaseModel],
     params: Optional[dict[str, Any]],
     model_slug: str,
     model_action: str,

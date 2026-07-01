@@ -1,5 +1,5 @@
 import gzip
-from typing import Optional
+from typing import Any, Optional, cast
 
 import orjson
 from botocore.exceptions import ClientError
@@ -52,7 +52,9 @@ def build_r2_key_for_item(
     )
 
 
-def fetch_from_r2(model_slug: str, model_action: str, item_key: str) -> Optional[dict]:
+def fetch_from_r2(
+    model_slug: str, model_action: str, item_key: str
+) -> Optional[dict[str, Any]]:
     """
     Fetch the item from {item_key}.jsonbin and auto-detect
     if it's gzip-compressed by magic bytes (0x1F, 0x8B).
@@ -83,10 +85,10 @@ def fetch_from_r2(model_slug: str, model_action: str, item_key: str) -> Optional
         if len(data) >= 2 and data[0] == 0x1F and data[1] == 0x8B:
             # It's gzipped
             decompressed = gzip.decompress(data)
-            return orjson.loads(decompressed)
+            return cast(dict[str, Any], orjson.loads(decompressed))
         else:
             # It's plain JSON
-            return orjson.loads(data)
+            return cast(dict[str, Any], orjson.loads(data))
 
     except r2_client.exceptions.NoSuchKey:
         return None
@@ -95,7 +97,9 @@ def fetch_from_r2(model_slug: str, model_action: str, item_key: str) -> Optional
         return None
 
 
-def store_in_r2(model_slug: str, model_action: str, item_key: str, value: dict) -> None:
+def store_in_r2(
+    model_slug: str, model_action: str, item_key: str, value: dict[str, Any]
+) -> None:
     """
     Serialize `value` to JSON. If it's >= 2KB, gzip it.
     Store everything as *.jsonbin, so we only need one extension.
@@ -195,7 +199,7 @@ def get_items_added_by_day(
     to only those subfolders. Otherwise, we scan all items
     under r2_model_cache_dir.
     """
-    from datetime import datetime, timedelta
+    from datetime import date, datetime, timedelta
 
     r2_client = get_r2_client()
 
@@ -211,7 +215,7 @@ def get_items_added_by_day(
     start_date = end_date - timedelta(days=n_days - 1)
 
     # 3) Use a dict to collect counts, keyed by date
-    day_counts = {}
+    day_counts: dict[date, int] = {}
 
     paginator = r2_client.get_paginator("list_objects_v2")
     pages = paginator.paginate(Bucket=r2_bucket_name, Prefix=base_prefix)

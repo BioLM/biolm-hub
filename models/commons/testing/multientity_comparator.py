@@ -40,12 +40,13 @@ Potential future users: chai1 (multi-chain complexes), af2_nim (AlphaFold predic
 import warnings
 from collections import defaultdict
 from io import StringIO
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 from Bio import pairwise2
-from Bio.PDB import MMCIFParser, Superimposer
 from Bio.PDB.Chain import Chain
+from Bio.PDB.MMCIFParser import MMCIFParser
 from Bio.PDB.Structure import Structure
+from Bio.PDB.Superimposer import Superimposer
 from Bio.SeqUtils import seq1
 
 # Suppress Bio warnings
@@ -98,7 +99,7 @@ class MultiEntitymmCIFComparator:
         }
         self.min_sequence_similarity = min_sequence_similarity
         self.verbose = verbose
-        self.parser = MMCIFParser(QUIET=True)
+        self.parser = MMCIFParser(QUIET=True)  # type: ignore[no-untyped-call]  # biopython MMCIFParser ctor is untyped
 
     def compare(  # noqa: C901  # Complex bioinformatics algorithm - complexity justified
         self, expected_cif: str, predicted_cif: str
@@ -204,7 +205,10 @@ class MultiEntitymmCIFComparator:
         """Parse mmCIF string to BioPython Structure"""
         try:
             io = StringIO(cif_str)
-            return self.parser.get_structure(name, io)
+            return cast(
+                Structure,
+                self.parser.get_structure(name, io),  # type: ignore[no-untyped-call]  # biopython get_structure is untyped
+            )
         except Exception as e:
             if self.verbose:
                 print(f"Error parsing structure '{name}': {e}")
@@ -223,7 +227,7 @@ class MultiEntitymmCIFComparator:
 
     def _determine_entity_type(self, chain: Chain) -> str:
         """Determine the type of entity from a chain"""
-        residues = list(chain.get_residues())
+        residues = list(chain.get_residues())  # type: ignore[no-untyped-call]  # biopython get_residues is untyped
         if not residues:
             return EntityType.UNKNOWN
 
@@ -340,13 +344,15 @@ class MultiEntitymmCIFComparator:
 
             if not seq1_str or not seq2_str:
                 # For non-sequence entities (ligands), compare by atom count
-                n1 = len(list(chain1.get_atoms()))
-                n2 = len(list(chain2.get_atoms()))
+                n1 = len(list(chain1.get_atoms()))  # type: ignore[no-untyped-call]  # biopython get_atoms is untyped
+                n2 = len(list(chain2.get_atoms()))  # type: ignore[no-untyped-call]  # biopython get_atoms is untyped
                 # Simple similarity based on atom count
                 return 1.0 - abs(n1 - n2) / max(n1, n2) if max(n1, n2) > 0 else 0.0
 
             # For sequences, use alignment score
-            alignments = pairwise2.align.globalxx(seq1_str, seq2_str)
+            alignments = pairwise2.align.globalxx(  # type: ignore[attr-defined]  # Bio.pairwise2.align dispatches align fns dynamically
+                seq1_str, seq2_str
+            )
             if alignments:
                 score = alignments[0].score
                 max_len = max(len(seq1_str), len(seq2_str))
@@ -356,8 +362,8 @@ class MultiEntitymmCIFComparator:
 
         except Exception:
             # Fall back to atom count similarity
-            n1 = len(list(chain1.get_atoms()))
-            n2 = len(list(chain2.get_atoms()))
+            n1 = len(list(chain1.get_atoms()))  # type: ignore[no-untyped-call]  # biopython get_atoms is untyped
+            n2 = len(list(chain2.get_atoms()))  # type: ignore[no-untyped-call]  # biopython get_atoms is untyped
             return 1.0 - abs(n1 - n2) / max(n1, n2) if max(n1, n2) > 0 else 0.0
 
     def _extract_sequence(self, chain: Chain) -> str:
@@ -367,7 +373,7 @@ class MultiEntitymmCIFComparator:
             if residue.id[0] == " ":  # Standard residue
                 try:
                     # Convert 3-letter code to 1-letter
-                    one_letter = seq1(residue.resname)
+                    one_letter = seq1(residue.resname)  # type: ignore[no-untyped-call]  # biopython seq1 is untyped
                     sequence.append(one_letter)
                 except Exception:
                     # For non-standard residues, use X
@@ -378,15 +384,15 @@ class MultiEntitymmCIFComparator:
         """Get a chain from structure by ID"""
         for model in structure:
             if chain_id in model:
-                return model[chain_id]
+                return cast(Chain, model[chain_id])
         return None
 
     def _calculate_chain_rmsd(
         self, chain1: Chain, chain2: Chain
     ) -> tuple[Optional[float], int]:
         """Calculate RMSD between two chains"""
-        atoms1 = list(chain1.get_atoms())
-        atoms2 = list(chain2.get_atoms())
+        atoms1 = list(chain1.get_atoms())  # type: ignore[no-untyped-call]  # biopython get_atoms is untyped
+        atoms2 = list(chain2.get_atoms())  # type: ignore[no-untyped-call]  # biopython get_atoms is untyped
 
         if len(atoms1) != len(atoms2):
             # Try to match by residue and atom name
@@ -396,8 +402,10 @@ class MultiEntitymmCIFComparator:
             return None, 0
 
         try:
-            super_imposer = Superimposer()
-            super_imposer.set_atoms(atoms1, atoms2)
+            super_imposer = Superimposer()  # type: ignore[no-untyped-call]  # biopython Superimposer ctor is untyped
+            super_imposer.set_atoms(  # type: ignore[no-untyped-call]  # biopython set_atoms is untyped
+                atoms1, atoms2
+            )
             rmsd = super_imposer.rms
             return rmsd, len(atoms1)
         except Exception as e:
@@ -405,7 +413,7 @@ class MultiEntitymmCIFComparator:
                 print(f"Error calculating RMSD: {e}")
             return None, 0
 
-    def _match_atoms(self, chain1: Chain, chain2: Chain) -> tuple[list, list]:
+    def _match_atoms(self, chain1: Chain, chain2: Chain) -> tuple[list[Any], list[Any]]:
         """Match atoms between chains by residue and atom name"""
         atoms1 = []
         atoms2 = []
@@ -434,16 +442,19 @@ class MultiEntitymmCIFComparator:
         self, structure1: Structure, structure2: Structure
     ) -> float:
         """Calculate naive all-atom RMSD as fallback"""
-        atoms1 = list(structure1.get_atoms())
-        atoms2 = list(structure2.get_atoms())
+        atoms1 = list(structure1.get_atoms())  # type: ignore[no-untyped-call]  # biopython get_atoms is untyped
+        atoms2 = list(structure2.get_atoms())  # type: ignore[no-untyped-call]  # biopython get_atoms is untyped
 
         if len(atoms1) != len(atoms2):
             return float("inf")
 
         try:
-            super_imposer = Superimposer()
-            super_imposer.set_atoms(atoms1, atoms2)
-            return super_imposer.rms
+            super_imposer = Superimposer()  # type: ignore[no-untyped-call]  # biopython Superimposer ctor is untyped
+            super_imposer.set_atoms(  # type: ignore[no-untyped-call]  # biopython set_atoms is untyped
+                atoms1, atoms2
+            )
+            rmsd = super_imposer.rms
+            return rmsd if rmsd is not None else float("inf")
         except Exception:
             return float("inf")
 

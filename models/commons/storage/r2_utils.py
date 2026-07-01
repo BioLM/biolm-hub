@@ -3,7 +3,7 @@ import json
 import time
 from collections.abc import Callable
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from models.commons.core.logging import get_logger
 from models.commons.storage.r2 import get_r2_client
@@ -85,7 +85,7 @@ class R2Utils:
 
     @staticmethod
     def download_from_r2_prefix(
-        r2_client,
+        r2_client: Any,
         target_dir: Path,
         r2_prefix: str,
         bucket_name: str = r2_bucket_name,
@@ -169,10 +169,10 @@ class R2Utils:
 
     @staticmethod
     def upload_completion_marker(
-        r2_client,
+        r2_client: Any,
         r2_prefix: str,
         bucket_name: str = r2_bucket_name,
-        metadata: Optional[dict] = None,
+        metadata: Optional[dict[str, Any]] = None,
     ) -> bool:
         """
         Upload atomic completion marker to signal successful cache operation.
@@ -221,7 +221,7 @@ class R2Utils:
 
     @staticmethod
     def check_completion_marker(
-        r2_client,
+        r2_client: Any,
         r2_prefix: str,
         bucket_name: str = r2_bucket_name,
         timeout_hours: Optional[int] = None,
@@ -274,7 +274,9 @@ class R2Utils:
             return False
 
     @staticmethod
-    def create_manifest(source_dir: Path, include_checksums: bool = True) -> dict:
+    def create_manifest(
+        source_dir: Path, include_checksums: bool = True
+    ) -> dict[str, dict[str, Any]]:
         """
         Create manifest with file metadata and optional checksums.
 
@@ -289,7 +291,7 @@ class R2Utils:
             >>> manifest = R2Utils.create_manifest(Path("/models/esm2"))
             >>> print(f"Manifest contains {len(manifest)} files")
         """
-        manifest = {}
+        manifest: dict[str, dict[str, Any]] = {}
 
         if not source_dir.exists():
             return manifest
@@ -299,7 +301,7 @@ class R2Utils:
                 if file_path.is_file():
                     relative_path = file_path.relative_to(source_dir)
 
-                    file_info = {
+                    file_info: dict[str, Any] = {
                         "size": file_path.stat().st_size,
                         "mtime": file_path.stat().st_mtime,
                     }
@@ -317,7 +319,9 @@ class R2Utils:
 
     @staticmethod
     def validate_manifest(
-        target_dir: Path, manifest: dict, check_checksums: bool = True
+        target_dir: Path,
+        manifest: dict[str, dict[str, Any]],
+        check_checksums: bool = True,
     ) -> bool:
         """
         Validate files against manifest metadata.
@@ -376,7 +380,7 @@ class R2Utils:
 
     @staticmethod
     def _upload_file_to_r2(
-        r2_client, file_path: Path, r2_key: str, bucket_name: str
+        r2_client: Any, file_path: Path, r2_key: str, bucket_name: str
     ) -> None:
         """Upload a single file to R2 with size-based optimization."""
         from models.commons.storage.downloads import upload_file_with_size_optimization
@@ -387,7 +391,7 @@ class R2Utils:
         )
 
     @staticmethod
-    def _create_file_manifest_entry(file_path: Path) -> dict:
+    def _create_file_manifest_entry(file_path: Path) -> dict[str, Any]:
         """Create manifest entry for a file."""
         return {
             "size": file_path.stat().st_size,
@@ -397,7 +401,10 @@ class R2Utils:
 
     @staticmethod
     def _upload_manifest_to_r2(
-        r2_client, manifest: dict, r2_prefix: str, bucket_name: str
+        r2_client: Any,
+        manifest: dict[str, dict[str, Any]],
+        r2_prefix: str,
+        bucket_name: str,
     ) -> bool:
         """Upload manifest to R2."""
         if not manifest:
@@ -420,7 +427,7 @@ class R2Utils:
         total_files: int,
         bytes_uploaded: int,
         total_bytes: int,
-        progress_callback: Optional[Callable[[dict], None]] = None,
+        progress_callback: Optional[Callable[[dict[str, Any]], None]] = None,
     ) -> None:
         """Report detailed upload progress with size and file information."""
         percent = (bytes_uploaded / total_bytes * 100) if total_bytes > 0 else 0
@@ -452,7 +459,7 @@ class R2Utils:
         r2_prefix: str,
         bucket_name: str = r2_bucket_name,
         create_manifest: bool = True,
-        progress_callback: Optional[Callable[[dict], None]] = None,
+        progress_callback: Optional[Callable[[dict[str, Any]], None]] = None,
     ) -> bool:
         """
         Atomically upload directory to R2 with completion marker.
@@ -540,7 +547,7 @@ class R2Utils:
             )
 
             # Upload completion marker (atomic commit)
-            completion_metadata = {
+            completion_metadata: dict[str, Any] = {
                 "file_count": total_files,
                 "manifest_uploaded": manifest_uploaded,
             }

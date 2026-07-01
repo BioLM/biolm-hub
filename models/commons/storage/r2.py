@@ -18,7 +18,7 @@ def r2_credentials_present() -> bool:
     return bool(os.getenv("AWS_ACCESS_KEY_ID") and os.getenv("AWS_SECRET_ACCESS_KEY"))
 
 
-def get_r2_transfer_config():
+def get_r2_transfer_config() -> Any:
     """
     Returns a TransferConfig optimized for large file *downloads*.
 
@@ -42,7 +42,7 @@ def get_r2_transfer_config():
     )
 
 
-def get_r2_upload_transfer_config():
+def get_r2_upload_transfer_config() -> Any:
     """
     Returns a TransferConfig optimized for large file *uploads*.
 
@@ -64,7 +64,7 @@ def get_r2_upload_transfer_config():
 
 
 @functools.lru_cache
-def get_r2_client():
+def get_r2_client() -> Any:
     """
     Returns a cached R2 client object for interacting with the R2 bucket.
 

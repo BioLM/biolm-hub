@@ -1,6 +1,7 @@
 from collections.abc import Callable
+from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 from models.commons.core.logging import get_logger
 from models.commons.storage.acquisition import (
@@ -138,7 +139,7 @@ def acquire_library_managed_model(
     library_name: str,
     target_dir: Path,
     init_fn: Optional[Callable[[Path], Any]] = None,
-    env_vars: Optional[dict] = None,
+    env_vars: Optional[dict[str, str]] = None,
     cache_to_r2: bool = True,
     required_files: Optional[list[str]] = None,
 ) -> AcquisitionResult:
@@ -255,9 +256,9 @@ def download_with_fallback(
 
 
 def build_model_type_filter(
-    checkpoint_mapping: dict,
+    checkpoint_mapping: dict[str, str],
     model_type: str,
-    allowed_values: Optional[type] = None,
+    allowed_values: Optional[type[Enum]] = None,
     include_files: Optional[list[str]] = None,
 ) -> Callable[[str], bool]:
     """
@@ -344,7 +345,7 @@ def extract_model_variant(variant_config: Optional[dict[str, Any]], key: str) ->
             f"This likely means the variant was not properly set in app.py."
         )
 
-    return value
+    return cast(str, value)
 
 
 # ---------------------------------------------------------------------------
@@ -448,6 +449,12 @@ def r2_then_hf(
     # When the HF fallback runs, _acquire_huggingface_hub already sets this.
     # When the R2 primary succeeds, we need to resolve it ourselves.
     if result.success and result.actual_model_path == target_dir:
+        if hf_revision is None:
+            raise ValueError(
+                "r2_then_hf: R2 cache hit but no hf_revision was provided; a "
+                "pinned commit hash is required to resolve the HF snapshot path "
+                "when restoring from R2's flat layout."
+            )
         snapshot_path = build_hf_snapshot_path(
             target_dir, hf_repo_id, hf_revision, repo_type=repo_type
         )

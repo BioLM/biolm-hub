@@ -1,3 +1,4 @@
+from collections.abc import Callable, Iterator
 from typing import Any
 
 try:
@@ -69,7 +70,7 @@ try:
 
         @classmethod
         def __get_pydantic_core_schema__(
-            cls, source: Any, handler: _Handler
+            cls: type[Any], source: Any, handler: _Handler
         ) -> _cs.CoreSchema:
             schema = handler(source)
             return _cs.no_info_before_validator_function(
@@ -83,8 +84,8 @@ except ImportError:
         """Fallback for pydantic v1 (sadie container)."""
 
         @classmethod
-        def __get_validators__(cls):
-            def _cast(v):
+        def __get_validators__(cls: type[Any]) -> Iterator[Callable[[Any], Any]]:
+            def _cast(v: Any) -> Any:
                 if isinstance(v, str) and not isinstance(v, cls):
                     return cls(v)
                 return v

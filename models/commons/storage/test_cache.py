@@ -1,6 +1,7 @@
 import random
 import string
 import time
+from collections.abc import Iterator
 
 import pytest
 
@@ -24,7 +25,7 @@ TEST_MODEL_ACTION = "z_test_model_action"
 short_term_model_cache = get_model_cache(TEST_MODEL_SLUG)
 
 
-def _safe_pop_from_short_term_model_cache(key: str):
+def _safe_pop_from_short_term_model_cache(key: str) -> None:
     """
     A small helper to avoid errors with 'pop(key, default)'.
     modal.Dict.pop() doesn't allow a second argument, so check membership first.
@@ -34,7 +35,7 @@ def _safe_pop_from_short_term_model_cache(key: str):
 
 
 @pytest.fixture(scope="module", autouse=True)
-def setup_and_teardown():
+def setup_and_teardown() -> Iterator[None]:
     """
     Runs ONCE before all tests in this file, and ONCE after.
     Ensures we clean up data in short-term and R2 that belongs to our test slug.
@@ -82,7 +83,7 @@ def setup_and_teardown():
 ### 1) Basic short-term cache tests
 
 
-def test_short_term_model_cache_crud():
+def test_short_term_model_cache_crud() -> None:
     print("\n--- test_short_term_model_cache_crud ---")
 
     test_key = "z_test_short_term_crud"
@@ -113,7 +114,7 @@ def test_short_term_model_cache_crud():
 ### 2) Basic R2 cache tests
 
 
-def test_r2_cache_crud():
+def test_r2_cache_crud() -> None:
     print("\n--- test_r2_cache_crud ---")
     # We'll store and fetch from the real R2.
     # We'll use our test slug + some random item_key
@@ -154,7 +155,7 @@ def random_string(length: int) -> str:
 
 
 @pytest.mark.parametrize("payload_size", [100, 500, 2000])
-def test_short_term_model_cache_performance(payload_size):
+def test_short_term_model_cache_performance(payload_size: int) -> None:
     """
     Measure raw writes/reads to short-term cache (Modal Dict) for the specified payload size.
     We'll do 100 writes and 100 reads, then print out RPS.
@@ -193,7 +194,7 @@ def test_short_term_model_cache_performance(payload_size):
 
 
 @pytest.mark.parametrize("payload_size", [100, 500, 2000])
-def test_r2_cache_performance(payload_size):
+def test_r2_cache_performance(payload_size: int) -> None:
     """
     Measure raw writes/reads to R2 for the specified payload size.
     We'll do 100 writes and 100 reads, then print out RPS.

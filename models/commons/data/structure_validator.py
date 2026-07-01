@@ -112,7 +112,9 @@ def _get_pdb_record_types() -> set[str]:
     }
 
 
-def _process_pdb_line(line: str, valid_record_types: set) -> tuple[bool, bool, bool]:
+def _process_pdb_line(
+    line: str, valid_record_types: set[str]
+) -> tuple[bool, bool, bool]:
     """Process a single PDB line.
     Returns (is_atom_hetatm, has_valid_record, has_valid_coords)."""
     if len(line) < 6:

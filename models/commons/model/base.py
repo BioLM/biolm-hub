@@ -28,7 +28,7 @@ class ModelMixin:
         return 1
 
     @modal.method()
-    def healthy(self) -> dict:
+    def healthy(self) -> dict[str, str]:
         """Lightweight health check for the container."""
         return {
             "status": "healthy",

@@ -1,7 +1,11 @@
+from collections.abc import Callable
+from typing import Any, Optional
+
 import modal
 
+from models.commons.model.config import ResolvedVariant
 from models.commons.storage.r2 import read_json_from_r2, write_data_to_r2
-from models.commons.testing.config import TestSuite
+from models.commons.testing.config import ActionTestCase, TestSuite
 from models.commons.testing.runner import (
     _fixture_r2_path,
     setup_and_get_local_model_instance,
@@ -18,15 +22,19 @@ class FixtureGenerator:
     def __init__(self, suite: TestSuite):
         self.suite = suite
         self.r2_base_path = f"{r2_test_data_dir}/{suite.r2_fixture_subdir}/{suite.model_family.base_model_slug}"
-        self.test_cases = []
+        self.test_cases: list[ActionTestCase] = []
 
-    def add_test_case(self, test_case):
+    def add_test_case(self, test_case: ActionTestCase) -> None:
         """Registers a new ActionTestCase to be run."""
         self.test_cases.append(test_case)
 
-    def _get_matching_test_cases(self, variant, mapping_filter_func):
+    def _get_matching_test_cases(
+        self,
+        variant: ResolvedVariant,
+        mapping_filter_func: Callable[[ResolvedVariant, dict[str, Any]], bool],
+    ) -> Optional[list[ActionTestCase]]:
         """Get test cases that match the given variant."""
-        matching_test_cases = []
+        matching_test_cases: list[ActionTestCase] = []
         variant_matches = False
 
         for mapping in self.suite.variant_test_mappings:
@@ -43,7 +51,12 @@ class FixtureGenerator:
 
         return matching_test_cases if variant_matches else None
 
-    def _write_input_files(self, test_cases, variant, written_inputs):
+    def _write_input_files(
+        self,
+        test_cases: list[ActionTestCase],
+        variant: ResolvedVariant,
+        written_inputs: set[str],
+    ) -> None:
         """Write input files for the given test cases."""
         for case in test_cases:
             # Skip file-based inputs - they should already exist
@@ -52,17 +65,30 @@ class FixtureGenerator:
 
             # Programmatic input - convert to JSON and upload
             try:
-                input_path = case.input_filename_template.format(variant=variant)
+                # A None template intentionally raises AttributeError here, caught
+                # below to fall back to the (also None) raw template value.
+                input_path = case.input_filename_template.format(  # type: ignore[union-attr]
+                    variant=variant
+                )
             except (KeyError, AttributeError):
                 input_path = case.input_filename_template
 
             if input_path not in written_inputs:
                 r2_input_path = f"{self.r2_base_path}/{input_path}"
-                input_data_dict = case.input_fixture.model_dump()
+                if isinstance(case.input_fixture, dict):
+                    input_data_dict = case.input_fixture
+                else:
+                    input_data_dict = case.input_fixture.model_dump()
                 write_data_to_r2(r2_bucket_name, r2_input_path, input_data_dict)
                 written_inputs.add(input_path)
 
-    def _generate_output_files(self, model_instance, app_object, test_cases, variant):
+    def _generate_output_files(
+        self,
+        model_instance: Any,
+        app_object: Any,
+        test_cases: list[ActionTestCase],
+        variant: ResolvedVariant,
+    ) -> None:
         """Generate output files by calling the app methods."""
         with modal.enable_output(), app_object.run():
             for case in test_cases:
@@ -122,14 +148,18 @@ class FixtureGenerator:
 
                 # Write the output to R2
                 try:
-                    output_path = case.expected_output_fixture.format(variant=variant)
+                    # A None fixture intentionally raises AttributeError here, caught
+                    # below to fall back to the (also None) raw value.
+                    output_path = case.expected_output_fixture.format(  # type: ignore[union-attr]
+                        variant=variant
+                    )
                 except (KeyError, AttributeError):
                     output_path = case.expected_output_fixture
 
                 r2_output_path = f"{self.r2_base_path}/{output_path}"
                 write_data_to_r2(r2_bucket_name, r2_output_path, actual_output)
 
-    def generate(self):
+    def generate(self) -> None:
         """Runs the full fixture generation process using the TestSuite system."""
         print(
             f"--- 🚀 Generating fixtures for {self.suite.model_family.base_model_slug} ---"
@@ -137,7 +167,7 @@ class FixtureGenerator:
 
         from models.commons.testing.runner import _variant_matches_mapping_filter
 
-        written_inputs = (
+        written_inputs: set[str] = (
             set()
         )  # Track inputs to avoid re-uploading variant-agnostic files
 

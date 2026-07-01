@@ -19,7 +19,7 @@ class ActionTestCase(BaseModel):
 
     # Path to the input data file in R2, relative to the model's test data directory.
     # Can also be a dict or Pydantic model for programmatic input generation.
-    input_fixture: Union[str, dict, BaseModel]
+    input_fixture: Union[str, dict[str, Any], BaseModel]
 
     # Optional: Path to the expected output file for integration tests.
     # Can be a string template, e.g., "{variant.name}_output.json", which the
@@ -33,7 +33,7 @@ class ActionTestCase(BaseModel):
     tolerances: dict[str, Any] = {}
 
     # Optional custom validation function for the response.
-    validator: Optional[Callable[[Any, Optional[dict]], None]] = None
+    validator: Optional[Callable[[Any, Optional[dict[str, Any]]], None]] = None
 
     # A dictionary of kwargs to pass to the .remote() function.
     remote_fn_kwargs: Optional[dict[str, Any]] = None

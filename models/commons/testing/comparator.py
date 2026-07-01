@@ -2,8 +2,8 @@ from io import StringIO
 from math import sqrt
 from typing import Any, Optional
 
-from Bio.PDB import PDBParser  # type: ignore[import-untyped]
 from Bio.PDB.MMCIFParser import MMCIFParser
+from Bio.PDB.PDBParser import PDBParser
 
 
 class DictComparator:
@@ -111,12 +111,16 @@ class DictComparator:
 
     def _parse_structure(self, value: str, file_type: str = "pdb") -> Any:
         parser = (
-            PDBParser(QUIET=True) if file_type == "pdb" else MMCIFParser(QUIET=True)
+            PDBParser(QUIET=True)  # type: ignore[no-untyped-call]  # biopython parser ctor is untyped
+            if file_type == "pdb"
+            else MMCIFParser(QUIET=True)  # type: ignore[no-untyped-call]  # biopython parser ctor is untyped
         )
         structure_id = "expected" if "expected" in value else "result"
         io = StringIO(value)
         try:
-            return parser.get_structure(structure_id, io)
+            return parser.get_structure(  # type: ignore[no-untyped-call]  # biopython get_structure is untyped
+                structure_id, io
+            )
         except Exception as e:
             print(f">>> Error parsing {file_type.upper()} file: {e}")
             return None
@@ -156,6 +160,9 @@ class DictComparator:
     def _compare_vectors(
         self, path: list[Any], flat1: list[float], flat2: list[float]
     ) -> None:
+        # Only called from _compare_lists after confirming cosine_distance_threshold
+        # is not None.
+        assert self.cosine_distance_threshold is not None
         # Compute cosine similarity first (in pure Python), then derive distance
         dot = sum(a * b for a, b in zip(flat1, flat2, strict=True))
         norm1_sq = sum(a**2 for a in flat1)
@@ -284,11 +291,18 @@ class DictComparator:
             return
 
         if len(expected_atoms) == len(result_atoms):
-            from Bio.PDB import Superimposer
+            from Bio.PDB.Superimposer import Superimposer
 
-            super_imposer = Superimposer()
-            super_imposer.set_atoms(expected_atoms, result_atoms)
-            rmsd = super_imposer.rms
+            # Only reached when not pdb_seq_match, so _are_pdbs already guarantees
+            # pdb_rmsd_threshold is set.
+            assert self.pdb_rmsd_threshold is not None
+            super_imposer = Superimposer()  # type: ignore[no-untyped-call]  # biopython Superimposer ctor is untyped
+            super_imposer.set_atoms(  # type: ignore[no-untyped-call]  # biopython set_atoms is untyped
+                expected_atoms, result_atoms
+            )
+            rmsd = (
+                super_imposer.rms if super_imposer.rms is not None else self._inf_diff
+            )
             print(f"Computed RMSD at {self._diff_path_str(path)}: {rmsd}")
             diff = 0.0 if rmsd < self.pdb_rmsd_threshold else rmsd
         else:
@@ -305,6 +319,9 @@ class DictComparator:
         slack. If the relative difference in lengths is <= 10%, the diff is set to 0;
         otherwise, the diff is set to an infinite value.
         """
+        # Only called from _compare_values after confirming msa_content_len_threshold
+        # is not None.
+        assert self.msa_content_len_threshold is not None
         len1 = len(value1)
         len2 = len(value2)
         # Calculate relative difference
@@ -319,17 +336,17 @@ class DictComparator:
             diff = self._inf_diff
         self._update_max_diff(diff, path, (value1, value2))
 
-    def _flatten_list(self, lst: list) -> Optional[list[float]]:  # noqa: C901
+    def _flatten_list(self, lst: list[Any]) -> Optional[list[float]]:  # noqa: C901
         # FIXME(noqa: C901): Refactor to reduce complexity below the linter's threshold.
         """
         Flatten vectors (1D), matrices (2D), or 3D tensors to 1D for cosine distance.
         Returns None if the input is not a valid numeric tensor (up to 3D).
         """
 
-        def _is_numeric(x):
+        def _is_numeric(x: Any) -> bool:
             return isinstance(x, int | float)
 
-        def _flatten_recursive(obj, depth=0):
+        def _flatten_recursive(obj: Any, depth: int = 0) -> Optional[list[float]]:
             if depth > 3:  # Limit to 3D tensors
                 return None
 
@@ -342,7 +359,7 @@ class DictComparator:
 
             # Check if this level is all lists (higher dimension)
             if all(isinstance(x, list) for x in obj):
-                results = []
+                results: list[float] = []
                 first_result = None
 
                 for item in obj:
@@ -367,9 +384,11 @@ class DictComparator:
     def _extract_sequence(self, structure: Any) -> str:
         from Bio.PDB.Polypeptide import PPBuilder
 
-        ppb = PPBuilder()
+        ppb = PPBuilder()  # type: ignore[no-untyped-call]  # biopython PPBuilder ctor is untyped
         seqs = []
-        for pp in ppb.build_peptides(structure):
+        for pp in ppb.build_peptides(  # type: ignore[no-untyped-call]  # biopython build_peptides is untyped
+            structure
+        ):
             seqs.append(str(pp.get_sequence()))
         return "".join(seqs)
 

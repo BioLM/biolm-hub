@@ -2,7 +2,7 @@ import io
 import logging
 import os
 import sys
-from typing import Any
+from typing import Any, Optional, cast
 
 from pydantic import BaseModel
 
@@ -90,9 +90,15 @@ class DebugLogger:
         enabled: bool = True,
         print_to_console: bool = True,
         level: int = logging.DEBUG,
-        extra_context: dict = None,
-    ):
+        extra_context: Optional[dict[str, Any]] = None,
+    ) -> None:
         self.enabled = enabled
+        self.log_stream: Optional[io.StringIO] = None
+        self.handler: Optional[logging.StreamHandler[Any]] = None
+        self.logger: Optional[logging.Logger] = None
+        self.adapter: Optional[logging.LoggerAdapter[logging.Logger]] = None
+        # This will hold the console handler so we can remove it later
+        self._print_handler: Optional[logging.StreamHandler[Any]] = None
         if self.enabled:
             self.log_stream = io.StringIO()
             self.handler = logging.StreamHandler(self.log_stream)
@@ -106,8 +112,6 @@ class DebugLogger:
             self.logger.setLevel(level)
             self.logger.addHandler(self.handler)
 
-            # This will hold the console handler so we can remove it later
-            self._print_handler = None
             if print_to_console:
                 self._print_handler = logging.StreamHandler(sys.stdout)
                 self._print_handler.setFormatter(formatter)
@@ -121,54 +125,61 @@ class DebugLogger:
                 extra_context = {"model_slug": "", "model_action": ""}
             # Wrap the logger in a LoggerAdapter to inject the extra context into every log record.
             self.adapter = logging.LoggerAdapter(self.logger, extra_context)
-        else:
-            self.log_stream = None
-            self.handler = None
-            self.logger = None
-            self.adapter = None
 
-    def debug(self, message: str):
+    def debug(self, message: str) -> None:
         if not self.enabled:
             return
+        assert self.adapter is not None
         self.adapter.debug(message)
 
-    def info(self, message: str):
+    def info(self, message: str) -> None:
         if not self.enabled:
             return
+        assert self.adapter is not None
         self.adapter.info(message)
 
-    def warning(self, message: str):
+    def warning(self, message: str) -> None:
         if not self.enabled:
             return
+        assert self.adapter is not None
         self.adapter.warning(message)
 
-    def error(self, message: str):
+    def error(self, message: str) -> None:
         if not self.enabled:
             return
+        assert self.adapter is not None
         self.adapter.error(message)
 
     def get_logs(self) -> str:
         if not self.enabled:
             return ""
+        assert self.handler is not None
+        assert self.log_stream is not None
         self.handler.flush()
         return self.log_stream.getvalue()
 
-    def clear(self):
+    def clear(self) -> None:
         if not self.enabled:
             return
+        assert self.log_stream is not None
         self.log_stream.truncate(0)
         self.log_stream.seek(0)
 
-    def remove_handler(self):
+    def remove_handler(self) -> None:
         if not self.enabled:
             return
+        assert self.logger is not None
+        assert self.handler is not None
         self.logger.removeHandler(self.handler)
         # Also remove the print handler if it exists
         if self._print_handler:
             self.logger.removeHandler(self._print_handler)
 
-    def update_context(self, extra_context: dict):
+    def update_context(self, extra_context: dict[str, Any]) -> None:
         if not self.enabled:
             return
+        assert self.adapter is not None
         # Update the extra context; this will be added to all future log records.
-        self.adapter.extra.update(extra_context)
+        # LoggerAdapter.extra is typed by typeshed as an immutable Mapping, but
+        # __init__ always constructs it from a plain dict, so mutation is safe.
+        cast(dict[str, Any], self.adapter.extra).update(extra_context)

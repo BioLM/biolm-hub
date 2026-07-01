@@ -1,6 +1,6 @@
 import os
 from collections.abc import Iterable
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 import modal
 
@@ -115,7 +115,8 @@ def get_environment_name() -> str:
         str: The environment name (e.g., "biolm-hub-dev" or "biolm-hub").
     """
 
-    return modal.config.config.get("environment")
+    # modal.config.Config.get has no type stubs; cast preserves the runtime value.
+    return cast(str, modal.config.config.get("environment"))  # type: ignore[no-untyped-call]
 
 
 def is_prod_environment() -> bool:

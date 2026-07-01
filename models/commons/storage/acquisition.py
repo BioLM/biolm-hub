@@ -129,14 +129,17 @@ class UrlSourceConfig:
 class CustomSourceConfig:
     """Configuration for custom acquisition strategy."""
 
-    acquisition_fn: Callable[[Path], dict]  # Function that downloads to target_dir
-    acquisition_kwargs: dict = field(
+    # Function that downloads to target_dir. Called as
+    # acquisition_fn(target_dir=..., **acquisition_kwargs), so the signature must
+    # accept a `target_dir` keyword argument (plus arbitrary extra kwargs).
+    acquisition_fn: Callable[..., dict[str, Any]]
+    acquisition_kwargs: dict[str, Any] = field(
         default_factory=dict
     )  # Additional kwargs for function
     name: Optional[str] = None  # Name for this custom strategy
     description: Optional[str] = None  # Description of what this does
     post_process_fn: Optional[Callable[..., None]] = None  # Optional post-processing
-    post_process_kwargs: dict = field(
+    post_process_kwargs: dict[str, Any] = field(
         default_factory=dict
     )  # Additional kwargs for post-processing
 
@@ -666,11 +669,9 @@ def _acquire_r2_only(config: AcquisitionConfig) -> AcquisitionResult:
         )
 
 
-def _resolve_hf_snapshot_path(config: AcquisitionConfig) -> Callable[[Path], Path]:
+def _resolve_hf_snapshot_path(hf_config: HfSourceConfig) -> Callable[[Path], Path]:
     """Build a resolve_model_path callback for HF snapshot path resolution."""
     from models.commons.storage.downloads import build_hf_snapshot_path
-
-    hf_config = config.hf_config
 
     def _resolve(target_dir: Path) -> Path:
         if hf_config.revision and len(hf_config.revision) == 40:
@@ -754,7 +755,7 @@ def _acquire_huggingface_hub(config: AcquisitionConfig) -> AcquisitionResult:
             "repo_id": hf_config.repo_id,
             "revision": hf_config.revision,
         },
-        resolve_model_path=_resolve_hf_snapshot_path(config),
+        resolve_model_path=_resolve_hf_snapshot_path(hf_config),
     )
     if cache_result:
         return cache_result
@@ -824,9 +825,11 @@ def _acquire_huggingface_hub(config: AcquisitionConfig) -> AcquisitionResult:
         )
 
 
-def _setup_library_environment(library_config: LibrarySourceConfig) -> dict:
+def _setup_library_environment(
+    library_config: LibrarySourceConfig,
+) -> dict[str, Optional[str]]:
     """Set environment variables for library and return original values."""
-    original_env = {}
+    original_env: dict[str, Optional[str]] = {}
     if library_config.env_vars:
         logger.info("Setting %s environment variables", len(library_config.env_vars))
         for var, value in library_config.env_vars.items():
@@ -836,7 +839,7 @@ def _setup_library_environment(library_config: LibrarySourceConfig) -> dict:
     return original_env
 
 
-def _restore_environment(original_env: dict):
+def _restore_environment(original_env: dict[str, Optional[str]]) -> None:
     """Restore original environment variables."""
     for var, value in original_env.items():
         if value is None:
@@ -1181,7 +1184,7 @@ def _validate_size_constraints(
     actual_path: Path, validation_config: ValidationConfig
 ) -> list[str]:
     """Validate directory size against min/max constraints."""
-    errors = []
+    errors: list[str] = []
     if not (validation_config.min_size_bytes or validation_config.max_size_bytes):
         return errors
 
@@ -1209,7 +1212,9 @@ def _validate_size_constraints(
     return errors
 
 
-def _run_custom_validator(actual_path: Path, custom_validator) -> Optional[str]:
+def _run_custom_validator(
+    actual_path: Path, custom_validator: Callable[[Path], bool]
+) -> Optional[str]:
     """Run custom validation function."""
     logger.info("Running custom validator...")
     try:

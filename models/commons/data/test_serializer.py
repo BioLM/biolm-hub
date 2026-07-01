@@ -14,21 +14,21 @@ from models.commons.data.serializer import _coerce_to_json_native, serialize_mod
 # ---------------------------------------------------------------------------
 
 
-def test_datetime_isoformat():
+def test_datetime_isoformat() -> None:
     dt = datetime.datetime(2026, 4, 15, 12, 34, 56, 789012)
     result = _coerce_to_json_native(dt)
     assert result == "2026-04-15T12:34:56.789012"
     assert isinstance(result, str)
 
 
-def test_date_isoformat():
+def test_date_isoformat() -> None:
     d = datetime.date(2026, 4, 15)
     result = _coerce_to_json_native(d)
     assert result == "2026-04-15"
     assert isinstance(result, str)
 
 
-def test_datetime_with_timezone():
+def test_datetime_with_timezone() -> None:
     dt = datetime.datetime(2026, 4, 15, 12, 0, 0, tzinfo=datetime.UTC)
     result = _coerce_to_json_native(dt)
     assert result == "2026-04-15T12:00:00+00:00"
@@ -39,13 +39,13 @@ def test_datetime_with_timezone():
 # ---------------------------------------------------------------------------
 
 
-def test_decimal_becomes_float():
+def test_decimal_becomes_float() -> None:
     result = _coerce_to_json_native(decimal.Decimal("3.14"))
     assert result == pytest.approx(3.14)
     assert isinstance(result, float)
 
 
-def test_decimal_zero():
+def test_decimal_zero() -> None:
     result = _coerce_to_json_native(decimal.Decimal("0"))
     assert result == 0.0
     assert isinstance(result, float)
@@ -56,7 +56,7 @@ def test_decimal_zero():
 # ---------------------------------------------------------------------------
 
 
-def test_uuid_becomes_str():
+def test_uuid_becomes_str() -> None:
     uid = uuid.UUID("12345678-1234-5678-1234-567812345678")
     result = _coerce_to_json_native(uid)
     assert result == "12345678-1234-5678-1234-567812345678"
@@ -68,14 +68,14 @@ def test_uuid_becomes_str():
 # ---------------------------------------------------------------------------
 
 
-def test_path_becomes_str():
+def test_path_becomes_str() -> None:
     p = pathlib.Path("/tmp/model.joblib")
     result = _coerce_to_json_native(p)
     assert result == "/tmp/model.joblib"
     assert isinstance(result, str)
 
 
-def test_pure_posix_path_becomes_str():
+def test_pure_posix_path_becomes_str() -> None:
     p = pathlib.PurePosixPath("/data/output")
     result = _coerce_to_json_native(p)
     assert result == "/data/output"
@@ -97,7 +97,7 @@ pandas_only = pytest.mark.skipif(not _PANDAS_AVAILABLE, reason="pandas not insta
 
 
 @pandas_only
-def test_pd_na_becomes_none():
+def test_pd_na_becomes_none() -> None:
     import pandas as pd
 
     result = _coerce_to_json_native(pd.NA)
@@ -105,7 +105,7 @@ def test_pd_na_becomes_none():
 
 
 @pandas_only
-def test_pd_nat_becomes_none():
+def test_pd_nat_becomes_none() -> None:
     import pandas as pd
 
     result = _coerce_to_json_native(pd.NaT)
@@ -113,7 +113,7 @@ def test_pd_nat_becomes_none():
 
 
 @pandas_only
-def test_pd_timestamp_isoformat():
+def test_pd_timestamp_isoformat() -> None:
     import pandas as pd
 
     ts = pd.Timestamp("2026-04-15T12:00:00")
@@ -137,7 +137,7 @@ numpy_only = pytest.mark.skipif(not _NUMPY_AVAILABLE, reason="numpy not installe
 
 
 @numpy_only
-def test_numpy_datetime64_isoformat():
+def test_numpy_datetime64_isoformat() -> None:
     import numpy as np
 
     dt64 = np.datetime64("2026-04-15T12:00:00")
@@ -152,7 +152,7 @@ def test_numpy_datetime64_isoformat():
 
 
 @pandas_only
-def test_pd_na_in_dict_via_serialize_model():
+def test_pd_na_in_dict_via_serialize_model() -> None:
     """pd.NA inside a dict must become None, not the truthy string '<NA>'."""
     import pandas as pd
 
@@ -167,9 +167,9 @@ def test_pd_na_in_dict_via_serialize_model():
 # ---------------------------------------------------------------------------
 
 
-def test_fallback_logs_warning(caplog):
+def test_fallback_logs_warning(caplog: pytest.LogCaptureFixture) -> None:
     class _WeirdType:
-        def __str__(self):
+        def __str__(self) -> str:
             return "weird"
 
     obj = _WeirdType()

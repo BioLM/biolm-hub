@@ -1,20 +1,23 @@
 import itertools
 from collections.abc import Callable
+from typing import TypeVar
 
 from pydantic import BaseModel, Field, PrivateAttr
 
 from models.commons.model.schema import ModalResourceSpec
 from models.commons.model.tag import ModelTags
 
+T = TypeVar("T")
 
-def biolm_model_class(cls):
+
+def biolm_model_class(cls: type[T]) -> type[T]:
     """
     Decorator that marks a class as a BioLM model class for discovery purposes.
 
     Works by marking the class with ``_is_biolm_model_class = True`` so the
     gateway/test framework can resolve a model family's container class.
     """
-    cls._is_biolm_model_class = True
+    cls._is_biolm_model_class = True  # type: ignore[attr-defined]  # dynamic marker attribute for discovery
     return cls
 
 
@@ -42,7 +45,7 @@ class ResolvedVariant(BaseModel):
     modal_resource_spec: ModalResourceSpec
 
     # Internal mapping for the test framework
-    _variant_config: dict = PrivateAttr()
+    _variant_config: dict[str, str] = PrivateAttr()
 
 
 class ModelFamily(BaseModel):
@@ -68,12 +71,12 @@ class ModelFamily(BaseModel):
 
     # A function that takes a variant configuration dict (e.g., {"MODEL_NUMBER": "n1"})
     # and returns its ModalResourceSpec.
-    resource_function: Callable[[dict], ModalResourceSpec]
+    resource_function: Callable[[dict[str, str]], ModalResourceSpec]
 
     # A flexible function to define all naming schemes.
     # It takes the base_model_slug and a variant config dict.
     # It MUST return a tuple: (modal_app_name, public_endpoint_slug).
-    naming_function: Callable[[str, dict], tuple[str, str]] = Field(
+    naming_function: Callable[[str, dict[str, str]], tuple[str, str]] = Field(
         default=lambda base_slug, cfg: (
             (
                 f"{base_slug}-{'-'.join(str(v) for v in cfg.values())}"
@@ -91,7 +94,7 @@ class ModelFamily(BaseModel):
     # A function to generate human-readable display names for variants.
     # It takes the base display_name and a variant config dict.
     # Default: appends variant values separated by spaces.
-    display_naming_function: Callable[[str, dict], str] = Field(
+    display_naming_function: Callable[[str, dict[str, str]], str] = Field(
         default=lambda display_name, cfg: (
             f"{display_name} {' '.join(str(v) for v in cfg.values())}"
             if cfg
@@ -101,7 +104,7 @@ class ModelFamily(BaseModel):
 
     # A list of variant config dicts to explicitly exclude from the final set.
     # Example: [{"MODEL_ACTION": "generate", "MODEL_DIRECTION": "fold2AA"}]
-    excluded_variant_combos: list[dict] = []
+    excluded_variant_combos: list[dict[str, str]] = []
 
     @property
     def resolved_variants(self) -> list[ResolvedVariant]:
@@ -112,7 +115,7 @@ class ModelFamily(BaseModel):
         """
         if not self.variant_axes:
             # Handle single-variant models (like esmfold)
-            variant_config = {}
+            variant_config: dict[str, str] = {}
             modal_app_name, public_slug = self.naming_function(
                 self.base_model_slug, variant_config
             )
@@ -159,7 +162,7 @@ class ModelFamily(BaseModel):
 
         return variants
 
-    def find_variant(self, **env_vars) -> ResolvedVariant:
+    def find_variant(self, **env_vars: str) -> ResolvedVariant:
         """Find a variant by its environment variables.
 
         Args:
@@ -183,7 +186,7 @@ class ModelFamily(BaseModel):
                 f"Available variants for {self.base_model_slug}: {available_variants}"
             ) from None
 
-    def get_app_config(self, **env_vars) -> tuple[str, ModalResourceSpec]:
+    def get_app_config(self, **env_vars: str) -> tuple[str, ModalResourceSpec]:
         """Get app name and resource spec for a variant in one call.
 
         Args:

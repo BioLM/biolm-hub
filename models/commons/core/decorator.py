@@ -3,7 +3,7 @@ import functools
 import inspect
 import traceback
 from collections.abc import Callable
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 import modal
 import orjson
@@ -30,7 +30,7 @@ from models.commons.util.config import cache_enabled
 def modal_endpoint(  # noqa: C901
     app_name: str,
     debug: bool = False,
-):
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     # FIXME(noqa: C901): Refactor to reduce complexity below the linter's threshold.
 
     """
@@ -66,11 +66,12 @@ def modal_endpoint(  # noqa: C901
         }
     """
 
-    def decorator(func):  # noqa: C901
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:  # noqa: C901
         # FIXME(noqa: C901): Refactor to reduce complexity below the linter's threshold.
 
-        # Mark the function as a BioLM action (public API action)
-        func._is_biolm_action = True
+        # Mark the function as a BioLM action (public API action). Callable has
+        # no such attribute in typeshed; this is a deliberate dynamic marker.
+        func._is_biolm_action = True  # type: ignore[attr-defined]
 
         # Validate the method signature (no longer registers to SCHEMA_REGISTRY)
         signature = inspect.signature(func)
@@ -86,7 +87,9 @@ def modal_endpoint(  # noqa: C901
         request_model_type: type[BaseModel] = payload_param.annotation
 
         @functools.wraps(func)
-        async def async_wrapper(*args, **kwargs):  # noqa: C901
+        async def async_wrapper(
+            *args: Any, **kwargs: Any
+        ) -> dict[str, Any]:  # noqa: C901
             # FIXME(noqa: C901): Refactor to reduce complexity below the linter's threshold.
 
             ### ------- [Temporary] Return payload schema logic for Python SDK -------
@@ -130,7 +133,7 @@ def modal_endpoint(  # noqa: C901
             return async_wrapper  # Expose async wrapper directly
         else:
             # Create sync adapter that runs async_wrapper in a new event loop
-            def _sync_proxy(*args, **kwargs):
+            def _sync_proxy(*args: Any, **kwargs: Any) -> dict[str, Any]:
                 return asyncio.run(async_wrapper(*args, **kwargs))
 
             functools.update_wrapper(_sync_proxy, func)
@@ -141,11 +144,11 @@ def modal_endpoint(  # noqa: C901
 
 def _validate_and_bind_payload(
     signature: inspect.Signature,
-    args: tuple,
-    kwargs: dict,
+    args: tuple[Any, ...],
+    kwargs: dict[str, Any],
     request_model_type: type[BaseModel],
     debug_logger: DebugLogger,
-) -> tuple[inspect.BoundArguments, Any, dict, bool, Optional[dict]]:
+) -> tuple[inspect.BoundArguments, Any, dict[str, Any], bool, Optional[dict[str, Any]]]:
     """
     Validates and binds the payload from function arguments.
 
@@ -179,7 +182,7 @@ def _validate_and_bind_payload(
     # Capture original request dict for cache partial-payload reconstruction.
     # This preserves fields (e.g. smiles on ligands) that would be lost when
     # Pydantic validation adds None defaults and serialize_model strips them.
-    raw_payload_dict: Optional[dict] = None
+    raw_payload_dict: Optional[dict[str, Any]] = None
     if isinstance(raw_payload, dict):
         raw_payload_dict = raw_payload
     elif isinstance(raw_payload, str):
@@ -201,7 +204,8 @@ def _validate_and_bind_payload(
         else:
             payload = _validate_payload(raw_payload, request_model_type)
     else:
-        payload = raw_payload  # Assumed to be a valid Pydantic object
+        # Assumed to be a valid Pydantic object (caller passed _skip_validation=True).
+        payload = cast(BaseModel, raw_payload)
 
     # Truncate long fields for debug logging to prevent overwhelming output
     truncated_payload = truncate_for_debug(payload) if debug_logger.enabled else payload
@@ -213,7 +217,7 @@ def _validate_and_bind_payload(
 
 
 async def _call_function_directly(
-    func: Callable,
+    func: Callable[..., Any],
     bound_args: inspect.BoundArguments,
     debug_logger: DebugLogger,
 ) -> dict[str, list[Any]]:
@@ -225,14 +229,16 @@ async def _call_function_directly(
     else:
         response_obj = func(*bound_args.args, **bound_args.kwargs)
 
-    # Convert the Pydantic response to a dictionary immediately.
-    return serialize_model(response_obj, debug_logger)
+    # Convert the Pydantic response to a dictionary immediately. serialize_model
+    # is untyped (Any) by design (JSON-native contract enforced at runtime); cast
+    # to the house-style {"results": [...]} shape every model response follows.
+    return cast(dict[str, list[Any]], serialize_model(response_obj, debug_logger))
 
 
 async def _call_function_with_cache(
-    func: Callable,
+    func: Callable[..., Any],
     payload: Any,
-    raw_payload_dict: Optional[dict],
+    raw_payload_dict: Optional[dict[str, Any]],
     bound_args: inspect.BoundArguments,
     signature: inspect.Signature,
     request_model_type: type[BaseModel],
@@ -250,7 +256,9 @@ async def _call_function_with_cache(
     if params:  # Convert params to a dict for hashing
         params = serialize_model(params, debug_logger)
 
-    async def compute_function(items_to_compute: list, indices_to_compute: list[int]):
+    async def compute_function(
+        items_to_compute: list[BaseModel], indices_to_compute: list[int]
+    ) -> Any:
         """
         This closure correctly reconstructs the function call with a partial payload.
         When raw_payload_dict is available, items are taken from it to preserve
@@ -296,13 +304,13 @@ async def _call_function_with_cache(
 
 
 async def _run_main_decorator_flow_async(
-    func: Callable,
+    func: Callable[..., Any],
     model_slug: str,
     model_action: str,
     signature: inspect.Signature,
     request_model_type: type[BaseModel],
-    args: tuple,
-    kwargs: dict,
+    args: tuple[Any, ...],
+    kwargs: dict[str, Any],
     debug_logger: DebugLogger,
 ) -> dict[str, list[Any]]:
     """
@@ -432,14 +440,14 @@ ERROR_MAP = {
 }
 
 
-def _handle_errors(exc, *, debug_logger):
+def _handle_errors(exc: Exception, *, debug_logger: DebugLogger) -> dict[str, Any]:
     """
     Concise error handler for the modal_endpoint decorator.
     """
     for etype, (status_code, tmpl) in ERROR_MAP.items():
         if isinstance(exc, etype):
             # Build base kwargs
-            kwargs = {
+            kwargs: dict[str, Any] = {
                 "detail_msg": tmpl.format(exc=str(exc)),
                 "status_code": status_code,
                 # Machine-readable code from BioLMError.code (None otherwise).
@@ -472,7 +480,7 @@ def _error_response(
     errors: Optional[Any] = None,
     traceback_info: bool = False,
     print_exc: bool = False,
-) -> ErrorResponse:
+) -> dict[str, Any]:
     """
     Builds a structured ErrorResponse and appends optional debug logs/traceback.
 
@@ -487,7 +495,8 @@ def _error_response(
         print_exc (bool): If True and `traceback_info` is True, prints the traceback to logs.
 
     Returns:
-        ErrorResponse: A Pydantic model containing error details, and status code.
+        dict: The ErrorResponse, serialized to a plain JSON-native dict (via
+            serialize_model) so it can safely cross the Modal function boundary.
     """
 
     # We'll collect everything in `collected_errors`, which becomes `ErrorResponse.errors`.
@@ -522,4 +531,6 @@ def _error_response(
         code=code,
     )
 
-    return serialize_model(error_response)
+    # serialize_model recursively converts the Pydantic model to a plain dict
+    # (untyped/Any by design; see its docstring for the JSON-native contract).
+    return cast(dict[str, Any], serialize_model(error_response))

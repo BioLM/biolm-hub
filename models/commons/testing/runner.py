@@ -1,11 +1,13 @@
 import os
 import sys
 import time
+from collections.abc import Callable
 from importlib import import_module
+from typing import Any, Optional, cast
 
 import modal
 import pytest
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 
 from models.commons.model.config import ResolvedVariant
 from models.commons.storage.r2 import read_json_from_r2
@@ -34,7 +36,9 @@ def _fixture_r2_path(r2_fixture_subdir: str, slug: str, filename: str) -> str:
     return f"{r2_test_data_dir}/{r2_fixture_subdir}/{slug}/{filename}"
 
 
-def _validate_log_prob(actual_output: dict, _expected_output: dict = None):
+def _validate_log_prob(
+    actual_output: dict[str, Any], _expected_output: Optional[dict[str, Any]] = None
+) -> None:
     """Consolidated validator for log probability output across all models."""
     # All models wrap batch output under the canonical `results` key.
     assert "results" in actual_output, "Response missing the 'results' key"
@@ -50,7 +54,9 @@ def _validate_log_prob(actual_output: dict, _expected_output: dict = None):
 ### UNIFIED TEST UTILS
 
 
-def _validate_with_pydantic_schema(input_data, schema, context_name):
+def _validate_with_pydantic_schema(
+    input_data: Any, schema: Optional[type[BaseModel]], context_name: str
+) -> Any:
     """Common function to validate data with Pydantic schema, handling v1/v2 compatibility."""
     if schema is None:
         print("  - Sending raw JSON (no schema validation)")
@@ -80,7 +86,9 @@ def _resolve_app_module_name(suite: TestSuite) -> str:
     return f"models.{module_package_name}.app"
 
 
-def setup_and_get_local_model_instance(suite: TestSuite, variant: ResolvedVariant):
+def setup_and_get_local_model_instance(
+    suite: TestSuite, variant: ResolvedVariant
+) -> tuple[Any, Any]:
     """Handles environment setup and dynamically imports the local app module."""
     os.environ.update(variant.env_vars)
 
@@ -101,7 +109,7 @@ def setup_and_get_local_model_instance(suite: TestSuite, variant: ResolvedVarian
 
 def _load_and_validate_payload(
     suite: TestSuite, case: ActionTestCase, variant: ResolvedVariant
-):
+) -> Any:
     """Handles loading data from R2 and validating with Pydantic."""
     if isinstance(case.input_fixture, str):
         # Load from R2 - format template if needed (supports both templated and non-templated inputs)
@@ -151,7 +159,7 @@ def _load_and_validate_payload(
 
 def execute_integration_test_case(
     suite: TestSuite, variant: ResolvedVariant, case: ActionTestCase
-):
+) -> None:
     """Generic function to execute a single integration test case."""
     test_name = f"INTEGRATION [{variant.modal_app_name}] -> {case.action_name}"
     print(f"\n🧪 Running Test: {test_name}")
@@ -175,7 +183,7 @@ def execute_integration_test_case(
 
     # 4. Execute the remote method with retry logic (matching old system)
     MAX_ATTEMPTS = 2
-    actual_output = None
+    actual_output: Optional[dict[str, Any]] = None
     for attempt in range(MAX_ATTEMPTS):
         try:
             final_kwargs = case.remote_fn_kwargs or {"_skip_cache": True}
@@ -222,6 +230,10 @@ def execute_integration_test_case(
                 )
 
     # 5. Validate the output
+    # By this point either the call above succeeded (actual_output was assigned) or
+    # a retryable failure exhausted its attempts and hit the pytest.fail() (NoReturn)
+    # above, which exits before we get here — so actual_output is never really None.
+    assert actual_output is not None, "actual_output must be set by the call above"
     try:
         if case.validator:
             case.validator(actual_output, expected_output)
@@ -248,7 +260,9 @@ def execute_integration_test_case(
         pytest.fail(f"❌ Validation Failed for {test_name}: {e}")
 
 
-def _default_deployment_validator(actual_output: dict):
+def _default_deployment_validator(
+    actual_output: dict[str, Any], _expected_output: Optional[dict[str, Any]] = None
+) -> None:
     """Default check: ensure the canonical 'results' key exists and is not empty."""
     # All models wrap batch output under the canonical `results` key.
     print(
@@ -260,7 +274,7 @@ def _default_deployment_validator(actual_output: dict):
     assert actual_output["results"], "Validation failed: 'results' key is empty."
 
 
-def _get_model_class_from_deployment(suite: TestSuite, variant: ResolvedVariant):
+def _get_model_class_from_deployment(suite: TestSuite, variant: ResolvedVariant) -> Any:
     """Get the model class from a deployed Modal app using decorator discovery."""
     # Import the app module to discover the decorated class
     module_name = _resolve_app_module_name(suite)
@@ -276,7 +290,7 @@ def _get_model_class_from_deployment(suite: TestSuite, variant: ResolvedVariant)
 
 def execute_deployment_test_case(
     suite: TestSuite, variant: ResolvedVariant, case: ActionTestCase
-):
+) -> None:
     """Generic function to execute a single deployment test case."""
     test_name = f"DEPLOYMENT [{variant.modal_app_name}] -> {case.action_name}"
     print(f"\n🧪 Running Test: {test_name}")
@@ -295,12 +309,12 @@ def execute_deployment_test_case(
 
     # 4. Validate the output (use case validator when provided, else default)
     validator = case.validator or _default_deployment_validator
-    validator(actual_output)
+    validator(actual_output, None)
     print(f"✅ PASS: {test_name}")
 
 
 def _variant_matches_mapping_filter(
-    variant: ResolvedVariant, mapping_config: dict
+    variant: ResolvedVariant, mapping_config: dict[str, Any]
 ) -> bool:
     """Check if a variant matches the mapping's filter."""
     return all(
@@ -312,7 +326,7 @@ def _is_case_valid_for_test_type(case: ActionTestCase, test_type: str) -> bool:
     """Check if a test case is valid for the given test type."""
     if test_type in ("integration", "slow"):
         # Integration/slow tests require expected_output_fixture OR validator
-        return case.expected_output_fixture or case.validator
+        return bool(case.expected_output_fixture or case.validator)
     elif test_type == "deployment":
         # Deployment tests can run with or without expected outputs
         return True
@@ -338,7 +352,7 @@ def _generate_test_id(case: ActionTestCase, variant: ResolvedVariant) -> str:
         return f"{case.action_name}-{input_part}"
 
 
-def _collect_test_params(suite: TestSuite, test_type: str) -> list:
+def _collect_test_params(suite: TestSuite, test_type: str) -> list[Any]:
     """Collect all test parameters for the given test suite and type."""
     test_params = []
 
@@ -353,21 +367,23 @@ def _collect_test_params(suite: TestSuite, test_type: str) -> list:
     return test_params
 
 
-def _apply_test_type_marker(test_fn, test_type: str):
+def _apply_test_type_marker(
+    test_fn: Callable[..., Any], test_type: str
+) -> Callable[..., Any]:
     """Apply the pytest marker that matches the test type (no-op if unknown)."""
     if test_type == "integration":
-        return pytest.mark.integration(test_fn)
+        return cast(Callable[..., Any], pytest.mark.integration(test_fn))
     if test_type == "slow":
-        return pytest.mark.slow(test_fn)
+        return cast(Callable[..., Any], pytest.mark.slow(test_fn))
     if test_type == "deployment":
-        return pytest.mark.deployment(test_fn)
+        return cast(Callable[..., Any], pytest.mark.deployment(test_fn))
     return test_fn
 
 
-def _create_test_template(suite: TestSuite, test_type: str):
+def _create_test_template(suite: TestSuite, test_type: str) -> Callable[..., Any]:
     """Create the test template function with appropriate markers."""
 
-    def test_template(variant, case):
+    def test_template(variant: ResolvedVariant, case: ActionTestCase) -> None:
         if test_type in ("integration", "slow"):
             execute_integration_test_case(suite, variant, case)
         elif test_type == "deployment":
@@ -378,7 +394,7 @@ def _create_test_template(suite: TestSuite, test_type: str):
     return _apply_test_type_marker(test_template, test_type)
 
 
-def _create_empty_suite_test(test_type: str):
+def _create_empty_suite_test(test_type: str) -> Callable[..., Any]:
     """Return a single test that skips when a suite collects no cases.
 
     An empty ``pytest.mark.parametrize`` list silently yields zero tests, so a
@@ -387,7 +403,7 @@ def _create_empty_suite_test(test_type: str):
     observable: ``--collect-only`` always reports >=1 item per generated test.
     """
 
-    def test_template():
+    def test_template() -> None:
         pytest.skip(
             f"no {test_type} test cases collected — check Modal/R2 config / fixtures"
         )
@@ -395,7 +411,7 @@ def _create_empty_suite_test(test_type: str):
     return _apply_test_type_marker(test_template, test_type)
 
 
-def generate_tests_from_suite(suite: TestSuite, test_type: str):
+def generate_tests_from_suite(suite: TestSuite, test_type: str) -> Callable[..., Any]:
     """Build and return a parametrized pytest test function for a ``TestSuite``.
 
     Assign the result to a module-level ``test_*`` name so pytest collects it::
@@ -414,4 +430,7 @@ def generate_tests_from_suite(suite: TestSuite, test_type: str):
         return _create_empty_suite_test(test_type)
 
     test_template = _create_test_template(suite, test_type)
-    return pytest.mark.parametrize("variant, case", test_params)(test_template)
+    return cast(
+        Callable[..., Any],
+        pytest.mark.parametrize("variant, case", test_params)(test_template),
+    )

@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 from pydantic import BaseModel
 
@@ -47,12 +47,12 @@ class ModalResourceSpec(BaseModel):
     scaledown_window: Optional[int] = default_scaledown_window  # seconds
     max_containers: Optional[int] = None
 
-    def to_modal_options(self) -> dict:
+    def to_modal_options(self) -> dict[str, Any]:
         """
         Return a dictionary that can be unpacked (**dict)
         in the @app.cls(...) or .with_options(...) call.
         """
-        opts = {
+        opts: dict[str, Any] = {
             "cpu": self.cpu,
             "memory": self.memory,
             "gpu": (self.gpu if not self.gpu_count else f"{self.gpu}:{self.gpu_count}"),
