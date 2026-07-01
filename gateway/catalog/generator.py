@@ -233,9 +233,7 @@ def analyze_schema(schema: BaseModel) -> dict:
         return _sanitize_schema_dict(field_details)
     except Exception as e:
         # Debug logging for troubleshooting
-        logger.warning(
-            "Failed to analyze schema %s: %s", schema.__class__.__name__, e
-        )
+        logger.warning("Failed to analyze schema %s: %s", schema.__class__.__name__, e)
         return {}
 
 

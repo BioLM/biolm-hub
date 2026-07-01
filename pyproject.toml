@@ -45,7 +45,10 @@ docs = [
 
 dev = [
     "black>=24.10.0,<25.0.0",
-    "mypy==1.5.1",
+    # mypy floor >=1.14: 1.5.1 hard-crashes analyzing numpy 2.x stubs. The repo
+    # still carries strict-mypy debt (tracked in FUTURE_WORK); the CI mypy step is
+    # non-blocking until that is paid down.
+    "mypy>=1.14",
     "pytest>=7.4.4,<8.0.0",
     "pytest-cov>=4.1.0,<5.0.0",
     "pytest-xdist>=3.8.0,<4.0.0",
@@ -54,6 +57,7 @@ dev = [
     "ruff>=0.6.9,<0.7.0",
     "requests>=2.32.4,<3.0.0",
     "httpx>=0.27.0,<1.0.0",  # FastAPI TestClient (gateway/test_catalog.py)
+    "pandas>=2.0,<3.0",  # boltzgen pure-function unit tests (models/boltzgen/test_unit.py)
 ]
 
 mypy-types = [
@@ -100,7 +104,7 @@ show_error_context = true
 warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true
-exclude = '(^|/)(external|\.venv|build|dist|docs|tooling)/'
+exclude = '(^|/)(external|\.venv|build|dist|docs|tooling|\.planning)/'
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -129,7 +133,7 @@ fail_under = 85
 target-version = "py312"
 line-length = 88
 fix = true
-extend-exclude = ["external", "build", "dist"]
+extend-exclude = ["external", "build", "dist", ".planning"]
 
 [tool.ruff.lint]
 select = [

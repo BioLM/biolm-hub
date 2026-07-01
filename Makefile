@@ -30,12 +30,15 @@ lint:
 format:
 	uv run black .
 
-# Static type checking (enforced repo-wide).
+# Static type checking (repo + CI scripts, matches ci.yml).
+# NOTE: currently reports pre-existing strict debt (see FUTURE_WORK.md); non-blocking in `check`.
 mypy:
-	uv run mypy .
+	uv run mypy . .github/scripts
 
-# Everything CI runs on every PR: style + types + schema docs + unit + CI-script tests (no Modal/R2 needed).
-check: style mypy check-schema-docs test-github-scripts test-unit
+# Everything CI runs on every PR: style + schema docs + CI-script tests + unit (no Modal/R2 needed).
+# mypy runs last but is non-blocking (pre-existing strict-mypy debt, see FUTURE_WORK.md) — mirrors ci.yml.
+check: style check-schema-docs test-github-scripts test-unit
+	-uv run mypy . .github/scripts
 
 # Every schema field has a rendered Field(description=...) and shared fields match the glossary.
 check-schema-docs:

@@ -72,7 +72,9 @@ def _query_deployed_app_names(environment: Optional[str]) -> Optional[set[str]]:
         rows = json.loads(proc.stdout)
     except (OSError, subprocess.SubprocessError, json.JSONDecodeError) as e:
         stderr = getattr(e, "stderr", "") or ""
-        logger.warning("Could not query deployed Modal apps (%s): %s %s", cmd[0], e, stderr)
+        logger.warning(
+            "Could not query deployed Modal apps (%s): %s %s", cmd[0], e, stderr
+        )
         return None
 
     if not isinstance(rows, list):

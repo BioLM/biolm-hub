@@ -93,7 +93,7 @@ def download_model_assets(
 ) -> Path:
     # Extract variant from config
     model_size = extract_model_variant(variant_config, "MODEL_SIZE")
-    
+
     # Configure primary strategy (R2_ONLY)
     primary_config = AcquisitionConfig(
         strategy=AcquisitionStrategy.R2_ONLY,
@@ -101,7 +101,7 @@ def download_model_assets(
         cache_config=CacheConfig(enable_r2_cache=False),  # Reading, not writing
         r2_config=R2OnlyConfig(...)
     )
-    
+
     # Configure fallback strategy (HUGGINGFACE_HUB or LIBRARY_MANAGED)
     fallback_config = AcquisitionConfig(
         strategy=AcquisitionStrategy.HUGGINGFACE_HUB,
@@ -109,7 +109,7 @@ def download_model_assets(
         cache_config=CacheConfig(enable_r2_cache=True),  # Cache to R2
         hf_config=HfSourceConfig(...)
     )
-    
+
     # Execute with fallback
     result = download_with_fallback(primary_config, fallback_config)
     return result.actual_model_path
@@ -368,7 +368,7 @@ def download_model_assets(...) -> Path:
         cache_config=CacheConfig(enable_r2_cache=False),
         r2_config=R2OnlyConfig(...)
     )
-    
+
     # Configure fallback (HuggingFace)
     fallback_config = AcquisitionConfig(
         strategy=AcquisitionStrategy.HUGGINGFACE_HUB,
@@ -376,7 +376,7 @@ def download_model_assets(...) -> Path:
         cache_config=CacheConfig(enable_r2_cache=True),  # Cache to R2!
         hf_config=HfSourceConfig(...)
     )
-    
+
     # Execute with automatic fallback
     result = download_with_fallback(primary_config, fallback_config)
     return Path(result.actual_model_path)
@@ -387,17 +387,17 @@ def download_model_assets(...) -> Path:
 def _init_library_weights(target_dir: Path) -> Path:
     # Set environment to control library
     setup_hf_cache_env(target_dir)
-    
+
     # Import and trigger library download
     from some_library import Model
     Model.from_pretrained("model-name", device="cpu")
-    
+
     return target_dir
 
 def download_model_assets(...) -> Path:
     # Primary: R2
     primary_config = AcquisitionConfig(...)
-    
+
     # Fallback: Library-managed
     fallback_config = AcquisitionConfig(
         strategy=AcquisitionStrategy.LIBRARY_MANAGED,
@@ -408,7 +408,7 @@ def download_model_assets(...) -> Path:
         ),
         custom_function=_init_library_weights,
     )
-    
+
     result = download_with_fallback(primary_config, fallback_config)
     return Path(result.actual_model_path)
 ```
@@ -537,7 +537,7 @@ R2Utils.upload_to_r2_atomic(
 
 #### 1. R2 Cache Miss
 **Error:** `No files found in R2 at prefix`
-**Solution:** 
+**Solution:**
 - Check if fallback is configured
 - Verify R2 prefix matches expected structure
 - Ensure initial weights were uploaded

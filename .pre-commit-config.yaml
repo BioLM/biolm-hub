@@ -1,4 +1,6 @@
 # Run with: pre-commit run --all-files   (or `make style`)
+# Internal planning scratch (deleted before public launch) is not linted/formatted.
+exclude: '^\.planning/'
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0

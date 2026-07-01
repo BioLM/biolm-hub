@@ -93,9 +93,7 @@ def _action_methods(model_name: str, class_name: str) -> set[str]:
         for item in node.body:
             if not isinstance(item, ast.FunctionDef | ast.AsyncFunctionDef):
                 continue
-            if any(
-                _decorator_name(d) == "modal_endpoint" for d in item.decorator_list
-            ):
+            if any(_decorator_name(d) == "modal_endpoint" for d in item.decorator_list):
                 methods.add(item.name)
     return methods
 

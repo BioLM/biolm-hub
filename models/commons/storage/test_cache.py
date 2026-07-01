@@ -10,6 +10,13 @@ from models.commons.storage.cache import (
     fetch_from_r2,
     store_in_r2,
 )
+from models.commons.storage.r2 import r2_credentials_present
+
+# The R2-backed tests below need real R2 credentials; skip them in the
+# creds-free unit environment (they run as integration where creds exist).
+_needs_r2 = pytest.mark.skipif(
+    not r2_credentials_present(), reason="requires R2 credentials"
+)
 
 # A test-specific model slug/action so we know what's safe to remove.
 TEST_MODEL_SLUG = "z_test_model_slug"
@@ -108,6 +115,7 @@ def test_short_term_model_cache_crud():
 ### 2) Basic R2 cache tests
 
 
+@_needs_r2
 def test_r2_cache_crud():
     print("\n--- test_r2_cache_crud ---")
     # We'll store and fetch from the real R2.
@@ -187,6 +195,7 @@ def test_short_term_model_cache_performance(payload_size):
     )
 
 
+@_needs_r2
 @pytest.mark.parametrize("payload_size", [100, 500, 2000])
 def test_r2_cache_performance(payload_size):
     """

@@ -58,4 +58,3 @@ complements:
   - model: boltz
     workflow: "Use MSA Transformer for quick unsupervised contact prediction to assess protein foldability, then run Boltz on promising candidates for full atomic-level structure prediction — MSA Transformer as a fast structural pre-screen"
     example_protocol: null
-

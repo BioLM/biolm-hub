@@ -362,8 +362,6 @@ def build_gateway_app(model_mapper: ModelMapper, *, use_cache: bool) -> FastAPI:
         """Return the resource specifications for all model variants."""
         return model_mapper.get_all_resource_specs()
 
-    route_count = _register_model_routes(
-        fastapi_app, model_mapper, use_cache=use_cache
-    )
+    route_count = _register_model_routes(fastapi_app, model_mapper, use_cache=use_cache)
     logger.info("Registered %d gateway routes (use_cache=%s)", route_count, use_cache)
     return fastapi_app

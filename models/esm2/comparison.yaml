@@ -78,4 +78,3 @@ complements:
   - model: mpnn
     workflow: "Use ESM2 log_prob to score wild-type sequence fitness, then use ProteinMPNN to redesign specific regions (e.g., surface residues for stability), and finally re-score the designed sequences with ESM2 to verify evolutionary plausibility — published as part of the JACS 2024 protein design evaluation pipeline"
     example_protocol: null
-

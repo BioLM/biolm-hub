@@ -93,9 +93,7 @@ def _within(base: Path, candidate: Path) -> bool:
         return False
 
 
-def restore_weights_via_http(
-    target_dir: Path, r2_prefix: str, public_url: str
-) -> bool:
+def restore_weights_via_http(target_dir: Path, r2_prefix: str, public_url: str) -> bool:
     """Restore cached model weights from the public bucket over anonymous HTTPS.
 
     Mirrors the miss/hit semantics of the S3 cache read: returns True only on a

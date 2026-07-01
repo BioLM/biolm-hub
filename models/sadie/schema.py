@@ -133,9 +133,7 @@ class SADIEPredictRequest(RequestModel):
         model-local workaround because SADIE is the only Pydantic-v1 container.
         """
         data = (
-            self.model_dump(mode="json")
-            if hasattr(self, "model_dump")
-            else self.dict()
+            self.model_dump(mode="json") if hasattr(self, "model_dump") else self.dict()
         )
         return (_reconstruct_sadie_request, (data,))
 
