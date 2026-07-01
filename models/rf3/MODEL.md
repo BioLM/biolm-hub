@@ -20,7 +20,7 @@ RF3 processes inputs through a trunk network with recycling (iterative refinemen
 | Component | Details |
 |-----------|---------|
 | Architecture | Transformer trunk + diffusion structure module |
-| Trunk recycling | 0--20 recycles (default: 10) |
+| Trunk recycling | 2--20 recycles (default: 10) |
 | Diffusion steps | 50--500 (default: 200) |
 | Diffusion batch size | 1--10 (default: 5) output structures |
 | Input modalities | Sequence, SMILES, MSA (A3M), structure (CIF/PDB/SDF) |

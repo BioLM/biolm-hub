@@ -52,7 +52,7 @@ model_size = variant_config["MODEL_SIZE"]
 
 
 # Build Modal container image
-image = modal.Image.from_registry("pytorch/pytorch:2.6.0-cuda11.8-cudnn9-runtime")
+image = modal.Image.from_registry("pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime")
 # Setup download layer with model weights
 # Note: huggingface_hub needed in download layer for HF fallback when R2 cache is empty
 image = setup_download_layer(

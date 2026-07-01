@@ -126,13 +126,16 @@ def download_model_assets(
         )
 
     # ---- Execute download with fallback ----
-    if fallback_config:
-        result = download_with_fallback(primary_config, fallback_config)
-    else:
-        # No fallback available, use primary only
-        from models.commons.storage.acquisition import acquire_model_weights
-
-        result = acquire_model_weights(primary_config)
+    # Every deployable variant has an HF repo + filename mapping (see
+    # EVO2_HF_REPO_MAP / EVO2_FILENAME_MAP in config.py), so a missing fallback
+    # means a variant was enabled without its HF mapping — fail loudly rather
+    # than silently attempting an R2-only read that cannot self-populate.
+    if not fallback_config:
+        raise RuntimeError(
+            f"Evo2 variant '{model_variant}' has no HF repo/filename mapping; "
+            "add it to EVO2_HF_REPO_MAP and EVO2_FILENAME_MAP in config.py."
+        )
+    result = download_with_fallback(primary_config, fallback_config)
 
     # ---- Final validation ----
     if not result.success:

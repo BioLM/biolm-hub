@@ -85,7 +85,7 @@ Predicts all-atom biomolecular structures from sequences, SMILES strings, and/or
 | `items[].components[].chain_id` | str | None | -- | Chain identifier |
 | `items[].components[].msa_content` | str | None | -- | MSA content in A3M format |
 | `items[].bonds` | list | None | -- | Custom bonds as pairs of atom specifications |
-| `params.n_recycles` | int | 10 | 0-20 | Number of trunk recycles |
+| `params.n_recycles` | int | 10 | 2-20 | Number of trunk recycles |
 | `params.num_steps` | int | 200 | 50-500 | Number of diffusion sampling steps |
 | `params.diffusion_batch_size` | int | 5 | 1-10 | Number of output structures to generate |
 | `params.seed` | int | 42 | -- | Random seed for reproducibility |
@@ -261,7 +261,7 @@ request = RF3PredictRequest(
 
 ### Model Parameters
 
-- `n_recycles`: 0-20 (default: 10) - Number of trunk recycles
+- `n_recycles`: 2-20 (default: 10) - Number of trunk recycles
 - `num_steps`: 50-500 (default: 200) - Diffusion sampling steps
 - `diffusion_batch_size`: 1-10 (default: 5) - Number of output structures
 - `early_stopping_plddt_threshold`: 0.0-1.0 (default: 0.5) - Early stop threshold

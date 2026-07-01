@@ -117,7 +117,7 @@ class RF3PredictParams(RequestModel):
 
     # Recycling and sampling parameters
     n_recycles: int = Field(
-        default=10, ge=0, le=20, description="Number of trunk recycling iterations."
+        default=10, ge=2, le=20, description="Number of trunk recycling iterations."
     )
     num_steps: int = Field(
         default=200,

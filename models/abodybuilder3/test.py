@@ -36,6 +36,17 @@ test_abodybuilder3_deployment = generate_tests_from_suite(
     test_suite, test_type="deployment"
 )
 
+
+def test_plddt_response_accepts_flat_list():
+    """Regression (was a latent 500 on ``plddt=True``): the fold action emits a
+    flat per-residue ``list[float]`` (``output['plddt'].squeeze(0).tolist()``),
+    so the response field must accept that shape — not ``list[list[float]]``."""
+    from models.abodybuilder3.schema import AbodyBuilder3PredictResponseResult
+
+    result = AbodyBuilder3PredictResponseResult(pdb="FAKEPDB", plddt=[85.2, 92.1, 77.0])
+    assert result.plddt == [85.2, 92.1, 77.0]
+
+
 # Usage:
 #   pytest models/abodybuilder3/test.py -m integration -n auto --no-cov -v -s  # integration only
 #   pytest models/abodybuilder3/test.py -m deployment -n auto --no-cov -v -s   # deployment only

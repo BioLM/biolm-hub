@@ -105,7 +105,7 @@ class AbodyBuilder3PredictResponseResult(ResponseModel):
         },
     }
     pdb: str = Field(description="Predicted structure in PDB format.")
-    plddt: Optional[list[list[float]]] = Field(
+    plddt: Optional[list[float]] = Field(
         default=None,
         description="Per-residue pLDDT confidence score (0–100; higher is more confident).",
     )

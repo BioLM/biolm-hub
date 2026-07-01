@@ -30,8 +30,8 @@ image = (
         python_version="3.10"
     )  # sadie-antibody==1.0.6 requires Python <3.12
     .apt_install("procps")  # Critical for computing container uptime
-    .pip_install(common_requirements)
-    .pip_install("sadie-antibody==1.0.6")
+    .uv_pip_install(common_requirements)
+    .uv_pip_install("sadie-antibody==1.0.6")
     # NOTE: pip downgrades biopython to 1.80 and pydantic to v1 per sadie's requirements.
     # sadie-antibody==1.0.6 is incompatible with pydantic v2 (uses validate_arguments).
     # schema.py must use @validator (v1 syntax), not @field_validator.
