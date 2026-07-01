@@ -30,17 +30,13 @@ lint:
 format:
 	uv run black .
 
-# Static type checking (repo + CI scripts, matches ci.yml).
-# NOTE: currently reports ~1200 pre-existing strict errors (a v1 release blocker,
-# deferred to a dedicated cleanup session); non-blocking in `check` until fixed.
+# Static type checking (repo + CI scripts, matches ci.yml). Enforced (blocking).
 mypy:
 	uv run mypy . .github/scripts
 
-# Everything CI runs on every PR: style + schema docs + CI-script tests + unit (no Modal/R2 needed).
-# mypy runs last but is non-blocking TEMPORARILY (pre-existing strict-mypy debt; a v1
-# release blocker deferred to a dedicated cleanup session) — mirrors ci.yml.
-check: style check-schema-docs test-github-scripts test-unit
-	-uv run mypy . .github/scripts
+# Everything CI runs on every PR: style + mypy + schema docs + CI-script tests + unit
+# (no Modal/R2 needed). mypy is enforced (blocking) — mirrors ci.yml.
+check: style mypy check-schema-docs test-github-scripts test-unit
 
 # Every schema field has a rendered Field(description=...) and shared fields match the glossary.
 check-schema-docs:

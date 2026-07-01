@@ -37,11 +37,6 @@ jobs:
         run: uv run pre-commit run --all-files --show-diff-on-failure
 
       - name: Type check (mypy)
-        # TEMPORARILY non-blocking: ~1200 pre-existing strict errors (mypy 1.5.1 had
-        # been crashing on numpy stubs, so this step never ran). This is a v1 release
-        # BLOCKER scheduled for a dedicated cleanup session — re-enable blocking once
-        # fixed. mypy still runs here for visibility.
-        continue-on-error: true
         run: uv run mypy . .github/scripts
 
       - name: Schema docs (field descriptions)
