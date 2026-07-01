@@ -17,6 +17,7 @@ Deploy (from the repo root):
 """
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import modal
 
@@ -30,6 +31,9 @@ from models.commons.util.config import (
     common_requirements,
     remote_models_path,
 )
+
+if TYPE_CHECKING:
+    from fastapi import FastAPI
 
 # The gateway imports every model's config.py at startup, so it needs the WHOLE
 # models/ tree (models/__init__.py + models/commons/ + every models/<slug>/)
@@ -70,7 +74,7 @@ _custom_domains = [d] if (d := get_custom_domain()) else []
 )
 @modal.concurrent(max_inputs=100)
 @modal.asgi_app(custom_domains=_custom_domains)
-def web():
+def web() -> "FastAPI":
     """ASGI entrypoint: build and return the cache-enabled gateway app."""
     from gateway.model_discovery import get_model_mapper
     from gateway.routing import build_gateway_app

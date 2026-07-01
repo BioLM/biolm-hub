@@ -104,7 +104,7 @@ show_error_context = true
 warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true
-exclude = '(^|/)(external|\.venv|build|dist|docs|tooling|\.planning)/'
+exclude = '(^|/)(external|\.venv|build|dist|docs|tooling|\.planning|scratchpad)/'
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -133,7 +133,7 @@ fail_under = 85
 target-version = "py312"
 line-length = 88
 fix = true
-extend-exclude = ["external", "build", "dist", ".planning"]
+extend-exclude = ["external", "build", "dist", ".planning", "scratchpad"]
 
 [tool.ruff.lint]
 select = [

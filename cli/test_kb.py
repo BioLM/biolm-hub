@@ -13,8 +13,10 @@ models/ tree.  Rich console output is captured via a patched Console
 to verify warnings are actually printed.
 """
 
+from collections.abc import Iterator
 from io import StringIO
 from pathlib import Path
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -66,13 +68,15 @@ MINIMAL_COMPARISON = {
 
 
 @pytest.fixture()
-def mock_models_dir(tmp_path: Path):
+def mock_models_dir(tmp_path: Path) -> Iterator[Path]:
     """Patch cli.kb.MODELS_DIR to a temporary directory for isolation."""
     with patch("cli.kb.MODELS_DIR", tmp_path):
         yield tmp_path
 
 
-def _make_model_dir(tmp_path: Path, slug: str, sources: dict | None = None) -> Path:
+def _make_model_dir(
+    tmp_path: Path, slug: str, sources: dict[str, Any] | None = None
+) -> Path:
     """Create a model directory with optional sources.yaml."""
     model_dir = tmp_path / slug
     model_dir.mkdir(parents=True, exist_ok=True)
@@ -81,7 +85,7 @@ def _make_model_dir(tmp_path: Path, slug: str, sources: dict | None = None) -> P
     return model_dir
 
 
-def _capture_console():
+def _capture_console() -> tuple[Console, StringIO]:
     """Return (console, buf) for capturing Rich output."""
     buf = StringIO()
     test_console = Console(file=buf, force_terminal=False)
@@ -94,7 +98,7 @@ def _capture_console():
 
 
 class TestGetAllModelSlugs:
-    def test_returns_sorted_slugs_with_sources(self, mock_models_dir: Path):
+    def test_returns_sorted_slugs_with_sources(self, mock_models_dir: Path) -> None:
         """Only directories that contain sources.yaml are returned."""
         _make_model_dir(mock_models_dir, "zebra", sources={"model_slug": "zebra"})
         _make_model_dir(mock_models_dir, "alpha", sources={"model_slug": "alpha"})
@@ -106,7 +110,7 @@ class TestGetAllModelSlugs:
         result = _get_all_model_slugs()
         assert result == ["alpha", "zebra"]
 
-    def test_skips_special_directories(self, mock_models_dir: Path):
+    def test_skips_special_directories(self, mock_models_dir: Path) -> None:
         """Directories in SKIP_DIRS are excluded even if they have sources.yaml."""
         for skip in SKIP_DIRS:
             _make_model_dir(mock_models_dir, skip, sources={"model_slug": skip})
@@ -117,7 +121,7 @@ class TestGetAllModelSlugs:
         result = _get_all_model_slugs()
         assert result == ["real-model"]
 
-    def test_empty_models_dir(self, mock_models_dir: Path):
+    def test_empty_models_dir(self, mock_models_dir: Path) -> None:
         """Empty directory returns empty list."""
         assert _get_all_model_slugs() == []
 
@@ -128,7 +132,7 @@ class TestGetAllModelSlugs:
 
 
 class TestLoadSources:
-    def test_loads_valid_yaml(self, mock_models_dir: Path):
+    def test_loads_valid_yaml(self, mock_models_dir: Path) -> None:
         """Valid sources.yaml is loaded and returned as dict."""
         _make_model_dir(mock_models_dir, "good-model", sources=MINIMAL_SOURCES)
 
@@ -136,13 +140,13 @@ class TestLoadSources:
         assert result["model_slug"] == "test-model"
         assert result["display_name"] == "Test Model"
 
-    def test_missing_model_exits(self, mock_models_dir: Path):
+    def test_missing_model_exits(self, mock_models_dir: Path) -> None:
         """Raises typer.Exit(1) when sources.yaml does not exist."""
         with pytest.raises(typer.Exit) as exc:
             _load_sources("nonexistent")
         assert exc.value.exit_code == 1
 
-    def test_malformed_yaml_exits(self, mock_models_dir: Path):
+    def test_malformed_yaml_exits(self, mock_models_dir: Path) -> None:
         """Raises typer.Exit(1) on invalid YAML."""
         model_dir = mock_models_dir / "bad-yaml"
         model_dir.mkdir()
@@ -152,7 +156,7 @@ class TestLoadSources:
             _load_sources("bad-yaml")
         assert exc.value.exit_code == 1
 
-    def test_empty_yaml_returns_empty_dict(self, mock_models_dir: Path):
+    def test_empty_yaml_returns_empty_dict(self, mock_models_dir: Path) -> None:
         """An empty YAML file returns {} (not None)."""
         model_dir = mock_models_dir / "empty-model"
         model_dir.mkdir()
@@ -179,8 +183,8 @@ class TestValidateCmd:
         self,
         tmp_path: Path,
         slug: str = "test-model",
-        sources: dict | None = None,
-        comparison: dict | None = None,
+        sources: dict[str, Any] | None = None,
+        comparison: dict[str, Any] | None = None,
         docs: set[str] | None = None,
     ) -> Path:
         """Create a fully valid model directory.
@@ -206,13 +210,13 @@ class TestValidateCmd:
 
         return model_dir
 
-    def test_fully_valid_model_no_errors(self, mock_models_dir: Path):
+    def test_fully_valid_model_no_errors(self, mock_models_dir: Path) -> None:
         """A fully valid model should produce no errors or warnings."""
         self._make_complete_model(mock_models_dir)
         # Should NOT raise
         validate_cmd(model="test-model")
 
-    def test_missing_sources_yaml_is_error(self, mock_models_dir: Path):
+    def test_missing_sources_yaml_is_error(self, mock_models_dir: Path) -> None:
         """Missing sources.yaml triggers an error and typer.Exit(1)."""
         model_dir = mock_models_dir / "no-sources"
         model_dir.mkdir()
@@ -223,17 +227,17 @@ class TestValidateCmd:
             validate_cmd(model="no-sources")
         assert exc.value.exit_code == 1
 
-    def test_missing_required_fields_are_errors(self, mock_models_dir: Path):
+    def test_missing_required_fields_are_errors(self, mock_models_dir: Path) -> None:
         """Each missing required top-level field in sources.yaml is an error."""
         # Sources with no required fields at all
-        empty_sources: dict = {}
+        empty_sources: dict[str, Any] = {}
         self._make_complete_model(mock_models_dir, sources=empty_sources)
 
         with pytest.raises(typer.Exit) as exc:
             validate_cmd(model="test-model")
         assert exc.value.exit_code == 1
 
-    def test_missing_license_type_is_error(self, mock_models_dir: Path):
+    def test_missing_license_type_is_error(self, mock_models_dir: Path) -> None:
         """license dict without 'type' key triggers error."""
         sources = {**MINIMAL_SOURCES, "license": {"url": "http://example.com"}}
         self._make_complete_model(mock_models_dir, sources=sources)
@@ -242,7 +246,7 @@ class TestValidateCmd:
             validate_cmd(model="test-model")
         assert exc.value.exit_code == 1
 
-    def test_unrecognized_molecule_type_is_warning(self, mock_models_dir: Path):
+    def test_unrecognized_molecule_type_is_warning(self, mock_models_dir: Path) -> None:
         """Unknown molecule_type triggers a warning (not an error)."""
         sources = {**MINIMAL_SOURCES, "molecule_types": ["protein", "alien_molecule"]}
         self._make_complete_model(mock_models_dir, sources=sources)
@@ -255,7 +259,7 @@ class TestValidateCmd:
         assert "WARN" in output
         assert "alien_molecule" in output
 
-    def test_unrecognized_task_is_warning(self, mock_models_dir: Path):
+    def test_unrecognized_task_is_warning(self, mock_models_dir: Path) -> None:
         """Unknown task triggers a warning (not an error)."""
         sources = {**MINIMAL_SOURCES, "tasks": ["embedding", "teleportation"]}
         self._make_complete_model(mock_models_dir, sources=sources)
@@ -267,7 +271,7 @@ class TestValidateCmd:
         assert "WARN" in output
         assert "teleportation" in output
 
-    def test_paper_missing_title_is_error(self, mock_models_dir: Path):
+    def test_paper_missing_title_is_error(self, mock_models_dir: Path) -> None:
         """Primary paper without 'title' triggers error."""
         sources = {
             **MINIMAL_SOURCES,
@@ -284,7 +288,7 @@ class TestValidateCmd:
             validate_cmd(model="test-model")
         assert exc.value.exit_code == 1
 
-    def test_paper_missing_year_is_error(self, mock_models_dir: Path):
+    def test_paper_missing_year_is_error(self, mock_models_dir: Path) -> None:
         """Primary paper without 'year' triggers error."""
         sources = {
             **MINIMAL_SOURCES,
@@ -301,7 +305,7 @@ class TestValidateCmd:
             validate_cmd(model="test-model")
         assert exc.value.exit_code == 1
 
-    def test_molecule_focus_as_list_is_warning(self, mock_models_dir: Path):
+    def test_molecule_focus_as_list_is_warning(self, mock_models_dir: Path) -> None:
         """molecule_focus as a list (instead of string) triggers warning."""
         sources = {
             **MINIMAL_SOURCES,
@@ -324,7 +328,7 @@ class TestValidateCmd:
         assert "WARN" in output
         assert "molecule_focus" in output
 
-    def test_applied_lit_missing_title_is_error(self, mock_models_dir: Path):
+    def test_applied_lit_missing_title_is_error(self, mock_models_dir: Path) -> None:
         """Applied literature entry without 'title' triggers error."""
         sources = {
             **MINIMAL_SOURCES,
@@ -336,7 +340,7 @@ class TestValidateCmd:
             validate_cmd(model="test-model")
         assert exc.value.exit_code == 1
 
-    def test_source_repo_missing_url_is_error(self, mock_models_dir: Path):
+    def test_source_repo_missing_url_is_error(self, mock_models_dir: Path) -> None:
         """source_repos entry without 'url' triggers error."""
         sources = {
             **MINIMAL_SOURCES,
@@ -348,7 +352,7 @@ class TestValidateCmd:
             validate_cmd(model="test-model")
         assert exc.value.exit_code == 1
 
-    def test_unrecognized_repo_type_is_warning(self, mock_models_dir: Path):
+    def test_unrecognized_repo_type_is_warning(self, mock_models_dir: Path) -> None:
         """Unrecognized source_repos type triggers warning."""
         sources = {
             **MINIMAL_SOURCES,
@@ -363,7 +367,7 @@ class TestValidateCmd:
         assert "WARN" in output
         assert "magic_repo" in output
 
-    def test_missing_docs_are_errors(self, mock_models_dir: Path):
+    def test_missing_docs_are_errors(self, mock_models_dir: Path) -> None:
         """Each missing required doc (README.md, MODEL.md, BIOLOGY.md) is an error."""
         # Create model with sources and comparison but NO doc files
         self._make_complete_model(mock_models_dir, docs=set())
@@ -374,7 +378,7 @@ class TestValidateCmd:
 
     # --- comparison.yaml validation ---
 
-    def test_comparison_missing_is_warning(self, mock_models_dir: Path):
+    def test_comparison_missing_is_warning(self, mock_models_dir: Path) -> None:
         """Missing comparison.yaml triggers a warning (not error)."""
         model_dir = mock_models_dir / "test-model"
         model_dir.mkdir(parents=True)
@@ -391,7 +395,7 @@ class TestValidateCmd:
         assert "WARN" in output
         assert "comparison.yaml" in output
 
-    def test_comparison_section_below_min_is_error(self, mock_models_dir: Path):
+    def test_comparison_section_below_min_is_error(self, mock_models_dir: Path) -> None:
         """comparison.yaml with <3 entries in a section triggers error."""
         comparison = {
             "strengths": ["a", "b"],  # Only 2, needs 3
@@ -407,7 +411,9 @@ class TestValidateCmd:
             validate_cmd(model="test-model")
         assert exc.value.exit_code == 1
 
-    def test_comparison_section_below_target_is_warning(self, mock_models_dir: Path):
+    def test_comparison_section_below_target_is_warning(
+        self, mock_models_dir: Path
+    ) -> None:
         """comparison.yaml with 3-4 entries triggers warning (target 5+)."""
         comparison = {
             "strengths": ["a", "b", "c"],  # 3 entries -> warning (target 5+)
@@ -428,7 +434,9 @@ class TestValidateCmd:
         assert "strengths" in output
         assert "target 5+" in output
 
-    def test_comparison_invalid_alternative_slug_is_error(self, mock_models_dir: Path):
+    def test_comparison_invalid_alternative_slug_is_error(
+        self, mock_models_dir: Path
+    ) -> None:
         """Alternative with a model slug not in models/ triggers error."""
         comparison = {
             **MINIMAL_COMPARISON,
@@ -440,7 +448,9 @@ class TestValidateCmd:
             validate_cmd(model="test-model")
         assert exc.value.exit_code == 1
 
-    def test_comparison_invalid_complement_slug_is_error(self, mock_models_dir: Path):
+    def test_comparison_invalid_complement_slug_is_error(
+        self, mock_models_dir: Path
+    ) -> None:
         """Complement with a model slug not in models/ triggers error."""
         comparison = {
             **MINIMAL_COMPARISON,
@@ -452,7 +462,9 @@ class TestValidateCmd:
             validate_cmd(model="test-model")
         assert exc.value.exit_code == 1
 
-    def test_comparison_valid_alternative_slug_no_error(self, mock_models_dir: Path):
+    def test_comparison_valid_alternative_slug_no_error(
+        self, mock_models_dir: Path
+    ) -> None:
         """Alternative referencing an existing model directory is valid."""
         # Create the referenced model directory
         (mock_models_dir / "other-model").mkdir()
@@ -465,7 +477,7 @@ class TestValidateCmd:
 
         validate_cmd(model="test-model")
 
-    def test_comparison_malformed_yaml_is_error(self, mock_models_dir: Path):
+    def test_comparison_malformed_yaml_is_error(self, mock_models_dir: Path) -> None:
         """Malformed comparison.yaml triggers error."""
         model_dir = self._make_complete_model(mock_models_dir)
         # Overwrite with bad YAML
@@ -475,7 +487,7 @@ class TestValidateCmd:
             validate_cmd(model="test-model")
         assert exc.value.exit_code == 1
 
-    def test_pending_r2_uploads_are_warnings(self, mock_models_dir: Path):
+    def test_pending_r2_uploads_are_warnings(self, mock_models_dir: Path) -> None:
         """Papers without R2 paths trigger warnings about pending uploads."""
         sources = {
             **MINIMAL_SOURCES,
@@ -503,25 +515,25 @@ class TestValidateCmd:
 class TestConstants:
     """Verify that the enum sets and required fields are reasonable."""
 
-    def test_valid_molecule_types_not_empty(self):
+    def test_valid_molecule_types_not_empty(self) -> None:
         assert len(VALID_MOLECULE_TYPES) >= 5
 
-    def test_valid_tasks_not_empty(self):
+    def test_valid_tasks_not_empty(self) -> None:
         assert len(VALID_TASKS) >= 5
 
-    def test_valid_repo_types_includes_github(self):
+    def test_valid_repo_types_includes_github(self) -> None:
         assert "github" in VALID_REPO_TYPES
 
-    def test_required_fields_include_model_slug(self):
+    def test_required_fields_include_model_slug(self) -> None:
         assert "model_slug" in REQUIRED_FIELDS
 
-    def test_required_paper_fields_include_title_and_year(self):
+    def test_required_paper_fields_include_title_and_year(self) -> None:
         assert REQUIRED_PAPER_FIELDS == {"title", "year"}
 
-    def test_required_docs_include_core_files(self):
+    def test_required_docs_include_core_files(self) -> None:
         assert "README.md" in REQUIRED_DOCS
         assert "MODEL.md" in REQUIRED_DOCS
         assert "BIOLOGY.md" in REQUIRED_DOCS
 
-    def test_skip_dirs_includes_commons(self):
+    def test_skip_dirs_includes_commons(self) -> None:
         assert "commons" in SKIP_DIRS

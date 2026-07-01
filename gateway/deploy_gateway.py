@@ -18,7 +18,7 @@ from models.commons.core.logging import get_logger
 logger = get_logger(__name__)
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Deploy a BioLM Models gateway.")
     parser.add_argument(
         "--cache",

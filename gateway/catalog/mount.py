@@ -14,6 +14,8 @@ app already built by :func:`gateway.routing.build_gateway_app`. It's used by
 from pathlib import Path
 from typing import Optional
 
+from fastapi import FastAPI
+
 from gateway.catalog.deployment_status import get_deployment_status
 from gateway.catalog.generator import generate_catalog_data, group_models_by_base
 from gateway.model_discovery import ModelMapper
@@ -25,7 +27,7 @@ _CATALOG_DIR = Path(__file__).resolve().parent
 
 
 def mount_catalog(
-    fastapi_app,
+    fastapi_app: FastAPI,
     model_mapper: ModelMapper,
     *,
     environment: Optional[str] = None,
@@ -50,7 +52,7 @@ def mount_catalog(
             always fail) and per-request subprocess spawns are a needless risk —
             the catalog then renders without deployment badges.
     """
-    from fastapi import HTTPException, Request
+    from fastapi import HTTPException, Request, Response
     from fastapi.concurrency import run_in_threadpool
     from fastapi.staticfiles import StaticFiles
     from fastapi.templating import Jinja2Templates
@@ -68,14 +70,14 @@ def mount_catalog(
     grouped_catalog = group_models_by_base(catalog_data)
     logger.info("Catalog mounted for %d model variants", len(catalog_data))
 
-    async def _status() -> dict:
+    async def _status() -> dict[str, Optional[bool]]:
         # Off the event loop: the Modal query is a blocking subprocess.
         if not check_deployment_status:
             return {}
         return await run_in_threadpool(get_deployment_status, model_mapper, environment)
 
     @fastapi_app.get("/catalog", include_in_schema=False)
-    async def get_catalog(request: Request):
+    async def get_catalog(request: Request) -> Response:
         return templates.TemplateResponse(
             request,
             "catalog.html",
@@ -83,7 +85,7 @@ def mount_catalog(
         )
 
     @fastapi_app.get("/catalog/{model_slug}", include_in_schema=False)
-    async def get_model_catalog(request: Request, model_slug: str):
+    async def get_model_catalog(request: Request, model_slug: str) -> Response:
         if model_slug not in catalog_data:
             raise HTTPException(status_code=404, detail="Model not found")
         return templates.TemplateResponse(

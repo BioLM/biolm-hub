@@ -3,10 +3,12 @@ import subprocess
 import sys
 from importlib import import_module
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated, Optional, cast
 
 import typer
 from rich.console import Console
+
+from models.commons.model.config import ModelFamily, ResolvedVariant
 
 """
 Unified deployment script for BioLM models.
@@ -32,7 +34,7 @@ console = Console()
 
 
 def deploy_single_variant(
-    model_name: str, variant_env_vars: dict, force: bool = False
+    model_name: str, variant_env_vars: dict[str, str], force: bool = False
 ) -> bool:
     """Deploy a single model variant using subprocess to ensure clean environment."""
     # Build the command
@@ -74,7 +76,7 @@ def deploy_single_variant(
                 print(result.stderr, file=sys.stderr)
         else:
             # Allow interactive prompts when not forcing
-            result = subprocess.run(cmd, env=env, check=True)
+            subprocess.run(cmd, env=env, check=True)
         return True
     except subprocess.CalledProcessError as e:
         # Print captured output on error
@@ -85,7 +87,7 @@ def deploy_single_variant(
         return False
 
 
-def get_model_family(model_name: str):
+def get_model_family(model_name: str) -> Optional[ModelFamily]:
     """Load the ModelFamily from a model's config.py."""
     try:
         # Handle both model directory names and slugs
@@ -98,18 +100,18 @@ def get_model_family(model_name: str):
             )
             return None
 
-        return config_module.MODEL_FAMILY
+        return cast(ModelFamily, config_module.MODEL_FAMILY)
     except ImportError as e:
         print(f"❌ ERROR: Could not import models/{model_name}/config.py: {e}")
         return None
 
 
-def parse_variant_spec(variant_spec: str) -> dict:
+def parse_variant_spec(variant_spec: str) -> dict[str, str]:
     """Parse variant specification like 'MODEL_SIZE=150m,MODEL_ACTION=encode'."""
     if not variant_spec:
         return {}
 
-    variant_dict = {}
+    variant_dict: dict[str, str] = {}
     for pair in variant_spec.split(","):
         if "=" not in pair:
             print(f"❌ ERROR: Invalid variant spec format: {pair}")
@@ -121,7 +123,9 @@ def parse_variant_spec(variant_spec: str) -> dict:
     return variant_dict
 
 
-def _get_variants_to_deploy(model_family, variant_spec):
+def _get_variants_to_deploy(
+    model_family: ModelFamily, variant_spec: Optional[str]
+) -> list[ResolvedVariant]:
     """Get the list of variants to deploy based on variant_spec."""
     if variant_spec:
         # Deploy specific variant
@@ -142,9 +146,11 @@ def _get_variants_to_deploy(model_family, variant_spec):
     return variants_to_deploy
 
 
-def _deploy_variants(model_name, variants_to_deploy, force):
+def _deploy_variants(
+    model_name: str, variants_to_deploy: list[ResolvedVariant], force: bool
+) -> list[str]:
     """Deploy a list of variants and track failures."""
-    failed_deployments = []
+    failed_deployments: list[str] = []
 
     for i, variant in enumerate(variants_to_deploy, 1):
         if len(variants_to_deploy) > 1:
@@ -173,7 +179,11 @@ def _deploy_variants(model_name, variants_to_deploy, force):
     return failed_deployments
 
 
-def _print_deployment_summary(model_name, variants_to_deploy, failed_deployments):
+def _print_deployment_summary(
+    model_name: str,
+    variants_to_deploy: list[ResolvedVariant],
+    failed_deployments: list[str],
+) -> None:
     """Print the deployment summary."""
     if failed_deployments:
         print("\n⚠️  Deployment completed with failures:")
@@ -188,7 +198,9 @@ def _print_deployment_summary(model_name, variants_to_deploy, failed_deployments
             print(f"\n✅ Successfully deployed all {total} variants of {model_name}")
 
 
-def deploy_model(model_name: str, force: bool = False, variant_spec: str = None):
+def deploy_model(
+    model_name: str, force: bool = False, variant_spec: Optional[str] = None
+) -> None:
     """
     Deploy a model and all its variants, or a specific variant if specified.
 
@@ -256,7 +268,7 @@ def deploy_cmd(
             "deployment. Off by default.",
         ),
     ] = None,
-):
+) -> None:
     """
     Deploy one or more BioLM models.
 

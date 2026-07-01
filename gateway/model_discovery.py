@@ -1,6 +1,6 @@
 import importlib.util
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel
 
@@ -24,20 +24,22 @@ class ModelMapper:
     with the ``@biolm_model_class``-decorated class in that model's ``app.py``.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the discovery system and load all model configurations."""
         self._model_families: dict[str, ModelFamily] = {}
-        self._variant_map: dict[str, dict] = {}
-        self._action_registry: dict[tuple[str, str], tuple] = {}
+        self._variant_map: dict[str, dict[str, Any]] = {}
+        self._action_registry: dict[
+            tuple[str, str], tuple[type[BaseModel], type[BaseModel]]
+        ] = {}
         self._class_names: dict[str, str] = {}
-        self._resource_specs: dict[str, dict] = {}
+        self._resource_specs: dict[str, dict[str, Any]] = {}
 
         # Load all configurations at initialization
         self._load_all_configs()
         self._build_variant_map()
         self._build_action_registry()
 
-    def _load_all_configs(self):
+    def _load_all_configs(self) -> None:
         """
         Import every ``models/*/config.py`` and register its ``MODEL_FAMILY``.
 
@@ -88,7 +90,7 @@ class ModelMapper:
             except Exception as e:
                 logger.warning("Failed to load config for %s: %s", model_dir.name, e)
 
-    def _build_variant_map(self):
+    def _build_variant_map(self) -> None:
         """
         Build the variant map from model configurations.
         Maps public API slugs to base model slug and variant info.
@@ -109,7 +111,7 @@ class ModelMapper:
                     variant.modal_resource_spec.model_dump()
                 )
 
-    def _build_action_registry(self):
+    def _build_action_registry(self) -> None:
         """
         Build the action registry from model configurations.
         Maps (base_model_slug, action) to (request_schema, response_schema).
@@ -122,7 +124,7 @@ class ModelMapper:
                     action_map.response_schema,
                 )
 
-    def get_variant_info(self, api_slug: str) -> Optional[dict]:
+    def get_variant_info(self, api_slug: str) -> Optional[dict[str, Any]]:
         """
         Get variant information for a given API slug.
 
@@ -165,7 +167,7 @@ class ModelMapper:
         """
         return self._class_names.get(base_model_slug)
 
-    def get_resource_spec(self, modal_app_name: str) -> Optional[dict]:
+    def get_resource_spec(self, modal_app_name: str) -> Optional[dict[str, Any]]:
         """
         Get resource specification for a Modal app.
 
@@ -177,7 +179,7 @@ class ModelMapper:
         """
         return self._resource_specs.get(modal_app_name)
 
-    def get_all_resource_specs(self) -> dict[str, dict]:
+    def get_all_resource_specs(self) -> dict[str, dict[str, Any]]:
         """
         Get all resource specifications.
 
@@ -204,7 +206,7 @@ class ModelMapper:
                 result.append((action, req_schema, res_schema))
         return result
 
-    def get_all_variant_mappings(self) -> dict[str, dict]:
+    def get_all_variant_mappings(self) -> dict[str, dict[str, Any]]:
         """
         Get the complete variant mapping.
 

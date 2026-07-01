@@ -5,7 +5,7 @@ Provides tools for inspecting, validating, and managing the model knowledge base
 """
 
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import typer
 import yaml
@@ -72,7 +72,7 @@ def _get_all_model_slugs() -> list[str]:
     )
 
 
-def _load_sources(model_slug: str) -> dict:
+def _load_sources(model_slug: str) -> dict[str, Any]:
     """Load sources.yaml for a model. Raises typer.Exit on missing/malformed files."""
     path = MODELS_DIR / model_slug / "sources.yaml"
     if not path.exists():

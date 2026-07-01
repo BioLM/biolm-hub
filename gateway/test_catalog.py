@@ -4,14 +4,21 @@ Covers catalog data generation (route scanning) and the deployment-status
 mapping. The Modal query is monkeypatched, so these run with no Modal/R2.
 """
 
+from typing import TYPE_CHECKING
+
+import pytest
+
 from gateway.catalog import deployment_status as ds
 from gateway.catalog.deployment_status import get_deployment_status
 from gateway.catalog.generator import generate_catalog_data
 from gateway.model_discovery import get_model_mapper
 from gateway.routing import build_gateway_app
 
+if TYPE_CHECKING:
+    from fastapi.testclient import TestClient
 
-def test_catalog_generation_produces_endpoints():
+
+def test_catalog_generation_produces_endpoints() -> None:
     mapper = get_model_mapper()
     app = build_gateway_app(mapper, use_cache=False)
     catalog = generate_catalog_data(app)
@@ -25,9 +32,13 @@ def test_catalog_generation_produces_endpoints():
     assert any(e["path"].startswith("/api/v3/dna-chisel/") for e in endpoints)
 
 
-def test_deployment_status_maps_deployed_and_undeployed(monkeypatch):
+def test_deployment_status_maps_deployed_and_undeployed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     mapper = get_model_mapper()
-    dna_chisel_app = mapper.get_variant_info("dna-chisel")["modal_app_name"]
+    dna_chisel_variant = mapper.get_variant_info("dna-chisel")
+    assert dna_chisel_variant is not None
+    dna_chisel_app = dna_chisel_variant["modal_app_name"]
     # Pretend only the dna-chisel app is deployed.
     monkeypatch.setattr(
         ds, "get_deployed_app_names", lambda environment=None: {dna_chisel_app}
@@ -38,7 +49,9 @@ def test_deployment_status_maps_deployed_and_undeployed(monkeypatch):
     assert any(v is False for slug, v in status.items() if slug != "dna-chisel")
 
 
-def test_deployment_status_unknown_when_query_fails(monkeypatch):
+def test_deployment_status_unknown_when_query_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     mapper = get_model_mapper()
     # Query failure → None for every slug (status unknown, never wrongly "undeployed").
     monkeypatch.setattr(ds, "get_deployed_app_names", lambda environment=None: None)
@@ -51,7 +64,9 @@ def test_deployment_status_unknown_when_query_fails(monkeypatch):
 # --- Route-level rendering (FastAPI TestClient; no Modal — status monkeypatched) ---
 
 
-def _catalog_client(monkeypatch, deployed_app_names):
+def _catalog_client(
+    monkeypatch: pytest.MonkeyPatch, deployed_app_names: set[str]
+) -> "TestClient":
     from fastapi.testclient import TestClient
 
     from gateway.catalog.mount import mount_catalog
@@ -65,9 +80,11 @@ def _catalog_client(monkeypatch, deployed_app_names):
     return TestClient(app)
 
 
-def test_catalog_page_renders_status_badges(monkeypatch):
+def test_catalog_page_renders_status_badges(monkeypatch: pytest.MonkeyPatch) -> None:
     mapper = get_model_mapper()
-    dna_chisel_app = mapper.get_variant_info("dna-chisel")["modal_app_name"]
+    dna_chisel_variant = mapper.get_variant_info("dna-chisel")
+    assert dna_chisel_variant is not None
+    dna_chisel_app = dna_chisel_variant["modal_app_name"]
     client = _catalog_client(monkeypatch, {dna_chisel_app})
 
     resp = client.get("/catalog")
@@ -77,9 +94,11 @@ def test_catalog_page_renders_status_badges(monkeypatch):
     assert "● not deployed" in resp.text  # the rest
 
 
-def test_model_page_deployed_vs_undeployed(monkeypatch):
+def test_model_page_deployed_vs_undeployed(monkeypatch: pytest.MonkeyPatch) -> None:
     mapper = get_model_mapper()
-    dna_chisel_app = mapper.get_variant_info("dna-chisel")["modal_app_name"]
+    dna_chisel_variant = mapper.get_variant_info("dna-chisel")
+    assert dna_chisel_variant is not None
+    dna_chisel_app = dna_chisel_variant["modal_app_name"]
 
     deployed = _catalog_client(monkeypatch, {dna_chisel_app})
     r1 = deployed.get("/catalog/dna-chisel")

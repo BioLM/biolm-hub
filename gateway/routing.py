@@ -22,7 +22,8 @@ Design notes:
 
 import functools
 import re
-from typing import Any
+from collections.abc import Callable
+from typing import Any, cast
 
 import modal
 from fastapi import FastAPI, HTTPException, Request
@@ -50,7 +51,7 @@ class _ModelErrorResponse(Exception):
     the request handler so the body ``status_code`` can be promoted to HTTP.
     """
 
-    def __init__(self, payload: dict):
+    def __init__(self, payload: dict[str, Any]):
         super().__init__(payload.get("detail", "model error"))
         self.payload = payload
 
@@ -78,7 +79,7 @@ def _sanitize_error_message(error_msg: str) -> str:
 
 
 @functools.lru_cache(maxsize=256)
-def _model_class(modal_app_name: str, class_name: str):
+def _model_class(modal_app_name: str, class_name: str) -> modal.cls.Obj:
     """Resolve (and cache) a deployed Modal model class handle.
 
     Instantiated with no arguments — the container class supplies defaults for
@@ -92,7 +93,7 @@ async def _compute_remotely(
     modal_app_name: str,
     class_name: str,
     model_action: str,
-) -> dict:
+) -> dict[str, Any]:
     """Dispatch a single (possibly partial) request to the deployed Modal model.
 
     The model is told to skip its own validation (the gateway already validated
@@ -102,8 +103,14 @@ async def _compute_remotely(
     try:
         instance = _model_class(modal_app_name, class_name)
         remote_function = getattr(instance, model_action)
-        return await remote_function.remote.aio(
-            payload=payload, _skip_validation=True, _skip_cache=True
+        # The remote Modal function is resolved dynamically (getattr), so its
+        # return type is unknown to mypy; cast to the documented contract
+        # (a JSON-serializable response dict).
+        return cast(
+            dict[str, Any],
+            await remote_function.remote.aio(
+                payload=payload, _skip_validation=True, _skip_cache=True
+            ),
         )
     except modal.exception.NotFoundError as e:
         raise HTTPException(
@@ -126,7 +133,7 @@ async def _run_cached(
     modal_app_name: str,
     class_name: str,
     model_action: str,
-) -> dict:
+) -> dict[str, Any]:
     """Cache-check → compute-misses → merge, then return the assembled dict.
 
     Caching tiers are gated inside ``process_with_cache`` by ``BIOLM_CACHE_ENABLED``
@@ -145,7 +152,9 @@ async def _run_cached(
     # serialize_model(exclude_none=True) would otherwise strip.
     full_items = payload.model_dump().get("items", [])
 
-    async def _compute(items_to_compute: list, indices_to_compute: list[int]):
+    async def _compute(
+        items_to_compute: list[BaseModel], indices_to_compute: list[int]
+    ) -> BaseModel:
         partial_payload_dict = serialize_model(payload)
         partial_payload_dict["items"] = [full_items[i] for i in indices_to_compute]
         partial_payload = request_schema.model_validate(partial_payload_dict)
@@ -185,7 +194,7 @@ async def _handle_request(
     request_schema: type[BaseModel],
     response_schema: type[BaseModel],
     payload: BaseModel,
-):
+) -> dict[str, Any] | JSONResponse:
     """Route one request to the model and promote any model error to HTTP status."""
     # Never cache stochastic actions (e.g. `generate`) — caching them would
     # return byte-identical samples for repeated identical inputs. Mirrors the
@@ -240,14 +249,24 @@ def _make_endpoint_handler(
     model_action: str,
     request_schema: type[BaseModel],
     response_schema: type[BaseModel],
-):
+) -> Callable[..., Any]:
     """Build a FastAPI endpoint that forwards to :func:`_handle_request`.
 
     The factory captures per-route values to dodge Python's late-binding gotcha,
     and annotates ``payload`` with the request schema so FastAPI validates it.
+
+    Return type is deliberately ``Callable[..., Any]`` rather than a precise
+    ``Coroutine[..., dict | JSONResponse]``: FastAPI's own ``add_api_route``
+    stub declares ``endpoint: Callable[..., Coroutine[Any, Any, Response]]``,
+    which doesn't admit a handler that (by design) sometimes returns a plain
+    dict for ``response_model`` validation and sometimes a ``JSONResponse``
+    to bypass it for structured model errors — both are supported at runtime.
     """
 
-    async def endpoint_handler(payload: request_schema, request: Request):
+    async def endpoint_handler(
+        payload: request_schema,  # type: ignore[valid-type]  # dynamic per-model Pydantic class; kept as a real runtime annotation so FastAPI validates the request body against it
+        request: Request,
+    ) -> dict[str, Any] | JSONResponse:
         return await _handle_request(
             use_cache=use_cache,
             public_slug=public_slug,
@@ -332,7 +351,9 @@ def build_gateway_app(model_mapper: ModelMapper, *, use_cache: bool) -> FastAPI:
     )
 
     @fastapi_app.exception_handler(Exception)
-    async def _unhandled_exception_handler(request: Request, exc: Exception):
+    async def _unhandled_exception_handler(
+        request: Request, exc: Exception
+    ) -> JSONResponse:
         """Uniform, sanitized 500 for any error not already mapped to a status."""
         logger.error(
             "Unhandled gateway error for %s: %s", request.url, exc, exc_info=True
@@ -348,7 +369,7 @@ def build_gateway_app(model_mapper: ModelMapper, *, use_cache: bool) -> FastAPI:
         )
 
     @fastapi_app.get("/", tags=["Health"])
-    async def health_check():
+    async def health_check() -> dict[str, Any]:
         """Confirm the gateway is running and list supported models."""
         return {
             "status": "ok",
@@ -358,7 +379,7 @@ def build_gateway_app(model_mapper: ModelMapper, *, use_cache: bool) -> FastAPI:
         }
 
     @fastapi_app.get("/resource-specs", tags=["Gateway"])
-    async def resource_specs():
+    async def resource_specs() -> dict[str, dict[str, Any]]:
         """Return the resource specifications for all model variants."""
         return model_mapper.get_all_resource_specs()
 

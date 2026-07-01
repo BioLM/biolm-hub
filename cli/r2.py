@@ -1,14 +1,16 @@
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import click
 import typer
 from botocore.exceptions import ClientError
+from botocore.response import StreamingBody
 from rich.console import Console
 from rich.progress import (
     BarColumn,
     Progress,
     SpinnerColumn,
+    TaskID,
     TextColumn,
     TimeRemainingColumn,
 )
@@ -58,7 +60,7 @@ def format_r2_path(path: str) -> tuple[str, str]:
 
 def list_r2_objects(  # noqa: C901
     bucket: str, prefix: Optional[str] = None, recursive: bool = False
-):
+) -> None:
     # FIXME(noqa: C901): Refactor to reduce complexity below the linter's threshold.
 
     """
@@ -135,7 +137,9 @@ def list_r2_objects(  # noqa: C901
                     # Find or create directory node
                     found = False
                     for child in current.children:
-                        if child.label.endswith(part):
+                        # Labels are always plain strings here (we only ever add
+                        # f"📁 {...}" / f"📄 {...}"); narrow the Rich RenderableType.
+                        if isinstance(child.label, str) and child.label.endswith(part):
                             current = child
                             found = True
                             break
@@ -162,12 +166,12 @@ def list_r2_objects(  # noqa: C901
 
 
 def _download_one(
-    r2_client, bucket: str, key: str, local_path: str, file_size: int, label: str
+    r2_client: Any, bucket: str, key: str, local_path: str, file_size: int, label: str
 ) -> None:
     """Download a single file with progress bar (TTY) or optimized transfer (non-TTY)."""
     if console.is_terminal:
         dl_config = (
-            get_r2_transfer_config()
+            get_r2_transfer_config()  # type: ignore[no-untyped-call]  # untyped in models/commons/storage/r2.py
             if file_size > DOWNLOAD_LARGE_FILE_THRESHOLD
             else None
         )
@@ -179,7 +183,7 @@ def _download_one(
         ) as progress:
             task = progress.add_task(f"Downloading {label}", total=max(file_size, 1))
 
-            def callback(bytes_transferred, _task=task):
+            def callback(bytes_transferred: int, _task: TaskID = task) -> None:
                 progress.update(_task, advance=bytes_transferred)
 
             r2_client.download_file(
@@ -193,7 +197,7 @@ def _download_one(
 
 
 def download_from_r2(
-    r2_client,
+    r2_client: Any,
     bucket: str,
     key: str,
     dest_path: Path,
@@ -355,7 +359,7 @@ def download(
         raise typer.Exit(1) from e
 
 
-def _check_if_directory(r2_client, bucket: str, key: str) -> bool:
+def _check_if_directory(r2_client: Any, bucket: str, key: str) -> bool:
     """Check if the given key represents a directory by looking for objects with that prefix."""
     # Check both with and without trailing slash
     prefix = key if key.endswith("/") else key + "/"
@@ -363,7 +367,7 @@ def _check_if_directory(r2_client, bucket: str, key: str) -> bool:
     return bool(list_response.get("Contents"))
 
 
-def _stream_file_content(streaming_body) -> None:
+def _stream_file_content(streaming_body: StreamingBody) -> None:
     """Stream file content to stdout, handling binary data gracefully.
 
     Uses an incremental UTF-8 decoder so a multi-byte character that straddles a
@@ -507,9 +511,9 @@ def du(  # noqa: C901
             prefix += "/"
 
         total_size = 0
-        dir_sizes = {}
-        file_sizes = {}
-        files = []
+        dir_sizes: dict[str, int] = {}
+        file_sizes: dict[str, int] = {}
+        files: list[tuple[str, int]] = []
 
         # List objects and calculate size
         response = r2_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
@@ -548,7 +552,7 @@ def du(  # noqa: C901
                 break
 
         # Format size as human-readable
-        def format_size(size: int) -> str:
+        def format_size(size: float) -> str:
             for unit in ["B", "KB", "MB", "GB", "TB"]:
                 if size < 1024:
                     return f"{size:.2f} {unit}"

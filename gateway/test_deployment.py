@@ -34,7 +34,7 @@ class GatewayTestCase:
     model_action: str
     input_filename: str
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Used for generating descriptive test IDs in pytest output."""
         return f"{self.model_slug}/{self.model_action}"
 
@@ -50,7 +50,7 @@ gateway_test_cases = [
 ]
 
 
-def execute_gateway_test_case(case: GatewayTestCase):
+def execute_gateway_test_case(case: GatewayTestCase) -> None:
     """
     A reusable test runner that executes a single test case against the live gateway.
     """
@@ -99,7 +99,7 @@ def execute_gateway_test_case(case: GatewayTestCase):
 
 @pytest.mark.deployment
 @pytest.mark.parametrize("case", gateway_test_cases, ids=str)
-def test_gateway_endpoints(case: GatewayTestCase):
+def test_gateway_endpoints(case: GatewayTestCase) -> None:
     execute_gateway_test_case(case)
 
 

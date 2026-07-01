@@ -13,6 +13,7 @@ Override the served domain or CORS with ``BIOLM_GATEWAY_DOMAIN`` /
 """
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import modal
 
@@ -23,6 +24,9 @@ from gateway.config import (
 )
 from models.commons.core.logging import get_logger
 from models.commons.util.config import common_requirements, remote_models_path
+
+if TYPE_CHECKING:
+    from fastapi import FastAPI
 
 logger = get_logger(__name__)
 
@@ -62,7 +66,7 @@ _custom_domains = [d] if (d := get_custom_domain()) else []
 )
 @modal.concurrent(max_inputs=100)
 @modal.asgi_app(custom_domains=_custom_domains)
-def web():
+def web() -> "FastAPI":
     """ASGI entrypoint: build and return the bare (no-cache) gateway app.
 
     API-only by default; set ``BIOLM_GATEWAY_CATALOG=1`` to also mount the

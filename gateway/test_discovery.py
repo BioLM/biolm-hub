@@ -99,7 +99,7 @@ def _action_methods(model_name: str, class_name: str) -> set[str]:
 
 
 @pytest.mark.parametrize("model_name", _model_dirs())
-def test_modal_class_name_resolves(model_name: str):
+def test_modal_class_name_resolves(model_name: str) -> None:
     family = _load_model_family(model_name)
     assert isinstance(
         family, ModelFamily
@@ -118,7 +118,7 @@ def test_modal_class_name_resolves(model_name: str):
 
 
 @pytest.mark.parametrize("model_name", _model_dirs())
-def test_config_actions_have_endpoint_methods(model_name: str):
+def test_config_actions_have_endpoint_methods(model_name: str) -> None:
     """Every action the gateway will route must be backed by a model method.
 
     The gateway registers a route per ``config.action_schemas`` entry and calls

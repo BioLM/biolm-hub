@@ -1,3 +1,6 @@
+from typing import Any
+
+from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
@@ -7,7 +10,7 @@ from models.commons.core.logging import get_logger
 logger = get_logger(__name__)
 
 
-def get_field_details(field: FieldInfo) -> dict:
+def get_field_details(field: FieldInfo) -> dict[str, Any]:
     """Extracts relevant details from a Pydantic field."""
     details = _init_field_details(field)
     _detect_list_type(field, details)
@@ -17,7 +20,7 @@ def get_field_details(field: FieldInfo) -> dict:
     return details
 
 
-def _init_field_details(field: FieldInfo) -> dict:
+def _init_field_details(field: FieldInfo) -> dict[str, Any]:
     """Initialize basic field details."""
     return {
         "type": str(getattr(field, "annotation", "Unknown")),
@@ -36,7 +39,7 @@ def _init_field_details(field: FieldInfo) -> dict:
     }
 
 
-def _sanitize_value(value):
+def _sanitize_value(value: Any) -> Any:
     """Sanitize values to be JSON serializable, converting PydanticUndefined to None."""
     if value is None:
         return None
@@ -57,7 +60,7 @@ def _sanitize_value(value):
         return str(value) if value is not None else None
 
 
-def _detect_list_type(field: FieldInfo, details: dict) -> None:
+def _detect_list_type(field: FieldInfo, details: dict[str, Any]) -> None:
     """Detect if field is a list type."""
     annotation = getattr(field, "annotation", None)
     if annotation is None:
@@ -92,7 +95,7 @@ def _detect_list_type(field: FieldInfo, details: dict) -> None:
             )
 
 
-def _detect_multi_select_enum(type_str: str, details: dict) -> None:
+def _detect_multi_select_enum(type_str: str, details: dict[str, Any]) -> None:
     """Detect if list contains enum types."""
     try:
         import re
@@ -106,7 +109,7 @@ def _detect_multi_select_enum(type_str: str, details: dict) -> None:
         pass
 
 
-def _detect_enum_type(field: FieldInfo, details: dict) -> None:
+def _detect_enum_type(field: FieldInfo, details: dict[str, Any]) -> None:
     """Detect enum types."""
     annotation = getattr(field, "annotation", None)
     if annotation is None:
@@ -128,7 +131,7 @@ def _detect_enum_type(field: FieldInfo, details: dict) -> None:
         pass
 
 
-def _detect_nested_model(field: FieldInfo, details: dict) -> None:
+def _detect_nested_model(field: FieldInfo, details: dict[str, Any]) -> None:
     """Detect nested BaseModel fields."""
     annotation = getattr(field, "annotation", None)
     if annotation is None:
@@ -145,7 +148,7 @@ def _detect_nested_model(field: FieldInfo, details: dict) -> None:
         pass
 
 
-def _process_metadata(field: FieldInfo, details: dict) -> None:
+def _process_metadata(field: FieldInfo, details: dict[str, Any]) -> None:
     """Process field metadata and extract validation hints."""
     validation_hints = []
 
@@ -166,7 +169,7 @@ def _process_metadata(field: FieldInfo, details: dict) -> None:
         details["validation_hints"] = validation_hints
 
 
-def _extract_validator_hint(validator) -> str:
+def _extract_validator_hint(validator: Any) -> str:
     """Extract human-readable hints from validator instances."""
     validator_name = validator.__class__.__name__
 
@@ -179,7 +182,7 @@ def _extract_validator_hint(validator) -> str:
     return _extract_function_validator_hint(validator)
 
 
-def _extract_class_validator_hint(validator_name: str, validator) -> str:
+def _extract_class_validator_hint(validator_name: str, validator: Any) -> str:
     """Extract hints from class-based validators."""
     validators = {
         "SingleOccurrenceOf": lambda v: f"Must contain exactly one '{getattr(v, 'single_token', '')}' token",
@@ -197,7 +200,7 @@ def _extract_class_validator_hint(validator_name: str, validator) -> str:
     return ""
 
 
-def _extract_function_validator_hint(validator) -> str:
+def _extract_function_validator_hint(validator: Any) -> str:
     """Extract hints from function-based validators."""
     if not (callable(validator) and hasattr(validator, "__name__")):
         return ""
@@ -212,7 +215,7 @@ def _extract_function_validator_hint(validator) -> str:
     return function_hints.get(validator.__name__, "")
 
 
-def analyze_schema(schema: BaseModel) -> dict:
+def analyze_schema(schema: BaseModel) -> dict[str, Any]:
     """Analyzes a Pydantic schema and returns a dictionary of its fields."""
     if schema is None:
         return {}
@@ -237,12 +240,12 @@ def analyze_schema(schema: BaseModel) -> dict:
         return {}
 
 
-def _sanitize_schema_dict(schema_dict: dict) -> dict:
+def _sanitize_schema_dict(schema_dict: dict[str, Any]) -> dict[str, Any]:
     """Recursively sanitize a schema dictionary to ensure JSON serialization."""
     if not isinstance(schema_dict, dict):
         return _sanitize_value(schema_dict)
 
-    sanitized = {}
+    sanitized: dict[str, Any] = {}
     for key, value in schema_dict.items():
         if isinstance(value, dict):
             sanitized[key] = _sanitize_schema_dict(value)
@@ -261,9 +264,9 @@ def _sanitize_schema_dict(schema_dict: dict) -> dict:
     return sanitized
 
 
-def generate_catalog_data(app) -> dict:
+def generate_catalog_data(app: FastAPI) -> dict[str, dict[str, Any]]:
     """Generates a structured dictionary of API endpoints from a FastAPI app."""
-    catalog = {}
+    catalog: dict[str, dict[str, Any]] = {}
     for route in app.routes:
         if isinstance(route, APIRoute) and route.path.startswith("/api/v3/"):
             # Correctly parse the model_slug from the path, not the tag
@@ -311,9 +314,11 @@ def _extract_base_model_slug(model_slug: str) -> str:
     return base
 
 
-def group_models_by_base(catalog: dict) -> dict:
+def group_models_by_base(
+    catalog: dict[str, dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
     """Group models by their base model slug."""
-    grouped = {}
+    grouped: dict[str, dict[str, Any]] = {}
 
     for model_slug, model_info in catalog.items():
         base_slug = model_info.get("base_model_slug", model_slug)
