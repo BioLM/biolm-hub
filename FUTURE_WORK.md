@@ -36,15 +36,6 @@ feedback into the template and the guide so the next contribution starts further
 Adopt BuildKit-style caching and shared base layers to cut cold-build times for the heavier
 (conda/GPU) models.
 
-## Restore strict type-checking (mypy)
-
-The CI `mypy` step is currently **non-blocking** (`continue-on-error`). The repo pins `mypy>=1.14`
-(the old pinned `mypy==1.5.1` hard-crashed analyzing numpy 2.x stubs, so the step had never actually
-run to completion). A full run surfaces ~1200 pre-existing strict-mode errors across ~185 files —
-mostly missing function annotations (`no-untyped-def`) and their cascading `no-untyped-call`s, plus
-`type-arg` / `arg-type` issues. Pay this down (annotate functions, tighten generics) and flip the CI
-step back to blocking so `mypy` is enforced as the house rules describe.
-
 ---
 
 *Have something else you think belongs in the catalog? Open an issue — see
