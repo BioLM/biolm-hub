@@ -33,7 +33,7 @@
 > Status: ⬜ todo · 🔵 deploying · ✅ deploy+invoke ok · 🟡 deployed (invoke pending/manual) · 🔴 failed (see notes).
 
 ## ✅✅ MILESTONE B DEPLOY+VALIDATE — COMPLETE (2026-07-01)
-**All 39 SHIP models (+ dummy) deploy + runtime-validated** (cold-start log-verified, served real output) on
+**All 38 SHIP models (+ dummy) deploy + runtime-validated** (cold-start log-verified, served real output) on
 the new `biolm-hub/` R2 path, dev env. **9 port-drift bugs found + fixed + committed** (all internal-repo-grounded):
 thermompnn (missing PROTEIN_MPNN_CHECKPOINT), zymctrl (HF snapshot path), omni_dna (safetensors no metadata),
 sadie (pydantic v1↔v2 pickle + dead G3 host), prody (openmm/pdbfixer) + **commons `requests`** (systemic — minimal
