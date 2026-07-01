@@ -1,21 +1,48 @@
+from urllib.error import URLError
+from urllib.request import urlopen
+
 from models.commons.core.logging import get_logger
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
 from models.commons.testing.fixture import FixtureGenerator
 from models.mpnn.config import MODEL_FAMILY
+from models.mpnn.schema import (
+    AllMPNNGenerateParams,
+    MPNNGenerateRequest,
+    MPNNGenerateRequestItem,
+)
 
 logger = get_logger(__name__)
 
-# Test input/output filenames (manually created and stored in R2)
-# MPNN uses multiple input files for all variants
+# Test input/output filenames. Inputs are self-contained (fetched inside
+# generate() below), so generation needs no pre-existing R2 assets — the
+# generator writes these inputs to R2 itself, alongside the generated outputs.
+#
+# MPNN's wire schema (MPNNGenerateRequest / AllMPNNGenerateParams) is the same
+# for every MODEL_TYPE — the app re-validates/filters params per-variant
+# server-side (see mpnn_schema_map in models/mpnn/app.py) — so these 4
+# variant-agnostic inputs are valid for ALL variants (including hyper), and
+# test.py's 3-variant smoke test can reuse INPUT1 unmodified.
 INPUT1 = "input1.json"
 INPUT2 = "input2.json"
 INPUT3 = "input3.json"
 INPUT4 = "input4.json"
-# INPUT5 = "input5.json"
 
-# Use the same test suite as test.py for fixture generation
-# This will generate fixtures for ALL variants including hyper
+
+def _download_pdb(pdb_id: str) -> str:
+    """Download a PDB-format structure file from RCSB and return it as text."""
+    url = f"https://files.rcsb.org/download/{pdb_id}.pdb"
+    try:
+        with urlopen(url, timeout=10) as response:
+            return response.read().decode("utf-8")
+    except URLError as e:
+        raise ValueError(f"Failed to download PDB for {pdb_id}: {e}") from e
+
+
+# TestSuite skeleton — test cases are built lazily inside generate() to avoid
+# a module-scope network call (the RCSB PDB download) that would break
+# --collect-only / plain imports of this module (test.py imports INPUT1 above
+# at import time).
 fixture_generation_suite = TestSuite(
     model_family=MODEL_FAMILY,
     r2_fixture_subdir="models",
@@ -23,31 +50,92 @@ fixture_generation_suite = TestSuite(
         # Single mapping that applies to ALL variants (including hyper)
         VariantTestMapping(
             variant_config={},  # Empty dict means applies to ALL variants
-            test_cases=[
-                ActionTestCase(
-                    action_name=ModelActions.GENERATE,
-                    input_fixture=INPUT1,
-                    expected_output_fixture="{variant.modal_app_name}-generate-input1-expected_output.json",
-                ),
-                ActionTestCase(
-                    action_name=ModelActions.GENERATE,
-                    input_fixture=INPUT2,
-                    expected_output_fixture="{variant.modal_app_name}-generate-input2-expected_output.json",
-                ),
-                ActionTestCase(
-                    action_name=ModelActions.GENERATE,
-                    input_fixture=INPUT3,
-                    expected_output_fixture="{variant.modal_app_name}-generate-input3-expected_output.json",
-                ),
-                ActionTestCase(
-                    action_name=ModelActions.GENERATE,
-                    input_fixture=INPUT4,
-                    expected_output_fixture="{variant.modal_app_name}-generate-input4-expected_output.json",
-                ),
-            ],
+            test_cases=[],  # populated by _build_test_cases() inside generate()
         )
     ],
 )
+
+
+def _build_test_cases() -> list[ActionTestCase]:
+    """
+    Fetches a canonical small structure from RCSB and builds the 4 GENERATE
+    test cases (same backbone, 4 different parameter settings) shared across
+    all MPNN variants.
+    """
+    logger.info("Downloading PDB structure from RCSB...")
+    # 1CRN: Crambin, a small (46-residue) single-chain protein — a fast, cheap
+    # canonical backbone for inverse folding (chain "A", residues 1-46).
+    pdb_1crn = _download_pdb("1CRN")
+    logger.info("PDB structure downloaded successfully")
+
+    return [
+        # Baseline design: near-greedy sampling, small batch.
+        ActionTestCase(
+            action_name=ModelActions.GENERATE,
+            input_fixture=MPNNGenerateRequest(
+                params=AllMPNNGenerateParams(
+                    seed=42,
+                    temperature=0.1,
+                    batch_size=2,
+                    number_of_batches=1,
+                ),
+                items=[MPNNGenerateRequestItem(pdb=pdb_1crn)],
+            ),
+            input_filename_template=INPUT1,
+            expected_output_fixture="{variant.modal_app_name}-generate-input1-expected_output.json",
+        ),
+        # Higher-temperature sampling for more diverse designs.
+        ActionTestCase(
+            action_name=ModelActions.GENERATE,
+            input_fixture=MPNNGenerateRequest(
+                params=AllMPNNGenerateParams(
+                    seed=7,
+                    temperature=0.3,
+                    batch_size=4,
+                    number_of_batches=1,
+                ),
+                items=[MPNNGenerateRequestItem(pdb=pdb_1crn)],
+            ),
+            input_filename_template=INPUT2,
+            expected_output_fixture="{variant.modal_app_name}-generate-input2-expected_output.json",
+        ),
+        # Constrained design: fix the first 3 residues of chain A, redesign the rest.
+        ActionTestCase(
+            action_name=ModelActions.GENERATE,
+            input_fixture=MPNNGenerateRequest(
+                params=AllMPNNGenerateParams(
+                    seed=123,
+                    temperature=0.1,
+                    batch_size=2,
+                    number_of_batches=1,
+                    fixed_residues=["A1", "A2", "A3"],
+                    chains_to_design=["A"],
+                ),
+                items=[MPNNGenerateRequestItem(pdb=pdb_1crn)],
+            ),
+            input_filename_template=INPUT3,
+            expected_output_fixture="{variant.modal_app_name}-generate-input3-expected_output.json",
+        ),
+        # Side-chain packing enabled - exercises the all-atom packed-output path.
+        ActionTestCase(
+            action_name=ModelActions.GENERATE,
+            input_fixture=MPNNGenerateRequest(
+                params=AllMPNNGenerateParams(
+                    seed=99,
+                    temperature=0.1,
+                    batch_size=1,
+                    number_of_batches=1,
+                    pack_side_chains=True,
+                    number_of_packs_per_design=1,
+                    sc_num_samples=4,
+                    sc_num_denoising_steps=2,
+                ),
+                items=[MPNNGenerateRequestItem(pdb=pdb_1crn)],
+            ),
+            input_filename_template=INPUT4,
+            expected_output_fixture="{variant.modal_app_name}-generate-input4-expected_output.json",
+        ),
+    ]
 
 
 def generate(hyper_only: bool = False):
@@ -57,6 +145,8 @@ def generate(hyper_only: bool = False):
     Args:
         hyper_only: If True, only generate fixtures for hyper-mpnn variant
     """
+    fixture_generation_suite.variant_test_mappings[0].test_cases = _build_test_cases()
+
     if hyper_only:
         # Create a custom generator that only processes hyper variant
         from models.commons.testing.runner import _variant_matches_mapping_filter
