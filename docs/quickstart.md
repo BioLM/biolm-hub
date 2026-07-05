@@ -27,25 +27,22 @@ bh setup
   authenticated, `bh setup` points you at `modal token new`.
 - **Cloudflare R2** is optional. Public model weights are pulled from a read-only bucket by default.
   If your Modal workspace doesn't have the `cloudflare-r2` / `hf-api-token` secrets provisioned, a
-  deploy can't mount them, so prefix deploys with `BIOLM_SKIP_MODAL_SECRETS=1` (see Step 3) and the
-  build reads those public weights anonymously. Configure R2 only if you want to cache weights or
-  responses into your own bucket.
+  deploy can't mount them — `bh deploy` detects this and reads the public weights anonymously (no flag
+  needed). Configure R2 only if you want to cache weights or responses into your own bucket.
 
 ## 3. Deploy a model
 
 ```bash
-bh deploy esm2 --variant MODEL_SIZE=8m
+bh deploy esm2
 
-# No cloudflare-r2 / hf-api-token secrets in your Modal workspace? Read the
-# public weights anonymously instead:
-BIOLM_SKIP_MODAL_SECRETS=1 bh deploy esm2 --variant MODEL_SIZE=8m
+# bh deploy auto-detects a workspace with no cloudflare-r2 / hf-api-token secrets and
+# reads the public weights anonymously. Set BIOLM_SKIP_MODAL_SECRETS=1 to force it.
 ```
 
-This deploys the smallest [ESM-2](models/esm2.md) variant (`esm2-8m`, CPU-only) to *your* Modal
-workspace. `--variant MODEL_SIZE=8m` picks that size explicitly; a bare `bh deploy esm2` (no
-`--variant`) deploys **all five** ESM-2 sizes, including a 3B-parameter model on an L40S GPU. The
-first deploy pulls the weights from the public bucket (or the original source) and caches them;
-subsequent deploys are fast.
+This deploys ESM-2's **default variant** — the smallest size (`esm2-8m`, CPU-only) — to *your* Modal
+workspace. Pass `--all-variants` to deploy all five ESM-2 sizes (including a 3B-parameter model on an
+L40S GPU), or `--variant MODEL_SIZE=650m` to pick a specific one. The first deploy pulls the weights
+from the public bucket (or the original source) and caches them; subsequent deploys are fast.
 
 Browse the [model catalog](models/index.md) for everything you can deploy, and each model's page for
 its actions and request/response schema.

@@ -16,7 +16,7 @@ cd biolm-hub
 make install                               # venv + the `bh` CLI (all extras)
 
 bh setup                                   # checks your Modal config
-BIOLM_SKIP_MODAL_SECRETS=1 bh deploy esm2  # deploy to your Modal workspace
+bh deploy esm2                             # deploy to your Modal workspace
 
 bh serve                                   # local catalog UI + HTTP API → http://127.0.0.1:8000
 # then, in another terminal, call it:
