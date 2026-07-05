@@ -39,10 +39,10 @@ source_repos:
   notes: Protein dynamics and structure analysis library (MIT)
 - type: github
   url: https://github.com/openmm/pdbfixer
-  commit: v1.8.1
+  commit: v1.12
   notes: >
     PDBFixer (MIT) — used for hydrogen addition (primary method). Installed at runtime
-    from git tag v1.8.1.
+    from PyPI, pdbfixer==1.12.0 (paired with openmm==8.2.0, its hard runtime dependency).
 - type: github
   url: https://github.com/openbabel/openbabel
   notes: >

@@ -45,9 +45,8 @@ docs = [
 
 dev = [
     "black>=24.10.0,<25.0.0",
-    # mypy floor >=1.14: 1.5.1 hard-crashes analyzing numpy 2.x stubs. The repo
-    # still carries strict-mypy debt (tracked in FUTURE_WORK); the CI mypy step is
-    # non-blocking until that is paid down.
+    # mypy floor >=1.14: 1.5.1 hard-crashes analyzing numpy 2.x stubs. mypy --strict
+    # is a blocking CI gate (0 errors across the repo).
     "mypy>=1.14",
     "pytest>=7.4.4,<8.0.0",
     "pytest-cov>=4.1.0,<5.0.0",
@@ -93,6 +92,8 @@ extend-exclude = '''
   | dist
   | __pycache__
   | external
+  | \.planning
+  | scratchpad
 )/
 '''
 
