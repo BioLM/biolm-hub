@@ -4,14 +4,11 @@ from pathlib import Path
 from typing import Optional
 
 import modal
-from modal.exception import NotFoundError
 
 from models.commons.core.logging import get_logger
 from models.commons.util.config import (
     cloudflare_r2_secret,
-    cloudflare_r2_secret_name,
     huggingface_api_token_secret,
-    huggingface_api_token_secret_name,
 )
 
 logger = get_logger(__name__)
@@ -38,63 +35,37 @@ Primary APIs:
   optional `variant_config` and `sub_path`.
 """
 
-# Escape hatch: force a fully credential-less build even on a workspace that DOES have
-# the secrets. When truthy, skip the Modal existence probe entirely and mount no
-# secrets, so the build reads public weights anonymously over r2.dev. Useful for
-# exercising the credential-less happy path (and Milestone-B verification) from a
-# maintainer workspace. Same truthy vocabulary as BIOLM_CACHE_ENABLED.
+# Credential-less deploys. A user whose Modal workspace has no `cloudflare-r2` /
+# `hf-api-token` secret cannot mount them: Modal 1.3.5's `Secret.from_name` has no
+# `required=False`, and a missing named secret aborts the deploy before it starts. Set
+# BIOLM_SKIP_MODAL_SECRETS=1 to mount NO download secrets — the deploy then starts and
+# the build/runtime reads public weights anonymously over r2.dev (no self-population;
+# that needs credentials). Maintainer deploys leave it unset and self-populate as before.
+#
+# We deliberately do NOT probe secret existence here: hydrating a secret requires Modal
+# auth + a network round-trip, and this runs at import of every model's app.py (the
+# download layer is built at module scope). Importing app.py must stay credential-free
+# and network-free so unit-test collection, docs generation, and schema checks work with
+# no Modal token. `Secret.from_name` is lazy, so mounting the references is import-safe;
+# Modal resolves them at deploy/build time. Same truthy vocabulary as BIOLM_CACHE_ENABLED.
 _SKIP_SECRETS_TRUTHY = {"1", "true", "yes"}
 
 
 def _skip_modal_secrets() -> bool:
     """True if BIOLM_SKIP_MODAL_SECRETS opts out of mounting download secrets."""
-    return (
-        os.getenv("BIOLM_SKIP_MODAL_SECRETS", "").strip().lower()
-        in _SKIP_SECRETS_TRUTHY
-    )
-
-
-def _secret_exists(secret_name: str) -> bool:
-    """Return True if a named Modal secret is provisioned in the target workspace.
-
-    Modal 1.3.5's ``Secret.from_name`` has no ``required=False`` (verified against the
-    installed version — its only relevant kwarg is ``required_keys``), and Modal
-    resolves *every* mounted secret by name at deploy/build time, so a missing named
-    secret aborts the entire deploy before it starts. That would make the
-    credential-less happy path impossible: a user whose Modal workspace has no
-    ``cloudflare-r2`` / ``hf-api-token`` secret could not even begin a deploy.
-
-    So we probe existence ourselves with a throwaway reference. The deploy runs in the
-    same process and ambient ``MODAL_ENVIRONMENT`` as this graph construction (``bh
-    deploy`` shells out to ``app.py`` inheriting ``os.environ``), so the probe resolves
-    against the exact environment the real mount would use. A ``NotFoundError`` means
-    the secret is genuinely absent -> return False so the caller omits it. Any other
-    error (network/auth) propagates: the deploy needs Modal reachable regardless, and
-    we must not silently drop a maintainer's secret over a transient blip.
-    """
-    try:
-        modal.Secret.from_name(secret_name).hydrate()
-        return True
-    except NotFoundError:
-        return False
+    value = os.getenv("BIOLM_SKIP_MODAL_SECRETS", "").strip().lower()
+    return value in _SKIP_SECRETS_TRUTHY
 
 
 def _available_download_secrets() -> list[modal.Secret]:
-    """Return only the download secrets that exist in the workspace (see _secret_exists).
+    """Download secrets to mount — resolution deferred to deploy time (no import-time I/O).
 
-    Behavior by workspace, mirroring the credential-gated read path in
-    ``storage.acquisition``/``storage.r2_utils`` (``r2_credentials_present()``):
-
-    - Both present (maintainer / CI): both mounted -> the build reads and *self-populates*
-      the public R2 bucket with credentials. Unchanged from prior behavior.
-    - Neither present (credential-less user): none mounted -> the deploy still STARTS, and
-      inside the build container ``r2_credentials_present()`` is False, so weight
-      acquisition takes the anonymous public-HTTP path (r2.dev). Self-population is
-      skipped; reads work.
-    - Exactly one present: only that one is mounted.
-
-    We mount the shared module-level secret objects (not the throwaway probe references)
-    so Modal re-resolves them fresh against the deploy's environment during the build.
+    - Default (maintainer / CI with the secrets provisioned): mount `cloudflare-r2` +
+      `hf-api-token` as lazy `Secret.from_name` references; the build self-populates the
+      public R2 bucket with credentials. Unchanged from prior behavior.
+    - BIOLM_SKIP_MODAL_SECRETS truthy (credential-less user): mount nothing, so a deploy
+      starts even with no secrets provisioned and the build/runtime reads public weights
+      anonymously over r2.dev (`r2_credentials_present()` is False in-container).
     """
     if _skip_modal_secrets():
         logger.info(
@@ -102,27 +73,7 @@ def _available_download_secrets() -> list[modal.Secret]:
             "will read public weights anonymously over HTTP (no self-population)."
         )
         return []
-
-    candidates = [
-        (cloudflare_r2_secret, cloudflare_r2_secret_name),
-        (huggingface_api_token_secret, huggingface_api_token_secret_name),
-    ]
-    available: list[modal.Secret] = []
-    mounted_names: list[str] = []
-    for secret, name in candidates:
-        if _secret_exists(name):
-            available.append(secret)
-            mounted_names.append(name)
-
-    if mounted_names:
-        logger.info("Download layer: mounting Modal secrets %s", mounted_names)
-    else:
-        logger.info(
-            "Download layer: no download secrets found in this Modal workspace — "
-            "proceeding credential-less. Public weights are read anonymously over "
-            "HTTP; self-population is skipped (needs credentials)."
-        )
-    return available
+    return [cloudflare_r2_secret, huggingface_api_token_secret]
 
 
 def setup_download_layer(
@@ -199,7 +150,7 @@ def setup_download_layer(
     )
 
     # Step 6: Execute download function.
-    # Mount ONLY the secrets that actually exist in the target Modal workspace so a
+    # Mount the download secrets unless BIOLM_SKIP_MODAL_SECRETS opts out, so a
     # credential-less deploy can still START (see _available_download_secrets).
     image = image.run_function(
         _run_download_with_params,
