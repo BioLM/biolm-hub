@@ -1,6 +1,24 @@
 # REMAINING WORK — master open-items ledger
 
 > ## ▶▶ FABLE SESSION LIVE STATUS — 2026-07-05 (session `final-oss-release-sprint-1`; trust THIS first)
+>
+> ## ✅✅ SESSION COMPLETE — v1 TECHNICAL BAR MET (independent final audit = GO). HEAD=`c8dc8eb`, CI green.
+> A fresh-context final auditor independently verified ALL 8 of the §4 "done" bars against live
+> Modal/R2/CI/code and returned **GO**: (1) 36 SHIP + dummy deploy + cold-invoke, credential-less path
+> proven live on weight (esm2-8m) + weightless (biotite) with NO crash-loop; (2) integration passes
+> creds-less incl. changed models (thermompnn_d 6/6), goldens reviewed; (3) make check + docs + mypy=0 +
+> CI (incl. gitleaks over full history) green; (4) R2 = ONLY model-weights + test-data (zero cruft/
+> dropped-weights/PDFs); (5) de-internalization clean (the last miss — internal Redis/"platform layer"
+> caching prose in 7 docs — fixed in `c8dc8eb`); (6) docs render + skills current+proven + quickstart
+> runnable; (7) residual = closed ledger; (8) W-launch staged, repo still PRIVATE, history intact.
+> **REMAINING = HUMAN-ONLY (see `W_LAUNCH_STAGING.md` §A + `MAINTAINER_LAUNCH_CHECKLIST.md`):** D2 GitHub
+> `modal-dev` env+secrets+label (optional — only for gated-CI/prod deploys); confirm `support+security@`/
+> `support+conduct@biolm.ai` inboxes; optional Exscientia (igbert/igt5) + prot_bert_bfd (temberture)
+> license confirms (documented, low-risk); prody OpenBabel GPL-2.0 already accepted. Then the 2
+> irreversibles: **nuke git history → flip public** (gated on marketing; maintainer-only, on explicit
+> command — NEVER run autonomously). esmc MIT VERIFIED against the live upstream LICENSE.md (CZ Biohub
+> 2026 — real relicense, not fabricated).
+>
 > Fresh Fable took over from the FABLE_HANDOFF. Independently re-audited everything (7 fresh-context
 > agents vs live Modal/R2/code/git/internal-repo/testing-harness/skills) before touching anything.
 >
