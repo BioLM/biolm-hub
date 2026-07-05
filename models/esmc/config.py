@@ -50,7 +50,7 @@ ESMC_VARIANT_RESOURCE_SPECS = {
 MODEL_FAMILY = ModelFamily(
     base_model_slug=ESMCParams.base_model_slug,
     display_name=ESMCParams.display_name,
-    # The @biolm_model_class container class in app.py (used for gateway routing).
+    # The @biolm_model_class container class in app.py drives gateway routing.
     modal_class_name="ESMCModel",
     tags=ModelTags(
         input_modality=[InputModality.SEQUENCE],

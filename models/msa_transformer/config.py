@@ -29,7 +29,7 @@ MSATransformerResourceSpec = ModalResourceSpec(
 MODEL_FAMILY = ModelFamily(
     base_model_slug=MSATransformerParams.base_model_slug,
     display_name=MSATransformerParams.display_name,
-    # The @biolm_model_class container class in app.py.
+    # The @biolm_model_class container class in app.py drives gateway routing.
     modal_class_name="MSATransformerModel",
     tags=ModelTags(
         input_modality=[InputModality.MSA],

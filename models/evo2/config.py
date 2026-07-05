@@ -106,7 +106,7 @@ def get_build_gpu(variant: str) -> ModalGPU:
 MODEL_FAMILY = ModelFamily(
     base_model_slug=Evo2Params.base_model_slug,
     display_name=Evo2Params.display_name,
-    # The @biolm_model_class container class in app.py (gateway routing, W8).
+    # The @biolm_model_class container class in app.py drives gateway routing.
     modal_class_name="Evo2Model",
     tags=ModelTags(
         input_modality=[InputModality.SEQUENCE],

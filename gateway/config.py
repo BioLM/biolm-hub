@@ -28,7 +28,7 @@ def get_custom_domain() -> str | None:
 def catalog_enabled() -> bool:
     """Serve the interactive catalog UI on a *deployed* gateway.
 
-    Off by default (the deployed gateway is API-only — W8). Set
+    Off by default (the deployed gateway is API-only). Set
     ``BIOLM_GATEWAY_CATALOG`` to a truthy value (``1``/``true``/``yes``) to also
     mount ``/catalog`` on the deployment, turning it into a hosted web app.
     (``bh serve`` always mounts the catalog locally regardless of this flag.)

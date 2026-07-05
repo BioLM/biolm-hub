@@ -52,7 +52,7 @@ IgT5_VARIANT_RESOURCE_SPECS = {
 MODEL_FAMILY = ModelFamily(
     base_model_slug=IgT5Params.base_model_slug,
     display_name=IgT5Params.display_name,
-    # The @biolm_model_class container class in app.py (gateway routing, W8).
+    # The @biolm_model_class container class in app.py drives gateway routing.
     modal_class_name="IgT5Model",
     tags=ModelTags(
         input_modality=[InputModality.SEQUENCE],

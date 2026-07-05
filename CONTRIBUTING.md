@@ -114,7 +114,23 @@ Tests are the coherence mechanism. There are four tiers (full detail in the test
   (e.g. `from models.commons.testing.shared_assets import STANDARD_PROTEIN`). Larger shared inputs
   live in public R2 under the canonical convention `test-data/shared/<category>/<name>.<ext>` — a
   fixture path beginning with `shared/` resolves there instead of your per-model directory.
-- Target ≥85% coverage on testable code.
+- Cover the testable code paths you add. Coverage is a local diagnostic, not an enforced gate —
+  `make test-unit` and CI run with `--no-cov` for speed; run `uv run pytest` (no `--no-cov`) to see a
+  report with missing lines.
+
+### Verify your model
+
+Before opening a PR for a new or changed model, confirm it lands in house style and actually runs:
+
+- **`make check`** must be green — this is the every-PR safe gate (style, mypy, the schema-doc check,
+  CI-script tests, and unit tests). It runs Modal-free, so anyone can run it locally.
+- **`make docs`** must build (`mkdocs build --strict`) — your model's page is generated from its
+  config + knowledge graph, so schema or KB mistakes surface here.
+- **Generate goldens and run the model's test file** against a Modal deployment:
+  `python -m pytest models/<name>/test.py`. The golden output is the oracle — regenerate goldens only
+  when an output change is *intended*, and say so in the PR. Integration and deployment tests
+  (which need a Modal env + R2) run in the maintainer-gated `deploy.yml` workflow once a maintainer
+  applies the `deploy-approved` label.
 
 ## Pull requests
 
