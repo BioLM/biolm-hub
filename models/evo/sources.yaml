@@ -15,7 +15,6 @@ tasks:
 - property_prediction
 primary_papers:
 - title: Sequence modeling and design from molecular to genome scale with Evo
-  arxiv: 10.1101/2024.02.27.582234
   doi: 10.1126/science.ado9336
   venue: Science, 2024
   year: 2024

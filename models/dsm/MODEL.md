@@ -19,6 +19,7 @@ The key innovation is the masked diffusion training objective, which unifies the
 DSM models are extended from pre-trained ESM2 checkpoints (Hallee et al., 2025). DSM-150M inherits the ESM2-150M architecture (30 layers, 640 hidden dim, 20 attention heads). DSM-650M inherits the ESM2-650M architecture (33 layers, 1280 hidden dim, 20 attention heads). Both were trained on OMGprot50, a dataset of over 207 million protein sequences clustered at 50% sequence identity from the Open MetaGenomic dataset (OMG). DSM-150M was trained for 100,000 steps with batch size 32 and max sequence length 512. DSM-650M was trained for 100,000 steps with batch size 128 and max sequence length 2048. DSMppi (the PPI variant) was fine-tuned from DSM-650M on protein-protein interaction pairs from the STRING database.
 
 All variants share:
+
 | Property | Value |
 |----------|-------|
 | Max sequence length | 2048 tokens |

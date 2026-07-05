@@ -17,7 +17,6 @@ tasks:
 - property_prediction
 primary_papers:
 - title: Evolutionary-scale prediction of atomic-level protein structure with a language model
-  arxiv: 10.1101/2022.07.20.500902
   doi: 10.1126/science.ade2574
   venue: Science, 2023
   year: 2023
@@ -30,7 +29,6 @@ primary_papers:
   md_r2: knowledge-base/models/esm2/primary/papers-md/lin2023.md
   figures_of_note: []
 - title: Language models of protein sequences at the scale of evolution enable accurate structure prediction
-  arxiv: 10.1101/2022.07.20.500902v1
   doi: 10.1101/2022.07.20.500902
   venue: bioRxiv preprint, 2022
   year: 2022
