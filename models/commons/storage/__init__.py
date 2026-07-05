@@ -10,8 +10,6 @@ Prefer these over importing the lower-level ``acquisition`` engine directly.
 
 from models.commons.storage.acquisition import CustomSourceConfig
 from models.commons.storage.download_helpers import (
-    build_model_type_filter,
-    build_variant_filter,
     download_with_fallback,
     extract_model_variant,
     r2_then_archive,
@@ -31,10 +29,8 @@ __all__ = [
     "r2_then_library",
     "r2_then_archive",
     "download_with_fallback",
-    # Escape hatch + filter/variant helpers
+    # Escape hatch + variant helper
     "CustomSourceConfig",
-    "build_variant_filter",
-    "build_model_type_filter",
     "extract_model_variant",
     # Path utilities
     "get_model_dir_util",

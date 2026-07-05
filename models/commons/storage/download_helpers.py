@@ -1,5 +1,4 @@
 from collections.abc import Callable
-from enum import Enum
 from pathlib import Path
 from typing import Any, Optional, cast
 
@@ -31,9 +30,9 @@ Role in Flow:
 Layer 1 (Top) → Uses acquisition.py (strategies) → downloads.py (low-level ops)
 
 Common patterns:
-- standard_r2_download(...): R2-only (legacy/compat)
+- r2_then_hf / r2_then_library / r2_then_urls / r2_then_archive: try the R2 cache
+  first, then fall back to the original source and cache the result back to R2.
 - download_with_fallback(primary, fallback): try R2, then source (HF/library/URLs)
-- acquire_library_managed_model(...): DEPRECATED — prefer r2_then_library
 - extract_model_variant(...): fetch variant axes from variant_config
 
 Notes:
@@ -42,171 +41,6 @@ Notes:
 """
 
 logger = get_logger(__name__)
-
-
-def standard_r2_download(
-    base_model_slug: Optional[str] = None,
-    weights_version: Optional[str] = None,
-    model_variant: Optional[str] = None,
-    sub_path: Optional[str] = None,
-    target_dir: Optional[Path] = None,
-    force_download: bool = False,
-    filter_func: Optional[Callable[[str], bool]] = None,
-    required_files: Optional[list[str]] = None,
-) -> AcquisitionResult:
-    """
-    Simple wrapper for R2-only downloads with standard configuration.
-
-    R2-only; cannot self-populate. Prefer a fallback wrapper
-    (``r2_then_hf`` / ``r2_then_urls`` / ``r2_then_library`` / ``r2_then_archive``)
-    so a missing R2 cache fetches from the original source. Use this only for a
-    model with no fetchable upstream source (e.g. the self-trained ``esmstabp``).
-
-    Args:
-        base_model_slug: Model family identifier
-        weights_version: Parameter version
-        model_variant: Model size/variant
-        sub_path: Subdirectory path
-        target_dir: Custom target directory (computed if None)
-        force_download: Force re-download even if files exist
-        filter_func: Optional function to filter which files to download
-        required_files: Optional list of files to validate after download
-
-    Returns:
-        AcquisitionResult with download status and metadata
-
-    Examples:
-        >>> # Pass explicit kwargs (recommended)
-        >>> result = standard_r2_download(
-        ...     base_model_slug="esm2",
-        ...     weights_version="v1",
-        ...     model_variant="8b",
-        ...     required_files=["model.pt", "config.json"],
-        ...     filter_func=lambda k: k.endswith(".pt"),
-        ... )
-    """
-    # Validate required parameters
-    if not base_model_slug:
-        raise ValueError("base_model_slug is required for standard_r2_download")
-    if not weights_version:
-        raise ValueError("weights_version is required for standard_r2_download")
-
-    # Create R2 configuration
-    r2_config = R2OnlyConfig(
-        base_model_slug=base_model_slug,
-        weights_version=weights_version,
-        model_variant=model_variant,
-        sub_path=sub_path,
-        filter_func=filter_func,
-    )
-
-    # Create cache configuration
-    cache_config = CacheConfig(
-        enable_r2_cache=True,
-        force_download=force_download,
-    )
-
-    # Create validation configuration
-    validation_config = ValidationConfig(
-        required_files=required_files,
-    )
-
-    # Determine target directory (use default path resolution if not specified)
-    if target_dir is None:
-        from models.commons.storage.downloads import get_model_dir_util
-
-        target_dir = get_model_dir_util(
-            base_model_slug=base_model_slug,
-            weights_version=weights_version,
-            model_variant=model_variant,
-            sub_path=sub_path,
-        )
-
-    # Create acquisition configuration
-    config = AcquisitionConfig(
-        strategy=AcquisitionStrategy.R2_ONLY,
-        target_dir=target_dir,
-        cache_config=cache_config,
-        validation_config=validation_config,
-        r2_config=r2_config,
-    )
-
-    # Execute acquisition
-    return acquire_model_weights(config)
-
-
-def acquire_library_managed_model(
-    library_name: str,
-    target_dir: Path,
-    init_fn: Optional[Callable[[Path], Any]] = None,
-    env_vars: Optional[dict[str, str]] = None,
-    cache_to_r2: bool = True,
-    required_files: Optional[list[str]] = None,
-) -> AcquisitionResult:
-    """
-    Library-managed acquisition with optional R2 caching.
-
-    .. deprecated::
-        Prefer :func:`r2_then_library`, which adds the marker-gated R2-primary
-        read in front of the library download. This wrapper is retained only
-        until the remaining callers migrate, after which it is removed.
-
-    This function lets libraries manage their own downloads while providing
-    R2 caching.
-
-    Args:
-        library_name: Name of the library managing the download
-        target_dir: Directory where the model should be downloaded
-        init_fn: Function that triggers the library's download (returns model path)
-        env_vars: Optional dictionary of environment variables to set
-        cache_to_r2: Whether to cache downloaded model to R2
-        required_files: Optional list of files to validate after download
-
-    Returns:
-        AcquisitionResult with download status
-
-    Examples:
-        >>> def init_esm3(target_dir):
-        ...     from models.commons.storage.downloads import setup_hf_cache_env
-        ...     setup_hf_cache_env(target_dir)
-        ...     from esm.models.esm3 import ESM3
-        ...     ESM3.from_pretrained("esm3-sm-open-v1", device="cpu")
-        ...     return target_dir
-
-        >>> result = acquire_library_managed_model(
-        ...     library_name="esm3",
-        ...     target_dir=Path("/models/esm3"),
-        ...     init_fn=init_esm3,
-        ... )
-    """
-    # Create library configuration
-    library_config = LibrarySourceConfig(
-        library_name=library_name,
-        env_vars=env_vars,
-    )
-
-    # Create cache configuration
-    cache_config = CacheConfig(
-        enable_r2_cache=cache_to_r2,
-    )
-
-    # Create validation configuration
-    validation_config = ValidationConfig(
-        required_files=required_files,
-    )
-
-    # Create acquisition configuration
-    config = AcquisitionConfig(
-        strategy=AcquisitionStrategy.LIBRARY_MANAGED,
-        target_dir=target_dir,
-        cache_config=cache_config,
-        validation_config=validation_config,
-        library_config=library_config,
-        custom_function=init_fn,
-    )
-
-    # Execute acquisition
-    return acquire_model_weights(config)
 
 
 def download_with_fallback(
@@ -253,61 +87,6 @@ def download_with_fallback(
         )
 
     return fallback_result
-
-
-def build_model_type_filter(
-    checkpoint_mapping: dict[str, str],
-    model_type: str,
-    allowed_values: Optional[type[Enum]] = None,
-    include_files: Optional[list[str]] = None,
-) -> Callable[[str], bool]:
-    """
-    Build filter functions based on model type from variant_config.
-
-    Args:
-        checkpoint_mapping: Dict mapping model types to checkpoint filenames
-        model_type: The model type (e.g., from variant_config["MODEL_TYPE"])
-        allowed_values: Enum class for validation (optional)
-        include_files: Additional files to always include
-
-    Returns:
-        Filter function for use with standard_r2_download
-
-    Example:
-        # For ImmuneFold:
-        from models.immunefold.config import model_id_mapping, ImmuneFoldModelTypes
-
-        model_type = extract_model_variant(variant_config, "MODEL_TYPE")
-        filter_func = build_model_type_filter(
-            checkpoint_mapping=model_id_mapping,
-            model_type=model_type,
-            allowed_values=ImmuneFoldModelTypes,
-            include_files=[".pt"]
-        )
-        return standard_r2_download(filter_func=filter_func)
-    """
-    # Validate against allowed values if provided
-    if allowed_values and hasattr(allowed_values, "__members__"):
-        valid_values = [e.value for e in allowed_values]
-        if model_type not in valid_values:
-            raise ValueError(
-                f"Invalid model type '{model_type}'. " f"Must be one of: {valid_values}"
-            )
-
-    checkpoints_to_include = []
-
-    if model_type and model_type in checkpoint_mapping:
-        checkpoints_to_include.append(checkpoint_mapping[model_type])
-
-    if include_files:
-        checkpoints_to_include.extend(include_files)
-
-    def filter_func(full_key: str) -> bool:
-        return any(
-            full_key.endswith(checkpoint) for checkpoint in checkpoints_to_include
-        )
-
-    return filter_func
 
 
 def extract_model_variant(variant_config: Optional[dict[str, Any]], key: str) -> str:
@@ -692,26 +471,3 @@ def r2_then_archive(
     )
 
     return download_with_fallback(primary, fallback)
-
-
-def build_variant_filter(
-    model_variant: str,
-    *,
-    include_files: Optional[list[str]] = None,
-) -> Callable[[str], bool]:
-    """Build a filter function that selects files matching a variant name.
-
-    The returned callable accepts an R2 key and returns ``True`` when the key
-    contains ``model_variant`` or matches any entry in ``include_files``.
-
-    This standardises the one-off closures that many models hand-roll for
-    variant-based filtering.
-    """
-    extras = include_files or []
-
-    def _filter(full_key: str) -> bool:
-        if model_variant in full_key:
-            return True
-        return any(f in full_key for f in extras)
-
-    return _filter

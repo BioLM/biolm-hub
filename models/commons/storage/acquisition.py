@@ -10,9 +10,6 @@ from urllib.parse import urlparse
 import requests
 
 from models.commons.core.logging import get_logger
-from models.commons.storage.downloads import (
-    download_model_from_r2,
-)
 from models.commons.storage.r2_utils import R2Utils
 from models.commons.util.config import r2_bucket_name
 
@@ -475,58 +472,17 @@ def _acquire_direct_urls(config: AcquisitionConfig) -> AcquisitionResult:
         )
 
 
-def _acquire_r2_only_via_http(
-    r2_config: "R2OnlyConfig",
-    target_dir: Path,
-    r2_prefix: str,
-    public_url: str,
-    start_time: float,
-) -> AcquisitionResult:
-    """Credential-less R2_ONLY restore over anonymous public HTTPS (r2.dev).
-
-    Mirrors the marker-gate miss/hit semantics of the signed S3 read, returning a
-    success result on a complete manifest-driven restore and a miss result
-    otherwise so the caller's source fallback runs.
-    """
-    from models.commons.storage.r2_http import restore_weights_via_http
-
-    base_metadata = {
-        "strategy": "r2_only",
-        "model_slug": r2_config.base_model_slug,
-        "weights_version": r2_config.weights_version,
-        "read_via": "public_http",
-    }
-    if restore_weights_via_http(target_dir, r2_prefix, public_url):
-        return AcquisitionResult(
-            success=True,
-            target_dir=target_dir,
-            actual_model_path=target_dir,
-            cache_hit=False,  # R2 is the primary source, not a cache hit
-            acquisition_time_seconds=time.time() - start_time,
-            metadata={
-                **base_metadata,
-                "model_variant": r2_config.model_variant,
-                "sub_path": r2_config.sub_path,
-            },
-        )
-    return AcquisitionResult(
-        success=False,
-        target_dir=target_dir,
-        error_message=(
-            "Public R2 read: no completion marker/manifest at the expected prefix "
-            "(anonymous HTTP cache miss)"
-        ),
-        acquisition_time_seconds=time.time() - start_time,
-        metadata={**base_metadata, "cache_miss_reason": "no_public_marker_or_manifest"},
-    )
-
-
 def _acquire_r2_only(config: AcquisitionConfig) -> AcquisitionResult:
     """
-    Acquire model weights directly from R2 storage.
+    Acquire model weights directly from R2 storage (the R2-primary read).
 
-    This strategy downloads files directly from R2 using the standardized
-    directory structure and optional filtering.
+    Restores the marker-gated cache via ``R2Utils.restore_from_r2_atomic`` — the
+    same primitive every other strategy uses for its R2 cache hit — so there is a
+    single restore path. That primitive marker-gates the read, transparently uses
+    the credential-less public-HTTP path when no S3 creds are present, and (for
+    signed reads) honors the optional per-key ``filter_func`` for variant-subset
+    restores. On any miss it returns ``success=False`` so the caller's source
+    fallback runs.
 
     Args:
         config: Complete acquisition configuration with r2_config
@@ -557,98 +513,56 @@ def _acquire_r2_only(config: AcquisitionConfig) -> AcquisitionResult:
     if r2_config.filter_func:
         logger.info("   Using custom filter function")
 
-    try:
-        # Marker gate (B1/B2): an R2 prefix without a valid completion marker is
-        # an incomplete/interrupted cache. Treat it as a MISS so the caller's
-        # source fallback runs, instead of silently restoring a partial weight
-        # set as a false "success". This unifies the R2-primary read semantics
-        # with R2Utils.restore_from_r2_atomic, which already requires the marker.
-        from models.commons.storage.r2 import get_r2_client, r2_credentials_present
-        from models.commons.util.config import r2_public_url
+    base_metadata: dict[str, Any] = {
+        "strategy": "r2_only",
+        "model_slug": r2_config.base_model_slug,
+        "weights_version": r2_config.weights_version,
+        "model_variant": r2_config.model_variant,
+        "sub_path": r2_config.sub_path,
+    }
 
+    try:
         r2_prefix = R2Utils.get_r2_prefix_from_target_dir(target_dir)
 
-        # Credential-less public read: with no S3 creds present, restore the cached
-        # weights anonymously over HTTPS from the bucket's public URL (r2.dev has no
-        # LIST, so it drives off the manifest). Writes still require credentials.
-        if not r2_credentials_present() and r2_public_url:
-            return _acquire_r2_only_via_http(
-                r2_config, target_dir, r2_prefix, r2_public_url, start_time
-            )
+        # Manifest validation is disabled: a filtered R2_ONLY read pulls only a
+        # variant subset, so the manifest (which lists the full, unfiltered
+        # prefix) would report the un-fetched files as missing. This also matches
+        # the prior R2_ONLY behavior, which never validated the manifest.
+        restored = R2Utils.restore_from_r2_atomic(
+            target_dir=target_dir,
+            r2_prefix=r2_prefix,
+            bucket_name=r2_bucket_name,
+            validate_manifest=False,
+            timeout_hours=config.cache_config.cache_timeout_hours,
+            filter_func=r2_config.filter_func,
+        )
 
-        if not R2Utils.check_completion_marker(
-            get_r2_client(),
-            r2_prefix,
-            r2_bucket_name,
-            config.cache_config.cache_timeout_hours,
-        ):
+        if not restored:
             logger.info(
-                "No valid R2 completion marker at %s — treating as cache miss",
+                "R2 restore reported a miss at %s — treating as cache miss",
                 r2_prefix,
             )
             return AcquisitionResult(
                 success=False,
                 target_dir=target_dir,
                 error_message=(
-                    f"R2 cache incomplete: no completion marker at '{r2_prefix}' "
-                    "(interrupted or absent upload)"
+                    f"R2 cache miss at '{r2_prefix}': no valid completion marker, "
+                    "no matching files, or no public manifest"
                 ),
                 acquisition_time_seconds=time.time() - start_time,
-                metadata={
-                    "strategy": "r2_only",
-                    "model_slug": r2_config.base_model_slug,
-                    "weights_version": r2_config.weights_version,
-                    "cache_miss_reason": "no_completion_marker",
-                },
+                metadata={**base_metadata, "cache_miss_reason": "r2_restore_miss"},
             )
 
-        # Use the existing download_model_from_r2 function
-        sync_result = download_model_from_r2(
-            model_dir=target_dir,
-            filter_func=r2_config.filter_func,
-            force_download=config.cache_config.force_download,
-        )
-
-        # Distinguish "no files exist in R2" (genuine failure) from
-        # "all files already present locally" (idempotent success).
-        if sync_result.total == 0:
-            return AcquisitionResult(
-                success=False,
-                target_dir=target_dir,
-                error_message="No files found in R2 at the expected prefix",
-                acquisition_time_seconds=time.time() - start_time,
-                metadata={
-                    "strategy": "r2_only",
-                    "model_slug": r2_config.base_model_slug,
-                    "weights_version": r2_config.weights_version,
-                    "model_variant": r2_config.model_variant,
-                    "sub_path": r2_config.sub_path,
-                },
-            )
-
-        files_downloaded = sync_result.downloaded
-        if sync_result.skipped > 0:
-            logger.info(
-                "R2 sync complete: %s downloaded, %s already up-to-date",
-                files_downloaded,
-                sync_result.skipped,
-            )
-        else:
-            logger.info("R2 download complete: %s files", files_downloaded)
-
+        logger.info("R2 restore complete for %s", r2_prefix)
         return AcquisitionResult(
             success=True,
             target_dir=target_dir,
             actual_model_path=target_dir,
-            files_downloaded=files_downloaded,
             cache_hit=False,  # R2 is the primary source, not a cache hit
             acquisition_time_seconds=time.time() - start_time,
             metadata={
-                "strategy": "r2_only",
-                "model_slug": r2_config.base_model_slug,
-                "weights_version": r2_config.weights_version,
-                "model_variant": r2_config.model_variant,
-                "sub_path": r2_config.sub_path,
+                **base_metadata,
+                "r2_prefix": r2_prefix,
                 "filter_applied": r2_config.filter_func is not None,
             },
         )
@@ -661,11 +575,7 @@ def _acquire_r2_only(config: AcquisitionConfig) -> AcquisitionResult:
             target_dir=target_dir,
             error_message=error_msg,
             acquisition_time_seconds=time.time() - start_time,
-            metadata={
-                "strategy": "r2_only",
-                "model_slug": r2_config.base_model_slug,
-                "weights_version": r2_config.weights_version,
-            },
+            metadata=base_metadata,
         )
 
 

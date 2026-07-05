@@ -56,9 +56,9 @@ class ModelFamily(BaseModel):
     action_schemas: list[ActionSchemaMap]
 
     # Name of the @biolm_model_class-decorated container class in this model's
-    # app.py (e.g. "ESM2Model"). Set per-model in W5; consumed by the gateway's
-    # config-driven routing (W8) in place of AST class discovery. Optional here so
-    # existing configs import cleanly until values are populated.
+    # app.py (e.g. "ESM2Model"). Consumed by the gateway's config-driven routing
+    # to resolve a family's container class without AST discovery. Optional so
+    # configs import cleanly until the value is populated.
     modal_class_name: str | None = None
 
     # Model tags for categorization and discovery

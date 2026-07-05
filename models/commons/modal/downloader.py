@@ -163,6 +163,44 @@ def setup_download_layer(
     return image
 
 
+def _download_layer_source_files(model_folder_name: str) -> list[str]:
+    """Repo-relative source files the download layer mounts into the container.
+
+    Single source of truth shared by ``_add_minimal_commons`` (which copies these
+    into the image) and ``_compute_download_source_hash`` (which hashes them to
+    bust Modal's run_function cache). Keeping ONE list guarantees the cache-busting
+    hash covers exactly the files that are mounted: a new import added to the mount
+    can never be silently left out of the hash (which would leave a stale weights
+    layer), and a hashed file can never be missing from the mount (which would be
+    an ImportError at build time). The model's ``download.py`` is mounted and
+    hashed separately (see ``setup_download_layer`` / ``_compute_download_source_hash``).
+    """
+    return [
+        # Package structure
+        "models/__init__.py",
+        "models/commons/__init__.py",
+        # Storage modules
+        "models/commons/storage/__init__.py",
+        "models/commons/storage/downloads.py",
+        "models/commons/storage/r2.py",
+        "models/commons/storage/acquisition.py",
+        "models/commons/storage/download_helpers.py",
+        "models/commons/storage/r2_utils.py",
+        # Configuration utilities
+        "models/commons/util/__init__.py",
+        "models/commons/util/config.py",
+        "models/commons/util/environment.py",
+        # Model-related modules
+        "models/commons/model/__init__.py",
+        "models/commons/model/pydantic.py",
+        "models/commons/model/schema.py",
+        # Model-specific files that may be imported during download
+        f"models/{model_folder_name}/__init__.py",
+        f"models/{model_folder_name}/schema.py",
+        f"models/{model_folder_name}/config.py",
+    ]
+
+
 def _compute_download_source_hash(
     repo_root: Path, model_folder_name: str, download_module: Path
 ) -> str:
@@ -171,29 +209,21 @@ def _compute_download_source_hash(
     Modal's run_function caches based on function source code and kwargs only.
     It does NOT detect changes to files imported at runtime inside the container.
     This hash ensures the download layer rebuilds when any download-related
-    source file changes (commons storage modules, model download.py, schema, etc.).
+    source file changes. It hashes EXACTLY the set mounted by
+    ``_add_minimal_commons`` (plus the model's ``download.py``) via the shared
+    ``_download_layer_source_files`` list, so the mounted closure and the hashed
+    closure can never drift apart.
     """
     import hashlib
 
     h = hashlib.sha256()
 
-    # Hash the model's download.py
+    # Hash the model's download.py (mounted separately as /root/download.py)
     if download_module.exists():
         h.update(download_module.read_bytes())
 
-    # Hash essential commons files that are mounted into the download container
-    commons_files = [
-        "models/commons/storage/downloads.py",
-        "models/commons/storage/acquisition.py",
-        "models/commons/storage/download_helpers.py",
-        "models/commons/storage/r2.py",
-        "models/commons/storage/r2_utils.py",
-        "models/commons/util/config.py",
-        f"models/{model_folder_name}/schema.py",
-        f"models/{model_folder_name}/config.py",
-    ]
-
-    for rel_path in sorted(commons_files):
+    # Hash exactly the files mounted into the download container.
+    for rel_path in sorted(_download_layer_source_files(model_folder_name)):
         full_path = repo_root / rel_path
         if full_path.exists():
             h.update(full_path.read_bytes())
@@ -215,35 +245,9 @@ def _add_minimal_commons(image: modal.Image, model_folder_name: str) -> modal.Im
     downloader_file = Path(__file__).resolve()
     repo_root = downloader_file.parent.parent.parent.parent
 
-    essential_files = [
-        # Package structure
-        "models/__init__.py",
-        "models/commons/__init__.py",
-        # Storage modules
-        "models/commons/storage/__init__.py",
-        "models/commons/storage/downloads.py",
-        "models/commons/storage/r2.py",
-        "models/commons/storage/acquisition.py",
-        "models/commons/storage/download_helpers.py",
-        "models/commons/storage/r2_utils.py",
-        # Configuration utilities
-        "models/commons/util/__init__.py",
-        "models/commons/util/config.py",
-        "models/commons/util/environment.py",
-        # Model-related modules
-        "models/commons/model/__init__.py",
-        "models/commons/model/pydantic.py",
-        "models/commons/model/schema.py",
-    ]
-
-    # Add model-specific files that may be imported during download
-    model_specific_files = [
-        f"models/{model_folder_name}/__init__.py",
-        f"models/{model_folder_name}/schema.py",
-        f"models/{model_folder_name}/config.py",
-    ]
-
-    all_files = essential_files + model_specific_files
+    # Shared with _compute_download_source_hash so the mounted set and the
+    # cache-busting hash always cover exactly the same files.
+    all_files = _download_layer_source_files(model_folder_name)
 
     # Optimized approach: collect all files and use a temporary directory
     # This results in a single layer operation instead of multiple individual file adds

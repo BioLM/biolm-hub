@@ -13,7 +13,8 @@ What this module provides:
 - get_model_dir_util(): Standardized model directory construction. This path must
   be the exact directory where the model expects weights at runtime. R2 caching
   also uses this path to derive the R2 prefix, ensuring restores land in-place.
-- download_model_from_r2(): Idempotent R2 sync with simple filtering and retry.
+  (R2 restores themselves go through R2Utils.restore_from_r2_atomic /
+  download_from_r2_prefix — the single shared restore primitive.)
 - download_from_hf(): Hugging Face snapshot download that returns the actual
   snapshot directory. Callers must use the returned path when loading models.
 - verify_model_dir(): Lightweight post-download validation (presence + files).
@@ -32,14 +33,13 @@ Notes:
 
 import os
 import zipfile
-from collections.abc import Callable
 from pathlib import Path
-from typing import Any, NamedTuple, Optional
+from typing import Any, Optional
 
 import requests
 
 from models.commons.core.logging import get_logger
-from models.commons.util.config import r2_bucket_name, r2_model_store_dir
+from models.commons.util.config import r2_model_store_dir
 
 logger = get_logger(__name__)
 
@@ -200,219 +200,6 @@ def verify_model_dir(
 
     logger.info("✅ [downloads.py] Verification successful for %s", model_dir)
     return True
-
-
-def _should_skip_file(
-    local_file_path: Path, remote_size: int, force_download: bool
-) -> bool:
-    """Check if file should be skipped based on idempotency rules."""
-    if force_download or not local_file_path.exists():
-        return False
-
-    local_size = local_file_path.stat().st_size
-    if local_size == remote_size:
-        return True
-
-    logger.warning(
-        f"  - Size mismatch for {local_file_path.name}: "
-        f"local={local_size/1024**3:.2f}GB, remote={remote_size/1024**3:.2f}GB"
-    )
-    return False
-
-
-def _filter_r2_objects(
-    r2_objects: list[dict[str, Any]], filter_func: Optional[Callable[[str], bool]]
-) -> list[dict[str, Any]]:
-    """Filter R2 objects based on criteria."""
-    # Lazy import avoids a module-load cycle (r2_utils imports downloads).
-    from models.commons.storage.r2_utils import R2Utils
-
-    cache_dotfiles = (R2Utils.COMPLETION_MARKER, R2Utils.MANIFEST_FILE)
-
-    files_to_process = []
-    for obj in r2_objects:
-        full_key = obj["Key"]
-
-        # Skip directories
-        if full_key.endswith("/"):
-            continue
-
-        # Never materialize the atomic cache-control dotfiles
-        # (.r2_cache_complete / .r2_manifest.json) into the model directory.
-        if full_key.rsplit("/", 1)[-1] in cache_dotfiles:
-            continue
-
-        # Apply filter if provided
-        if filter_func and not filter_func(full_key):
-            continue
-
-        files_to_process.append(obj)
-
-    return files_to_process
-
-
-def _download_single_file(
-    r2_client: Any,
-    bucket_name: str,
-    full_key: str,
-    local_file_path: Path,
-    remote_size: int,
-    idx: int,
-    total: int,
-) -> None:
-    """Download a single file from R2 with optimized configuration for large files."""
-    local_file_path.parent.mkdir(parents=True, exist_ok=True)
-
-    file_gb = remote_size / (1024**3)
-    status = "📝 Updating" if local_file_path.exists() else "📥 Downloading"
-    logger.info(f"  [{idx}/{total}] {status} {local_file_path.name} ({file_gb:.2f} GB)")
-
-    # Use optimized download based on file size
-    download_file_with_size_optimization(
-        r2_client, bucket_name, full_key, str(local_file_path), remote_size
-    )
-    if (
-        file_gb > 0.5 and remote_size > 100 * 1024 * 1024
-    ):  # Only log for large files > 500MB
-        logger.debug(
-            f"    ✅ Used optimized transfer config for large file ({file_gb:.2f} GB)"
-        )
-
-
-class R2SyncResult(NamedTuple):
-    """Result of an R2 sync operation.
-
-    Attributes:
-        downloaded: Number of files newly downloaded.
-        skipped: Number of files skipped because they already exist locally
-            with the correct size (idempotent hits).
-        total: Total number of files considered after filtering.
-    """
-
-    downloaded: int
-    skipped: int
-    total: int
-
-
-def download_model_from_r2(
-    model_dir: Path,
-    filter_func: Optional[Callable[[str], bool]] = None,
-    force_download: bool = False,
-) -> R2SyncResult:
-    """
-    Idempotent R2 download with pagination support for any number of files.
-    Optimized for large files (up to 8GB) with size-based idempotency.
-
-    Args:
-        model_dir: Local directory to download files into
-        filter_func: Optional function that takes R2 key and returns True to download
-        force_download: If True, re-download even if file exists with same size
-
-    Returns:
-        R2SyncResult with downloaded, skipped, and total file counts.
-        When all files are already present (idempotent re-run), downloaded=0
-        but skipped>0 and total>0 -- this is a success, not a failure.
-
-    Raises:
-        Exception: If R2 download fails
-
-    Examples:
-        >>> # Download all files
-        >>> result = download_model_from_r2(Path("/models/esm2"))
-        >>> result.downloaded
-        15
-
-        >>> # Download only checkpoint files
-        >>> result = download_model_from_r2(
-        ...     Path("/models/mpnn"),
-        ...     filter_func=lambda key: key.endswith(".ckpt")
-        ... )
-        >>> result.downloaded
-        3
-    """
-    from models.commons.storage.r2 import get_r2_client
-
-    logger.info("▶️ [downloads.py] Starting R2 sync for directory: %s", model_dir)
-    model_dir.mkdir(parents=True, exist_ok=True)
-
-    r2_client = get_r2_client()
-    r2_dir_prefix = str(model_dir).lstrip("/")
-
-    # Ensure prefix ends with / for directory listing
-    if not r2_dir_prefix.endswith("/"):
-        r2_dir_prefix += "/"
-
-    try:
-        # Use paginator for robustness - handles any number of files
-        paginator = r2_client.get_paginator("list_objects_v2")
-        pages = paginator.paginate(Bucket=r2_bucket_name, Prefix=r2_dir_prefix)
-
-        # Collect all objects across pages
-        r2_objects = []
-        for page in pages:
-            r2_objects.extend(page.get("Contents", []))
-
-        if not r2_objects:
-            logger.warning(
-                "⚠️ [downloads.py] No files found in R2 at prefix: '%s'", r2_dir_prefix
-            )
-            return R2SyncResult(downloaded=0, skipped=0, total=0)
-
-        logger.info("🔍 [downloads.py] Found %s objects in R2", len(r2_objects))
-
-        # Pre-filter to get accurate counts
-        files_to_process = _filter_r2_objects(r2_objects, filter_func)
-
-        if not files_to_process:
-            logger.info("✅ [downloads.py] No files to process after filtering")
-            return R2SyncResult(downloaded=0, skipped=0, total=0)
-
-        logger.info(
-            "📋 [downloads.py] Processing %s files after filtering",
-            len(files_to_process),
-        )
-
-        download_count = 0
-        skip_count = 0
-
-        # Process files with accurate progress counter
-        for idx, obj in enumerate(files_to_process, 1):
-            full_key = obj["Key"]
-            remote_size = obj["Size"]
-            local_file_path = Path("/") / full_key
-
-            # Check if should skip
-            if _should_skip_file(local_file_path, remote_size, force_download):
-                skip_count += 1
-                continue
-
-            # Download the file
-            _download_single_file(
-                r2_client,
-                r2_bucket_name,
-                full_key,
-                local_file_path,
-                remote_size,
-                idx,
-                len(files_to_process),
-            )
-            download_count += 1
-
-        # Summary
-        logger.info("✅ [downloads.py] R2 sync complete:")
-        logger.info("   • Downloaded: %s files", download_count)
-        logger.info("   • Skipped (up-to-date): %s files", skip_count)
-        logger.info("   • Total processed: %s files", len(files_to_process))
-
-        return R2SyncResult(
-            downloaded=download_count,
-            skipped=skip_count,
-            total=len(files_to_process),
-        )
-
-    except Exception as e:
-        logger.error("❌ [downloads.py] R2 sync failed: %s", e, exc_info=True)
-        raise
 
 
 def download_from_hf(

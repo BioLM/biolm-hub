@@ -90,6 +90,7 @@ class R2Utils:
         r2_prefix: str,
         bucket_name: str = r2_bucket_name,
         skip_patterns: Optional[list[str]] = None,
+        filter_func: Optional[Callable[[str], bool]] = None,
     ) -> int:
         """
         Download all files from R2 under a specific prefix using pagination.
@@ -100,6 +101,9 @@ class R2Utils:
             r2_prefix: R2 prefix to download from (without trailing slash)
             bucket_name: R2 bucket name
             skip_patterns: List of file patterns to skip (e.g., [".r2_cache_complete"])
+            filter_func: Optional predicate on the full R2 key; when provided, only
+                keys for which it returns True are downloaded. Used by the R2_ONLY
+                strategy to restore a variant-specific subset of a shared prefix.
 
         Returns:
             Number of files downloaded
@@ -131,8 +135,16 @@ class R2Utils:
                 for obj in page["Contents"]:
                     key = obj["Key"]
 
+                    # Skip directory-marker keys (never materialized as files).
+                    if key.endswith("/"):
+                        continue
+
                     # Skip patterns (completion markers, manifests, etc.)
                     if any(key.endswith(pattern) for pattern in skip_patterns):
+                        continue
+
+                    # Apply the caller's key filter (variant-subset restores).
+                    if filter_func and not filter_func(key):
                         continue
 
                     # Extract relative path from the key
@@ -274,50 +286,6 @@ class R2Utils:
             return False
 
     @staticmethod
-    def create_manifest(
-        source_dir: Path, include_checksums: bool = True
-    ) -> dict[str, dict[str, Any]]:
-        """
-        Create manifest with file metadata and optional checksums.
-
-        Args:
-            source_dir: Directory to create manifest for
-            include_checksums: Whether to calculate SHA256 checksums
-
-        Returns:
-            Dictionary containing file manifest
-
-        Examples:
-            >>> manifest = R2Utils.create_manifest(Path("/models/esm2"))
-            >>> print(f"Manifest contains {len(manifest)} files")
-        """
-        manifest: dict[str, dict[str, Any]] = {}
-
-        if not source_dir.exists():
-            return manifest
-
-        try:
-            for file_path in source_dir.rglob("*"):
-                if file_path.is_file():
-                    relative_path = file_path.relative_to(source_dir)
-
-                    file_info: dict[str, Any] = {
-                        "size": file_path.stat().st_size,
-                        "mtime": file_path.stat().st_mtime,
-                    }
-
-                    # Add checksum if requested
-                    if include_checksums:
-                        file_info["sha256"] = R2Utils.calculate_file_checksum(file_path)
-
-                    manifest[str(relative_path)] = file_info
-
-        except Exception as e:
-            logger.warning("⚠️ Error creating manifest: %s", e)
-
-        return manifest
-
-    @staticmethod
     def validate_manifest(
         target_dir: Path,
         manifest: dict[str, dict[str, Any]],
@@ -335,7 +303,7 @@ class R2Utils:
             True if all files validate successfully
 
         Examples:
-            >>> manifest = R2Utils.create_manifest(source_dir)
+            >>> # `manifest` is the .r2_manifest.json written by upload_to_r2_atomic
             >>> valid = R2Utils.validate_manifest(target_dir, manifest)
             >>> if not valid:
             ...     print("Validation failed!")
@@ -578,6 +546,7 @@ class R2Utils:
         bucket_name: str = r2_bucket_name,
         validate_manifest: bool = True,
         timeout_hours: Optional[int] = None,
+        filter_func: Optional[Callable[[str], bool]] = None,
     ) -> bool:
         """
         Atomically restore directory from R2 with validation.
@@ -588,6 +557,12 @@ class R2Utils:
             bucket_name: R2 bucket name
             validate_manifest: Whether to validate using manifest checksums
             timeout_hours: Optional cache timeout in hours
+            filter_func: Optional predicate on the full R2 key restricting the
+                signed download to a subset (R2_ONLY variant-filtered restores).
+                Not applied on the credential-less public-HTTP path, which — as
+                before — restores the full manifest. When a filter is supplied,
+                pass ``validate_manifest=False`` since the manifest lists the
+                complete (unfiltered) prefix.
 
         Returns:
             True if restore succeeded
@@ -626,7 +601,7 @@ class R2Utils:
             # Download files from R2
             target_dir.mkdir(parents=True, exist_ok=True)
             files_downloaded = R2Utils.download_from_r2_prefix(
-                r2_client, target_dir, r2_prefix, bucket_name
+                r2_client, target_dir, r2_prefix, bucket_name, filter_func=filter_func
             )
 
             if files_downloaded == 0:
@@ -695,31 +670,3 @@ class R2Utils:
             return target_str[idx:].lstrip("/")
         # Fallback: relative path from root (already correct for store-rooted dirs).
         return target_str.lstrip("/")
-
-    @staticmethod
-    def check_r2_cache_exists(
-        r2_prefix: str, bucket_name: str = r2_bucket_name
-    ) -> bool:
-        """
-        Quick check if R2 cache exists by looking for completion marker.
-
-        Args:
-            r2_prefix: R2 prefix to check
-            bucket_name: R2 bucket name
-
-        Returns:
-            True if cache exists (completion marker found)
-
-        Examples:
-            >>> if R2Utils.check_r2_cache_exists("biolm-hub/model-weights/models/esm2/v1"):
-            ...     print("Cache exists")
-        """
-        try:
-            r2_client = get_r2_client()
-            completion_marker = f"{r2_prefix}/{R2Utils.COMPLETION_MARKER}"
-            r2_client.head_object(Bucket=bucket_name, Key=completion_marker)
-            return True
-        except r2_client.exceptions.NoSuchKey:
-            return False
-        except Exception:
-            return False
