@@ -37,6 +37,10 @@ The README is the public-facing API reference. It must be:
 - Step-by-step usage tutorials (the API is self-documenting via schemas)
 - Information duplicated from `config.py` or `schema.py`
 
+> **Ship a `LICENSE` file.** Every model dir includes `models/<name>/LICENSE` containing the upstream
+> license text copied **verbatim** from the source repo. Its license must agree with `sources.yaml`
+> and the README's License section — the `model-knowledge-base` validation cross-checks all three.
+
 ---
 
 ## 4.2 Knowledge Graph — Delegate to `model-knowledge-base`
@@ -87,6 +91,7 @@ PR body should include:
 - [ ] Limitations are clear and honest
 - [ ] Performance metrics verified against the paper
 - [ ] `sources.yaml` has license and primary papers filled in
+- [ ] `models/<name>/LICENSE` present with the upstream license text; agrees with `sources.yaml`/README
 - [ ] `make check` passes
 - [ ] PR description explains what was added and what was tested
 

@@ -63,6 +63,12 @@ Read: `validation/GUIDE.md`
 
 **Gate:** `make check` green; `make docs` green; unit tests pass; coverage ≥85%.
 
+> **Docs build ordering:** the per-model page is generated from `config.py` **and** the
+> knowledge-graph files authored in Phase 4 (`README.md`/`MODEL.md`/`BIOLOGY.md`, cross-links,
+> tables). The Phase 3 `make docs` run only confirms nothing is hard-broken (config/schema); the
+> *meaningful* strict build is the one you re-run at the **end of Phase 4**, once the KG content the
+> page renders actually exists.
+
 ---
 
 ### Phase 4: Documentation
@@ -144,7 +150,7 @@ from models.commons.core.error import UserError  # caller's mistake — surfaced
 3. **Running tests before generating fixtures** — always `python models/MODEL/fixture.py` first
 4. **Unpinned dependencies** — every package must use `==X.Y.Z`
 5. **Unpinned HuggingFace revisions** — use 40-char commit hash, never `"main"`
-6. **Missing seeds** — set `torch`, `numpy`, `random`, `cuda` seeds for determinism
+6. **Missing seeds** — set `torch`, `numpy`, `random`, `cuda` seeds for determinism (**stochastic/torch models only** — deterministic CPU/algorithmic tools like `dna_chisel`/`biotite` need none)
 7. **Modifying `models/commons/`** — breaks all other models; raise as a separate change
 8. **Wrong action verb** — use the closed set; folding = `fold`, not `predict`
 

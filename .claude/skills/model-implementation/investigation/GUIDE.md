@@ -76,7 +76,9 @@ Work through these before writing a line of code:
 
 Map each action to its input/output schema fields (using the standard field names from `CONTRIBUTING.md`).
 
-> **Get user approval on actions and schemas before proceeding.**
+> **Get user approval on actions and schemas before proceeding** — or, if you are running
+> autonomously with no interactive user, record the decision (which verbs, which schema fields, and
+> why) in the PR description or `sources.yaml` notes so a reviewer can check it.
 
 **Resources:** For each variant, estimate GPU, memory, CPU, and timeout. See `resources/quick_reference.md` for the GPU tier table.
 
@@ -144,6 +146,6 @@ Before moving to Phase 2, confirm:
 
 - [ ] License confirmed permissive and recorded in `sources.yaml`
 - [ ] Reference model(s) identified; key files read
-- [ ] Variants, actions, and schemas approved by user
+- [ ] Variants, actions, and schemas approved by user (or, running autonomously, recorded in the PR / `sources.yaml`)
 - [ ] Resource requirements estimated
 - [ ] `sources.yaml` skeleton committed (or ready to commit with Phase 2)

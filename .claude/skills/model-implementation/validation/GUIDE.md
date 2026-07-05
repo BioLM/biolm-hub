@@ -43,16 +43,24 @@ make docs   # mkdocs build --strict — must be clean before you push
 
 ## 3.2 Generate Fixtures — Before Running Integration Tests
 
-If `test.py` uses golden output files (not just custom validators), generate them first:
+If `test.py` uses golden output files (not just custom validators), generate them first. **Writing
+goldens requires R2 write credentials** — fixture *reads* work credential-less over the public bucket
+URL, but *writes* go through the signed S3 API. Point the tooling at a bucket you control and export
+credentials first:
 
 ```bash
+export BIOLM_R2_BUCKET=<your-bucket>       # defaults to the read-only public bucket otherwise
+export AWS_ACCESS_KEY_ID=<key>
+export AWS_SECRET_ACCESS_KEY=<secret>
+export R2_ENDPOINT=<your-r2-s3-endpoint>
 python models/<name>/fixture.py
 ```
 
-This runs the model against predefined inputs and uploads both the inputs and the outputs to R2
-(under `test-data/models/<slug>/`) as reference ("golden") values. Without this step, integration
-tests fail with "file not found" errors. If you haven't written `fixture.py` yet, see
-**Phase 2 → `fixture.py`** in `implementation/GUIDE.md` and copy the template at
+This runs the model against predefined inputs and writes both the inputs and the outputs to R2
+(under `test-data/models/<slug>/`) as reference ("golden") values. The public `biolm-public` goldens
+are a maintainer-populated artifact; a contributor generates their own into their own bucket. Without
+this step, integration tests fail with "file not found" errors. If you haven't written `fixture.py`
+yet, see **Phase 2 → `fixture.py`** in `implementation/GUIDE.md` and copy the template at
 `models/dummy/fixture.py`.
 
 **The golden output is the oracle.** Only regenerate when an output change is intentional, and say so in the PR.
@@ -121,7 +129,7 @@ The full deploy + integration + deployment test matrix runs in CI under the `dep
 - [ ] `make check` passes (style + mypy + schema-doc check + CI-script tests + unit tests)
 - [ ] `make docs` passes (mkdocs --strict — the generated model page builds)
 - [ ] All dependencies pinned to exact versions
-- [ ] Seeds set (torch, numpy, random, CUDA) — deterministic outputs
+- [ ] Seeds set (torch, numpy, random, CUDA) — deterministic outputs (**stochastic/torch models only**; deterministic CPU/algorithmic tools need none)
 - [ ] `UserError` used for bad-input paths
 - [ ] Fixtures generated before integration tests (if using golden outputs)
 - [ ] Coverage ≥85%
@@ -149,6 +157,14 @@ Reduce batch size, or upgrade the resource spec in `config.py`.
 
 **Image build fails locally**
 Check `app.py` image build — wrong dependency version or missing system package.
+
+**Strict mypy `[no-untyped-call]` from a new dependency**
+If your model adds a dependency that is *installed in the repo venv* (a real project dep — e.g.
+`biopython`), strict mypy follows it and flags every call into its untyped API as
+`[no-untyped-call]`. See `resources/common_issues.md` for the fix (annotate the object `Any`, or
+`# type: ignore[no-untyped-call]` with a reason). Deps that live **only** in the Modal image (not
+installed locally, e.g. `dnachisel`/`primer3`) don't trip this — `ignore_missing_imports` makes them
+`Any`.
 
 ## Gate
 

@@ -11,7 +11,8 @@ Write all model files in dependency order, following the patterns from `models/d
 4. `app.py` — Modal application
 5. `test.py` — test suite
 6. `fixture.py` — golden-fixture generator (only if `test.py` uses golden output files)
-7. `__init__.py` — empty package marker
+7. `LICENSE` — the upstream license text, copied verbatim from the source repo (required in every model dir; the license must match `sources.yaml` and the README)
+8. `__init__.py` — empty package marker
 
 ---
 
@@ -155,37 +156,77 @@ fallback. If R2 and containers are wiped, `download.py` alone must restore every
 canonical `r2_then_*` wrappers — they build the R2-primary + source-fallback for you. Do **not**
 hand-roll `AcquisitionConfig`.
 
+**Single-variant** (no size/type axis — mirrors `models/dnabert2/download.py`): `get_model_dir()`
+takes **no** argument, and the repo id / pinned revision live in `config.py` (module-level
+`hf_repo_id` / `hf_pin_revision`) so `app.py` and `download.py` share one source of truth.
+
 ```python
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from models.commons.core.logging import get_logger
-from models.commons.storage.download_helpers import extract_model_variant, r2_then_hf
+from models.commons.storage.download_helpers import r2_then_hf
 from models.commons.storage.downloads import get_model_dir_util
+from models.my_model.config import hf_pin_revision, hf_repo_id  # pinned in config.py
 from models.my_model.schema import MyModelParams
 
 logger = get_logger(__name__)
 
 
-def get_model_dir(model_variant: str) -> Path:
-    """Path helper — used by app.py to locate the weights."""
+def get_model_dir() -> Path:
+    """Path helper — used by app.py to locate the weights. No variant arg (single variant)."""
     return get_model_dir_util(
         base_model_slug=MyModelParams.base_model_slug,
         weights_version=MyModelParams.weights_version,
-        model_variant=model_variant,
     )
 
 
 def download_model_assets(
     base_model_slug: str,
     weights_version: str,
-    variant_config: Optional[dict] = None,
+    variant_config: Optional[dict[str, Any]] = None,
     sub_path: Optional[str] = None,
 ) -> Path:
     """Called by setup_download_layer at build time. Returns Path; raises on failure."""
-    model_size = extract_model_variant(variant_config, "MODEL_SIZE")
-
     # R2 cache first; on a miss, download from HuggingFace and cache back to R2.
+    result = r2_then_hf(
+        base_model_slug=base_model_slug,
+        weights_version=weights_version,
+        sub_path=sub_path,
+        hf_repo_id=hf_repo_id,
+        hf_revision=hf_pin_revision,  # 40-char commit hash — NEVER "main"
+        required_files=["config.json"],
+    )
+    if not result.success:
+        raise RuntimeError(f"Download failed: {result.error_message}")
+
+    # actual_model_path is the resolved HF snapshot dir (handled for you).
+    return result.actual_model_path or result.target_dir
+```
+
+**Multi-variant** (a size/type axis — mirrors `models/esm2/download.py`): thread the variant through
+`get_model_dir(model_size)`, and pull the axis out of `variant_config` with `extract_model_variant`
+inside `download_model_assets` — never read it from `os.environ`.
+
+```python
+from models.commons.storage.download_helpers import extract_model_variant, r2_then_hf
+
+
+def get_model_dir(model_size: str) -> Path:
+    return get_model_dir_util(
+        base_model_slug=MyModelParams.base_model_slug,
+        weights_version=MyModelParams.weights_version,
+        model_variant=model_size,
+    )
+
+
+def download_model_assets(
+    base_model_slug: str,
+    weights_version: str,
+    variant_config: Optional[dict[str, Any]] = None,
+    sub_path: Optional[str] = None,
+) -> Path:
+    model_size = extract_model_variant(variant_config, "MODEL_SIZE")
     result = r2_then_hf(
         base_model_slug=base_model_slug,
         weights_version=weights_version,
@@ -196,8 +237,6 @@ def download_model_assets(
     )
     if not result.success:
         raise RuntimeError(f"Download failed: {result.error_message}")
-
-    # actual_model_path is the resolved HF snapshot dir (handled for you).
     return result.actual_model_path or result.target_dir
 ```
 
@@ -240,7 +279,7 @@ from models.commons.modal.downloader import setup_download_layer  # omit if no w
 from models.commons.modal.source import setup_source_layer
 from models.commons.model.base import ModelMixinSnap  # or ModelMixin (no snapshots)
 from models.commons.model.config import biolm_model_class
-from models.commons.util.config import cloudflare_r2_secret, common_requirements
+from models.commons.util.config import common_requirements, runtime_secrets
 from models.my_model.config import MODEL_FAMILY
 from models.my_model.download import MyModelParams  # only if has download.py
 from models.my_model.schema import MyModelRequest, MyModelResponse
@@ -276,8 +315,9 @@ app = modal.App(app_name, image=image)
 # --- Model class (with memory snapshot) ---
 @app.cls(
     image=image,
-    secrets=[cloudflare_r2_secret],
+    secrets=runtime_secrets(),                     # [cloudflare_r2_secret], or [] under BIOLM_SKIP_MODAL_SECRETS
     enable_memory_snapshot=True,
+    experimental_options={"enable_gpu_snapshot": True},   # GPU/snapshot models only — omit on CPU
     **modal_resource_spec.to_modal_options(),
 )
 @biolm_model_class
@@ -344,6 +384,66 @@ from other_repo.mixins import CachingMixin              # WRONG — no billing/c
 print("loading model")                                  # WRONG — use logger
 raise ValueError("bad sequence")                        # WRONG — use UserError
 ```
+
+### CPU / no-weights variant
+
+Weightless algorithmic tools (e.g. `dna_chisel`, `biotite`, `prody`, `sadie`) have **no** download
+layer, **no** CUDA base image, **no** GPU move, and **no** torch/numpy/random seeds. Mirror
+`models/dna_chisel/app.py`:
+
+```python
+import modal
+
+from models.commons.core.decorator import modal_endpoint
+from models.commons.core.logging import get_logger
+from models.commons.modal.source import setup_source_layer
+from models.commons.model.base import ModelMixinSnap
+from models.commons.model.config import biolm_model_class
+from models.commons.util.config import common_requirements, runtime_secrets
+from models.my_model.config import MODEL_FAMILY
+from models.my_model.schema import MyModelParams, MyModelRequest, MyModelResponse
+
+logger = get_logger(__name__)
+
+# CPU image: debian_slim (NOT a CUDA registry image); pin any extra libs exactly.
+image = (
+    modal.Image.debian_slim(python_version="3.12")
+    .apt_install("procps")  # needed to compute container uptime
+    .uv_pip_install(common_requirements)
+    .uv_pip_install("my-lib==1.2.3")   # this model's exact deps
+)
+image = setup_source_layer(MODEL_FAMILY.base_model_slug)(image)
+
+app_name, modal_resource_spec = MODEL_FAMILY.get_app_config()
+app = modal.App(app_name, image=image)
+
+
+@app.cls(
+    image=image,
+    secrets=runtime_secrets(),
+    enable_memory_snapshot=True,        # NO experimental_options / enable_gpu_snapshot — CPU only
+    **modal_resource_spec.to_modal_options(),
+)
+@biolm_model_class
+class MyModelImplementation(ModelMixinSnap):
+    @modal.enter(snap=True)
+    def load_model(self) -> None:
+        """Import the library and bind helpers — captured in the snapshot. No torch/CUDA/seeds."""
+        import my_lib
+
+        self.lib = my_lib
+        logger.info("%s ready for inference.", MyModelParams.display_name)
+
+    @modal.method()
+    @modal_endpoint(app_name=app_name)
+    def encode(self, payload: MyModelRequest) -> MyModelResponse:
+        ...   # pure-CPU computation
+```
+
+- No `setup_download_layer`, no `modal.Image.from_registry(...cuda...)`, no `.to("cuda")`, and no
+  `torch.manual_seed` / `np.random.seed` / `random.seed` — a deterministic CPU algorithm needs none.
+- In `config.py`, set the resource spec's `gpu=None` (the CPU tier — see the tier table in
+  `resources/quick_reference.md`).
 
 ---
 
@@ -450,8 +550,24 @@ variant that matches a mapping, it (1) writes each programmatic `input_fixture` 
 `test-data/models/<slug>/<input_filename_template>`, (2) spins up the model's Modal app locally —
 which **self-populates weights** via `download.py`, so you don't pre-stage anything — (3) calls each
 action with the input, and (4) writes the response to `test-data/models/<slug>/<expected_output_fixture>`.
-Those written files are the goldens the integration tests then load. Generation needs Modal + R2
-write access, so it runs locally (or under the maintainer-gated deploy job), not in the unit-test CI.
+Those written files are the goldens the integration tests then load.
+
+**Golden generation needs R2 *write* credentials.** Fixture *reads* are credential-less over the
+public bucket URL, but *writes* go through the signed S3 API. The public `biolm-public` goldens are a
+maintainer-populated artifact — a contributor does **not** write to it. To generate your own, point
+the tooling at a bucket you control and export S3 credentials, then run `fixture.py`:
+
+```bash
+export BIOLM_R2_BUCKET=<your-bucket>       # defaults to the read-only public bucket otherwise
+export AWS_ACCESS_KEY_ID=<key>             # your R2/S3 access key
+export AWS_SECRET_ACCESS_KEY=<secret>
+export R2_ENDPOINT=<your-r2-s3-endpoint>   # e.g. https://<account>.r2.cloudflarestorage.com
+python models/<name>/fixture.py            # writes inputs + outputs to YOUR bucket
+```
+
+`FixtureGenerator` writes via `get_r2_client` in `models/commons/storage/r2.py`, which reads exactly
+those env vars — with no credentials the write fails. Generation also needs a Modal account (it runs
+the app), so it runs locally or under the maintainer-gated deploy job, never in the unit-test CI.
 
 **Requirements:**
 - Inputs self-contained and lazily built (inline or `shared_assets`); no module-scope R2 reads or
@@ -475,12 +591,12 @@ touch models/<name>/__init__.py
 - [ ] All imports organized (Core, Data, Modal, Model, Storage, Testing, Util — these are the only import groups)
 - [ ] All dependency versions pinned exactly (`==X.Y.Z`)
 - [ ] `ModelMixinSnap` or `ModelMixin` used (these are the only base mixins — don't import a billing/caching mixin carried over from another codebase)
-- [ ] Seeds set for all sources (torch, numpy, random, CUDA) in `snap=False` enter
+- [ ] Seeds set for all sources (torch, numpy, random, CUDA) in `snap=False` enter — **stochastic/torch models only**; deterministic CPU/algorithmic tools skip seeding entirely
 - [ ] `@modal.method()` + `@modal_endpoint()` on every action method
 - [ ] `modal_class_name` in `config.py` matches the class name in `app.py`
 - [ ] `UserError` used for bad-input paths; `ServerError` propagates for system errors
 - [ ] `get_logger(__name__)` — no `print` anywhere in runtime code
-- [ ] `download.py` returns `Path`, raises `RuntimeError`, uses `extract_model_variant`
+- [ ] `download.py` returns `Path`, raises `RuntimeError`; uses `extract_model_variant` (multi-variant only — a single-variant `get_model_dir()` takes no arg)
 - [ ] HuggingFace revision is a 40-char commit hash
 - [ ] Single-variant models do NOT use `{variant.name}` template in fixture paths
 - [ ] `make check` passes (style + mypy + schema-doc check + CI-script tests + unit tests)

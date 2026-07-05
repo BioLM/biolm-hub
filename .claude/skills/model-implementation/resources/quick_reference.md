@@ -12,7 +12,8 @@ Create files in dependency order (later files import earlier ones):
 3. `download.py` — weight acquisition (only if the model has weights)
 4. `app.py` — the Modal app + the action methods
 5. `test.py` — the `TestSuite` (integration + deployment cases); `fixture.py` if generating fixtures
-6. `__init__.py` — empty marker
+6. `LICENSE` — the upstream license text, copied verbatim from the source repo (every model dir ships one; it must match `sources.yaml`)
+7. `__init__.py` — empty marker
 
 Then the knowledge graph (`sources.yaml`, `comparison.yaml`, `README.md`, `MODEL.md`, `BIOLOGY.md`)
 via the `model-knowledge-base` skill.
@@ -43,7 +44,7 @@ from models.commons.core.logging import get_logger
 from models.commons.modal.source import setup_source_layer
 from models.commons.model.base import ModelMixinSnap   # or ModelMixin (non-snapshot)
 from models.commons.model.config import biolm_model_class
-from models.commons.util.config import cloudflare_r2_secret, common_requirements
+from models.commons.util.config import common_requirements, runtime_secrets
 
 logger = get_logger(__name__)
 ```
@@ -52,6 +53,11 @@ logger = get_logger(__name__)
   `ModelMixin` otherwise.
 - Mark the class with `@biolm_model_class` and each action with `@modal.method()` +
   `@modal_endpoint(app_name=app_name)`.
+- Mount secrets with `@app.cls(secrets=runtime_secrets(), ...)`. `runtime_secrets()` returns
+  `[cloudflare_r2_secret]` normally, or `[]` under `BIOLM_SKIP_MODAL_SECRETS` so a credential-less
+  deploy can still start — never hard-code `secrets=[cloudflare_r2_secret]`.
+- GPU / snapshot models also pass `experimental_options={"enable_gpu_snapshot": True}` on `@app.cls`
+  (see `models/dummy/app.py`); CPU / no-weights models omit it.
 - There is **no** billing or redis layer in this repo — never import a billing mixin or a redis/cache secret carried over from another codebase.
 
 ## GPU / resource tiers (Modal)
