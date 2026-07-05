@@ -17,17 +17,22 @@ This script handles both single-variant and multi-variant model deployments
 by leveraging the ModelFamily configuration defined in each model's config.py.
 
 Usage via bh CLI:
-    # Deploy a single model (all variants)
+    # Deploy a model's default variant (the first-declared; smallest for most families)
     bh deploy esm2
 
-    # Deploy with force flag
-    bh deploy esm2 --force
+    # Deploy every variant of the family
+    bh deploy esm2 --all-variants
 
-    # Deploy specific variant
+    # Deploy a specific variant
     bh deploy esm2 --variant MODEL_SIZE=150m
 
-    # Deploy multiple models
+    # Deploy multiple models (default variant each)
     bh deploy esm2 esmc esmfold --force
+
+Credentials: if the Modal workspace has no `cloudflare-r2` secret, the deploy
+auto-switches to credential-less mode (public weights read over HTTP, no
+self-population). Set BIOLM_SKIP_MODAL_SECRETS explicitly to override the
+auto-detection in either direction.
 """
 
 console = Console()
@@ -124,26 +129,42 @@ def parse_variant_spec(variant_spec: str) -> dict[str, str]:
 
 
 def _get_variants_to_deploy(
-    model_family: ModelFamily, variant_spec: Optional[str]
+    model_family: ModelFamily, variant_spec: Optional[str], all_variants: bool
 ) -> list[ResolvedVariant]:
-    """Get the list of variants to deploy based on variant_spec."""
+    """Select which variants to deploy.
+
+    A specific ``--variant`` wins; otherwise ``--all-variants`` deploys the whole
+    family and the default (no flag) deploys a single variant — the first-declared,
+    which is the smallest/base for most families. This keeps ``bh deploy <model>``
+    a fast, cheap, single-endpoint operation.
+    """
     if variant_spec:
         # Deploy specific variant
         variant_dict = parse_variant_spec(variant_spec)
         try:
             variant = model_family.find_variant(**variant_dict)
-            variants_to_deploy = [variant]
             print(f"Deploying specific variant: {variant.modal_app_name}")
+            return [variant]
         except ValueError as e:
             print(f"❌ ERROR: {e}")
             sys.exit(1)
-    else:
-        # Deploy all variants
-        variants_to_deploy = model_family.resolved_variants
-        if len(variants_to_deploy) > 1:
-            print(f"Multi-variant model with {len(variants_to_deploy)} variants")
 
-    return variants_to_deploy
+    all_resolved = model_family.resolved_variants
+
+    if all_variants:
+        if len(all_resolved) > 1:
+            print(f"Deploying all {len(all_resolved)} variants")
+        return all_resolved
+
+    # Default: a single variant so no flag is needed for the common case.
+    default_variant = all_resolved[0]
+    if len(all_resolved) > 1:
+        print(
+            f"Deploying default variant: {default_variant.modal_app_name} "
+            f"(1 of {len(all_resolved)} — use --all-variants for the whole family, "
+            f"or --variant KEY=value to pick another)"
+        )
+    return [default_variant]
 
 
 def _deploy_variants(
@@ -199,15 +220,19 @@ def _print_deployment_summary(
 
 
 def deploy_model(
-    model_name: str, force: bool = False, variant_spec: Optional[str] = None
+    model_name: str,
+    force: bool = False,
+    variant_spec: Optional[str] = None,
+    all_variants: bool = False,
 ) -> None:
     """
-    Deploy a model and all its variants, or a specific variant if specified.
+    Deploy a model: its default variant, all variants, or a specific one.
 
     Args:
         model_name: Name of the model directory (e.g., "esm2", "esmfold")
         force: Whether to force deployment without prompts
         variant_spec: Optional specific variant to deploy (e.g., "MODEL_SIZE=150m")
+        all_variants: Deploy every variant instead of just the default
     """
     # Handle special case where model_name is "." (current directory)
     if model_name == ".":
@@ -222,13 +247,50 @@ def deploy_model(
         sys.exit(1)
 
     # Get variants to deploy
-    variants_to_deploy = _get_variants_to_deploy(model_family, variant_spec)
+    variants_to_deploy = _get_variants_to_deploy(
+        model_family, variant_spec, all_variants
+    )
 
     # Deploy each variant
     failed_deployments = _deploy_variants(model_name, variants_to_deploy, force)
 
     # Print summary
     _print_deployment_summary(model_name, variants_to_deploy, failed_deployments)
+
+
+def _maybe_enable_credential_less() -> None:
+    """Auto-enable credential-less mode when the workspace lacks the R2 secret.
+
+    Probes the Modal workspace for the ``cloudflare-r2`` secret. This lives in the
+    CLI — which is authenticated — precisely because it must NOT run at ``app.py``
+    import time (importing a model must stay auth-free so CI, unit tests, and docs
+    generation work with no Modal token). If the secret is absent, set
+    ``BIOLM_SKIP_MODAL_SECRETS`` for the deploy subprocess so ``bh deploy <model>``
+    works out-of-the-box against the public bucket over HTTP — no flag required. An
+    explicit ``BIOLM_SKIP_MODAL_SECRETS`` (either value) always wins, and a probe that
+    can't reach Modal changes nothing (the deploy then surfaces its own auth error).
+    """
+    if "BIOLM_SKIP_MODAL_SECRETS" in os.environ:
+        return  # explicit override wins, in both directions
+
+    import modal
+    from modal.exception import NotFoundError
+
+    from models.commons.util.config import cloudflare_r2_secret_name
+
+    try:
+        modal.Secret.from_name(cloudflare_r2_secret_name).hydrate()
+        return  # secret present → maintainer mode (self-populate), unchanged
+    except NotFoundError:
+        os.environ["BIOLM_SKIP_MODAL_SECRETS"] = "1"
+        console.print(
+            f"[yellow]No '{cloudflare_r2_secret_name}' secret in this Modal "
+            "workspace — deploying credential-less: public weights are read "
+            "anonymously over HTTP (no self-population). Provision the secret "
+            "or run `bh setup` to self-populate your own bucket.[/yellow]"
+        )
+    except Exception:
+        return  # inconclusive probe (no auth / network) → leave behavior unchanged
 
 
 # Main deploy command function
@@ -243,6 +305,14 @@ def deploy_cmd(
             "--force",
             "-f",
             help="Force deployment without confirmation prompts",
+        ),
+    ] = False,
+    all_variants: Annotated[
+        bool,
+        typer.Option(
+            "--all-variants",
+            help="Deploy every variant of the family (default: just the "
+            "default/first variant)",
         ),
     ] = False,
     force_deploy: Annotated[
@@ -272,9 +342,14 @@ def deploy_cmd(
     """
     Deploy one or more BioLM models.
 
+    By default deploys each model's single default variant; pass --all-variants
+    for the whole family or --variant KEY=value for a specific one. If the Modal
+    workspace has no cloudflare-r2 secret, the deploy auto-switches to
+    credential-less mode (public weights over HTTP).
+
     Examples:
         bh deploy esm2
-        bh deploy esm2 --force
+        bh deploy esm2 --all-variants
         bh deploy esm2 --variant MODEL_SIZE=150m
         bh deploy esm2 --cache          # enable response caching for this deploy
         bh deploy esm2 esmc esmfold --force
@@ -282,6 +357,11 @@ def deploy_cmd(
 
     # Consolidate force flags
     force = force or force_deploy
+
+    # Auto-detect credential-less mode (no cloudflare-r2 secret) once per invocation,
+    # before spawning any deploy subprocess. Must run here (authenticated CLI), not at
+    # app.py import time.
+    _maybe_enable_credential_less()
 
     # Response caching is a deploy-time setting read inside the container via
     # BIOLM_CACHE_ENABLED. The deploy subprocess inherits os.environ, so set it
@@ -295,7 +375,12 @@ def deploy_cmd(
     # Deploy each model
     for model_name in models:
         try:
-            deploy_model(model_name=model_name, force=force, variant_spec=variant)
+            deploy_model(
+                model_name=model_name,
+                force=force,
+                variant_spec=variant,
+                all_variants=all_variants,
+            )
         except SystemExit as e:
             if e.code != 0:
                 console.print(f"[red]❌ Deployment for {model_name} failed![/red]")
