@@ -37,7 +37,7 @@ Coverage characteristics:
 2. Generate hundreds to thousands of candidate sequences
 3. Rank by perplexity (threshold: <1.75 for high confidence)
 4. Filter top 5% of candidates
-5. Validate computationally (e.g., structure prediction with AlphaFold/Boltz, active site analysis)
+5. Validate computationally (e.g., structure prediction with ESMFold/Chai-1, active site analysis)
 6. Synthesize and test experimentally
 
 ### Problem 2: Exploring Enzyme Sequence Space
@@ -81,7 +81,7 @@ For more targeted design, the authors fine-tuned ZymCTRL on lactate dehydrogenas
 
 ### Complementary Models
 
-- **ESM2 / ESMFold / Boltz**: Use for structural validation of ZymCTRL-generated sequences. Typical pipeline: ZymCTRL generates sequences, then structure prediction confirms proper folding and active site geometry.
+- **ESM2 / ESMFold / Chai-1**: Use for structural validation of ZymCTRL-generated sequences. Typical pipeline: ZymCTRL generates sequences, then structure prediction confirms proper folding and active site geometry.
 - **ESM2 embeddings**: Can be used alongside ZymCTRL embeddings for a complementary view -- ESM2 captures general protein properties while ZymCTRL embeddings are enzyme-function-aware.
 
 ### Alternative Models

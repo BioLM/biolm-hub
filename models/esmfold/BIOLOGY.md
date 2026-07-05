@@ -22,7 +22,7 @@ The model is trained on structures from the Protein Data Bank (PDB) and AlphaFol
 | Globular proteins | High | Core training and evaluation target (CAMEO, CASP14) | Best performance category |
 | Enzymes | High | Active site geometry generally well-predicted for globular enzymes | Catalytic mechanism and substrate binding not modeled |
 | Antibodies | Moderate | Can fold individual Fv domains | CDR loop conformations may be inaccurate; dedicated antibody structure predictors (e.g., ABodyBuilder2) may outperform |
-| Protein complexes | Moderate | Supports up to 4 chains via `:` separator | Interface contacts are less reliable than dedicated complex predictors (Boltz, Chai-1) |
+| Protein complexes | Moderate | Supports up to 4 chains via `:` separator | Interface contacts are less reliable than dedicated complex predictors (Chai-1) |
 | Peptides | Low | Very short sequences (< 30 residues) provide limited context for the ESM-2 backbone | Structure prediction for short peptides is inherently difficult; consider experimental NMR data |
 | DNA/RNA-binding proteins | Moderate | Protein structure itself can be predicted | Nucleic acid partners are not modeled |
 
@@ -76,10 +76,10 @@ ESMFold has been widely adopted for rapid structure prediction workflows. Select
 ESMFold is closely related to other models on the BioLM platform:
 
 - **ESM-2**: ESMFold uses the ESM-2 3B language model as its backbone. ESM-2 embeddings (`encode` action) capture the same evolutionary representations that ESMFold uses for structure prediction. Users who need embeddings rather than structures should use ESM-2 directly.
-- **ESMStabP**: Uses ESM-2 embeddings for protein thermostability prediction. Combining ESMFold structure predictions with ESMStabP stability predictions provides a more complete characterization of engineered protein variants.
+- **ThermoMPNN**: Predicts stability changes (ddG) from structure. Combining ESMFold structure predictions with ThermoMPNN stability estimates provides a more complete characterization of engineered protein variants.
 
 Typical multi-model workflows:
-1. Use ESMFold for rapid structure prediction of a candidate set, then use Boltz for high-accuracy prediction of the top candidates
+1. Use ESMFold for rapid structure prediction of a candidate set, then use Chai-1 for high-accuracy prediction of the top candidates
 2. Use ESM-2 `log_prob` to score variant effects, then use ESMFold to assess structural impact of top-ranked variants
 3. Use ESMFold to generate initial structure models, then use MPNN for sequence design on the predicted structures
 
@@ -88,12 +88,11 @@ Typical multi-model workflows:
 | Alternative | Advantage Over ESMFold | Disadvantage vs ESMFold |
 |-------------|----------------------|------------------------|
 | AlphaFold2 | Higher accuracy, especially for multi-domain proteins | Requires MSA, much slower inference |
-| Boltz | Handles ligands, nucleic acids, and diverse complexes; higher accuracy for multi-chain | Slower inference, more resource-intensive |
-| Chai-1 | Similar capability to Boltz for diverse complexes | Slower inference, more resource-intensive |
+| Chai-1 | Handles ligands, nucleic acids, and diverse complexes; higher accuracy for multi-chain | Slower inference, more resource-intensive |
 
 **When to choose ESMFold**: Use ESMFold when you need fast, single-sequence protein structure predictions for screening, prototyping, or large-scale analysis where speed matters more than maximum accuracy. It is the fastest structure prediction option on the platform.
 
-**When to choose alternatives**: Use Boltz or Chai-1 when you need predictions for protein-ligand complexes, RNA/DNA-containing complexes, or when maximum structural accuracy is required. Use AlphaFold2 when you have MSAs available and need the highest accuracy for single-chain or multi-chain protein structures.
+**When to choose alternatives**: Use Chai-1 when you need predictions for protein-ligand complexes, RNA/DNA-containing complexes, or when maximum structural accuracy is required. Use AlphaFold2 when you have MSAs available and need the highest accuracy for single-chain or multi-chain protein structures.
 
 ## Biological Background
 

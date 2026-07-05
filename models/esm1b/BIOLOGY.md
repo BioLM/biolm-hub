@@ -92,8 +92,7 @@ Many of these applications have since migrated to ESM-2, which provides improved
 
 ESM-1b embeddings can be used as input features for downstream models:
 
-- **ESMStabP**: Protein thermostability prediction (though ESMStabP uses ESM-2 embeddings specifically)
-- **Boltz / Chai-1**: Structure prediction for top-scoring variants from ESM-1b log-likelihood screening
+- **ESMFold / Chai-1**: Structure prediction for top-scoring variants from ESM-1b log-likelihood screening
 
 ### Alternative Models
 

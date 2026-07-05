@@ -38,7 +38,7 @@ Single variant -- no size options. The model slug is `antifold`.
 - Sequence-only inputs (a 3D structure in PDB format is required)
 - General protein inverse folding (use ESM-IF1 or ProteinMPNN instead)
 - Constant region (Fc) engineering -- only variable domains are supported
-- Structure prediction (use Boltz or ESMFold to generate structures first)
+- Structure prediction (use ABodyBuilder3 or ESMFold to generate structures first)
 - Non-standard amino acids
 
 **Other considerations:**

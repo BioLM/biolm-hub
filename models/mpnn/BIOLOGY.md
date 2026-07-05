@@ -135,7 +135,7 @@ ProteinGuide demonstrated guiding ProteinMPNN generation conditioned on stabilit
 ### Complementary Models
 
 - **RFdiffusion / Chroma / FrameDiff**: Backbone generation models --- use MPNN downstream to design sequences for generated backbones
-- **Boltz / AlphaFold2 / ESMFold**: Structure prediction models --- use as self-consistency validation (does the designed sequence fold back to the intended structure?)
+- **ESMFold / Chai-1 / AlphaFold2**: Structure prediction models --- use as self-consistency validation (does the designed sequence fold back to the intended structure?)
 - **ESM2**: Protein language model --- embeddings can be used to filter/rank MPNN designs by evolutionary plausibility
 
 ### Alternative Models

@@ -84,7 +84,7 @@ Chai-1's multi-modal capability enables several practical workflows:
 ### Complementary Models
 
 - **ESM2**: Protein language model whose embeddings can be used by Chai-1 (`use_esm_embeddings=True`) to improve structure prediction quality, especially for proteins without good MSA coverage.
-- **Boltz-1**: Alternative open-source structure prediction model on the BioLM platform. Can be used as a second opinion or for ensemble predictions.
+- **RF3**: Alternative open-source AF3-like structure prediction model on this platform. Can be used as a second opinion or for ensemble predictions.
 
 ### Alternative Models
 

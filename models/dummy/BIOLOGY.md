@@ -129,8 +129,8 @@
 ### Complementary Models
 
 <!-- Models on the BioLM platform that are often used together with this one:
-     - e.g., "Use ESM2 embeddings as input to ESMStabP for stability prediction"
-     - e.g., "Use Boltz for structure, then MPNN for sequence design"
+     - e.g., "Use ESM2 embeddings as features for a downstream property predictor"
+     - e.g., "Use ESMFold for structure, then MPNN for sequence design"
      - Include the typical pipeline or workflow
 -->
 

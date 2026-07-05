@@ -25,7 +25,7 @@ The tool handles:
 
 ### Problem 1: Structure Prediction Evaluation
 
-**Why this matters**: When using ML-based structure prediction tools (Boltz, Chai1, ESMFold, AlphaFold2), researchers need to evaluate how well the predicted structure matches the experimental reference. RMSD (Root Mean Square Deviation) is the standard metric for quantifying structural similarity.
+**Why this matters**: When using ML-based structure prediction tools (Chai1, ESMFold, AlphaFold2), researchers need to evaluate how well the predicted structure matches the experimental reference. RMSD (Root Mean Square Deviation) is the standard metric for quantifying structural similarity.
 
 **How Biotite addresses it**: The `predict` action computes C-alpha RMSD between two structures after optimal superimposition using the Kabsch algorithm. This allows direct comparison of:
 - Predicted vs. experimental structures
@@ -50,10 +50,10 @@ This enables chain-level analysis without manual PDB file manipulation.
 
 ### Problem 3: Multi-Model Workflow Integration
 
-**Why this matters**: Modern computational biology workflows often chain multiple tools together -- predict a structure with Boltz, extract individual chains, compare against a reference, score the sequence with ESM2. Having structure parsing and comparison available as an API endpoint enables these workflows to be fully automated.
+**Why this matters**: Modern computational biology workflows often chain multiple tools together -- predict a structure with Chai1, extract individual chains, compare against a reference, score the sequence with ESM2. Having structure parsing and comparison available as an API endpoint enables these workflows to be fully automated.
 
 **How Biotite addresses it**: By providing standardized chain extraction and RMSD computation as BioLM endpoints, Biotite integrates directly with structure prediction models on the same platform. For example:
-1. Generate structure with Boltz or Chai1
+1. Generate structure with Chai1 or ESMFold
 2. Extract chains with Biotite `generate`
 3. Compare with reference using Biotite `predict`
 4. Analyze individual chain sequences with ESM2
@@ -74,8 +74,8 @@ Using Biotite RMSD in automated pipelines that compare predicted protein structu
 
 ### Complementary Models
 
-- **Boltz**: Structure prediction model. Use Boltz to predict structures, then Biotite to extract chains and compute RMSD against references.
-- **Chai1**: Alternative structure prediction model. Same workflow as Boltz.
+- **RF3**: AF3-like structure prediction model. Use RF3 to predict structures, then Biotite to extract chains and compute RMSD against references.
+- **Chai1**: Alternative structure prediction model. Same workflow as RF3.
 - **ESMFold**: Single-sequence structure prediction. Compare ESMFold outputs to experimental structures using Biotite RMSD.
 - **ESM2**: Protein language model. Extract chain sequences with Biotite `generate`, then analyze with ESM2 `encode`.
 

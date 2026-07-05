@@ -86,8 +86,7 @@ Anticipated (not yet published) use cases:
 
 - **ESM2** (this platform): DSM uses an ESM-style backbone. ESM2 provides established embeddings for comparison. DSM offers generation capability that ESM2 lacks.
 - **SPURS** (this platform): Can score DSM-generated sequences for stability impact of specific mutations.
-- **Boltz / Chai-1** (this platform): Can predict 3D structures of DSM-generated sequences to validate foldability.
-- **Pro4S / SoluProt** (this platform): Can predict solubility of DSM-generated sequences.
+- **ESMFold / Chai-1** (this platform): Can predict 3D structures of DSM-generated sequences to validate foldability.
 
 ### Alternative Models
 

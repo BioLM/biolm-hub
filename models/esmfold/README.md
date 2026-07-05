@@ -38,8 +38,8 @@ Single variant -- no size options. ESMFold uses the ESM-2 3B backbone exclusivel
 - Quick structural validation of protein engineering candidates
 
 **CANNOT be used for:**
-- Protein-ligand complex prediction (use Boltz or Chai-1 instead)
-- Nucleic acid structure prediction (use Boltz or Chai-1 instead)
+- Protein-ligand complex prediction (use Chai-1 instead)
+- Nucleic acid structure prediction (use Chai-1 instead)
 - Sequences longer than 768 residues
 - Complexes with more than 4 chains
 - Generating protein embeddings (use ESM-2 `encode` action instead)

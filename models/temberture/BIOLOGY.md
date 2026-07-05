@@ -12,7 +12,7 @@ TemBERTure is designed for protein sequences from all domains of life. It handle
 |--------------|---------------|----------|---------|
 | Globular proteins | High | Primary training target | Best for proteins with known structural context |
 | Enzymes | High | Well-represented in training data | Industrial enzyme engineering use case |
-| Nanobodies | Moderate | Single-domain antibody fragments are proteins | Consider TEMPRO for nanobody-specific Tm prediction |
+| Nanobodies | Moderate | Single-domain antibody fragments are proteins | Not specialized for nanobody-specific Tm prediction |
 | Peptides | Low | Short sequences may lack sufficient context | Minimum meaningful length depends on the fold |
 | Membrane proteins | Unknown | May be under-represented in training | Use predictions with caution |
 
@@ -62,7 +62,6 @@ TemBERTure builds on ProtBERT-BFD (Elnaggar et al., 2022), a BERT model pre-trai
 | Alternative | Advantage over TemBERTure | Disadvantage |
 |-------------|--------------------------|--------------|
 | ThermoMPNN | Structure-aware, per-mutation ddG | Requires PDB structure input |
-| TEMPRO | Specialized for nanobody Tm | Only applicable to nanobodies |
 
 ## Biological Background
 

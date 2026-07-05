@@ -74,9 +74,9 @@ ESM-IF1 has been used in several published protein design studies since its rele
 
 ESM-IF1 works well in combination with other models on the BioLM platform:
 
-- **Structure prediction models** (Boltz, ESMFold, AbodyBuilder3): Generate the input 3D structure needed by ESM-IF1 when an experimental structure is unavailable. Pipeline: predict structure, then design sequences with ESM-IF1.
+- **Structure prediction models** (ESMFold, Chai-1, AbodyBuilder3): Generate the input 3D structure needed by ESM-IF1 when an experimental structure is unavailable. Pipeline: predict structure, then design sequences with ESM-IF1.
 - **Protein language models** (ESM2, ESMC): Score ESM-IF1-designed sequences using pseudo-log-likelihoods or embeddings for additional fitness assessment.
-- **Stability predictors** (ESMStabP): Evaluate predicted thermostability of designed sequences.
+- **Stability predictors** (ThermoMPNN): Estimate stability changes (ddG) for designed sequences.
 
 ### Alternative Models
 

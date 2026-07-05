@@ -10,7 +10,7 @@ The BioLM Biotite endpoint serves two primary functions:
 1. **Chain extraction**: Parse multi-chain PDB structures and extract individual chains with their amino acid sequences and atomic coordinates
 2. **RMSD computation**: Compute root-mean-square deviation between two protein structures after optimal Kabsch superimposition
 
-These utilities are designed to integrate with structure prediction models on the BioLM platform (Boltz, Chai1, ESMFold) for end-to-end structure prediction and evaluation workflows.
+These utilities are designed to integrate with structure prediction models on the BioLM platform (Chai1, ESMFold, RF3) for end-to-end structure prediction and evaluation workflows.
 
 ## Architecture
 
@@ -40,7 +40,7 @@ Biotite is a single-variant model with no size options.
 - Batch processing of up to 8 structure pairs per request
 
 **CANNOT be used for:**
-- Structure prediction (use Boltz, Chai1, or ESMFold instead)
+- Structure prediction (use Chai1, ESMFold, or RF3 instead)
 - All-atom RMSD (only C-alpha backbone RMSD is computed)
 - mmCIF or other structure formats (PDB format only)
 - Ligand or small molecule analysis

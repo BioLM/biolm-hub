@@ -20,7 +20,7 @@ AbodyBuilder3 is designed for **antibody** Fv (variable fragment) structures. It
 | Nanobodies (VHH) | Not applicable | Requires paired heavy/light input | Use alternative structure predictors |
 | Fab fragments | Partial | Predicts Fv portion only | Constant domains not modeled |
 | T-cell receptors (TCRs) | Low | Not trained on TCR structures | Structural similarity exists but untested |
-| General proteins | Not applicable | Antibody-specific architecture | Use ESMFold, Boltz, or AlphaFold2 |
+| General proteins | Not applicable | Antibody-specific architecture | Use ESMFold, Chai-1, or AlphaFold2 |
 
 ## Biological Problems Addressed
 

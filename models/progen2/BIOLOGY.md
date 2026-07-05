@@ -36,7 +36,7 @@ Performance characteristics by protein type:
 
 **Biological meaning**: A generated sequence with a high log-likelihood (ll_mean close to 0) is one that the model considers consistent with natural protein sequences -- it follows the "grammar" of proteins. Lower likelihoods suggest the sequence deviates from natural patterns and may be less likely to fold or function. The num_samples parameter allows generating multiple candidates for experimental screening.
 
-**Practical considerations**: Generated sequences should be validated computationally (e.g., structure prediction with Boltz or ESMFold, stability prediction with ESMStabP) before experimental testing. ProGen2 generates sequences that look statistically natural but provides no guarantee of function.
+**Practical considerations**: Generated sequences should be validated computationally (e.g., structure prediction with ESMFold or Chai-1, stability estimation with ThermoMPNN) before experimental testing. ProGen2 generates sequences that look statistically natural but provides no guarantee of function.
 
 ### Protein Fitness Prediction (Sequence Scoring)
 
@@ -84,15 +84,15 @@ ProGen2 and its predecessor ProGen have been used in several applied settings:
 
 ProGen2 is often used in multi-step computational workflows:
 
-- **ProGen2 + Boltz/ESMFold**: Generate sequences with ProGen2, then predict their 3D structures with a structure prediction model to filter for foldable designs
-- **ProGen2 + ESMStabP**: Generate sequences, then predict thermostability to select candidates with desirable thermal properties
+- **ProGen2 + ESMFold/Chai-1**: Generate sequences with ProGen2, then predict their 3D structures with a structure prediction model to filter for foldable designs
+- **ProGen2 + ThermoMPNN**: Generate sequences, then predict stability changes (ddG) to select candidates with desirable thermal properties
 - **ProGen2 + ESM-2**: Use ESM-2 embeddings to cluster or characterize ProGen2-generated sequences, or use ESM-2 log-probabilities as an orthogonal fitness score
 
 Typical workflow:
 1. Generate candidate sequences with ProGen2 (diverse sampling, multiple seeds)
 2. Score candidates with ESM-2 pseudo-log-likelihood
-3. Predict structures for top candidates with Boltz
-4. Predict stability for top candidates with ESMStabP
+3. Predict structures for top candidates with Chai-1
+4. Estimate stability changes for top candidates with ThermoMPNN
 5. Select final candidates for experimental validation
 
 ### Alternative Models
@@ -107,7 +107,7 @@ Typical workflow:
 
 **When to choose ProGen2**: Use ProGen2 when you need to generate novel protein sequences from a context seed, especially when you want controllable diversity (temperature, top-p) and likelihood-based scoring. It is the strongest autoregressive protein generation model available on the platform.
 
-**When to choose alternatives**: Consider ESM-2 for fitness prediction without generation; consider Boltz + MPNN for structure-guided sequence design; consider EvoDiff for non-autoregressive generation with potentially better diversity.
+**When to choose alternatives**: Consider ESM-2 for fitness prediction without generation; consider Chai-1 + MPNN for structure-guided sequence design; consider EvoDiff for non-autoregressive generation with potentially better diversity.
 
 ## Biological Background
 

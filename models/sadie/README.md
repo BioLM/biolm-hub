@@ -39,7 +39,7 @@ SADIE is a single-variant tool with no size options.
 - E-value-based alignment quality assessment
 
 **CANNOT be used for:**
-- Sequence embedding (use AbLang2, IgBERT, IgT5, or NanoBERT)
+- Sequence embedding (use AbLang2, IgBERT, or IgT5)
 - Sequence generation or completion (use AbLang2 or IgBERT `generate`)
 - Log-probability scoring (use AbLang2 or IgBERT `log_prob`)
 - Non-immunoglobulin/non-TCR proteins

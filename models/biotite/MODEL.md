@@ -10,7 +10,7 @@ The BioLM Biotite endpoint exposes two key structural analysis capabilities:
 1. **Chain extraction** (`generate` action): Parse PDB structures and extract individual chains with their sequences and atomic coordinates. The `generate` verb follows BioLM platform convention; this is a **utility extraction operation**, not ML-based generation.
 2. **RMSD computation** (`predict` action): Compute root-mean-square deviation between two structures after optimal superimposition. The `predict` verb follows BioLM platform convention; this is a **structural metric computation**, not ML-based property prediction.
 
-These are essential utilities for structure prediction workflows -- e.g., comparing predicted structures from Boltz or Chai1 against experimental references, or extracting individual chains from multi-chain complexes for downstream analysis.
+These are essential utilities for structure prediction workflows -- e.g., comparing predicted structures from Chai1 or ESMFold against experimental references, or extracting individual chains from multi-chain complexes for downstream analysis.
 
 ### Parameters & Layers
 
@@ -76,7 +76,7 @@ All computations are deterministic. RMSD is computed using Biotite's `struc.supe
 - Fully deterministic -- no randomness or hardware-dependent variation
 - No GPU required -- runs on CPU with minimal resources
 - Fast execution -- structure parsing and RMSD computation complete in milliseconds
-- Composable -- designed to work with structure prediction models (Boltz, Chai1) in multi-step workflows
+- Composable -- designed to work with structure prediction models (Chai1, ESMFold) in multi-step workflows
 - Standard algorithms -- uses well-validated Kabsch superimposition for RMSD
 - Batch processing -- up to 8 items per request
 

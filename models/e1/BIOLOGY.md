@@ -77,7 +77,7 @@ E1 is a recent model (2025). Anticipated use cases include:
 
 - **ESM2** (this platform): E1 provides retrieval-augmented embeddings as an alternative to ESM2's single-sequence approach. Use ESM2 when no homologs are available; use E1 when context sequences can be provided.
 - **SPURS** (this platform): Can use E1 embeddings or log-prob scores alongside structure-based ddG predictions.
-- **Boltz / Chai-1** (this platform): Structure prediction models that can validate E1-guided sequence designs.
+- **ESMFold / Chai-1** (this platform): Structure prediction models that can validate E1-guided sequence designs.
 
 ### Alternative Models
 

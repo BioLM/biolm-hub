@@ -45,7 +45,7 @@ Parameter counts confirmed from paper Table 1 (Nijkamp et al., 2023). Note: the 
 - Extending partial protein sequences (context-conditioned completion)
 
 **CANNOT be used for:**
-- Structure prediction (use Boltz or ESMFold instead)
+- Structure prediction (use ESMFold or Chai-1 instead)
 - Protein embeddings (use ESM-2 instead)
 - Non-protein molecules (DNA, RNA, small molecules)
 - Sequences longer than 512 residues

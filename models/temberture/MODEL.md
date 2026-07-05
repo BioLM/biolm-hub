@@ -46,7 +46,6 @@ Both classifier and regression variants have been verified through integration t
 |-------|------|-------|-----------|
 | **TemBERTure** | Thermophilicity + Tm | Sequence only | Dual prediction (classification + regression) |
 | ThermoMPNN | ddG prediction | Structure (PDB) | Structure-aware, per-mutation predictions |
-| TEMPRO | Nanobody Tm | Sequence only | Specialized for nanobodies |
 
 ## Strengths & Limitations
 

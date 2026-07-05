@@ -40,7 +40,7 @@ Single variant -- no size options. The model slug is `zymctrl`.
 - Non-enzyme proteins (model trained exclusively on EC-annotated sequences)
 - Substrate-level specificity within an EC class (e.g., cannot specify which sugar a kinase acts on)
 - Sequences longer than ~1000 amino acids (1024 token limit includes EC and control tokens)
-- Structure prediction (use ESMFold or Boltz for structural validation of generated sequences)
+- Structure prediction (use ESMFold or Chai-1 for structural validation of generated sequences)
 - Multi-chain enzyme complexes (generates single chains only)
 
 **Other considerations:**

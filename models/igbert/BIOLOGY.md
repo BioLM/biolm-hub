@@ -19,7 +19,7 @@ IgBERT handles different antibody regions and contexts:
 |--------------|---------------|----------|---------|
 | IgG antibodies (paired) | High | Primary training target for paired variant | Use `igbert-paired` variant |
 | IgG antibodies (single chain) | High | Primary training target for unpaired variant | Use `igbert-unpaired` variant |
-| Nanobodies (VHH) | Low--Moderate | Single-domain; use unpaired variant | Not specifically trained on nanobodies; consider NanoBERT |
+| Nanobodies (VHH) | Low--Moderate | Single-domain; use unpaired variant | Not specifically trained on nanobodies |
 | TCRs | Low | Some structural homology to immunoglobulins | Not trained on TCR data |
 | General proteins | Not applicable | Antibody-specialized model | Use ESM-2 or similar |
 
@@ -71,7 +71,6 @@ Other complementary models on the BioLM platform:
 
 - **SADIE**: Use for antibody numbering and annotation before IgBERT embedding
 - **AbLang2**: Alternative antibody LM with germline debiasing
-- **NanoBERT**: Specialized for nanobody/VHH sequences
 
 Typical multi-model workflows:
 1. Use SADIE to annotate and number sequences
@@ -89,7 +88,7 @@ Typical multi-model workflows:
 
 **When to choose IgBERT**: Use IgBERT when you need a HuggingFace-compatible antibody model with both paired and unpaired variants, or when you need both embedding and sequence generation capabilities.
 
-**When to choose alternatives**: Consider AbLang2 for germline-debiased representations; consider IgT5 for T5-architecture embeddings; consider NanoBERT for nanobody sequences.
+**When to choose alternatives**: Consider AbLang2 for germline-debiased representations; consider IgT5 for T5-architecture embeddings; use the unpaired variant for nanobody sequences.
 
 ## Biological Background
 

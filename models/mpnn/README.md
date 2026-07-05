@@ -53,7 +53,7 @@ All variants run on CPU (no GPU required) with 3 GB memory.
 **CANNOT be used for:**
 - Backbone structure generation or remodeling (use RFdiffusion or Chroma for that)
 - Sequences longer than 1024 residues
-- Predicting protein structure from sequence (use AlphaFold2, ESMFold, or Boltz)
+- Predicting protein structure from sequence (use AlphaFold2, ESMFold, or Chai-1)
 - Directly predicting or optimizing catalytic activity
 - Handling non-PDB input formats (requires valid PDB string)
 

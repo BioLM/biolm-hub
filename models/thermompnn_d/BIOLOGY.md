@@ -59,7 +59,7 @@ ThermoMPNN-D extends ThermoMPNN (Dieckhaus et al., 2023), which itself builds on
 
 - **ThermoMPNN**: For single mutations only (simpler, faster). Use when double mutations are not needed.
 - **ESM2**: Sequence-based representations that can complement structure-based stability predictions.
-- **Boltz / AlphaFold**: Structure prediction models to generate input PDB structures when experimental structures are unavailable.
+- **ESMFold / Chai-1**: Structure prediction models to generate input PDB structures when experimental structures are unavailable.
 
 ### Alternative Models
 

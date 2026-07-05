@@ -6,7 +6,7 @@
 
 ESM-2 (Evolutionary Scale Modeling 2) is a protein language model developed by Meta AI's Fundamental AI Research (FAIR) team. It is trained with a masked language modeling objective on UniRef50, learning contextual representations of amino acids from evolutionary sequence data alone  --  no structural supervision is required during pre-training.
 
-ESM-2 is the most widely-used model on the BioLM platform and serves as the backbone for several downstream models (e.g., ESMFold for structure prediction, ESMStabP for stability). Its embeddings capture rich evolutionary and biophysical information and have been shown to be competitive with or superior to alignment-based methods on many protein function prediction tasks.
+ESM-2 is the most widely-used model on the BioLM platform and serves as the backbone for downstream models (e.g., ESMFold for structure prediction). Its embeddings capture rich evolutionary and biophysical information and have been shown to be competitive with or superior to alignment-based methods on many protein function prediction tasks.
 
 The model is available in five size variants (8M to 3B parameters), allowing users to trade off between speed and representation quality depending on their use case.
 
@@ -43,7 +43,7 @@ The default variant is **esm2-650m**. This is the recommended choice for most pr
 - Feature extraction for downstream classifiers (stability, function, localization)
 
 **CANNOT be used for:**
-- 3D structure prediction (use ESMFold or Boltz instead)
+- 3D structure prediction (use ESMFold or Chai-1 instead)
 - Sequence generation or design (this is an encoder-only model)
 - Non-protein molecules (DNA, RNA, small molecules)
 - Multi-chain / protein complex modeling

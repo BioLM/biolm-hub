@@ -40,8 +40,8 @@ AbLang2 is a single-variant model with no size options.
 **CANNOT be used for:**
 - Single-chain (unpaired) antibody analysis -- both heavy and light chains are required
 - Non-antibody proteins (use ESM-2 or similar)
-- Nanobody / VHH sequences (use NanoBERT)
-- 3D structure prediction (use AntiFold, Boltz, or similar)
+- Nanobody / VHH sequences (use the unpaired IgBERT or IgT5 variant)
+- 3D structure prediction (use AntiFold, ESMFold, or similar)
 - Antibody numbering and annotation (use SADIE)
 
 **Other considerations:**
@@ -89,7 +89,7 @@ Generates sequence-level (`seqcoding`) or residue-level (`rescoding`) embeddings
 }
 ```
 
-**Schema classes**: `AbLang2EncodeRequest` -> `AbLang2SeqcodingResponse` or `AbLang2RescodingResponse`
+**Schema classes**: `AbLang2EncodeRequest` -> `AbLang2EncodeResponse`
 
 ### `predict`
 

@@ -38,7 +38,7 @@ Three actions are available: `encode` for extracting embeddings and logits, `pre
 **CANNOT be used for:**
 - Sequences longer than 2048 residues
 - Nucleic acid sequences (protein-only model)
-- Structure prediction directly (use ESMFold or Boltz)
+- Structure prediction directly (use ESMFold or Chai-1)
 - Generating new protein sequences (use generative models like ProGen2 or Evo)
 - Non-canonical amino acid handling in log_prob (requires standard 20 only)
 

@@ -124,8 +124,8 @@ time — see `models/commons/modal/source.py` for why that lockstep matters.
 - **Model loads from the wrong directory** — use `result.actual_model_path`, not
   `target_dir`; HF models return the nested snapshot directory.
 - **Library downloaded to an unexpected location** — the library ignores its cache-redir
-  env var; set the right `env_vars` on `r2_then_library` (or `cache_to_r2=False` for
-  libraries that keep an out-of-tree cache, e.g. `evo`).
+  env var; set the right `env_vars` on `r2_then_library` (or `cache_to_r2=False` to
+  skip R2 caching for libraries that keep an out-of-tree cache).
 - **Manifest checksum mismatch on restore** — the R2 copy is corrupt or partial;
   re-run a maintainer deploy to re-upload atomically.
 

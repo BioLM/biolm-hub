@@ -69,7 +69,7 @@ SADIE is used as a preprocessing step in antibody engineering pipelines:
 - **Humanization assessment**: Compare germline gene assignments and mutation patterns between species (published)
 - **CDR extraction**: Extract CDR sequences for clustering, diversity analysis, or input to CDR-focused models (published)
 - **Quality control**: Validate antibody sequences and identify truncated or mis-annotated sequences (published)
-- **Multi-model pipeline preprocessing**: Annotate sequences before passing to AbLang2, IgBERT, or NanoBERT for embedding (anticipated)
+- **Multi-model pipeline preprocessing**: Annotate sequences before passing to AbLang2, IgBERT, or IgT5 for embedding (anticipated)
 
 ## Related Models
 
@@ -79,12 +79,12 @@ SADIE serves as a preprocessing tool that feeds into other models on the BioLM p
 
 - **AbLang2**: Use SADIE to extract and number variable domains, then AbLang2 for embedding and scoring
 - **IgBERT/IgT5**: Use SADIE for annotation, then IgBERT/IgT5 for embedding
-- **NanoBERT**: Use SADIE to identify VHH domains, then NanoBERT for nanobody-specific embedding
+- **Nanobodies / VHH**: Use SADIE to identify VHH domains, then the unpaired IgBERT or IgT5 variant for embedding
 
 Typical multi-model workflows:
 1. Use SADIE `predict` to annotate and number sequences
 2. Use germline assignment and CDR extraction for quality filtering
-3. Feed annotated variable domains into embedding models (AbLang2, IgBERT, NanoBERT)
+3. Feed annotated variable domains into embedding models (AbLang2, IgBERT, IgT5)
 4. Use embedding models for downstream analysis (clustering, scoring, design)
 
 ### Alternative Tools

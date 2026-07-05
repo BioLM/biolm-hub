@@ -23,8 +23,8 @@ Naming convention (locked — also in CONTRIBUTING.md):
 # Canonical R2 name: shared/protein/standard.fasta
 STANDARD_PROTEIN = "TPSSKEMMSQALKATFSGFTKEQQRLGIPKDPRQWTETHVRDWVMWAVNEFSLKGVDFQKF"
 
-# A standard 65-residue protein, used by the thermostability models
-# (esmstabp, temberture).
+# A standard 65-residue protein, used by the thermostability / stability models
+# (temberture, zymctrl, chai1).
 # Canonical R2 name: shared/protein/stability.fasta
 STANDARD_PROTEIN_STABILITY = (
     "MKTVRQERLKSIVRILERSKEPVSGAQLAEELSVSRQVIVQDIAYLRSLGYNIVATPRGYVLAGG"

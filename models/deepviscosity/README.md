@@ -198,7 +198,7 @@ python models/deepviscosity/fixture.py
 
 ### Verification Status
 
-**Status:** Schema validation tests pass (7/7). Numerical verification against the Lai_mAb_16 published results is deferred to deployment (Milestone A/B).
+**Status:** Schema validation tests pass (7/7). Numerical verification against the Lai_mAb_16 published results happens at deployment, when the model runs on GPU.
 
 ## Resource Requirements
 

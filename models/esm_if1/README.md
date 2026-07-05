@@ -35,7 +35,7 @@ Single variant -- no size options. The model slug is `esm-if1`.
 **CANNOT be used for:**
 - Multichain protein complexes (not yet implemented)
 - Sequence-only inputs (requires 3D structure in PDB format)
-- Structure prediction (inverse direction -- use ESMFold or Boltz)
+- Structure prediction (inverse direction -- use ESMFold or Chai-1)
 - Antibody-specific design (use AntiFold for better CDR recovery)
 - Deterministic output without explicit seed (stochastic by default)
 

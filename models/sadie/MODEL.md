@@ -8,7 +8,7 @@ SADIE (Sequencing Analysis and Data Library for Immunoinformatics Exploration) i
 
 The key innovation of SADIE is its unified interface for antibody and TCR sequence annotation, combining multiple numbering schemes (IMGT, Kabat, Chothia) and region definitions (IMGT, Kabat, Chothia, AbM, Contact, SCDR) into a single analysis pipeline. SADIE processes sequences through HMM alignment to identify domains, assign numbering, and extract framework and CDR region boundaries.
 
-Unlike the language models on this platform (AbLang2, IgBERT, IgT5, NanoBERT), SADIE does not produce embeddings or learn representations from data. It applies rule-based numbering schemes and HMM-based gene assignment to annotate sequences with structured metadata.
+Unlike the language models on this platform (AbLang2, IgBERT, IgT5), SADIE does not produce embeddings or learn representations from data. It applies rule-based numbering schemes and HMM-based gene assignment to annotate sequences with structured metadata.
 
 ### Algorithm Components
 

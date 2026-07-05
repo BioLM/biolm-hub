@@ -83,7 +83,7 @@ ESMC works well in combination with other models on the BioLM platform:
 - **ESMFold**: Uses ESM2 embeddings for structure prediction. ESMC embeddings may be useful in similar structure prediction pipelines.
 - **ESM1v**: Specialized for variant effect prediction. ESMC's predict and log_prob actions provide alternative (potentially superior) variant scoring.
 - **AbLEF**: Uses AbLang embeddings for antibody developability. ESMC embeddings could serve a similar role for general proteins.
-- **Structure prediction models** (Boltz, ESMFold): ESMC embeddings can complement structural features for integrated analysis.
+- **Structure prediction models** (ESMFold, Chai-1): ESMC embeddings can complement structural features for integrated analysis.
 
 ### Alternative Models
 

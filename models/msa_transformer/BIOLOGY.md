@@ -78,7 +78,7 @@ Using MSA Transformer embeddings as input features for downstream classifiers --
 
 - **ESM-2**: Single-sequence protein embeddings. For proteins without deep MSAs, use ESM-2. For proteins with rich evolutionary data, MSA Transformer provides complementary evolutionary signal.
 - **ESMFold**: Uses ESM-2 embeddings for full 3D structure prediction. MSA Transformer contacts can serve as a quick structural check before running the more expensive ESMFold.
-- **Boltz / Chai1**: Full structure prediction from sequences and MSAs. Use these when you need atomic-level 3D structures rather than contact maps.
+- **Chai-1 / RF3**: Full structure prediction from sequences and MSAs. Use these when you need atomic-level 3D structures rather than contact maps.
 
 ### Alternative Models
 

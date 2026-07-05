@@ -85,7 +85,7 @@ While not explicitly demonstrated in the published literature, DeepViscosity pre
 
 No models currently on the BioLM platform are direct complements for a viscosity prediction workflow. Potential future integrations:
 
-- **Structure prediction** (Boltz, ESMFold): Generate 3D structures for mAbs predicted as high-viscosity, enabling physics-based analysis of self-association interfaces
+- **Structure prediction** (ABodyBuilder3, ESMFold): Generate 3D structures for mAbs predicted as high-viscosity, enabling physics-based analysis of self-association interfaces
 - **Inverse folding** (ProteinMPNN): Design sequence variants that maintain fold stability while reducing predicted viscosity
 
 ### Alternative Models

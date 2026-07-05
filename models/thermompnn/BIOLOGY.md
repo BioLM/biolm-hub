@@ -58,7 +58,7 @@ ThermoMPNN builds on ProteinMPNN (Dauparas et al., 2022), a message-passing neur
 
 - **ThermoMPNN-D**: Extended version supporting double (paired) mutations with epistatic interaction modeling. Use when evaluating combinations of two mutations.
 - **ESM2**: General protein language model for sequence-based property prediction. Can provide complementary sequence-based stability signals.
-- **Boltz / AlphaFold**: Structure prediction models. Use to generate input PDB structures when experimental structures are unavailable.
+- **ESMFold / Chai-1**: Structure prediction models. Use to generate input PDB structures when experimental structures are unavailable.
 
 ### Alternative Models
 

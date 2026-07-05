@@ -11,7 +11,7 @@ AbLang2 handles different antibody regions with varying quality:
 - **Framework regions (FWRs)**: Excellent representation quality. Framework residues are highly conserved and well-represented in training data.
 - **Complementarity-determining regions (CDRs)**: Good representation quality. CDR diversity is well-captured, though CDR-H3 (the most variable region) may have higher prediction uncertainty.
 - **Constant regions**: Not applicable -- AbLang2 is designed for variable domain sequences only.
-- **Nanobodies / VHH**: Not supported -- requires paired heavy+light chains. Use NanoBERT for single-domain antibodies.
+- **Nanobodies / VHH**: Not supported -- requires paired heavy+light chains. For single-domain antibodies, use the unpaired IgBERT or IgT5 variant.
 
 ### Cross-Applicability
 
@@ -19,7 +19,7 @@ AbLang2 handles different antibody regions with varying quality:
 |--------------|---------------|----------|---------|
 | IgG antibodies | High | Primary training molecule; paired H+L modeling | Both chains required |
 | IgM / IgA | Moderate | Variable domains share structural features with IgG | Trained primarily on IgG; isotype-specific features not modeled |
-| Nanobodies (VHH) | Not applicable | Requires paired sequences | Use NanoBERT instead |
+| Nanobodies (VHH) | Not applicable | Requires paired sequences | Use the unpaired IgBERT or IgT5 variant instead |
 | TCRs | Low | Some structural homology to antibodies | Not trained on TCR sequences; use TCR-specific models |
 | General proteins | Not applicable | Antibody-specialized model | Use ESM-2 or similar general protein LMs |
 
@@ -88,7 +88,7 @@ Typical multi-model workflows:
 
 **When to choose AbLang2**: Use AbLang2 when you need germline-debiased paired antibody representations, sequence restoration, or likelihood scoring and always have both heavy and light chain sequences available.
 
-**When to choose alternatives**: Consider IgBERT for unpaired (single-chain) analysis; consider ESM-2 when comparing antibodies to non-antibody proteins; consider NanoBERT for nanobody/VHH sequences.
+**When to choose alternatives**: Consider IgBERT for unpaired (single-chain) analysis; consider ESM-2 when comparing antibodies to non-antibody proteins; consider the unpaired IgBERT or IgT5 variant for nanobody/VHH sequences.
 
 ## Biological Background
 

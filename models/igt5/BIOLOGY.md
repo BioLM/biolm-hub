@@ -18,7 +18,7 @@ IgT5 handles different antibody regions and contexts:
 |--------------|---------------|----------|---------|
 | IgG antibodies (paired) | High | Primary training target for paired variant | Use `igt5-paired` variant |
 | IgG antibodies (single chain) | High | Primary training target for unpaired variant | Use `igt5-unpaired` variant |
-| Nanobodies (VHH) | Low--Moderate | Single-domain; could use unpaired variant | Not specifically trained on nanobodies; consider NanoBERT |
+| Nanobodies (VHH) | Low--Moderate | Single-domain; could use unpaired variant | Not specifically trained on nanobodies |
 | TCRs | Low | Some structural homology | Not trained on TCR data |
 | General proteins | Not applicable | Antibody-specialized model | Use ESM-2 or similar |
 
@@ -59,7 +59,6 @@ IgT5 is primarily an embedding model suitable for:
 
 - **SADIE**: Use for antibody numbering and annotation before IgT5 embedding
 - **AbLang2**: Alternative antibody LM with germline debiasing and additional capabilities (restore, likelihood)
-- **NanoBERT**: Specialized for nanobody/VHH sequences
 
 Typical multi-model workflows:
 1. Use SADIE to annotate sequences and extract variable domains

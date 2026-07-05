@@ -71,7 +71,7 @@ def generate() -> None:
                 ),
                 items=[
                     ZymCTRLEncodeRequestItem(
-                        # First 43 residues of STANDARD_PROTEIN_STABILITY (W12 shared asset)
+                        # First 43 residues of the shared STANDARD_PROTEIN_STABILITY test asset
                         sequence=STANDARD_PROTEIN_STABILITY[:43],
                         ec_number="3.5.5.1",  # Optional EC context
                     ),

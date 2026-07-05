@@ -278,7 +278,7 @@ python models/rf3/app.py --force-deploy
 python models/rf3/fixture.py
 
 # Run tests
-python models/rf3/test.py
+python -m pytest models/rf3/test.py -n auto --no-cov -v -s
 ```
 
 ## Resource Requirements

@@ -65,9 +65,8 @@ ProDy is an established bioinformatics tool (published 2011, >2500 citations). A
 
 ### Complementary Models
 
-- **Boltz / Chai-1** (this platform): Structure prediction models that generate the 3D structures ProDy then analyzes
+- **ESMFold / Chai-1** (this platform): Structure prediction models that generate the 3D structures ProDy then analyzes
 - **SPURS** (this platform): Uses structure as input for stability prediction; ProDy can characterize the interactions SPURS implicitly evaluates
-- **Pro4S** (this platform): Uses structure for solubility prediction; ProDy interaction analysis can explain Pro4S predictions
 
 ### Alternative Models
 

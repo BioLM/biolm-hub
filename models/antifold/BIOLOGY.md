@@ -80,7 +80,7 @@ Since its publication in 2024, AntiFold has been evaluated in several applied an
 
 AntiFold works well in combination with other models on the BioLM platform:
 
-- **Structure prediction models** (e.g., Boltz, ESMFold): Generate the input 3D structure needed by AntiFold when an experimental structure is unavailable. Pipeline: predict structure with Boltz, then design sequences with AntiFold.
+- **Structure prediction models** (e.g., ABodyBuilder3, ESMFold): Generate the input 3D structure needed by AntiFold when an experimental structure is unavailable. Pipeline: predict structure with ABodyBuilder3, then design sequences with AntiFold.
 - **Protein language models** (e.g., ESM2): Use ESM2 pseudo-log-likelihoods to independently score AntiFold-designed sequences for general protein fitness.
 
 ### Alternative Models

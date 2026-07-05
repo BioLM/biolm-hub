@@ -42,7 +42,7 @@ Single variant -- no size options. The sole deployment is the full 650M paramete
 
 **CANNOT be used for:**
 - Sequences longer than 1022 residues (use ESM-2 for up to 2046)
-- 3D structure prediction (use ESMFold or Boltz)
+- 3D structure prediction (use ESMFold or Chai-1)
 - Sequence generation or design (encoder-only model)
 - Non-protein molecules (DNA, RNA, small molecules)
 - Multi-chain / protein complex modeling

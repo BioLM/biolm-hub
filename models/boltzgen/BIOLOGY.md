@@ -132,7 +132,7 @@ This is particularly valuable for targets where traditional small molecule appro
 | ProteinMPNN | Alternative sequence design | Can be used for additional sequence optimization of BoltzGen backbones |
 | ESM2 | Embedding-based analysis | Analyze designed sequences for evolutionary plausibility using ESM2 embeddings |
 | CamSol | Solubility prediction | Screen BoltzGen designs for aggregation propensity before experimental testing |
-| ESMStabP | Stability prediction | Predict thermal stability of designed binders |
+| ThermoMPNN | Stability prediction | Predict stability changes (ddG) of designed binders |
 
 ### Alternative Models
 

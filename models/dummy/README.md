@@ -81,7 +81,7 @@
      and sets expectations. Examples:
      - Sequences longer than 1022 residues
      - Non-canonical amino acids beyond X
-     - Structure prediction (use ESMFold or Boltz instead)
+     - Structure prediction (use ESMFold or Chai-1 instead)
 -->
 
 **Other considerations:**
@@ -197,12 +197,13 @@ request = ModelRequest(
 ## [OPTIONAL] Training
 
 <!-- Include this section if:
-     - The model has trainable components within BioLM (e.g., ESMStabP's RF heads)
+     - The model has trainable components within BioLM (e.g., a regression or
+       classification head trained on top of frozen embeddings)
      - Training/fine-tuning procedures are documented and reproducible
      - Training results (cross-validation, loss curves) are available
 
      Cover:
-     - Training command (e.g., `modal run models/esmstabp/_train.py`)
+     - Training command (e.g., `modal run models/<example-model>/_train.py`)
      - Dataset source and preprocessing
      - Training results (e.g., 5-fold CV metrics)
      - Where trained artifacts are stored (e.g., R2 biolm-hub/model-weights/models path)
