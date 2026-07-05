@@ -15,7 +15,7 @@ strengths:
   - "Unified autoregressive framework handles both embedding extraction and true log-probability scoring in a single architecture, unlike BERT-style models (DNABERT-2, NT) that provide only pseudo-log-likelihoods"
   - "1B-parameter model provides the largest capacity among BPE-tokenized DNA models on the platform, potentially capturing more complex sequence patterns than DNABERT-2 (117M)"
   - "BPE tokenization learns data-driven subword units from genomic data, offering variable-length tokens that may capture biologically meaningful motifs as vocabulary entries"
-  - "Apache-2.0 license permits unrestricted commercial and academic use without licensing concerns"
+  - "MIT license permits unrestricted commercial and academic use without licensing concerns"
   - "Most recent DNA foundation model (2025) on the platform, incorporating latest training methodology and architectural design choices"
   - "Designed for cross-modal and multi-task learning, positioning it as a versatile backbone for diverse downstream genomic analyses"
   - "Dual-action API (encode + log_prob) covers both embedding extraction and sequence scoring"
@@ -34,7 +34,7 @@ use_when:
   - "You want true autoregressive log-probability scoring (not pseudo-log-likelihood) for DNA sequences using a BPE-tokenized model"
   - "You are benchmarking DNA foundation models and need a recent (2025) autoregressive architecture to compare against BERT-style (DNABERT-2) and byte-level (Evo/Evo2) approaches"
   - "You need a unified model for both embedding extraction and sequence fitness scoring and want the highest parameter count in a BPE-tokenized DNA model"
-  - "You need a permissively licensed (Apache-2.0) large-capacity DNA model for commercial applications"
+  - "You need a permissively licensed (MIT) large-capacity DNA model for commercial applications"
   - "You are developing multi-task genomic analysis pipelines and want a model explicitly designed for cross-modal versatility"
 
 dont_use_when:

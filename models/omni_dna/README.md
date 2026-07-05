@@ -19,7 +19,7 @@ The model provides two actions: **embedding extraction** (mean or last-token poo
 | Training objective | Autoregressive (causal language modeling) |
 | Max sequence length | 2,048 nucleotides (characters) |
 | Input alphabet | A, C, G, T only |
-| License | Apache-2.0 |
+| License | MIT |
 
 For detailed architecture information, see [MODEL.md](MODEL.md).
 
@@ -205,8 +205,8 @@ Numerical reproduction: integration tests compare model outputs against golden f
 
 ## License
 
-- **Code**: Apache-2.0
-- **Weights**: Apache-2.0 ([HuggingFace](https://huggingface.co/zehui127/Omni-DNA-1B))
+- **Code**: MIT
+- **Weights**: MIT ([HuggingFace](https://huggingface.co/zehui127/Omni-DNA-1B))
 
 ## References & Citations
 

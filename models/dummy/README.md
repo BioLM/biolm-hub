@@ -172,52 +172,6 @@ request = ModelRequest(
      e.g., "SOTA for protein Tm prediction as of Feb 2025 (bioRxiv 2025.02.18.638450)"
 -->
 
-## Implementation Verification
-
-<!-- CRITICAL SECTION: Demonstrates that the BioLM implementation produces
-     biologically correct and numerically accurate results.
-
-     Every model should have at minimum ONE of the following verification
-     approaches:
-
-     Option A  --  Numerical Reproduction:
-       Compare outputs against the original implementation on identical inputs.
-       Show exact numerical agreement or acceptable tolerance.
-
-     Option B  --  Known Extremes:
-       Test on proteins/sequences with well-characterized properties.
-       Verify the model correctly ranks or classifies them.
-
-     Option C  --  Baseline Comparison:
-       Compare against published benchmark results on the same test set.
-       Show agreement within expected tolerance.
-
-     Document: methodology, test data, expected vs actual results, pass/fail.
--->
-
-### Verification Method
-
-<!-- Describe which verification approach was used (A, B, or C above)
-     and the rationale for choosing it.
--->
-
-### Test Cases
-
-<!-- List specific test inputs and expected outputs.
-
-     Example format:
-     | Input | Expected | Predicted | Status |
-     |-------|----------|-----------|--------|
-     | Protein X (UniProt: P12345) | High stability | 0.92 (High) | PASS |
--->
-
-### Verification Status
-
-<!-- One of: VERIFIED, PARTIALLY VERIFIED, PENDING, FAILED
-     Include verification date.
-     e.g., "**Status: VERIFIED** (2025-01-15)  --  All 10 test cases pass."
--->
-
 ## Resource Requirements
 
 | Resource | Value |

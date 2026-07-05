@@ -86,7 +86,6 @@ From the EvolutionaryScale blog post (2024):
 
 ### Cons
 
-- Licensed under MIT (re-released by CZ Biohub, 2026); no commercial-use restriction
 - Maximum sequence length of 2048 residues
 - Predict action requires at least one `<mask>` token
 - No ensemble mode (unlike ESM1v with 5 models)

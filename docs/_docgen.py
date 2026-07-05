@@ -331,6 +331,48 @@ _FENCE = re.compile(r"^\s*(```|~~~)")
 _HEADING = re.compile(r"^(#{1,6})\s+(.*)$")
 _LINK = re.compile(r"(!?)\[([^\]]*)\]\(([^)]+)\)")
 _SEE_ALSO = re.compile(r"^\s*[*_]*\s*See also:", re.IGNORECASE)
+_BIBTEX_FENCE = re.compile(r"```bibtex\s*\n(.*?)```", re.DOTALL | re.IGNORECASE)
+
+
+def strip_sections(md: str, deny: set[str]) -> str:
+    """Drop whole sections whose ATX heading text is in ``deny`` (case-insensitive).
+
+    Removes the matched heading line plus everything beneath it up to (but not
+    including) the next heading at the *same or a higher* level, so nested
+    subsections are carried out with their parent. Fence-aware: a ``#`` inside a
+    code fence is never mistaken for a heading. ``deny`` holds lowercased,
+    stripped heading texts (e.g. ``"license"``, ``"references & citations"``).
+    """
+    if not deny:
+        return md
+    out: list[str] = []
+    in_fence = False
+    skip_level: int | None = None  # level of the section currently being dropped
+    for line in md.split("\n"):
+        is_fence = bool(_FENCE.match(line))
+        if is_fence:
+            in_fence = not in_fence
+        heading = None if (is_fence or in_fence) else _HEADING.match(line)
+        if heading:
+            level = len(heading.group(1))
+            if skip_level is not None and level <= skip_level:
+                skip_level = None  # a same-or-higher heading ends the dropped run
+            if skip_level is None and heading.group(2).strip().lower() in deny:
+                skip_level = level  # drop this heading and its body
+                continue
+        if skip_level is None:
+            out.append(line)
+    return "\n".join(out)
+
+
+def extract_bibtex(md: str) -> list[str]:
+    """Return the body of each ```bibtex code fence in a doc, in order.
+
+    Used to lift a README's citation into the generated ``Sources & license``
+    block so the hand-written ``References`` section can be dropped from the
+    rendered page without losing the BibTeX humans want.
+    """
+    return [m.group(1).rstrip() for m in _BIBTEX_FENCE.finditer(md)]
 
 
 def strip_see_also(md: str) -> str:
@@ -431,10 +473,19 @@ def strip_html_comments(md: str) -> str:
     )
 
 
-def embed(md: str, base_dir: str, page_map: dict[str, str] | None = None) -> str:
-    """Prepare an embedded knowledge-graph doc for inclusion in a model page."""
-    return rewrite_links(
-        demote_headings(strip_see_also(strip_html_comments(md)), by=1),
-        base_dir,
-        page_map,
-    )
+def embed(
+    md: str,
+    base_dir: str,
+    page_map: dict[str, str] | None = None,
+    deny_sections: set[str] | None = None,
+) -> str:
+    """Prepare an embedded knowledge-graph doc for inclusion in a model page.
+
+    ``deny_sections`` (lowercased heading texts) are stripped whole — heading and
+    body — *before* heading demotion, so redundant/internal README sections never
+    reach the rendered page.
+    """
+    cleaned = strip_see_also(strip_html_comments(md))
+    if deny_sections:
+        cleaned = strip_sections(cleaned, deny_sections)
+    return rewrite_links(demote_headings(cleaned, by=1), base_dir, page_map)

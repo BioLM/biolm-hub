@@ -1,9 +1,9 @@
 model_slug: omni-dna
 display_name: Omni-DNA
 license:
-  type: Apache-2.0
+  type: MIT
   url: https://huggingface.co/zehui127/Omni-DNA-1B
-  notes: ''
+  notes: 'Upstream weights are distributed under MIT per the HuggingFace model card (license: mit).'
 molecule_types:
 - dna
 applicable_to:

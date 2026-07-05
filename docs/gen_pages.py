@@ -259,10 +259,39 @@ def _api(fam: Any) -> str:
     return "\n".join(out)
 
 
-def _prose(title: str, md: str | None, base_dir: str) -> str:
+# README sections that are dropped from the rendered per-model page (they remain
+# in the repo README for GitHub browsers). Each is either a flat duplicate of a
+# generated block (API & schema / Sources & license), a duplicate of MODEL.md, or
+# contributor-only QA ceremony. Matched case-insensitively on the heading text; the
+# heading and its whole body (through the next same-or-higher heading) are removed.
+# See .planning/final-review/readme-section-curation.md.
+README_DENY_SECTIONS = {
+    "actions",
+    "actions & endpoints",
+    "actions / endpoints",
+    "endpoints",
+    "model variants",
+    "resource requirements",
+    "license",
+    "references",
+    "references & citations",
+    "performance & benchmarks",
+    "implementation notes",
+    "implementation verification",
+}
+
+
+def _prose(
+    title: str,
+    md: str | None,
+    base_dir: str,
+    deny_sections: set[str] | None = None,
+) -> str:
     if not md:
         return ""
-    return f"## {title}\n\n" + dg.embed(md, base_dir, MODEL_PAGE_MAP) + "\n"
+    return (
+        f"## {title}\n\n" + dg.embed(md, base_dir, MODEL_PAGE_MAP, deny_sections) + "\n"
+    )
 
 
 def _license_line(lic: dict[str, Any]) -> str:
@@ -292,8 +321,12 @@ def _paper_line(p: dict[str, Any]) -> str:
     return f"- *{str(p.get('title', '')).strip()}*{suffix}{linktxt}"
 
 
-def _sources(src: dict[str, Any]) -> str:
-    if not src:
+def _sources(src: dict[str, Any], readme: str | None = None) -> str:
+    # The README's hand-written ``References & Citations`` section is dropped from
+    # the page (see README_DENY_SECTIONS), so lift its BibTeX here — it is the one
+    # part of that section humans want and the generated block otherwise lacks.
+    bibtex = dg.extract_bibtex(readme) if readme else []
+    if not src and not bibtex:
         return ""
     out = ["## Sources & license", ""]
     lic = src.get("license") or {}
@@ -307,6 +340,10 @@ def _sources(src: dict[str, Any]) -> str:
         out += ["**Source repositories**", ""]
         out += [f"- {r.get('type', 'repo')}: <{r['url']}>" for r in repos]
         out.append("")
+    if bibtex:
+        out += ["**Cite**", ""]
+        for entry in bibtex:
+            out += ["```bibtex", entry, "```", ""]
     return "\n".join(out)
 
 
@@ -337,10 +374,10 @@ def _model_page(name: str, known: set[str]) -> tuple[str, str] | None:
     for block in (
         _at_a_glance(cmp, known),
         _api(fam),
-        _prose("Usage", readme, f"models/{name}"),
+        _prose("Usage", readme, f"models/{name}", README_DENY_SECTIONS),
         _prose("Architecture & training", _read(d / "MODEL.md"), f"models/{name}"),
         _prose("Biology", _read(d / "BIOLOGY.md"), f"models/{name}"),
-        _sources(src),
+        _sources(src, readme),
     ):
         if block:
             parts += [block, ""]

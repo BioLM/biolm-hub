@@ -128,14 +128,20 @@ test_suite = TestSuite(
                     action_name=ModelActions.PREDICT,
                     input_fixture="predict_single_chain_same_input.json",
                     expected_output_fixture="predict_single_chain_same_expected_output.json",
-                    tolerances={"rel_tol": 2.0},  # Very relaxed for near-zero RMSDs
+                    # Self-alignment RMSD is ~0 (down to floating-point noise ~1e-14).
+                    # abs_tol absorbs the near-zero sign/precision jitter while a small
+                    # rel_tol still catches real regressions in any non-zero values.
+                    tolerances={"abs_tol": 1e-6, "rel_tol": 1e-4},
                     remote_fn_kwargs={"_skip_cache": True},
                 ),
                 ActionTestCase(
                     action_name=ModelActions.PREDICT,
                     input_fixture="predict_multi_chain_same_input.json",
                     expected_output_fixture="predict_multi_chain_same_expected_output.json",
-                    tolerances={"rel_tol": 2.0},  # Very relaxed for near-zero RMSDs
+                    # Self-alignment RMSD is ~0 (down to floating-point noise ~1e-14).
+                    # abs_tol absorbs the near-zero sign/precision jitter while a small
+                    # rel_tol still catches real regressions in any non-zero values.
+                    tolerances={"abs_tol": 1e-6, "rel_tol": 1e-4},
                     remote_fn_kwargs={"_skip_cache": True},
                 ),
                 ActionTestCase(

@@ -29,12 +29,12 @@ For detailed architecture information, see [MODEL.md](MODEL.md).
 | Variant | Slug | Parameters | Context | GPU | Memory | Status |
 |---------|------|-----------|---------|-----|--------|--------|
 | **Evo2 1B Base** | `evo2-1b-base` | ~1B | 8k nt | L4 | 16 GB | Enabled |
-| **Evo2 7B Base** | `evo2-7b-base` | ~7B | 8k nt | L4 | 16 GB | Enabled |
+| Evo2 7B Base | `evo2-7b-base` | ~7B | 8k nt | -- | -- | Planned |
 | Evo2 7B | `evo2-7b` | ~7B | 1M nt | -- | -- | Planned |
 | Evo2 40B Base | `evo2-40b-base` | ~40B | 8k nt | -- | -- | Planned |
 | Evo2 40B | `evo2-40b` | ~40B | 1M nt | -- | -- | Planned |
 
-The default variant is **evo2-1b-base**. Only the 1b-base variant is actively tested.
+The default variant is **evo2-1b-base**, which is the only variant currently shipped and tested. All other variants are planned and not yet resolvable by the API.
 
 ## Capabilities & Limitations
 
@@ -225,7 +225,6 @@ Numerical reproduction: integration tests compare model outputs against golden f
 | Variant | GPU | Memory | CPU |
 |---------|-----|--------|-----|
 | `evo2-1b-base` | L4 | 16 GB | 4 cores |
-| `evo2-7b-base` | L4 | 16 GB | 4 cores |
 
 | Resource | Value |
 |----------|-------|
