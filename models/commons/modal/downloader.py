@@ -49,7 +49,8 @@ _SKIP_SECRETS_TRUTHY = {"1", "true", "yes"}
 def _skip_modal_secrets() -> bool:
     """True if BIOLM_SKIP_MODAL_SECRETS opts out of mounting download secrets."""
     return (
-        os.getenv("BIOLM_SKIP_MODAL_SECRETS", "").strip().lower() in _SKIP_SECRETS_TRUTHY
+        os.getenv("BIOLM_SKIP_MODAL_SECRETS", "").strip().lower()
+        in _SKIP_SECRETS_TRUTHY
     )
 
 
