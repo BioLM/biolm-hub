@@ -97,7 +97,7 @@ versions, `ruff` + `black`. Run `make style && make mypy` before pushing.
 
 ## Testing
 
-Tests are the coherence mechanism. There are four tiers (full detail in the testing strategy doc):
+Tests are the coherence mechanism. There are four tiers:
 
 | Tier | What | Needs |
 |------|------|-------|
@@ -136,7 +136,7 @@ Before opening a PR for a new or changed model, confirm it lands in house style 
 
 - One coherent change per PR; keep `make check` green.
 - Fix failures locally before pushing — don't push just to re-trigger CI.
-- Be kind and assume good faith — see [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
+- Be kind and assume good faith.
 
 ### How CI works
 

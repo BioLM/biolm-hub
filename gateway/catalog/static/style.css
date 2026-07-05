@@ -761,7 +761,7 @@ button[type="submit"]:active {
     }
 }
 
-/* --- Deployment status (W9) --- */
+/* --- Deployment status --- */
 .status-badge {
     display: inline-block;
     font-size: 0.7rem;

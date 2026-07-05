@@ -51,7 +51,7 @@ UNIT_TEST_MARKER := not integration and not deployment and not slow and not e2e 
 test-unit:
 	uv run pytest -m "$(UNIT_TEST_MARKER)" -n auto --no-cov -v $(call get_test_paths)
 
-# Integration tests — deploy to a Modal env + pull golden fixtures from R2. See 04_TESTING_STRATEGY.
+# Integration tests — deploy to a Modal env + pull golden fixtures from R2 (see CONTRIBUTING.md).
 test-integration:
 	uv run pytest -m "integration" -n auto --no-cov -v $(call get_test_paths)
 

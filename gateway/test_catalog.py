@@ -1,4 +1,4 @@
-"""Modal-free tests for the W9 catalog web app.
+"""Modal-free tests for the catalog web app.
 
 Covers catalog data generation (route scanning) and the deployment-status
 mapping. The Modal query is monkeypatched, so these run with no Modal/R2.

@@ -47,15 +47,6 @@ incomplete, turning a silent crash-loop into a slower-but-successful cold start.
 commons runtime-path change touching every model's startup, and fresh deploys bake correctly, so the risk
 of landing it at launch outweighs the benefit.
 
-## Input option-value uniformity
-
-Output field names for per-residue embeddings converged on a single canonical name
-(`residue_embeddings`) across the catalog, but the *input* option values that request them still diverge:
-`params.include` accepts `per_token` (esm2/esm1b/esmc/e1/zymctrl), `per_residue` (dsm/temberture),
-`residue` (igbert/igt5/antifold), and `rescoding` (ablang2) for the same concept. Converging these on one
-canonical value — via enum aliases so the existing values keep validating — is a follow-up uniformity
-refinement that would bring the input surface in line with the already-unified output surface.
-
 ---
 
 *Have something else you think belongs in the catalog? Open an issue — see
