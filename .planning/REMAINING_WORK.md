@@ -4,6 +4,56 @@
 > Fresh Fable took over from the FABLE_HANDOFF. Independently re-audited everything (7 fresh-context
 > agents vs live Modal/R2/code/git/internal-repo/testing-harness/skills) before touching anything.
 >
+> **▶ MILESTONE-2 UPDATE (later same session; HEAD=`a3b3d2f`; every push CI-GREEN). ALL Modal-free code +
+> docs + chai1 + interim Modal validation DONE. Only the full deploy matrix + skills-proof + residual +
+> launch-staging remain.** Done since the Phase-1 block below:
+> - **chai1 build FIXED** (`9297d1a`): root cause = chai-lab `pip_install(gpu=…)` ran on the scarce A100
+>   builder → intermittent server-side "no stages" flake. Removed the `gpu=` arg → CPU builder
+>   (deterministic; verified across force-builds; fold works; goldens regenerated). evo/evo2 keep `gpu=`
+>   (flash-attn CUDA) legitimately.
+> - **Runtime creds-less gap CLOSED** (`09cb719`): the runtime `@app.cls(secrets=[cloudflare_r2_secret])`
+>   in all 37 app.py was un-gated → a creds-less external user's `app.deploy()` would fail. Added commons
+>   `runtime_secrets()` + `skip_modal_secrets()` (config.py), swept all 37 to `secrets=runtime_secrets()`.
+>   Import stays auth-free. So creds-less = set `BIOLM_SKIP_MODAL_SECRETS=1` (gates BOTH build + runtime).
+> - **Docs overhaul** (`2f14fe5` site + `2e60447` OSS + `a3b3d2f` KB): mkdocs usability assessment done +
+>   implemented — HTTP calling-contract page + per-action curl, resolved schema defaults, auto-generated
+>   Errors reference page, real bh-serve 5-min flow, See-also/Alternatives/arXiv/SUMMARY cleanups; README
+>   creds-less accuracy fix + first screen; CONTRIBUTING make-check/CI accuracy; esm2/evo arxiv-field DOI
+>   fix + dsm MODEL.md table. Stale generated docs leaks removed + gitignored. DEFERRED P2: page-split
+>   into tabs (G10), catalog filter (G11), search-index exclusion (G7).
+> - **Interim Modal validation GREEN** (esm2-8m + thermompnn on biolm-hub-dev): the residue_embeddings
+>   rename serializes, `BIOLM_SKIP_MODAL_SECRETS=1` deploy reads weights over r2.dev + serves, conda/
+>   StrEnum-3.10 build holds, numeric golden comparison engages + passes (creds-less golden read works).
+>   → **GREEN to fan out the full 36-model matrix.**
+>
+> **▶▶ THE FAN-OUT PLAN (the immediate remaining work — Milestone B #4).** Deploy ALL 36 SHIP + dummy to
+> `biolm-hub-dev` in cost-aware waves (~6-8 concurrent), heavy last. Per model: `bh deploy`/app.py
+> --force-deploy → **`modal app logs <app> --env biolm-hub-dev` health-verify (NEVER trust green deploy)**
+> → cold-invoke every action → integration `pytest models/<m>/test.py -m integration` (creds-less golden
+> read over r2.dev now works). Waves: **0 CPU** (ablang2, antifold, biotite, deepviscosity, dna_chisel,
+> immunebuilder, mpnn, prody, sadie, abodybuilder3-plddt, esm1v×5, progen2-oas, dnabert2) → **1 T4**
+> (esm_if1, esm1b, igbert×2, igt5×2, immunefold×2, msa_transformer, progen2 med/large/bfd90, spurs,
+> temberture×2, thermompnn, thermompnn_d, zymctrl, e1-150m, esm2-35m, esmc-300m) → **2 mid-GPU L4/A10G**
+> (evo×2, evo2×2, omni_dna, prostt5×2, e1-650m/3b, dsm×3, esmfold, esm2-3b, abodybuilder3-language) →
+> **3 A100** (boltzgen, rf3, chai1, dsm-3B).
+> **GOLDENS TO REGEN + REVIEW (9): schema-driven** esmc, e1, msa_transformer, dsm, igt5, immunefold;
+> **validator-wired (now numeric)** thermompnn(4), thermompnn_d(6), immunefold(4). Regen via
+> `MODAL_ENVIRONMENT=biolm-hub-dev .venv/bin/python scratchpad/gen_goldens.py <slug>` (routes writes thru
+> the deployed `golden-io` app). Review: linter (schema/NaN/shape/range) + type-based spot-check.
+> **MUST also:** settle the **esm1v phantom crash-loop** (deploy fresh, read logs); **deploy-verify the
+> sadie→gateway v1 round-trip** (deploy gateway + sadie, call through it); **creds-less spot-check** a few
+> models with `BIOLM_SKIP_MODAL_SECRETS=1`; **esm2 per-variant golden scoping** — `esm2/fixture.py` only
+> generates 3B goldens, so non-3B encode/predict integration cases 404 → either gen per-variant goldens
+> or scope those cases to 3B (log_prob is validator-based, fine for all variants).
+> **DEFERRED to residual-close (#8):** K3 = add `default_factory` to `params` in schemas that lack it
+> (makes params genuinely optional, resolves the "Required:yes vs optional-description" contradiction on
+> ~31 pages — a schema-uniformity fix, Modal-free, no golden impact).
+> **THEN:** skills executability proof (#7 — fresh agent follows model-implementation dummy→check+docs+
+> deploy+goldens & model-knowledge-base 5 KG files) → residual close (#8) → launch staging (#9:
+> contacts/D2 human items, 5-min quickstart from clean checkout, W-launch one-step-from-go; irreversibles
+> = human). **RACE HAZARD: never edit models/ during a Modal build — do all models/ code edits (K3, any
+> bug fixes) in no-build windows and commit before building.**
+>
 > **USER DECISIONS (this session):** prod = **OSS-repo-only** (prod `biolm-hub` env stays empty; users
 > deploy to their own Modal) · R2 legacy trees = **delete now** (DONE) · prody/OpenBabel = **accept**
 > (keep prody) · schema uniformity = **converge fully + fix bugs**. Deferred-to-launch (not blocking):
