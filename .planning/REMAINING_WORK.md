@@ -45,14 +45,22 @@
 > models with `BIOLM_SKIP_MODAL_SECRETS=1`; **esm2 per-variant golden scoping** — `esm2/fixture.py` only
 > generates 3B goldens, so non-3B encode/predict integration cases 404 → either gen per-variant goldens
 > or scope those cases to 3B (log_prob is validator-based, fine for all variants).
-> **DEFERRED to residual-close (#8):** K3 = add `default_factory` to `params` in schemas that lack it
-> (makes params genuinely optional, resolves the "Required:yes vs optional-description" contradiction on
-> ~31 pages — a schema-uniformity fix, Modal-free, no golden impact).
-> **THEN:** skills executability proof (#7 — fresh agent follows model-implementation dummy→check+docs+
-> deploy+goldens & model-knowledge-base 5 KG files) → residual close (#8) → launch staging (#9:
-> contacts/D2 human items, 5-min quickstart from clean checkout, W-launch one-step-from-go; irreversibles
-> = human). **RACE HAZARD: never edit models/ during a Modal build — do all models/ code edits (K3, any
-> bug fixes) in no-build windows and commit before building.**
+> **RESIDUAL CLOSE (#8) — ✅ DONE 2026-07-05 (Modal-free, no golden impact):** K3 params-optionality
+> fixed — added `default_factory` to `mpnn`/`thermompnn`/`thermompnn_d` so `params` is genuinely optional
+> (all three params classes instantiate with no args; existing fixtures send `params` explicitly and
+> validate identically). `antifold` FLAGGED not forced — its params carry the REQUIRED PDB chain selectors
+> (a model_validator requires ≥1 of heavy/light_chain_id → no valid empty default), so `params` is
+> genuinely required and its description was corrected to say so. `reviews/round-1/PHASE_B_DEFERRED.md`
+> reclassified into a CLOSED ledger (every item DONE or POST-V1 with mechanism). `FUTURE_WORK.md` gained
+> two POST-V1 items (self-healing weight bake; input option-value uniformity — divergence grep-verified).
+> Verified green: mypy(344)/pre-commit/unit(242 pass,1 skip)/schema-docs(37)/mkdocs-strict(36)/no-auth
+> full collection. (Audit found 4 models, not "~31": antifold×3 + mpnn + thermompnn + thermompnn_d.)
+> **REMAINING = W-launch staging (#9) + GATED/human items only.** Launch staging includes the skills
+> executability proof (#7, pre-launch QA gate — fresh agent follows model-implementation dummy→check+
+> docs+deploy+goldens & model-knowledge-base 5 KG files), contacts/D2 human items, 5-min quickstart from a
+> clean checkout, and W-launch one-step-from-go; irreversibles = human (`MAINTAINER_LAUNCH_CHECKLIST.md`).
+> **RACE HAZARD: never edit models/ during a Modal build — do all models/ code edits in no-build windows
+> and commit before building.**
 >
 > **USER DECISIONS (this session):** prod = **OSS-repo-only** (prod `biolm-hub` env stays empty; users
 > deploy to their own Modal) · R2 legacy trees = **delete now** (DONE) · prody/OpenBabel = **accept**
