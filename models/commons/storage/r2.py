@@ -117,6 +117,20 @@ def read_json_from_r2(bucket_name: str, file_key: str) -> Any:
     Raises:
         FileNotFoundError: If the file is not found or cannot be retrieved.
     """
+    # Credential-less read: with no S3 credentials, fetch the JSON anonymously over the
+    # bucket's public r2.dev URL. This mirrors the weights read fallback in
+    # storage.acquisition/r2_utils and makes `pytest -m integration` runnable against
+    # the public OSS bucket with only BIOLM_R2_PUBLIC_URL (no AWS_*/R2_ENDPOINT). When
+    # credentials ARE present the signed S3 path below is used unchanged — required for
+    # golden generation and every other write flow.
+    if not r2_credentials_present():
+        from models.commons.util.config import r2_public_url
+
+        if r2_public_url:
+            from models.commons.storage.r2_http import read_json_via_http
+
+            return read_json_via_http(r2_public_url, file_key)
+
     client = get_r2_client()
     try:
         response = client.get_object(Bucket=bucket_name, Key=file_key)

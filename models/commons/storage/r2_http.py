@@ -12,6 +12,11 @@ files with `list_objects_v2`. So this reader drives the fetch from the
 file's relative path under the prefix — rather than from an S3 LIST. The completion
 marker (`.r2_cache_complete`) is the same miss/hit gate as the S3 path.
 
+The same anonymous path also serves small JSON objects — the golden/input test
+fixtures read by the integration harness — via ``read_json_via_http`` (the
+credential-less counterpart of ``r2.read_json_from_r2``), so ``pytest -m integration``
+runs against the public OSS bucket with no S3 credentials.
+
 This module is READ-ONLY by design. Writes/self-population always go through the
 credentialed S3 path (CI only) — see r2_utils.upload_to_r2_atomic.
 """
@@ -19,7 +24,7 @@ credentialed S3 path (CI only) — see r2_utils.upload_to_r2_atomic.
 import json
 from contextlib import closing
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 from urllib.parse import quote
 
 import requests
@@ -69,6 +74,17 @@ def _object_url(public_url: str, r2_prefix: str, rel_key: str) -> str:
     prefix = quote(r2_prefix.strip("/"), safe="/")
     key = quote(rel_key.lstrip("/"), safe="/")
     return f"{public_url.rstrip('/')}/{prefix}/{key}"
+
+
+def _key_url(public_url: str, key: str) -> str:
+    """Build the public HTTPS URL for an object addressed by its full bucket key.
+
+    Unlike ``_object_url`` (which joins a model prefix with a relative weight path),
+    JSON goldens/inputs are addressed by a single absolute bucket key, e.g.
+    ``biolm-hub/test-data/models/<slug>/predict_input.json``. The key is URL-encoded
+    (preserving ``/`` separators) with the same safety as the weights read path.
+    """
+    return f"{public_url.rstrip('/')}/{quote(key.lstrip('/'), safe='/')}"
 
 
 def _http_get(session: requests.Session, url: str) -> Optional[requests.Response]:
@@ -189,5 +205,44 @@ def restore_weights_via_http(target_dir: Path, r2_prefix: str, public_url: str) 
             r2_prefix,
         )
         return True
+    finally:
+        session.close()
+
+
+def read_json_via_http(public_url: str, key: str) -> Any:
+    """Read and JSON-parse a single object from the public bucket over anonymous HTTPS.
+
+    The credential-less counterpart of ``r2.read_json_from_r2``: instead of a signed S3
+    ``GetObject`` it GETs ``{public_url}/{key}`` from the bucket's r2.dev public URL.
+    Used to read golden/input test fixtures so ``pytest -m integration`` runs against
+    the public OSS bucket with only ``BIOLM_R2_PUBLIC_URL`` (no ``AWS_*``/``R2_ENDPOINT``).
+
+    Args:
+        public_url: Base r2.dev (or custom-domain) URL for the bucket.
+        key: Full object key within the bucket (e.g. ``biolm-hub/test-data/...``).
+
+    Returns:
+        The JSON-parsed content (typically a dict or list).
+
+    Raises:
+        FileNotFoundError: on a 404, or any transport/parse error — mirroring
+            ``read_json_from_r2``'s not-found contract so callers see a uniform failure.
+    """
+    url = _key_url(public_url, key)
+    session = _session()
+    try:
+        resp = _http_get(session, url)
+        if resp is None:
+            raise FileNotFoundError(
+                f"{key} not found in the public R2 bucket (404 at {url})"
+            )
+        with closing(resp):
+            return json.loads(resp.content.decode("utf-8"))
+    except FileNotFoundError:
+        raise
+    except Exception as e:
+        raise FileNotFoundError(
+            f"Error reading {key} from the public R2 bucket over HTTP: {e}"
+        ) from e
     finally:
         session.close()

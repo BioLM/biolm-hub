@@ -11,9 +11,10 @@ from typing import Any, Optional
 import pytest
 import requests
 
-from models.commons.storage import r2_http
+from models.commons.storage import r2, r2_http
 from models.commons.storage.r2 import r2_credentials_present
 from models.commons.storage.r2_utils import R2Utils
+from models.commons.util import config as cfg
 
 PREFIX = "biolm-hub/model-weights/models/esm2/v1"
 PUBLIC_URL = "https://pub-test.r2.dev"
@@ -242,6 +243,93 @@ def test_object_url_encodes_special_characters() -> None:
         url
         == "https://pub-test.r2.dev/biolm-hub/model-weights/models/x/v1/weird%20name%23.bin"
     )
+
+
+GOLDEN_KEY = "biolm-hub/test-data/models/esm2/predict_output.json"
+
+
+def test_key_url_encodes_special_characters() -> None:
+    url = r2_http._key_url(
+        "https://pub-test.r2.dev/",
+        "biolm-hub/test-data/models/x/weird name#.json",
+    )
+    assert (
+        url
+        == "https://pub-test.r2.dev/biolm-hub/test-data/models/x/weird%20name%23.json"
+    )
+
+
+def test_read_json_via_http_returns_parsed(monkeypatch: pytest.MonkeyPatch) -> None:
+    session = _install(
+        monkeypatch,
+        {f"/{GOLDEN_KEY}": _FakeResp(200, b'{"results": [{"log_prob": -1.0}]}')},
+    )
+    assert r2_http.read_json_via_http(PUBLIC_URL, GOLDEN_KEY) == {
+        "results": [{"log_prob": -1.0}]
+    }
+    # The session is closed (no connection leak) — parity with the weights path.
+    assert session.closed is True
+
+
+def test_read_json_via_http_404_raises_filenotfound(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Nothing registered => 404 => FileNotFoundError (mirrors read_json_from_r2).
+    _install(monkeypatch, {})
+    with pytest.raises(FileNotFoundError):
+        r2_http.read_json_via_http(PUBLIC_URL, GOLDEN_KEY)
+
+
+def test_read_json_via_http_wraps_parse_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Malformed JSON body => wrapped as FileNotFoundError, not a raw JSONDecodeError.
+    _install(monkeypatch, {f"/{GOLDEN_KEY}": _FakeResp(200, b"not json{")})
+    with pytest.raises(FileNotFoundError):
+        r2_http.read_json_via_http(PUBLIC_URL, GOLDEN_KEY)
+
+
+def test_read_json_from_r2_falls_back_to_http_without_creds(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # No S3 creds + a public URL => read anonymously over HTTP; the S3 client must
+    # never be built. This is what makes `pytest -m integration` credential-less.
+    monkeypatch.setattr(r2, "r2_credentials_present", lambda: False)
+    monkeypatch.setattr(cfg, "r2_public_url", PUBLIC_URL)
+
+    def _no_client() -> object:
+        raise AssertionError("get_r2_client must not run on the credential-less path")
+
+    monkeypatch.setattr(r2, "get_r2_client", _no_client)
+    _install(monkeypatch, {f"/{GOLDEN_KEY}": _FakeResp(200, b'{"ok": true}')})
+
+    assert r2.read_json_from_r2("some-bucket", GOLDEN_KEY) == {"ok": True}
+
+
+def test_read_json_from_r2_uses_s3_when_creds_present(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # Creds present => the signed S3 path is used UNCHANGED; the HTTP fallback must
+    # not run (proves task-2 leaves the credentialed read/write flow intact).
+    monkeypatch.setattr(r2, "r2_credentials_present", lambda: True)
+
+    class _Body:
+        def read(self) -> bytes:
+            return b'{"from": "s3"}'
+
+    class _Client:
+        def get_object(self, Bucket: str, Key: str) -> dict[str, object]:
+            assert (Bucket, Key) == ("some-bucket", GOLDEN_KEY)
+            return {"Body": _Body()}
+
+    monkeypatch.setattr(r2, "get_r2_client", lambda: _Client())
+
+    def _boom(*a: object, **k: object) -> object:
+        raise AssertionError("HTTP fallback must not run when creds are present")
+
+    monkeypatch.setattr(r2_http, "read_json_via_http", _boom)
+
+    assert r2.read_json_from_r2("some-bucket", GOLDEN_KEY) == {"from": "s3"}
 
 
 def test_credentials_present_reflects_env(monkeypatch: pytest.MonkeyPatch) -> None:
