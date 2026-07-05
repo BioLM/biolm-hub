@@ -36,7 +36,7 @@ def setup_source_layer(
     def add_files(image: modal.Image) -> modal.Image:
         # Import here to avoid circular imports
 
-        from models.commons.util.config import remote_models_path
+        from models.commons.util.config import remote_models_path, skip_modal_secrets
 
         # Use relative paths for Modal's add_local_dir
         local_models_base = Path("models")
@@ -67,6 +67,17 @@ def setup_source_layer(
             )
             .add_local_file(local_init_path, str(remote_init_path), copy=True)
         )
+
+        # Bake the credential-less flag into the image so the RUNTIME container evaluates
+        # runtime_secrets() (in @app.cls) identically to deploy time. When set at deploy,
+        # runtime_secrets() returns [] so the class registers with 0 download secrets; if
+        # the flag were absent inside the container, Modal's re-import of app.py would
+        # re-evaluate runtime_secrets() to [cloudflare-r2] → the function would declare
+        # more dependencies than were provisioned → crash-loop. This source layer is
+        # common to ALL models (weight and weightless), so it's the universal place to
+        # keep deploy-time and runtime secret resolution in lockstep.
+        if skip_modal_secrets():
+            image = image.env({"BIOLM_SKIP_MODAL_SECRETS": "1"})
 
         return image
 
