@@ -2,7 +2,7 @@ from pathlib import Path
 
 import modal
 
-from models.chai1.config import MODEL_FAMILY, Chai1ResourceSpec
+from models.chai1.config import MODEL_FAMILY
 from models.chai1.download import get_model_dir
 from models.chai1.schema import (
     Chai1Params,
@@ -37,7 +37,14 @@ image = (
         "chai-lab==0.6.1",
         "pandas==2.1.1",  # For data handling
         "pyarrow==13.0.0",  # For Parquet handling
-        gpu=Chai1ResourceSpec.gpu,  # Use GPU from config
+        # No `gpu=` here on purpose: chai-lab and its deps ship prebuilt wheels
+        # (chai_lab is py3-none-any; torch comes from the base image) and compile
+        # no CUDA kernels at install time, so this layer needs no GPU builder.
+        # Adding one forces the layer onto Modal's scarcer GPU-builder pool, which
+        # slows/raises the cost of the build and has intermittently produced a
+        # degenerate downstream layer ("dockerfile has no stages"). The inference
+        # container's A100 comes from MODEL_FAMILY's resource spec, not from here.
+        # (Contrast evo/evo2, which legitimately need `gpu=` to compile flash-attn.)
     )
     .env(
         {
