@@ -345,7 +345,7 @@ def sources_cmd(
 
     Examples:
         bh kb sources esm2
-        bh kb sources boltz
+        bh kb sources boltzgen
     """
     sources = _load_sources(model)
 

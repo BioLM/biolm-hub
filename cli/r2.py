@@ -279,13 +279,13 @@ def ls(
         bh r2 ls
 
         # List specific model directory
-        bh r2 ls r2://biolm-public/model-store/esm2
+        bh r2 ls r2://biolm-public/biolm-hub/model-weights/models/esm2
 
         # List all contents recursively
-        bh r2 ls r2://biolm-public/model-store/esm2 --recursive
+        bh r2 ls r2://biolm-public/biolm-hub/model-weights/models/esm2 --recursive
 
         # List test data directory
-        bh r2 ls r2://biolm-public/test-data
+        bh r2 ls r2://biolm-public/biolm-hub/test-data
     """
     try:
         if path:
@@ -316,13 +316,13 @@ def download(
 
     Examples:
         # Download a single file to the current directory
-        bh r2 download r2://biolm-public/test-data/foo.json .
+        bh r2 download r2://biolm-public/biolm-hub/test-data/foo.json .
 
         # Download an entire prefix to ./tmp
-        bh r2 download r2://biolm-public/test-data/ ./tmp
+        bh r2 download r2://biolm-public/biolm-hub/test-data/ ./tmp
 
         # Preview a download without writing anything
-        bh r2 download r2://biolm-public/test-data/ ./tmp --dry-run
+        bh r2 download r2://biolm-public/biolm-hub/test-data/ ./tmp --dry-run
     """
     try:
         if not source.startswith("r2://"):
@@ -416,16 +416,16 @@ def cat(
 
     Examples:
         # Display a configuration file
-        bh r2 cat r2://biolm-public/test-data/models/chai1/input.json
+        bh r2 cat r2://biolm-public/biolm-hub/test-data/models/chai1/input.json
 
         # Pipe output to jq for JSON processing
-        bh r2 cat r2://biolm-public/test-data/models/chai1/input.json | jq '.params'
+        bh r2 cat r2://biolm-public/biolm-hub/test-data/models/chai1/input.json | jq '.params'
 
         # Pipe to grep for searching
-        bh r2 cat r2://biolm-public/test-data/models/chai1/input.json | grep "name"
+        bh r2 cat r2://biolm-public/biolm-hub/test-data/models/chai1/input.json | grep "name"
 
         # View with less for pagination
-        bh r2 cat r2://biolm-public/test-data/models/chai1/input.json | less
+        bh r2 cat r2://biolm-public/biolm-hub/test-data/models/chai1/input.json | less
     """
     import sys
 
@@ -495,13 +495,13 @@ def du(  # noqa: C901
 
     Examples:
         # Display directory-level totals
-        bh r2 du r2://biolm-public/model-store/
+        bh r2 du r2://biolm-public/biolm-hub/model-weights/models/
 
         # Display directory-level totals for a specific subfolder
-        bh r2 du r2://biolm-public/model-store/esm2/
+        bh r2 du r2://biolm-public/biolm-hub/model-weights/models/esm2/
 
         # Display directory size with file-level details
-        bh r2 du r2://biolm-public/model-store/esm2/ --per-file
+        bh r2 du r2://biolm-public/biolm-hub/model-weights/models/esm2/ --per-file
     """
     try:
         bucket, prefix = format_r2_path(path)
@@ -598,7 +598,7 @@ def du(  # noqa: C901
 @r2_app.command(name="download-outputs")
 def download_outputs(
     model: str = typer.Option(
-        ..., "--model", help="Model name (e.g., rfd3, rf3, chai1)"
+        ..., "--model", help="Model name (e.g., rf3, chai1, esmfold)"
     ),
     output_dir: Optional[str] = typer.Option(
         None,
@@ -620,14 +620,14 @@ def download_outputs(
         # Download RF3 test fixture outputs
         bh r2 download-outputs --model rf3
 
-        # Download RFD3 outputs with dry-run
-        bh r2 download-outputs --model rfd3 --dry-run
+        # Download antifold outputs with dry-run
+        bh r2 download-outputs --model antifold --dry-run
 
         # Download to custom directory
         bh r2 download-outputs --model chai1 --output-dir ./my_outputs
 
         # Preview what would be downloaded
-        bh r2 download-outputs --model boltz --dry-run
+        bh r2 download-outputs --model boltzgen --dry-run
     """
     try:
         # Determine output directory
