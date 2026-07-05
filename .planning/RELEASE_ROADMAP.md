@@ -1,5 +1,32 @@
 # ▶▶ READ FIRST — Release Roadmap & Your Decisions (resume anchor)
 
+> ## 🔄 STATUS RECONCILIATION — 2026-07-05 (added post-overnight; trust THIS for "what's done")
+> Everything below is a **2026-07-01 mid-project snapshot** — read it for rationale and the ⭐ decision
+> framing, but for *current status* trust this banner + `.planning/FABLE_HANDOFF.md`.
+>
+> **DONE since 2026-07-01:** catalog trimmed to **36 SHIP + dummy** (dropped `tempro` + `pro1`;
+> peptides/clean/boltz/rfd3/esmstabp already out) · full **`biolm-models`→`biolm-hub` + `bm`→`bh`
+> rebrand** · **R2 uniform re-layout** to `biolm-hub/{model-weights,test-data,model-cache}/models/<slug>`
+> (validated live on esm2) · **schema standardization (#5)** · **licenses** esmc/igbert/igt5→MIT +
+> **contacts** `support+security@` / `support+conduct@` · **golden fixtures generated for 35/36 models**
+> (only `chai1` missing — a Modal image-build bug) · **`mypy --strict` = 0 across 343 files and now a
+> BLOCKING CI gate** (the ~1236-error debt is paid down). CI is green.
+>
+> **⚠️ The TL;DR below that says "Milestone B is DONE / 38 models" is STALE** — that was a sample/first
+> pass. A **full 36-model deploy + integration/deployment matrix at the final state is still OWED.**
+>
+> **⭐ Decision status:** D1 tempro = DROPPED ✓ · D3 pro1 = DROPPED ✓, esmc/igbert/igt5 = MIT ✓ (**still
+> need you:** prody's transitive OpenBabel GPL-2.0 + the inferred per-model copyright holders) · D4
+> contacts set ✓ (**confirm** the inboxes route to a human) · D5 rebrand DONE, goldens 35/36, prod-deploy
+> still optional · D6 peptides = stay dropped ✓ · **still need you: D2** (Modal CI token + `deploy-approved`
+> gate on a `modal-dev` GitHub Environment) and **D8** (verify no raw PDFs in the now-public bucket +
+> delete the stale `protocols-r2-bkt`/`ngc-cli-api-key` secrets + green-light the big legacy-R2 cleanup).
+>
+> **Still-open engineering:** `chai1` build fix · `#6` commons (sadie serialize, decorator de-dup,
+> seed_everything lift) · the **full deploy/test matrix** · **R2 public-ready cleanup** (legacy
+> `biolm-hub/models/` ~255 GB + `model-store/` ~34 GB + partial caches) · **W-launch** minus the two
+> irreversibles (nuke history, flip public).
+
 **Authoritative as of 2026-07-01 (session `oss-w3b-wsec`).** Supersedes stale items in the older `.planning`
 docs. Read THIS first, make the decisions in the ⭐ section, then tell me "go" on the code work.
 

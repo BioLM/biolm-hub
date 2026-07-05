@@ -1,5 +1,75 @@
 # REMAINING WORK — master open-items ledger
 
+> ## ▶▶ FABLE SESSION LIVE STATUS — 2026-07-05 (session `final-oss-release-sprint-1`; trust THIS first)
+> Fresh Fable took over from the FABLE_HANDOFF. Independently re-audited everything (7 fresh-context
+> agents vs live Modal/R2/code/git/internal-repo/testing-harness/skills) before touching anything.
+>
+> **USER DECISIONS (this session):** prod = **OSS-repo-only** (prod `biolm-hub` env stays empty; users
+> deploy to their own Modal) · R2 legacy trees = **delete now** (DONE) · prody/OpenBabel = **accept**
+> (keep prody) · schema uniformity = **converge fully + fix bugs**. Deferred-to-launch (not blocking):
+> D2 GitHub `modal-dev` env+secrets+label; D4 confirm support+security@/support+conduct@ inboxes are
+> monitored.
+>
+> **DONE this session (committed on `main`, HEAD=`8d7f1f0`, 5 commits past `98e91ff`; make check + docs
+> green locally; CI running):**
+> - **R2 public-ready cleanup DONE + verified** — deleted legacy `biolm-hub/models/` (274 GB) +
+>   `model-store/` (36 GB) = 311 GB via `scratchpad/r2_cleanup.py --execute`. Bucket now = ONLY
+>   `model-weights/models/` (273.6 GB, 32 slugs, all markers complete) + `test-data/models/` (36 dirs).
+>   Zero raw PDFs, zero dropped-model weights (tempro went with the legacy tree).
+> - **Schema uniformity (`3024aaa`)** — residue_embeddings converged (7 models + glossary de-dup),
+>   mean_plddt, 4 DTOs re-based to ResponseModel, igbert/igt5 pad-row slicing, ablang2 encode unified,
+>   8 stale doc refs fixed. esm1v predict left as-is (semantically distinct fill-mask output — bar-#7
+>   reclassification, documented). Old names preserved via aliases.
+> - **`#6` commons (`88c2474`)** — build_partial_payload de-dup, gateway payload serialization (sadie
+>   `__reduce__` stopgap removed), seed_torch lifted to commons.util.device.
+> - **Credential-less path (`bb8d464`)** — optional R2 secret mount (probe + `BIOLM_SKIP_MODAL_SECRETS`);
+>   anonymous r2.dev golden-read fallback so `pytest -m integration` runs creds-less.
+> - **Skills (`fc82a03`)** — 5 defects fixed, `models/dummy/fixture.py` template added, `make docs` gate
+>   added to both skills. **Cosmetics (`8d7f1f0`)** — pyproject mypy-comment/black-exclude, prody drift.
+> - Each change fresh-reviewer-verified (schema/commons/skills reviewers ran; all SAFE).
+>
+> **NEXT (in order): (1)** chai1 build determinism (Modal). **(2)** Milestone B — deploy ALL 36+dummy to
+> `biolm-hub-dev` creds-aware waves (CPU→T4→mid→A100), `modal app logs`-verify health, cold-invoke every
+> action, settle the `esm1v` phantom crash-loop (deploy fresh), **regenerate the 6 goldens** (esmc, e1,
+> msa_transformer, dsm, igt5, immunefold), REVIEW every golden, make `pytest -m integration` genuinely
+> pass for all 36, **deploy-verify** sadie-gateway-v1-roundtrip + secret-mount both/none paths +
+> live-validate creds-less r2.dev read (use `BIOLM_SKIP_MODAL_SECRETS=1` from dev). **(3)** testing
+> validator-gap (deterministic models: thermompnn/thermompnn_d) + tolerance audit (immunefold rmsd 1e-4)
+> + snapshot 7 Category-B structures to R2 shared/. **(4)** skills executability proof (fresh agent
+> follows both skills end-to-end). **(5)** residual close (#8) + launch staging (#9: contacts/D2, 5-min
+> quickstart from clean checkout, W-launch one-step-from-go; irreversibles = human).
+>
+> **KEY FACTS:** repo `BioLM/biolm-hub` exists + PRIVATE + `main` pushed; prod env empty; secrets clean
+> (only cloudflare-r2 + hf-api-token; stale ones gone); git HISTORY still dirty (nuke at launch, planned);
+> `.planning/` deleted at launch. Local golden reads: creds-less HTTP now works, else route via Modal
+> (`scratchpad/golden_io.py`); never put R2 creds on the shell. Race hazard: never edit `models/` during
+> a Modal build.
+
+> ## 🔄 STATUS RECONCILIATION — 2026-07-05 (added post-overnight; read before the body)
+> This ledger is a **2026-06-28→30 snapshot**; a lot of §1–§4 is now DONE. For current status trust
+> `.planning/FABLE_HANDOFF.md` + the reconciliation banner atop `RELEASE_ROADMAP.md`. Treat the body's
+> "TODO/deferred" items as **verify-then-close** — many already landed.
+>
+> **DONE since this was written:** Gate-1 code (drops → **36 SHIP + dummy**, `biolm-hub`/`bh` rebrand,
+> R2 uniform re-layout, `#5` schema standardization, esmc/igbert/igt5→MIT, plus-addressed contacts) +
+> **CI green** · **golden fixtures 35/36** generated to `biolm-hub/test-data/models/<slug>/` · **`mypy
+> --strict` = 0 tree-wide and now BLOCKING in CI** — this **retires the strict-mypy blocker** tracked in
+> this ledger.
+>
+> **STILL OPEN (the real v1 tail):**
+> - **`chai1`** Modal image-build bug (its golden is the only one missing → 35/36).
+> - **Full 36-model deploy + integration/deployment matrix** (§1 "Milestone B", at the *final* state —
+>   the prior "Milestone B DONE" notes were a sample pass, not the full matrix).
+> - **`#6` commons** (§2 W3b): sadie gateway-serialize, `decorator.py` partial-payload de-dup,
+>   `seed_everything` lift — runtime-path changes needing a representative deploy-verify.
+> - **License / secret / R2 hygiene** (§3): the *code* is de-internalized + gitleaks-gated, but the
+>   **live R2 bucket still needs a public-ready cleanup** (legacy `biolm-hub/models/` ~255 GB +
+>   `model-store/` ~34 GB + any partial/corrupt caches), and the per-model inferred-copyright confirms +
+>   prody-OpenBabel + no-raw-PDFs checks need the human.
+> - **W-launch** (§4): everything except the two irreversibles (nuke git history, flip repo public).
+> - Round-1's residual (`reviews/round-1/PHASE_B_DEFERRED.md`) collapses onto the buckets above — see
+>   `FABLE_HANDOFF.md` §1 for the per-item mapping; do NOT re-review round-1 from scratch.
+
 > # ⛳ ON RESUME, READ `.planning/RELEASE_ROADMAP.md` FIRST.
 > That doc is the **authoritative, decision-forward resume anchor** (2026-07-01): current state, the ordered
 > release path (Phases A–E), and the ⭐ **decisions-for-you** ordered by importance with clear actions +
