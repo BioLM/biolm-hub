@@ -198,7 +198,7 @@ Deterministic output comparison: test fixtures verify chain extraction and RMSD 
 - **Superimposition**: Uses `biotite.structure.superimpose()` which implements the Kabsch algorithm for optimal rigid-body alignment.
 - **RMSD calculation**: Uses `biotite.structure.rmsd()` on C-alpha atoms after superimposition.
 - **Sequence extraction**: Converts 3-letter amino acid codes to 1-letter codes using a fixed mapping (25 residue types including non-standard). Unknown residues map to "X".
-- **Caching**: Response caching is handled by the platform layer, not the model container.
+- **Caching**: Response caching is available as an optional, off-by-default gateway feature (`BIOLM_CACHE_ENABLED`) -- see the gateway docs; it is not handled by the model container.
 
 ## License
 

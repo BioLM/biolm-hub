@@ -159,11 +159,7 @@ The `encode`, `score`, and `log_prob` actions are deterministic. The `generate` 
 
 ### Caching Behavior
 
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
-
-- Redis (Modal Dict) caching for fast repeated lookups
-- R2 caching for persistence
-- Cache keys are determined by the full request payload (PDB content + parameters)
+Response caching is available as an optional, off-by-default gateway feature (`BIOLM_CACHE_ENABLED`) -- see the gateway docs; it is not handled by the model container. Cache keys are determined by the full request payload (PDB content + parameters).
 
 ## Versions & Changelog
 

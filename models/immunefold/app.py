@@ -96,7 +96,7 @@ image = (
     )
     .uv_pip_install(
         common_requirements
-    )  # Install after deps so runtime env has redis, modal, pydantic, etc.
+    )  # Install after deps so runtime env has modal, pydantic, etc.
     .workdir("/root/models/immunefold")
     .run_commands(
         f"git clone https://github.com/CarbonMatrixLab/immunefold.git  && cd immunefold && git switch --detach {immunefold_commit_hash}"

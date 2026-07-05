@@ -163,10 +163,7 @@ Different seeds produce different structural samples from the diffusion process.
 
 ### Caching Behavior
 
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container:
-- Redis (Modal Dict) caching for fast repeated lookups
-- R2 caching for persistence
-- Important given the high compute cost of each prediction
+Response caching is available as an optional, off-by-default gateway feature (`BIOLM_CACHE_ENABLED`) -- see the gateway docs; it is not handled by the model container. Especially useful given the high compute cost of each prediction.
 
 ## Versions & Changelog
 

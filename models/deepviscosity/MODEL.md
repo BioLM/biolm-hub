@@ -199,8 +199,7 @@ The model is fully deterministic: identical inputs produce identical outputs acr
 ### Caching Behavior
 
 - **Cache key composition**: Determined by input sequences and params (include_deepsp_features flag)
-
-Response caching (Redis/R2 two-tier) is handled by the BioLM platform layer, not by the model container.
+- Response caching is available as an optional, off-by-default gateway feature (`BIOLM_CACHE_ENABLED`) -- see the gateway docs; it is not handled by the model container.
 - **Memory snapshots**: Enabled -- all 105 models (3 CNN + 102 ANN) are loaded during snapshot creation for fast cold starts
 
 ## Training Procedures

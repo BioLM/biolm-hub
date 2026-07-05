@@ -145,10 +145,7 @@ When no seed is provided, the model uses time-based entropy for diversity across
 
 ### Caching Behavior
 
-Response caching is handled by the BioLM platform layer (not the model container):
-- Redis (Modal Dict) caching for fast repeated lookups
-- R2 caching for persistence
-- Cache keys determined by full request payload (PDB content + parameters + seed)
+Response caching is available as an optional, off-by-default gateway feature (`BIOLM_CACHE_ENABLED`) -- see the gateway docs; it is not handled by the model container. Cache keys are determined by the full request payload (PDB content + parameters + seed).
 
 ## Versions & Changelog
 

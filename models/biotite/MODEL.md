@@ -145,7 +145,7 @@ Request
 
 ### Caching Behavior
 
-Response caching is handled by the platform layer, not by the model container:
+Response caching is available as an optional, off-by-default gateway feature (`BIOLM_CACHE_ENABLED`) -- see the gateway docs; it is not handled by the model container.
 
 - Cache key derived from PDB strings, chain IDs, and action type
 - Cache hits are always valid since outputs are deterministic

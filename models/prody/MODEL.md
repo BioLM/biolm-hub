@@ -148,7 +148,7 @@ Request
 
 ### Caching Behavior
 
-Response caching is handled at the platform layer, not by the model container. Memory snapshots are disabled (`enable_memory_snapshot=False`) to ensure fresh code execution on each container start.
+Response caching is available as an optional, off-by-default gateway feature (`BIOLM_CACHE_ENABLED`) -- see the gateway docs; it is not handled by the model container. Memory snapshots are disabled (`enable_memory_snapshot=False`) to ensure fresh code execution on each container start.
 
 ## Versions & Changelog
 
