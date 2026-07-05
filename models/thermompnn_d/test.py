@@ -1,42 +1,19 @@
-from typing import Any, Optional
-
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
 from models.commons.testing.runner import generate_tests_from_suite
 from models.thermompnn_d.config import MODEL_FAMILY
 from models.thermompnn_d.fixture import INPUT1, INPUT2, INPUT3, INPUT4, INPUT5, INPUT6
 
-
-def _validate_thermompnn_d_predict(
-    actual_output: dict[str, Any], _expected_output: Optional[dict[str, Any]] = None
-) -> None:
-    """Validate ThermoMPNN-D predict output with mode-specific field checks."""
-    assert "results" in actual_output, "Response missing 'results' key"
-    assert len(actual_output["results"]) > 0, "Results list is empty"
-    for result in actual_output["results"]:
-        assert "mutation" in result, "Result missing 'mutation' key"
-        assert "ddg" in result, "Result missing 'ddg' key"
-        assert isinstance(result["ddg"], int | float), "ddg must be numeric"
-
-        # Check mode-specific fields based on mutation format
-        mutation = result["mutation"]
-        if ":" in mutation:
-            required = [
-                "position1",
-                "position2",
-                "wildtype1",
-                "wildtype2",
-                "mutation_aa1",
-                "mutation_aa2",
-            ]
-            mode = "Double"
-        else:
-            required = ["position", "wildtype", "mutation_aa"]
-            mode = "Single"
-
-        for field in required:
-            assert field in result, f"{mode} mutation missing '{field}': {mutation}"
-
+# ThermoMPNN-D is a DETERMINISTIC ΔΔG predictor (single/double-mutation and SSM
+# scans; no sampling), so integration cases numerically compare the ddG output
+# against the R2 golden via DictComparator instead of a structural-only validator.
+# The mode-specific string/int fields (mutation, position*, wildtype*, mutation_aa*)
+# are compared exactly by DictComparator; ddG is compared with rel_tol=1e-4 to match
+# the sibling ΔΔG model `spurs` (see models/spurs/test.py). Because both the golden
+# and the live response are serialized by the same code path, optional fields left
+# `None` (e.g. position1/position2 for single mutations) line up on both sides. The
+# expected-output filenames below are exactly the goldens written by fixture.py.
+_DDG_TOLERANCES = {"rel_tol": 1e-4}  # tight numerical tolerance for ΔΔG (kcal/mol)
 
 # ThermoMPNN-D test suite - single variant
 test_suite = TestSuite(
@@ -49,32 +26,38 @@ test_suite = TestSuite(
                 ActionTestCase(
                     action_name=ModelActions.PREDICT,
                     input_fixture=INPUT1,
-                    validator=_validate_thermompnn_d_predict,
+                    expected_output_fixture="thermompnn-d-predict-input1-expected_output.json",
+                    tolerances=_DDG_TOLERANCES,
                 ),
                 ActionTestCase(
                     action_name=ModelActions.PREDICT,
                     input_fixture=INPUT2,
-                    validator=_validate_thermompnn_d_predict,
+                    expected_output_fixture="thermompnn-d-predict-input2-expected_output.json",
+                    tolerances=_DDG_TOLERANCES,
                 ),
                 ActionTestCase(
                     action_name=ModelActions.PREDICT,
                     input_fixture=INPUT3,
-                    validator=_validate_thermompnn_d_predict,
+                    expected_output_fixture="thermompnn-d-predict-input3-expected_output.json",
+                    tolerances=_DDG_TOLERANCES,
                 ),
                 ActionTestCase(
                     action_name=ModelActions.PREDICT,
                     input_fixture=INPUT4,
-                    validator=_validate_thermompnn_d_predict,
+                    expected_output_fixture="thermompnn-d-predict-input4-expected_output.json",
+                    tolerances=_DDG_TOLERANCES,
                 ),
                 ActionTestCase(
                     action_name=ModelActions.PREDICT,
                     input_fixture=INPUT5,
-                    validator=_validate_thermompnn_d_predict,
+                    expected_output_fixture="thermompnn-d-predict-input5-expected_output.json",
+                    tolerances=_DDG_TOLERANCES,
                 ),
                 ActionTestCase(
                     action_name=ModelActions.PREDICT,
                     input_fixture=INPUT6,
-                    validator=_validate_thermompnn_d_predict,
+                    expected_output_fixture="thermompnn-d-predict-input6-expected_output.json",
+                    tolerances=_DDG_TOLERANCES,
                 ),
             ],
         )

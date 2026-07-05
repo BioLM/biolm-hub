@@ -32,6 +32,11 @@ test_suite = TestSuite(
                     expected_output_fixture=LOGPROB_OUTPUT_TPL,
                     tolerances={"rel_tol": 1e-4},
                 ),
+                # is_generated_seq compares length only, NOT the residues — deliberate:
+                # Evo2 GENERATES sequences by autoregressive sampling, so the exact bases
+                # differ run to run and a numeric golden comparison would be meaningless.
+                # The golden pins the expected length instead. (The ENCODE and LOG_PROB
+                # cases above ARE real numeric comparisons — those outputs are deterministic.)
                 ActionTestCase(
                     action_name=ModelActions.GENERATE,
                     input_fixture=GENERATE_INPUT,

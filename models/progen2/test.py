@@ -47,6 +47,12 @@ test_suite = TestSuite(
         VariantTestMapping(
             variant_config={},  # Empty dict means applies to ALL variants
             test_cases=[
+                # Structural validator (not a numeric golden comparison) is deliberate:
+                # ProGen2 GENERATES sequences by autoregressive temperature/nucleus
+                # sampling, so the sampled sequences differ run to run. There is no fixed
+                # "golden" to compare against; the validator asserts the structural
+                # contract instead (right sample count, each starts with the context
+                # prefix, none exceeds max_length).
                 ActionTestCase(
                     action_name=ModelActions.GENERATE,
                     input_fixture=GENERATE_INPUT,

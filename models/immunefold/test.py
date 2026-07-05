@@ -17,6 +17,13 @@ from models.immunefold.fixture import (
 test_suite = TestSuite(
     model_family=MODEL_FAMILY,
     r2_fixture_subdir="models",
+    # ImmuneFold is a DETERMINISTIC PLM-based folder (ESM-2 3B + Transformer/GNN,
+    # no diffusion or OpenMM relaxation), so it is closest to ESMFold. pdb_rmsd_threshold
+    # is set to 0.5 Å to match ESMFold / chai1 single-chain: the previous 1e-4 Å is
+    # physically implausible for cross-GPU/CUDA structure comparison (0.0001 Å is below
+    # the numerical noise floor of a Kabsch superposition) and would false-fail on any
+    # hardware that differs from the golden's. rel_tol=1e-4 (for ptm/plddt) matches the
+    # sibling antibody folder immunebuilder and is left unchanged.
     variant_test_mappings=[
         # Antibody variant - has 3 input types
         VariantTestMapping(
@@ -26,19 +33,19 @@ test_suite = TestSuite(
                     action_name=ModelActions.FOLD,
                     input_fixture=ANTIGEN_PREDICT_INPUT,
                     expected_output_fixture=ANTIGEN_PREDICT_OUTPUT,
-                    tolerances={"rel_tol": 1e-4, "pdb_rmsd_threshold": 1e-4},
+                    tolerances={"rel_tol": 1e-4, "pdb_rmsd_threshold": 0.5},
                 ),
                 ActionTestCase(
                     action_name=ModelActions.FOLD,
                     input_fixture=ANTIBODY_PREDICT_INPUT,
                     expected_output_fixture=ANTIBODY_PREDICT_OUTPUT,
-                    tolerances={"rel_tol": 1e-4, "pdb_rmsd_threshold": 1e-4},
+                    tolerances={"rel_tol": 1e-4, "pdb_rmsd_threshold": 0.5},
                 ),
                 ActionTestCase(
                     action_name=ModelActions.FOLD,
                     input_fixture=NANOBODY_PREDICT_INPUT,
                     expected_output_fixture=NANOBODY_PREDICT_OUTPUT,
-                    tolerances={"rel_tol": 1e-4, "pdb_rmsd_threshold": 1e-4},
+                    tolerances={"rel_tol": 1e-4, "pdb_rmsd_threshold": 0.5},
                 ),
             ],
         ),
@@ -50,7 +57,7 @@ test_suite = TestSuite(
                     action_name=ModelActions.FOLD,
                     input_fixture=TCR_PREDICT_INPUT,
                     expected_output_fixture=TCR_PREDICT_OUTPUT,
-                    tolerances={"rel_tol": 1e-4, "pdb_rmsd_threshold": 1e-4},
+                    tolerances={"rel_tol": 1e-4, "pdb_rmsd_threshold": 0.5},
                 ),
             ],
         ),

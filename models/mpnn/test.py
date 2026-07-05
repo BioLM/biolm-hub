@@ -35,6 +35,13 @@ def _validate_mpnn_generate(
 # MPNN test suite — test 3 representative variants (protein + ligand + global_label_membrane)
 # with 1 input each. Full 6-variant x 4-input matrix (24 tests) exceeds CI timeout.
 # Membrane variant is included to catch regressions in the membrane-aware code path.
+#
+# Structural validator (not a numeric golden comparison) is deliberate: ProteinMPNN
+# GENERATES sequences by temperature-sampling the per-residue distribution, so the
+# designed sequence — and the packed side-chain PDB / confidence scores derived from
+# it — vary run to run. There is no fixed "golden" to compare numerically; the
+# validator asserts the output is well-formed (non-empty sequence + PDB, confidences
+# in [0, 1]) instead.
 test_suite = TestSuite(
     model_family=MODEL_FAMILY,
     r2_fixture_subdir="models",

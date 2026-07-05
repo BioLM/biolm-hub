@@ -16,6 +16,11 @@ test_suite = TestSuite(
         VariantTestMapping(
             variant_config={},  # Empty dict means applies to ALL variants (only one in this case)
             test_cases=[
+                # is_generated_seq compares length only, NOT the residues — deliberate:
+                # ESM-IF1 GENERATES sequences by temperature sampling from the inverse-
+                # folding distribution, so the exact residues differ run to run and a
+                # numeric golden comparison would be meaningless. The golden fixture pins
+                # the expected sequence length (a stable structural property) instead.
                 ActionTestCase(
                     action_name=ModelActions.GENERATE,
                     input_fixture=GENERATE_INPUT,

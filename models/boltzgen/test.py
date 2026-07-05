@@ -172,6 +172,11 @@ test_suite = TestSuite(
         VariantTestMapping(
             variant_config={},
             test_cases=[
+                # Structural validator (not a numeric golden comparison) is deliberate:
+                # BoltzGen is a GENERATIVE diffusion designer — each run draws a fresh
+                # diffusion sample, so the CIF coordinates, designed sequence, and metrics
+                # differ run to run. There is no fixed "golden" to compare against; we
+                # assert the output is a well-formed CIF instead.
                 ActionTestCase(
                     action_name=ModelActions.GENERATE,
                     input_fixture=_FAST_INPUT,
