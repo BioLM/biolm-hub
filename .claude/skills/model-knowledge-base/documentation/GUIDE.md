@@ -56,7 +56,7 @@ Related Models, Biological Background.
 - Every benchmark number is traceable to a paper table/figure with a citation; no fabricated numbers.
 - README.md summarizes; MODEL.md has the depth. Do not copy paragraphs between them.
 - Action verbs and schema field names match `models/<slug>/schema.py` and the Global Rules.
-- No internal references (no `biolm-modal`, no internal R2 uploads, no billing/redis).
+- No internal references (no internal repo or service names, no internal R2 uploads, no billing/redis layer).
 
 ---
 

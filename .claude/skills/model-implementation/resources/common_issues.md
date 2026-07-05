@@ -41,8 +41,10 @@ this is the fuller set.
     the integration tests load the goldens it writes.
 12. **Regenerating goldens to force a green test.** The golden output is the oracle. Only regenerate
     when an output change is *intended*, and say so in the PR.
-13. **Pushing with `make check` red.** `make check` (style + mypy + unit) is what CI runs on every PR.
-    Fix failures locally first; never push just to re-trigger CI.
+13. **Pushing with `make check` red.** `make check` (style + mypy + schema-doc check + CI-script
+    tests + unit tests) is CI's main `checks` job. Fix failures locally first; never push just to
+    re-trigger CI. Note `make check` does **not** build docs — CI runs a separate `mkdocs build
+    --strict` job, so also run `make docs` (a broken schema description or generated page fails it).
 
 ## Modal / deployment
 

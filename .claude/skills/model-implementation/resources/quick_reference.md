@@ -20,7 +20,8 @@ via the `model-knowledge-base` skill.
 ## Essential commands
 
 ```bash
-make check                                  # style + mypy + unit — MANDATORY before push (what CI runs)
+make check                                  # style + mypy + schema-doc check + CI-script tests + unit — MANDATORY before push (CI's `checks` job)
+make docs                                   # mkdocs build --strict — separate CI job; the generated model page must build
 make test-unit                              # fast unit tests only (no Modal/R2)
 
 # Optional local deploy + tests (need a Modal account):
@@ -51,7 +52,7 @@ logger = get_logger(__name__)
   `ModelMixin` otherwise.
 - Mark the class with `@biolm_model_class` and each action with `@modal.method()` +
   `@modal_endpoint(app_name=app_name)`.
-- There is **no** billing/redis layer — never import `models.commons.billing` or `redis_url_secret`.
+- There is **no** billing or redis layer in this repo — never import a billing mixin or a redis/cache secret carried over from another codebase.
 
 ## GPU / resource tiers (Modal)
 

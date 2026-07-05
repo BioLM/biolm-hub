@@ -10,7 +10,8 @@ Write all model files in dependency order, following the patterns from `models/d
 3. `download.py` — weight acquisition (if the model has external weights)
 4. `app.py` — Modal application
 5. `test.py` — test suite
-6. `__init__.py` — empty package marker
+6. `fixture.py` — golden-fixture generator (only if `test.py` uses golden output files)
+7. `__init__.py` — empty package marker
 
 ---
 
@@ -68,7 +69,14 @@ class MyModelResponse(ResponseModel):
 | Protein (20 AA + ambiguous X, B, Z) | `validate_aa_extended` |
 | Protein (20 AA only) | `validate_aa_unambiguous` |
 | DNA | `validate_dna_unambiguous` |
-| RNA | `validate_rna_unambiguous` |
+| SMILES | `validate_smiles` (or `validate_smiles_with_rdkit`) |
+| RNA | *no ready-made `validate_*` function* — see the RNA note below |
+
+> **RNA note:** there is no `validate_rna_unambiguous`. `models.commons.data.validator` exports an
+> `rna_unambiguous` charset constant (`"ACUG"`); validate RNA by checking membership against it
+> inside your own validator, e.g. `all(r in rna_unambiguous for r in seq.upper())` — see
+> `models/chai1/schema.py`. (Adding a `validate_rna_unambiguous` helper to commons would be a
+> separate commons change — out of scope during model implementation.)
 
 ---
 
@@ -332,7 +340,7 @@ if __name__ == "__main__":
 
 **Anti-patterns:**
 ```python
-from models.commons.billing.mixin import BillingMixin  # WRONG — use models.commons.model.base
+from other_repo.mixins import CachingMixin              # WRONG — no billing/caching mixin here; use ModelMixin/ModelMixinSnap from models.commons.model.base
 print("loading model")                                  # WRONG — use logger
 raise ValueError("bad sequence")                        # WRONG — use UserError
 ```
@@ -388,7 +396,72 @@ test_encode_deployment = generate_tests_from_suite(test_suite, test_type="deploy
 
 ---
 
-## 2.6 `__init__.py`
+## 2.6 `fixture.py` (golden generation)
+
+Write `fixture.py` **only if** `test.py` compares against golden output files (i.e. uses
+`input_filename_template` + `expected_output_fixture`). If `test.py` validates entirely with a custom
+`validator=`, you don't need one. **Copy the template at `models/dummy/fixture.py`** and adapt it —
+`models/esm2/fixture.py` is a fuller multi-fixture example.
+
+```python
+from models.commons.model.schema import ModelActions
+from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
+from models.commons.testing.fixture import FixtureGenerator
+from models.my_model.config import MODEL_FAMILY
+from models.my_model.schema import MyModelRequest
+
+# Self-contained input: inlined (or imported from shared_assets), never read from R2 at
+# module scope — so `pytest --collect-only` works with no Modal/R2 credentials.
+ENCODE_INPUT = "encode_input.json"
+ENCODE_OUTPUT = "encode_expected_output.json"   # multi-variant: "{variant.name}_encode_expected_output.json"
+
+
+def _build_fixture_generation_suite() -> TestSuite:
+    request = MyModelRequest.model_validate({"items": [{"sequence": "MKTLLLTLVVVTIVCLDLGAVS"}]})
+    return TestSuite(
+        model_family=MODEL_FAMILY,
+        r2_fixture_subdir="models",
+        variant_test_mappings=[
+            VariantTestMapping(
+                variant_config={},   # {} = all/single variant; {"MODEL_SIZE": "3b"} targets one
+                test_cases=[
+                    ActionTestCase(
+                        action_name=ModelActions.ENCODE,
+                        input_fixture=request,
+                        input_filename_template=ENCODE_INPUT,
+                        expected_output_fixture=ENCODE_OUTPUT,
+                    ),
+                ],
+            )
+        ],
+    )
+
+
+def generate() -> None:
+    FixtureGenerator(_build_fixture_generation_suite()).generate()
+
+
+if __name__ == "__main__":
+    generate()
+```
+
+**What `generate()` does** (`FixtureGenerator` in `models.commons.testing.fixture`): for each
+variant that matches a mapping, it (1) writes each programmatic `input_fixture` to R2 at
+`test-data/models/<slug>/<input_filename_template>`, (2) spins up the model's Modal app locally —
+which **self-populates weights** via `download.py`, so you don't pre-stage anything — (3) calls each
+action with the input, and (4) writes the response to `test-data/models/<slug>/<expected_output_fixture>`.
+Those written files are the goldens the integration tests then load. Generation needs Modal + R2
+write access, so it runs locally (or under the maintainer-gated deploy job), not in the unit-test CI.
+
+**Requirements:**
+- Inputs self-contained and lazily built (inline or `shared_assets`); no module-scope R2 reads or
+  heavy imports (keeps `pytest --collect-only` Modal-free).
+- Single-variant models: use plain filenames — do **not** put `{variant.name}` in the paths.
+- Do not pass `remote_fn_kwargs` here; the generator always calls with `_skip_cache=True` itself.
+
+---
+
+## 2.7 `__init__.py`
 
 Create empty:
 ```bash
@@ -399,9 +472,9 @@ touch models/<name>/__init__.py
 
 ## Code Review Checklist (before Phase 3)
 
-- [ ] All imports organized (Core, Data, Modal, Model, Storage, Testing, Util — no Billing category)
+- [ ] All imports organized (Core, Data, Modal, Model, Storage, Testing, Util — these are the only import groups)
 - [ ] All dependency versions pinned exactly (`==X.Y.Z`)
-- [ ] `ModelMixinSnap` or `ModelMixin` used (never `BillingMixinSnap`/`BillingMixin`)
+- [ ] `ModelMixinSnap` or `ModelMixin` used (these are the only base mixins — don't import a billing/caching mixin carried over from another codebase)
 - [ ] Seeds set for all sources (torch, numpy, random, CUDA) in `snap=False` enter
 - [ ] `@modal.method()` + `@modal_endpoint()` on every action method
 - [ ] `modal_class_name` in `config.py` matches the class name in `app.py`
@@ -410,7 +483,7 @@ touch models/<name>/__init__.py
 - [ ] `download.py` returns `Path`, raises `RuntimeError`, uses `extract_model_variant`
 - [ ] HuggingFace revision is a 40-char commit hash
 - [ ] Single-variant models do NOT use `{variant.name}` template in fixture paths
-- [ ] `make check` passes (style + mypy + unit)
+- [ ] `make check` passes (style + mypy + schema-doc check + CI-script tests + unit tests)
 
 ## Gate
 

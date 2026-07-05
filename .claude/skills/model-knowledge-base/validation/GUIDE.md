@@ -31,10 +31,14 @@ paper before opening the PR. Catch drift, fabricated numbers, and broken referen
 - `README.md`, `MODEL.md`, `BIOLOGY.md` cross-link each other.
 - No paragraph duplicated between README.md and MODEL.md.
 
-### 4. Syntax + style
+### 4. Syntax + style + docs build
 - `python -c "import yaml; yaml.safe_load(open('models/<slug>/sources.yaml'))"` — valid.
 - `python -c "import yaml; yaml.safe_load(open('models/<slug>/comparison.yaml'))"` — valid.
 - `make style` passes (it lints docs/YAML hygiene too).
+- `make docs` passes (`mkdocs build --strict`). The model's doc page is **generated** from these
+  knowledge-graph files + `config.py`, and CI runs the docs build as a **separate job** — a broken
+  cross-link, malformed markdown table, or bad YAML here fails CI even when `make style`/`make check`
+  are green.
 
 ---
 
@@ -46,5 +50,6 @@ paper before opening the PR. Catch drift, fabricated numbers, and broken referen
 - [ ] All referenced model slugs exist in `models/`
 - [ ] `sources.yaml` and `comparison.yaml` are valid YAML
 - [ ] `make style` passes
+- [ ] `make docs` passes (mkdocs --strict — the generated model page builds)
 
 When all boxes are checked, the knowledge graph is complete and ready for the PR.

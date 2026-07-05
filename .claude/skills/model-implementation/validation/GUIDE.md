@@ -7,7 +7,8 @@ Verify the implementation is correct before documentation and PR. Follow steps i
 
 ## 3.1 `make check` — MANDATORY
 
-`make check` runs style (`ruff` + `black`), mypy, and unit tests. This is exactly what CI runs on every PR.
+`make check` runs style (`ruff` + `black` + hygiene hooks), mypy, the schema-doc check, the CI-script
+tests, and the unit tests — the same checks as CI's main `checks` job.
 
 ```bash
 make check
@@ -18,9 +19,24 @@ Fix every failure before proceeding. Never push with `make check` red.
 If you want to run the sub-checks individually:
 
 ```bash
-make style        # ruff + black formatting
-make mypy         # static type checking (enforced)
-make test-unit    # fast unit tests (no Modal, no R2)
+make style              # ruff + black + hygiene hooks
+make mypy               # static type checking (enforced)
+make check-schema-docs  # every Field has a rendered description; shared fields match the glossary
+make test-github-scripts  # unit tests for the CI change-detection scripts
+make test-unit          # fast unit tests (no Modal, no R2)
+```
+
+---
+
+## 3.1a `make docs` — the generated page must build
+
+`make check` does **not** build the docs. CI runs a **separate `docs` job** (`mkdocs build
+--strict`). Your model's page is *generated* from its `config.py` + knowledge-graph files by
+`docs/gen_pages.py`, so a broken schema description, malformed YAML, or a bad cross-link can fail the
+docs build even when `make check` is green.
+
+```bash
+make docs   # mkdocs build --strict — must be clean before you push
 ```
 
 ---
@@ -33,7 +49,11 @@ If `test.py` uses golden output files (not just custom validators), generate the
 python models/<name>/fixture.py
 ```
 
-This runs the model against predefined inputs and uploads the outputs to R2 as reference ("golden") values. Without this step, integration tests fail with "file not found" errors.
+This runs the model against predefined inputs and uploads both the inputs and the outputs to R2
+(under `test-data/models/<slug>/`) as reference ("golden") values. Without this step, integration
+tests fail with "file not found" errors. If you haven't written `fixture.py` yet, see
+**Phase 2 → `fixture.py`** in `implementation/GUIDE.md` and copy the template at
+`models/dummy/fixture.py`.
 
 **The golden output is the oracle.** Only regenerate when an output change is intentional, and say so in the PR.
 
@@ -98,7 +118,8 @@ The full deploy + integration + deployment test matrix runs in CI under the `dep
 
 ## Validation Checklist
 
-- [ ] `make check` passes (style + mypy + unit)
+- [ ] `make check` passes (style + mypy + schema-doc check + CI-script tests + unit tests)
+- [ ] `make docs` passes (mkdocs --strict — the generated model page builds)
 - [ ] All dependencies pinned to exact versions
 - [ ] Seeds set (torch, numpy, random, CUDA) — deterministic outputs
 - [ ] `UserError` used for bad-input paths
@@ -131,4 +152,4 @@ Check `app.py` image build — wrong dependency version or missing system packag
 
 ## Gate
 
-Before Phase 4: `make check` green; unit tests pass; coverage ≥85%.
+Before Phase 4: `make check` green; `make docs` green; unit tests pass; coverage ≥85%.

@@ -16,41 +16,11 @@ model for their task.
 
 ## comparison.yaml Structure
 
-Note: `models/dummy/comparison.yaml` does not exist yet -- use the structure below directly.
-
-```yaml
-model_slug: "{slug}"
-display_name: "{display_name}"
-last_updated: "YYYY-MM-DD"
-
-strengths:
-  # At least 5 entries. Be specific and actionable.
-  - "Top-5 on ProteinGym variant effect prediction across 87 DMS datasets (650M variant)"
-
-weaknesses:
-  # At least 5 entries. Be honest about limitations.
-  - "Truncates sequences >1022 residues -- use a chunking strategy or a model with longer context"
-
-use_when:
-  # At least 5 entries. Describe concrete scenarios.
-  - "When you need general-purpose protein embeddings for downstream ML tasks like fitness prediction or clustering"
-
-dont_use_when:
-  # At least 5 entries. Always name the better alternative.
-  - "When you need structure-conditioned sequence design (use ProteinMPNN instead -- it accepts backbone coordinates)"
-
-alternatives:
-  # Models that could replace this one for overlapping tasks.
-  - model: "{slug}"
-    when_better: "description of when the alternative is superior"
-    when_worse: "description of when this model is superior"
-
-complements:
-  # Models commonly used together with this one in pipelines.
-  - model: "{slug}"
-    workflow: "description of how the two models work together"
-    example_protocol: null
-```
+Copy the template at `models/dummy/comparison.yaml` and fill it in — it is the authoritative format,
+carrying inline field-by-field guidance and all required keys (`model_slug`, `display_name`,
+`last_updated`, `strengths`, `weaknesses`, `use_when`, `dont_use_when`, `alternatives`,
+`complements`). Do not re-invent the structure here; the Steps below explain how to populate each
+section, and the Gate Criteria list the minimum entry counts.
 
 ---
 
@@ -58,17 +28,21 @@ complements:
 
 ### Step 1: Identify the model's competitive group
 
-Common groups in the catalog:
-- **Protein embeddings**: ESM2, ESMC, SaProt, MSA Transformer, PoET, ProstT5, TemBERTure
-- **Protein generation**: ProGen2, ZymCTRL, ProteinMPNN, ESM-IF1
-- **Structure prediction**: ESMFold, Chai-1, Boltz, RF3
-- **Binder/complex design**: RFdiffusion3, BoltzGen
-- **Antibody sequence**: AbLang2, IgBERT, NanoBERT, AbLEF
-- **Antibody structure**: AntiFold, AbodyBuilder3, ImmuneFold, ImmuneBuilder
-- **Developability**: ProperMAB, DeepViscosity, CamSol, SoluProt
-- **DNA/genomics**: NT, DNABERT2, OmniDNA, Evo, Evo2
-- **Property prediction**: ThermoMPNN, CLEAN, SPURS, Pro4S, GEMME
-- **Utility**: Biotite, ProDy, SADIE, Peptides, DNA Chisel
+Group the model with the catalog models that share its task. These clusters (by directory slug) are
+**illustrative, not exhaustive** — the catalog changes, so always confirm a slug with `ls models/`
+before you reference it in `comparison.yaml`. The Gate below rejects any slug that has no
+`models/<slug>/`.
+
+- **Protein embeddings / PLMs**: `esm2`, `esmc`, `esm1b`, `esm1v`, `msa_transformer`, `prostt5`, `e1`, `dsm`
+- **Protein generation / design**: `progen2`, `zymctrl`, `mpnn`, `esm_if1`
+- **Structure prediction**: `esmfold`, `chai1`, `rf3`
+- **Complex / binder design**: `boltzgen`
+- **Antibody sequence**: `ablang2`, `igbert`, `igt5`
+- **Antibody structure**: `antifold`, `abodybuilder3`, `immunefold`, `immunebuilder`
+- **Stability / property prediction**: `thermompnn`, `thermompnn_d`, `temberture`, `spurs`
+- **Developability**: `deepviscosity`
+- **DNA / genomics**: `dnabert2`, `omni_dna`, `evo`, `evo2`
+- **Utility**: `biotite`, `prody`, `sadie`, `dna_chisel`
 
 ### Step 2: Write strengths and weaknesses
 

@@ -53,7 +53,7 @@ For a model that has `config.py` and `app.py` but no knowledge-graph files:
 1. Read discovery/GUIDE.md     ->  create sources.yaml
 2. Read comparison/GUIDE.md    ->  create comparison.yaml
 3. Read documentation/GUIDE.md ->  create README.md, MODEL.md, BIOLOGY.md
-4. Read validation/GUIDE.md    ->  cross-check everything; run make style
+4. Read validation/GUIDE.md    ->  cross-check everything; run make style && make docs
 ```
 
 ## Common Pitfalls

@@ -22,7 +22,13 @@ Use for:
 
 ### 2. `make check` is MANDATORY
 
-`make check` runs style + mypy + unit tests — exactly what CI runs on every PR. Run it locally before pushing. Never push with `make check` failing.
+`make check` runs style + mypy + schema-doc check + CI-script tests + unit tests — the same
+checks as CI's main `checks` job. Run it locally before pushing; never push with `make check`
+failing.
+
+`make check` does **not** build the docs. CI runs a **separate `docs` job** (`mkdocs build
+--strict`), and each model's page is generated from its `config.py` + knowledge-graph files — so a
+model can pass `make check` and still fail CI on the docs build. Run `make docs` too (see Phase 3).
 
 ### 3. Follow phase order — no skipping
 
@@ -53,9 +59,9 @@ Write files in dependency order: `schema.py` → `config.py` → `download.py` (
 ### Phase 3: Validation
 Read: `validation/GUIDE.md`
 
-`make check` (MANDATORY) + fixture generation + local deploy + integration tests. Deployment tests are optional locally; they run in CI once a maintainer applies `deploy-approved`.
+`make check` (MANDATORY) + `make docs` (mkdocs --strict — the model's generated page must build) + fixture generation + local deploy + integration tests. Deployment tests are optional locally; they run in CI once a maintainer applies `deploy-approved`.
 
-**Gate:** `make check` green; unit tests pass; coverage ≥85%.
+**Gate:** `make check` green; `make docs` green; unit tests pass; coverage ≥85%.
 
 ---
 
@@ -84,14 +90,15 @@ Phase 2: Implementation
 Phase 3: Validation
   → Read: validation/GUIDE.md
   → make check (MANDATORY)
-  → python models/MODEL/fixture.py (before tests)
+  → make docs (mkdocs --strict — the generated page must build)
+  → python models/MODEL/fixture.py (before tests; template: models/dummy/fixture.py)
   → python -m pytest models/MODEL/test.py
   → GATE: coverage ≥85%
 
 Phase 4: Documentation
   → Read: documentation/GUIDE.md
   → Write README.md
-  → make check && git add && git commit
+  → make check && make docs && git add && git commit
   → Create PR
 ```
 

@@ -67,7 +67,7 @@ Note: the "CI" workflow always runs all unit tests regardless of what changed.
 
 | Change | Models Deployed | Unit Tests (CI) |
 |--------|----------------|-----------------|
-| Single model file (`models/boltz/app.py`) | Only that model | All |
+| Single model file (`models/esm2/app.py`) | Only that model | All |
 | Non-critical commons file | Smart: only importers of changed symbols | All |
 | **Critical commons** (`pydantic.py`, `decorator.py`, `caching.py`) | **All models** | All |
 | `pyproject.toml`, `uv.lock`, `Makefile` | 0 models | All |

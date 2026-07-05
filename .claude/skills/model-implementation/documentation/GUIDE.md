@@ -57,6 +57,11 @@ Invoke the skill after your PR is merged, or coordinate with a maintainer.
 ```bash
 # Final style + type check
 make check
+# Build the docs site — your generated per-model page must pass mkdocs --strict.
+# This is a SEPARATE CI job that `make check` does NOT run; the knowledge-graph
+# files you just authored (README/MODEL/BIOLOGY, cross-links, tables) are the
+# most common cause of a strict-mode docs failure.
+make docs
 
 # Stage and commit
 git add models/<name>/
@@ -69,7 +74,7 @@ gh pr create --title "feat(<name>): add <Model Name>" --body "..."
 PR body should include:
 - What the model does and why it was added
 - License confirmation (SPDX identifier from `sources.yaml`)
-- What was tested locally (at minimum: `make check` + unit tests)
+- What was tested locally (at minimum: `make check` + `make docs` + unit tests)
 - Any notes on resource allocation choices
 
 ---
