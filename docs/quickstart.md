@@ -23,14 +23,20 @@ bh setup
 
 - **[Modal](https://modal.com)** is required — it's where models deploy and run. If you're not
   authenticated, `bh setup` points you at `modal token new`.
-- **Cloudflare R2** is optional. Public model weights are pulled from a read-only bucket by default,
-  so the happy path needs no credentials beyond Modal. Configure R2 only if you want to cache weights
-  or responses in your own bucket.
+- **Cloudflare R2** is optional. Public model weights are pulled from a read-only bucket by default.
+  If your Modal workspace doesn't have the `cloudflare-r2` / `hf-api-token` secrets provisioned, a
+  deploy can't mount them, so prefix deploys with `BIOLM_SKIP_MODAL_SECRETS=1` (see Step 3) and the
+  build reads those public weights anonymously. Configure R2 only if you want to cache weights or
+  responses into your own bucket.
 
 ## 3. Deploy a model
 
 ```bash
 bh deploy esm2
+
+# No cloudflare-r2 / hf-api-token secrets in your Modal workspace? Read the
+# public weights anonymously instead:
+BIOLM_SKIP_MODAL_SECRETS=1 bh deploy esm2
 ```
 
 This deploys [ESM-2](models/esm2.md) to *your* Modal workspace. The first deploy pulls the weights
@@ -41,9 +47,23 @@ its actions and request/response schema.
 
 ## 4. Run inference
 
-Every model exposes the same uniform action verbs (`predict`, `fold`, `encode`, `generate`, `score`,
-`log_prob`) over an HTTP endpoint. See a model's page (e.g. [ESM-2](models/esm2.md)) for its exact
-request and response schema, then POST to your deployed endpoint.
+A bare `bh deploy` deploys the model's Modal class — it isn't a public HTTP endpoint on its own.
+Expose it over HTTP one of two ways: run `bh serve` locally (next section), or deploy the unified
+gateway. Both serve the same contract — `POST /api/v3/{slug}/{action}` with a
+`{"items": [...], "params": {...}}` body:
+
+```bash
+bh serve   # in one terminal → http://127.0.0.1:8000
+
+# in another terminal:
+curl -X POST http://127.0.0.1:8000/api/v3/esm2-8m/encode \
+  -H 'Content-Type: application/json' \
+  -d '{"items": [{"sequence": "MKTAYIAKQR"}]}'
+```
+
+Every model uses the same uniform action verbs (`predict`, `fold`, `encode`, `generate`, `score`,
+`log_prob`). See a model's page (e.g. [ESM-2](models/esm2.md)) for the exact request/response schema
+of each action, and the [HTTP API](api.md) page for the full calling contract and error shape.
 
 ## Run the catalog in your browser
 

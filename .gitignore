@@ -38,3 +38,10 @@ site/
 # NOTE: .planning/ is intentionally NOT ignored — it is tracked in the private repo
 # during development and removed (with git history) before the repo goes public.
 scratchpad/
+
+# Generated docs pages (built virtually by docs/gen_pages.py at mkdocs build time;
+# a standalone `python docs/gen_pages.py` run leaks them to disk — never commit).
+docs/models/
+docs/philosophy.md
+docs/contributing.md
+docs/future-work.md

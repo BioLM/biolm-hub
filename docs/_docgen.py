@@ -6,10 +6,16 @@ own; ``docs/gen_pages.py`` imports these and handles the mkdocs build wiring.
 
 from __future__ import annotations
 
+import json
 import re
-from typing import Any
+from collections.abc import Iterator
+from typing import Any, get_args, get_origin
+
+from pydantic import BaseModel
 
 GITHUB_BLOB = "https://github.com/BioLM/biolm-hub/blob/main"
+
+_MISSING = object()
 
 
 # --------------------------------------------------------------------------- #
@@ -107,11 +113,97 @@ def _enum_line(block: dict[str, Any]) -> str:
     return f"Allowed values: {vals}"
 
 
+def _annotation_models(ann: Any) -> Iterator[Any]:
+    """Yield every ``BaseModel`` subclass referenced by a type annotation.
+
+    Recurses through generics (``list[X]``, ``Optional[X]``, ``dict[str, X]``,
+    unions) so nested request/response models are all discovered.
+    """
+    if get_origin(ann) is None:
+        if isinstance(ann, type) and issubclass(ann, BaseModel):
+            yield ann
+        return
+    for arg in get_args(ann):
+        yield from _annotation_models(arg)
+
+
+def _reachable_models(
+    model_cls: Any, acc: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Map ``__name__`` -> class for ``model_cls`` and every model reachable via its fields.
+
+    The keys line up with the ``$defs`` names in ``model_json_schema()``, so a
+    ``$defs`` block can be paired back to the Pydantic class that produced it.
+    """
+    acc = {} if acc is None else acc
+    if not (isinstance(model_cls, type) and issubclass(model_cls, BaseModel)):
+        return acc
+    if model_cls.__name__ in acc:
+        return acc
+    acc[model_cls.__name__] = model_cls
+    for field in model_cls.model_fields.values():
+        for sub in _annotation_models(field.annotation):
+            _reachable_models(sub, acc)
+    return acc
+
+
+def _factory_default_json(field: Any) -> Any:
+    """Resolve a field's ``default_factory`` to a JSON-native value (or ``_MISSING``).
+
+    ``model_json_schema()`` omits the default for a ``default_factory`` field, so
+    resolve it here. A nested-model default (e.g. a ``params`` object) is skipped —
+    its own fields already carry the real defaults, and dumping the whole object as
+    a "default" would just be noise.
+    """
+    factory = getattr(field, "default_factory", None)
+    if factory is None:
+        return _MISSING
+    try:
+        value = factory()
+    except TypeError:
+        # Pydantic 2.10+ may pass validated data to the factory; such a
+        # data-dependent default has no single static value to show.
+        return _MISSING
+    if isinstance(value, BaseModel):
+        return _MISSING
+    try:
+        return json.loads(
+            json.dumps(value, default=lambda o: getattr(o, "value", str(o)))
+        )
+    except (TypeError, ValueError):
+        return _MISSING
+
+
+def _inject_factory_defaults(block: dict[str, Any], model_cls: Any) -> None:
+    """Populate ``default`` on schema properties whose field uses a ``default_factory``.
+
+    Mutates ``block["properties"]`` in place so the Constraints/default cell renders
+    a value (e.g. esm2 ``repr_layers`` -> ``[-1]``, ``include`` -> ``["mean"]``).
+    """
+    props = block.get("properties")
+    if not props:
+        return
+    for fname, field in getattr(model_cls, "model_fields", {}).items():
+        prop = props.get(fname) or props.get(getattr(field, "alias", None) or fname)
+        if prop is None or "default" in prop:
+            continue
+        value = _factory_default_json(field)
+        if value is not _MISSING:
+            prop["default"] = value
+
+
 def render_schema_md(schema_cls: Any) -> str:
     """Render one Pydantic model's JSON schema as Markdown (tables + raw JSON)."""
-    import json
-
     js = schema_cls.model_json_schema()
+    # model_json_schema() drops default_factory defaults; resolve and inject them
+    # (both on the root model and each nested $defs block) so the tables show them.
+    models = _reachable_models(schema_cls)
+    _inject_factory_defaults(js, schema_cls)
+    for def_name, def_block in js.get("$defs", {}).items():
+        def_cls = models.get(def_name)
+        if def_cls is not None:
+            _inject_factory_defaults(def_block, def_cls)
+
     out: list[str] = []
     root = _fields_table(js)
     if root:
@@ -144,12 +236,111 @@ def render_schema_md(schema_cls: Any) -> str:
 
 
 # --------------------------------------------------------------------------- #
+# Minimal example request bodies (for the per-action calling contract)
+# --------------------------------------------------------------------------- #
+
+
+def _str_example(name: str) -> str:
+    """A readable placeholder string for a leaf field, keyed off its name."""
+    n = name.lower()
+    if "smiles" in n:
+        return "CC(=O)Oc1ccccc1C(=O)O"
+    if "pdb" in n:
+        return "<contents of a .pdb file>"
+    if "cif" in n or "mmcif" in n:
+        return "<contents of a .cif file>"
+    if "msa" in n:
+        return ">seq1\nMKTAYIAK\n>seq2\nMKTAYIAK"
+    if any(k in n for k in ("heavy", "light", "chain", "sequence", "seq")):
+        return "MKTAYIAKQRQISFVKSHFSRQLEERLGLIE"
+    return "string"
+
+
+def _example_scalar(node: dict[str, Any], name: str) -> Any:
+    """A placeholder value for a scalar JSON-schema leaf (honouring any minimum)."""
+    kind = node.get("type")
+    if kind in ("integer", "number"):
+        for key in ("minimum", "exclusiveMinimum"):
+            if key in node:
+                bump = 1 if (kind == "integer" and key == "exclusiveMinimum") else 0
+                return int(node[key]) + bump if kind == "integer" else node[key]
+        return 1 if kind == "integer" else 0.1
+    if kind == "boolean":
+        return False
+    if kind == "string":
+        return _str_example(name)
+    return None
+
+
+def _example_node(node: dict[str, Any], defs: dict[str, Any], name: str = "") -> Any:
+    """Build a minimal JSON-native example for one JSON-schema node.
+
+    Follows ``$ref``/``anyOf``/``allOf``, honours an explicit ``default``/``enum``,
+    and only fills *required* object properties so the body stays minimal.
+    """
+    if "$ref" in node:
+        return _example_node(defs.get(_ref_name(node["$ref"]), {}), defs, name)
+    if "anyOf" in node:
+        opts = [o for o in node["anyOf"] if o.get("type") != "null"] or node["anyOf"]
+        return _example_node(opts[0], defs, name)
+    if "allOf" in node and len(node["allOf"]) == 1:
+        return _example_node(node["allOf"][0], defs, name)
+    if "default" in node:
+        return node["default"]
+    if "enum" in node:
+        return node["enum"][0]
+    kind = node.get("type")
+    if kind == "object" or "properties" in node:
+        props = node.get("properties", {})
+        required = set(node.get("required", []))
+        return {
+            key: _example_node(prop, defs, key)
+            for key, prop in props.items()
+            if key in required
+        }
+    if kind == "array":
+        return [_example_node(node.get("items", {}), defs, name)]
+    return _example_scalar(node, name)
+
+
+def example_request(schema_cls: Any) -> Any:
+    """A minimal, JSON-native example request body for a request schema."""
+    js = schema_cls.model_json_schema()
+    return _example_node(js, js.get("$defs", {}))
+
+
+def curl_snippet(base_url: str, slug: str, action: str, body: Any) -> str:
+    """A copy-pasteable ``curl`` block for ``POST {base_url}/api/v3/{slug}/{action}``."""
+    body_json = json.dumps(body, indent=2)
+    return "\n".join(
+        [
+            "```bash",
+            f"curl -X POST {base_url}/api/v3/{slug}/{action} \\",
+            '  -H "Content-Type: application/json" \\',
+            "  -d '" + body_json + "'",
+            "```",
+        ]
+    )
+
+
+# --------------------------------------------------------------------------- #
 # Markdown transforms for embedded knowledge-graph prose
 # --------------------------------------------------------------------------- #
 
 _FENCE = re.compile(r"^\s*(```|~~~)")
 _HEADING = re.compile(r"^(#{1,6})\s+(.*)$")
 _LINK = re.compile(r"(!?)\[([^\]]*)\]\(([^)]+)\)")
+_SEE_ALSO = re.compile(r"^\s*[*_]*\s*See also:", re.IGNORECASE)
+
+
+def strip_see_also(md: str) -> str:
+    """Drop the trailing ``See also: README.md | MODEL.md | ...`` cross-link footer.
+
+    Each knowledge-graph doc ends with an italic footer linking to its sibling
+    files. Concatenated into a single model page those become same-page anchor
+    links that leak raw filenames as link text, so drop the footer line entirely.
+    """
+    return "\n".join(ln for ln in md.split("\n") if not _SEE_ALSO.match(ln))
 
 
 def demote_headings(md: str, by: int, strip_first_h1: bool = True) -> str:
@@ -243,5 +434,7 @@ def strip_html_comments(md: str) -> str:
 def embed(md: str, base_dir: str, page_map: dict[str, str] | None = None) -> str:
     """Prepare an embedded knowledge-graph doc for inclusion in a model page."""
     return rewrite_links(
-        demote_headings(strip_html_comments(md), by=1), base_dir, page_map
+        demote_headings(strip_see_also(strip_html_comments(md)), by=1),
+        base_dir,
+        page_map,
     )

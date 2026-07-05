@@ -13,10 +13,21 @@ off the shelf and run.
 ```bash
 git clone https://github.com/BioLM/biolm-hub
 cd biolm-hub
-bh setup          # checks your Modal + R2 config and tells you what to do
-bh deploy esm2    # deploys the model to your Modal workspace
-# → run inference
+make install                               # venv + the `bh` CLI (all extras)
+
+bh setup                                   # checks your Modal config
+BIOLM_SKIP_MODAL_SECRETS=1 bh deploy esm2  # deploy to your Modal workspace
+
+bh serve                                   # local catalog UI + HTTP API → http://127.0.0.1:8000
+# then, in another terminal, call it:
+curl -X POST http://127.0.0.1:8000/api/v3/esm2-8m/encode \
+  -H 'Content-Type: application/json' \
+  -d '{"items": [{"sequence": "MKTAYIAKQR"}]}'
 ```
+
+No R2 / Hugging Face secrets on your Modal workspace? Prefix deploys with
+`BIOLM_SKIP_MODAL_SECRETS=1` so the build reads public weights anonymously. See
+the [HTTP API](api.md) for the full calling contract.
 
 ## What's inside
 

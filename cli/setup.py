@@ -10,8 +10,8 @@ What it checks:
   • **Cloudflare R2 credentials** (optional) — only needed to use the local
     ``bh r2`` browser or to cache weights/responses into *your own* bucket via
     ``BIOLM_R2_BUCKET``. Public model weights are served from a read-only public
-    bucket, so the happy path ("deploy esm2 and run inference") needs nothing
-    beyond a Modal account.
+    bucket; a workspace without the ``cloudflare-r2``/``hf-api-token`` secrets can
+    still deploy by prefixing ``BIOLM_SKIP_MODAL_SECRETS=1`` to read them anonymously.
 
 Exits non-zero if a *required* prerequisite (Modal auth) is missing, so it can
 gate scripts and CI.

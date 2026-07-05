@@ -14,12 +14,14 @@ from __future__ import annotations
 
 import importlib
 import logging
+import re
 import sys
 from pathlib import Path
 from typing import Any
 
 import mkdocs_gen_files
 import yaml
+from mkdocs.structure.files import InclusionLevel
 
 sys.path.insert(0, str(Path(__file__).parent))
 
@@ -154,7 +156,7 @@ def _badges(fam: Any, src: dict[str, Any]) -> str:
     )
 
 
-def _at_a_glance(cmp: dict[str, Any]) -> str:
+def _at_a_glance(cmp: dict[str, Any], known: set[str]) -> str:
     if not cmp:
         return ""
     out = ["## At a glance", ""]
@@ -185,8 +187,12 @@ def _at_a_glance(cmp: dict[str, Any]) -> str:
             "|-------|-------------|------------|",
         ]
         for a in alts:
+            slug = str(a.get("model", "") or "").strip()
+            # Link to the sibling model page when the alternative ships here;
+            # otherwise keep it as a plain code span (no dead link).
+            model_cell = f"[{slug}]({slug}.md)" if slug in known else f"`{slug}`"
             rows.append(
-                f"| `{a.get('model','')}` | {dg._esc(str(a.get('when_better','') or ''))} "
+                f"| {model_cell} | {dg._esc(str(a.get('when_better','') or ''))} "
                 f"| {dg._esc(str(a.get('when_worse','') or ''))} |"
             )
         out += rows + [""]
@@ -195,6 +201,12 @@ def _at_a_glance(cmp: dict[str, Any]) -> str:
 
 def _indent(text: str) -> str:
     return "\n".join("    " + ln if ln else "" for ln in text.split("\n"))
+
+
+# The `bh serve` local catalog serves the API on this same-origin base by
+# default (see cli/serve.py). A deployed gateway has its own https URL — see
+# the HTTP API page.
+SERVE_BASE_URL = "http://127.0.0.1:8000"
 
 
 def _api(fam: Any) -> str:
@@ -218,8 +230,28 @@ def _api(fam: Any) -> str:
                 f"| {getattr(spec, 'cpu', '—')} | {mem} |"
             )
         out.append("")
+
+    # Use the first resolved variant's slug for the worked examples — a real,
+    # deployable endpoint slug (also listed in the Variants table above).
+    example_slug = variants[0].public_endpoint_slug if variants else fam.base_model_slug
+
+    out += [
+        "Call an action with `POST /api/v3/{slug}/{action}` — the request envelope is "
+        '`{"items": [...], "params": {...}}` and a success returns `{"results": [...]}`. '
+        "See the [HTTP API](../api.md) page for the base URL, error shape, and full "
+        "contract.",
+        "",
+    ]
+
     for a in fam.action_schemas:
         out += [f"### `{a.name}`", ""]
+        out += ["**Call it**", ""]
+        try:
+            body = dg.example_request(a.request_schema)
+        except Exception as exc:  # noqa: BLE001 - never let one schema break the build
+            log.warning("example body for %s.%s failed: %s", example_slug, a.name, exc)
+            body = {"items": [{}]}
+        out += [dg.curl_snippet(SERVE_BASE_URL, example_slug, a.name, body), ""]
         out += [f"**Request** — `{a.request_schema.__name__}`", ""]
         out += [dg.render_schema_md(a.request_schema), ""]
         out += [f"**Response** — `{a.response_schema.__name__}`", ""]
@@ -242,12 +274,19 @@ def _license_line(lic: dict[str, Any]) -> str:
     return line
 
 
+# An arXiv identifier: new-style ``2301.12345`` or old-style ``math/0211159``.
+# Guard the arXiv link so a DOI mistakenly parked in the ``arxiv`` field can't
+# render as a dead arxiv.org/abs/<doi> link.
+_ARXIV_ID = re.compile(r"\d{4}\.\d{4,5}|\w+/\d+")
+
+
 def _paper_line(p: dict[str, Any]) -> str:
     links = []
     if p.get("doi"):
         links.append(f"[DOI](https://doi.org/{p['doi']})")
-    if p.get("arxiv"):
-        links.append(f"[arXiv](https://arxiv.org/abs/{p['arxiv']})")
+    arxiv = str(p.get("arxiv") or "").strip()
+    if arxiv and _ARXIV_ID.fullmatch(arxiv):
+        links.append(f"[arXiv](https://arxiv.org/abs/{arxiv})")
     suffix = f" — {p['venue']}" if p.get("venue") else ""
     linktxt = (" · " + " ".join(links)) if links else ""
     return f"- *{str(p.get('title', '')).strip()}*{suffix}{linktxt}"
@@ -276,7 +315,7 @@ def _sources(src: dict[str, Any]) -> str:
 # --------------------------------------------------------------------------- #
 
 
-def _model_page(name: str) -> tuple[str, str] | None:
+def _model_page(name: str, known: set[str]) -> tuple[str, str] | None:
     try:
         cfg = importlib.import_module(f"models.{name}.config")
         fam = cfg.MODEL_FAMILY
@@ -296,7 +335,7 @@ def _model_page(name: str) -> tuple[str, str] | None:
             parts += [f"*{tag}*", ""]
     parts += [_badges(fam, src), ""]
     for block in (
-        _at_a_glance(cmp),
+        _at_a_glance(cmp, known),
         _api(fam),
         _prose("Usage", readme, f"models/{name}"),
         _prose("Architecture & training", _read(d / "MODEL.md"), f"models/{name}"),
@@ -330,6 +369,94 @@ def _discover() -> list[str]:
     )
 
 
+# HTTP status per stable error `code`, sourced from the decorator's ERROR_MAP
+# (models/commons/core/decorator.py). Kept as a small literal here so the docs
+# build never has to import the decorator (which pulls in modal).
+_ERROR_HTTP: dict[str, int] = {
+    "user.error": 400,
+    "user.validation": 400,
+    "user.unsupported_option": 400,
+    "user.resource_not_found": 404,
+    "system.model_execution": 500,
+    "system.error": 500,
+}
+
+# Display order for the typed-error table: user-facing branch first, then system.
+_ERROR_ORDER = [
+    "UserError",
+    "ValidationError400",
+    "UnsupportedOptionError",
+    "ResourceNotFoundError",
+    "ServerError",
+    "ModelExecutionError",
+]
+
+
+def _docstring_summary(cls: type) -> str:
+    """First non-empty line of a class docstring, collapsed to one line."""
+    for line in (cls.__doc__ or "").strip().split("\n"):
+        s = line.strip()
+        if s:
+            return s
+    return ""
+
+
+def _errors_page() -> str:
+    """Generate the Errors reference page from the typed-error hierarchy."""
+    from models.commons.core import error as errmod
+
+    out = [
+        "# Errors",
+        "",
+        "Every failed request returns a structured JSON body with the same shape, and "
+        "the HTTP status equals the body's `status_code`. Agents branch on the stable, "
+        "machine-readable `code` (a dotted `<domain>.<reason>` string) rather than "
+        "parsing prose.",
+        "",
+        "```json",
+        "{",
+        '  "detail": "A human-readable message.",',
+        '  "errors": [],',
+        '  "status_code": 400,',
+        '  "code": "user.validation"',
+        "}",
+        "```",
+        "",
+        "## Typed errors",
+        "",
+        "These are the codes a caller can rely on. User-branch errors carry the "
+        "message verbatim (a caller mistake); system-branch errors are sanitized "
+        "before they reach you.",
+        "",
+        "| Error | `code` | HTTP | Meaning |",
+        "|-------|--------|------|---------|",
+    ]
+    for cls_name in _ERROR_ORDER:
+        cls = getattr(errmod, cls_name, None)
+        if cls is None:
+            continue
+        code = getattr(cls, "code", None) or "—"
+        status = _ERROR_HTTP.get(code, "—")
+        meaning = dg._esc(_docstring_summary(cls))
+        out.append(f"| `{cls_name}` | `{code}` | {status} | {meaning} |")
+    out += [
+        "",
+        "## Other responses",
+        "",
+        "- **`422` — schema validation.** A malformed body (missing/extra field, wrong "
+        "type) is rejected before the model runs. `code` is `null`; per-field details "
+        "are listed under `errors`.",
+        "- **`5xx` — unexpected failure.** Any error not mapped above returns a "
+        "sanitized `500` with `code` `null` (or the raised `code` when available); "
+        "filesystem paths and tokens are stripped from the message.",
+        "- **Gateway transport.** The gateway itself returns `404` when the target "
+        "model is not deployed, `503` when the model backend is unreachable, and `504` "
+        "when model execution times out.",
+        "",
+    ]
+    return "\n".join(out)
+
+
 def _mirror_root(src_name: str, dest: str) -> None:
     md = _read(REPO / src_name)
     if md is None:
@@ -341,9 +468,10 @@ def _mirror_root(src_name: str, dest: str) -> None:
 
 def main() -> None:
     names = _discover()
+    known = set(names)  # slugs that have a sibling page (for Alternatives links)
     titles: dict[str, str] = {}
     for name in names:
-        page = _model_page(name)
+        page = _model_page(name, known)
         if not page:
             continue
         titles[name], body = page
@@ -374,6 +502,20 @@ def main() -> None:
             summary.append(f"- [{titles[name]}]({name}.md)")
     with mkdocs_gen_files.open("models/SUMMARY.md", "w") as f:
         f.write("\n".join(summary) + "\n")
+    # literate-nav consumes SUMMARY.md to build the Models section, but MkDocs
+    # would otherwise also render it as a standalone "SUMMARY" page (and index it
+    # for search). `exclude_docs` can't catch it — literate-nav marks it
+    # NOT_IN_NAV before MkDocs re-applies exclusions — so mark the generated file
+    # EXCLUDED directly: literate-nav still reads its contents for the nav, but
+    # it is no longer built as a page.
+    editor = mkdocs_gen_files.FilesEditor.current()
+    summary_file = editor.files.get_file_from_path("models/SUMMARY.md")
+    if summary_file is not None:
+        summary_file.inclusion = InclusionLevel.EXCLUDED
+
+    # Errors reference (generated from the typed-error hierarchy)
+    with mkdocs_gen_files.open("errors.md", "w") as f:
+        f.write(_errors_page())
 
     # Top-level prose mirrored from the single-source root Markdown
     _mirror_root("PHILOSOPHY.md", "philosophy.md")
