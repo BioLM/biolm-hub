@@ -11,15 +11,20 @@ from models.esm2.fixture import (
     SINGLE_ENCODE_OUTPUT_TPL,
     SINGLE_SEQ_INPUT,
 )
+from models.esm2.schema import ESM2ModelSizes
 
 # ESM2 test suite - multiple variants, multiple actions
 test_suite = TestSuite(
     model_family=MODEL_FAMILY,
     r2_fixture_subdir="models",
     variant_test_mappings=[
-        # Single mapping that applies to ALL variants (8m, 35m, 150m, 650m, 3b)
+        # Encode/predict golden comparison runs on the 3B reference variant only:
+        # fixture.py deliberately generates goldens for 3B alone (the encode/predict
+        # computation is identical across variants, so 3B is the golden reference and
+        # regenerating the heavy 3B ×5 would be disproportionate). Non-3B variants are
+        # covered by the log_prob case below (all variants) + the deployment tests.
         VariantTestMapping(
-            variant_config={},  # Empty dict means applies to ALL variants
+            variant_config={"MODEL_SIZE": ESM2ModelSizes.SIZE_3B},
             test_cases=[
                 # Encode action - single sequence
                 ActionTestCase(
@@ -42,7 +47,13 @@ test_suite = TestSuite(
                     expected_output_fixture=MASKED_PREDICT_OUTPUT_TPL,
                     tolerances={"rel_tol": 1e-4, "cosine_distance_threshold": 0.02},
                 ),
-                # Predict log prob action with programmatic input
+            ],
+        ),
+        # log_prob is validator-based (no golden), so it runs on ALL variants
+        # (8m, 35m, 150m, 650m, 3b).
+        VariantTestMapping(
+            variant_config={},  # Empty dict means applies to ALL variants
+            test_cases=[
                 ActionTestCase(
                     action_name=ModelActions.LOG_PROB,
                     # Programmatic input - create data on the fly
@@ -51,7 +62,7 @@ test_suite = TestSuite(
                     validator=_validate_log_prob,
                 ),
             ],
-        )
+        ),
     ],
 )
 
