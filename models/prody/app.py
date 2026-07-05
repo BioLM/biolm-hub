@@ -75,7 +75,6 @@ app = modal.App(app_name, image=image)
 )
 @biolm_model_class
 class ProDyModel(ModelMixin):
-    app_username: str = modal.parameter(default="default_user")
 
     @modal.enter()
     def load_model(self) -> None:

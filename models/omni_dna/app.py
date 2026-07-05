@@ -92,8 +92,6 @@ class OmniDNAModel(ModelMixinSnap):
       - log_prob() => computes the total log-prob of each DNA sequence
     """
 
-    app_username: str = modal.parameter(default="default_user")
-
     @modal.enter(snap=True)
     def setup_model(self) -> None:
         """Load model on GPU for GPU memory snapshot with deterministic behavior."""

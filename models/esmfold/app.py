@@ -92,7 +92,6 @@ app = modal.App(app_name, image=image)
 )
 @biolm_model_class
 class ESMFoldModel(ModelMixinSnap):
-    app_username: str = modal.parameter(default="default_user")
 
     chunk_size = ESMFoldParams.max_sequence_len
 

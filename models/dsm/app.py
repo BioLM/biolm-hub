@@ -170,7 +170,6 @@ app = modal.App(app_name, image=image)
 )
 @biolm_model_class
 class DSMModel(ModelMixinSnap):
-    app_username: str = modal.parameter(default="default_user")
     model_size: str = model_size
     variant: str = variant
     model_id: str = get_model_id(model_size, variant)

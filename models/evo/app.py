@@ -88,8 +88,6 @@ class EvoModel(ModelMixinSnap):
       - generate() => sequence sampling
     """
 
-    app_username: str = modal.parameter(default="default_user")
-
     @modal.enter(snap=True)
     def setup_model(self) -> None:
         """

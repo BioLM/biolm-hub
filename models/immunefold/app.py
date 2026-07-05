@@ -143,7 +143,6 @@ app = modal.App(app_name, image=image)
 )
 @biolm_model_class
 class ImmuneFoldModel(ModelMixinSnap):
-    app_username: str = modal.parameter(default="default_user")
     model_type: ImmuneFoldModelTypes = ImmuneFoldModelTypes(model_type)
 
     @modal.enter(snap=True)

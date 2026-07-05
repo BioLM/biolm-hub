@@ -61,7 +61,6 @@ app = modal.App(app_name, image=image)
 )
 @biolm_model_class
 class DummyModel(ModelMixinSnap):
-    app_username: str = modal.parameter(default="default_user")
     # Define path to the data file in the container's root directory
     data_file_path = "/dummy_test_data.json"
 

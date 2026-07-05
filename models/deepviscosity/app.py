@@ -81,8 +81,6 @@ class DeepViscosityModel(ModelMixinSnap):
     antibody viscosity as low (<=20 cP) or high (>20 cP) at 150 mg/mL.
     """
 
-    app_username: str = modal.parameter(default="default_user")
-
     @modal.enter(snap=True)
     def load_model(self) -> None:
         """Load all models during snapshot creation."""

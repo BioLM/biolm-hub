@@ -17,7 +17,7 @@ Design notes:
 - **status_code → HTTP status.** Models return a structured ``ErrorResponse``
   (``{"detail", "errors", "status_code", "code"}``) on failure. The gateway
   promotes that body ``status_code`` to the real HTTP status so external/agent
-  callers can rely on HTTP semantics (decision deferred from W7 to W8).
+  callers can rely on HTTP semantics.
 """
 
 import functools
@@ -82,8 +82,8 @@ def _sanitize_error_message(error_msg: str) -> str:
 def _model_class(modal_app_name: str, class_name: str) -> modal.cls.Obj:
     """Resolve (and cache) a deployed Modal model class handle.
 
-    Instantiated with no arguments — the container class supplies defaults for
-    any constructor parameters (e.g. the legacy ``app_username``).
+    Instantiated with no arguments — the container classes take no constructor
+    parameters.
     """
     return modal.Cls.from_name(modal_app_name, class_name)()
 

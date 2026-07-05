@@ -105,8 +105,6 @@ app = modal.App(app_name, image=image)
 )
 @biolm_model_class
 class SpursModel(ModelMixinSnap):
-    app_username: str = modal.parameter(default="default_user")
-
     """
     SpursModel class offers this method:
      - predict() => computes ΔΔG values for protein mutations

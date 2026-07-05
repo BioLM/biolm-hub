@@ -114,7 +114,6 @@ class Evo2Model(ModelMixinSnap):
       - generate() => sequence generation from a prompt
     """
 
-    app_username: str = modal.parameter(default="default_user")
     model_variant: Evo2ModelVariants = Evo2ModelVariants(model_variant)
 
     @modal.enter(snap=True)

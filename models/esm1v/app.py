@@ -78,7 +78,6 @@ app = modal.App(app_name, image=image)
 )
 @biolm_model_class
 class ESM1vModel(ModelMixinSnap):
-    app_username: str = modal.parameter(default="default_user")
     model_number: str = model_number
 
     @modal.enter(snap=True)

@@ -15,8 +15,6 @@ class ModelMixin:
 
         @app.cls(...)
         class MyModel(ModelMixin):
-            app_username: str = modal.parameter(default="default_user")
-
             @modal.enter()
             def setup_model(self):
                 ...

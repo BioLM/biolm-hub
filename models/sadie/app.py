@@ -53,7 +53,6 @@ app = modal.App(app_name, image=image)
 )
 @biolm_model_class
 class SADIEModel(ModelMixinSnap):
-    app_username: str = modal.parameter(default="default_user")
 
     @modal.enter(snap=True)
     def load_model(self) -> None:

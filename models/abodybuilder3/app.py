@@ -113,7 +113,6 @@ app = modal.App(app_name, image=image)
 @biolm_model_class
 class AbodyBuilder3Model(ModelMixinSnap):
     model_type: str = model_type
-    app_username: str = modal.parameter(default="default_user")
 
     def _load_prott5_on_device(self, torch: ModuleType, device: "torch.device") -> None:
         """Load ProtT5 language model directly on device for GPU memory snapshot."""
