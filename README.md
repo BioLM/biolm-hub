@@ -34,16 +34,22 @@ shelf and run it. The catalog ships **36 models** today, each with an identical 
 git clone https://github.com/BioLM/biolm-hub
 cd biolm-hub
 make install                              # venv + all deps via uv, plus pre-commit hooks
+source .venv/bin/activate                 # puts the `bh` CLI on your PATH
 
-bh setup                                  # verify your Modal auth; it tells you exactly what to fix
-BIOLM_SKIP_MODAL_SECRETS=1 bh deploy esm2 # deploy ESM-2 to your own Modal workspace
+bh setup                                            # verify your Modal auth; it tells you exactly what to fix
+BIOLM_SKIP_MODAL_SECRETS=1 bh deploy esm2 --variant MODEL_SIZE=8m   # deploy the small 8M-param ESM-2
 ```
+
+Skipping the `source .venv/bin/activate` step? Run `.venv/bin/bh …` or `uv run bh …` instead — either
+puts you on the same CLI without activating.
 
 The only account you need is [Modal](https://modal.com) — `bh setup` points you at `modal token new`
 if you're not authenticated. `BIOLM_SKIP_MODAL_SECRETS=1` tells the deploy not to mount the optional
 weight-cache secrets (Cloudflare R2 / Hugging Face) that a fresh workspace doesn't have; public model
 weights are then read anonymously over HTTPS from a read-only bucket. Drop the flag once you've
 configured your own R2 credentials (via `bh setup`) and want deploys to self-populate your bucket.
+`--variant MODEL_SIZE=8m` deploys just the smallest, CPU-only size; a bare `bh deploy esm2` (no
+`--variant`) deploys **all five** ESM-2 sizes, including a 3B-parameter model on an L40S GPU.
 
 Deploy prints your endpoint URL. Every model speaks the same verbs — `predict`, `fold`, `encode`,
 `generate`, `score`, `log_prob` — over HTTP, so once you know one you know them all. See the

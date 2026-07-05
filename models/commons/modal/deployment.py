@@ -7,7 +7,11 @@ import modal
 
 from models.commons.core.logging import get_logger
 from models.commons.util.config import deployed_environment_names
-from models.commons.util.environment import get_environment_name, is_production
+from models.commons.util.environment import (
+    get_environment_name,
+    is_prod_environment,
+    is_production,
+)
 
 logger = get_logger(__name__)
 
@@ -77,9 +81,13 @@ def run_or_deploy_modal_app(
 
         should_deploy = True
         if is_production():
-            logger.warning(
-                "⚠️  Warning: Deploying to production environment '%s'.", current_env
-            )
+            if is_prod_environment():
+                logger.warning(
+                    "⚠️  Warning: Deploying to production environment '%s'.",
+                    current_env,
+                )
+            else:
+                logger.warning("Deploying to environment '%s'.", current_env)
             if not args.force_deploy:
                 confirm = input("Continue deployment? [y/N] ")
                 should_deploy = confirm.lower().strip() in ("y", "yes")

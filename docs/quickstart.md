@@ -7,11 +7,13 @@ Get from a clean clone to a running model in a few commands.
 ```bash
 git clone https://github.com/BioLM/biolm-hub
 cd biolm-hub
-make install      # creates the venv and installs everything via uv
+make install                # creates the venv and installs everything via uv
+source .venv/bin/activate   # puts the `bh` CLI on your PATH
 ```
 
 `make install` builds a virtualenv, installs the framework and the `bh` CLI, and sets up the
-pre-commit hooks.
+pre-commit hooks. Activating the venv puts `bh` on your `PATH`; without activating, run
+`.venv/bin/bh …` or `uv run bh …` instead.
 
 ## 2. Configure your accounts
 
@@ -32,15 +34,18 @@ bh setup
 ## 3. Deploy a model
 
 ```bash
-bh deploy esm2
+bh deploy esm2 --variant MODEL_SIZE=8m
 
 # No cloudflare-r2 / hf-api-token secrets in your Modal workspace? Read the
 # public weights anonymously instead:
-BIOLM_SKIP_MODAL_SECRETS=1 bh deploy esm2
+BIOLM_SKIP_MODAL_SECRETS=1 bh deploy esm2 --variant MODEL_SIZE=8m
 ```
 
-This deploys [ESM-2](models/esm2.md) to *your* Modal workspace. The first deploy pulls the weights
-from the public bucket (or the original source) and caches them; subsequent deploys are fast.
+This deploys the smallest [ESM-2](models/esm2.md) variant (`esm2-8m`, CPU-only) to *your* Modal
+workspace. `--variant MODEL_SIZE=8m` picks that size explicitly; a bare `bh deploy esm2` (no
+`--variant`) deploys **all five** ESM-2 sizes, including a 3B-parameter model on an L40S GPU. The
+first deploy pulls the weights from the public bucket (or the original source) and caches them;
+subsequent deploys are fast.
 
 Browse the [model catalog](models/index.md) for everything you can deploy, and each model's page for
 its actions and request/response schema.
@@ -68,12 +73,12 @@ of each action, and the [HTTP API](api.md) page for the full calling contract an
 ## Run the catalog in your browser
 
 ```bash
-pip install '.[serve]'
 bh serve
 ```
 
-`bh serve` runs a local catalog web app that lists every model and lets you fill in a form and run
-inference against your deployed endpoints — no gateway deployment required.
+`make install` already installed the `[serve]` extra (it runs `uv sync --all-extras`), so there's
+nothing more to install. `bh serve` runs a local catalog web app that lists every model and lets you
+fill in a form and run inference against your deployed endpoints — no gateway deployment required.
 
 !!! warning "Deployed endpoints are unauthenticated"
     A deployed model, a deployed gateway, or `bh serve --host 0.0.0.0` exposes inference **without

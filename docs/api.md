@@ -14,7 +14,7 @@ The `/api/v3/...` routes are served in two places — pick whichever fits:
   models directly. No gateway deployment needed.
 
   ```bash
-  pip install 'biolm-hub[serve]'
+  pip install 'biolm-hub[serve]'   # already included if you ran `make install`
   bh serve            # → http://127.0.0.1:8000/catalog  (API at the same origin)
   ```
 
