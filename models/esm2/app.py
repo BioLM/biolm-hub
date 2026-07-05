@@ -82,7 +82,6 @@ app = modal.App(app_name, image=image)
 )
 @biolm_model_class
 class ESM2Model(ModelMixinSnap):
-    app_username: str = modal.parameter(default="default_user")
     model_size: str = model_size
 
     @modal.enter(snap=True)
@@ -211,7 +210,7 @@ class ESM2Model(ModelMixinSnap):
         - include (List[str]): List of output types to include in the results.
             Options are:
                 - "mean": Mean representation of tokens (default).
-                - "per_token": Per-token representations.
+                - "per_residue": Per-residue representations.
                 - "bos": Beginning-of-sequence representation.
                 - "contacts": Predicted inter-residue distances (contacts).
                 - "logits": Predicted per-token logits.
@@ -320,7 +319,7 @@ class ESM2Model(ModelMixinSnap):
 
                 # Call clone on tensors to ensure tensors are not views into a larger embeddings
                 # See https://github.com/pytorch/pytorch/issues/1995
-                if "per_token" in include:
+                if "per_residue" in include:
                     result_dict["residue_embeddings"] = [
                         {
                             "layer": layer_n,

@@ -70,9 +70,17 @@ class MSATransformerEncodeIncludeOptions(EnhancedStringEnum):
     """Options for what to include in encode response."""
 
     MEAN = "mean"  # Mean embedding of query sequence
-    PER_TOKEN = "per_token"  # Per-position embeddings of query sequence
+    PER_RESIDUE = "per_residue"  # Per-residue embeddings of query sequence
+    PER_TOKEN = "per_residue"  # deprecated alias of PER_RESIDUE (back-compat)
     ROW_ATTENTION = "row_attention"  # Tied row attention maps
     CONTACTS = "contacts"  # Contact predictions from attention
+
+    @classmethod
+    def _missing_(cls, value: object) -> "MSATransformerEncodeIncludeOptions | None":
+        # Back-compat: legacy per-residue value, normalized to the canonical name.
+        if isinstance(value, str) and value == "per_token":
+            return cls.PER_RESIDUE
+        return None
 
 
 class MSATransformerEncodeRequestParams(RequestModel):

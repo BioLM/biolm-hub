@@ -31,10 +31,18 @@ class ESM1bParams(ModelParams):
 
 class ESM1bEncodeIncludeOptions(EnhancedStringEnum):
     MEAN = "mean"  # mean embedding (default)
-    PER_TOKEN = "per_token"  # per-token embeddings
+    PER_RESIDUE = "per_residue"  # per-residue embeddings
+    PER_TOKEN = "per_residue"  # deprecated alias of PER_RESIDUE (back-compat)
     BOS = "bos"  # beginning-of-sequence embedding
     LOGITS = "logits"  # predicted per-token logits
     ATTENTIONS = "attentions"  # self-attention weights
+
+    @classmethod
+    def _missing_(cls, value: object) -> "ESM1bEncodeIncludeOptions | None":
+        # Back-compat: legacy per-residue value, normalized to the canonical name.
+        if isinstance(value, str) and value == "per_token":
+            return cls.PER_RESIDUE
+        return None
 
 
 class ESM1bEncodeRequestParams(RequestModel):

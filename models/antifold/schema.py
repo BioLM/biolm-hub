@@ -131,8 +131,16 @@ def validate_positions(
 
 class AntiFoldEncodeIncludeOptions(EnhancedStringEnum):
     MEAN = "mean"  # mean embedding (default)
-    RESIDUE = "residue"  # per-residue embeddings
+    PER_RESIDUE = "per_residue"  # per-residue embeddings
+    RESIDUE = "per_residue"  # deprecated alias of PER_RESIDUE (back-compat)
     LOGITS = "logits"  # logits
+
+    @classmethod
+    def _missing_(cls, value: object) -> "AntiFoldEncodeIncludeOptions | None":
+        # Back-compat: legacy per-residue value, normalized to the canonical name.
+        if isinstance(value, str) and value == "residue":
+            return cls.PER_RESIDUE
+        return None
 
 
 class AntiFoldGenerateIncludeOptions(EnhancedStringEnum):
@@ -385,8 +393,9 @@ class AntiFoldEncodeResponseResult(ResponseModel):
         default=None,
         description="Per-position perplexity values for the sequence under the model (lower means more likely).",
     )
-    vocab: Optional[list[str]] = Field(
+    vocab_tokens: Optional[list[str]] = Field(
         default=None,
+        validation_alias=AliasChoices("vocab_tokens", "vocab"),
         description="Vocabulary token order corresponding to the logits columns.",
     )
 
@@ -472,8 +481,9 @@ class AntiFoldGenerateResponseResult(ResponseModel):
         default=None,
         description="Per-position perplexity values for the sequence under the model (lower means more likely).",
     )
-    vocab: Optional[list[str]] = Field(
+    vocab_tokens: Optional[list[str]] = Field(
         default=None,
+        validation_alias=AliasChoices("vocab_tokens", "vocab"),
         description="Vocabulary token order corresponding to the logits columns.",
     )
 

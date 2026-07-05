@@ -48,7 +48,15 @@ def validate_ec_number(value: str) -> str:
 class ZymCTRLPoolingType(EnhancedStringEnum):
     MEAN = "mean"
     LAST = "last"
-    PER_TOKEN = "per_token"
+    PER_RESIDUE = "per_residue"
+    PER_TOKEN = "per_residue"  # deprecated alias of PER_RESIDUE (back-compat)
+
+    @classmethod
+    def _missing_(cls, value: object) -> "ZymCTRLPoolingType | None":
+        # Back-compat: legacy per-residue value, normalized to the canonical name.
+        if isinstance(value, str) and value == "per_token":
+            return cls.PER_RESIDUE
+        return None
 
 
 ### Generate Request/Response
@@ -141,7 +149,7 @@ class ZymCTRLGenerateResponse(ResponseModel):
 class ZymCTRLEncodeParams(RequestModel):
     pooling: ZymCTRLPoolingType = Field(
         default=ZymCTRLPoolingType.MEAN,
-        description="Embedding pooling strategy: mean (average over residues), last (final token), or per_token (one embedding per residue).",
+        description="Embedding pooling strategy: mean (average over residues), last (final token), or per_residue (one embedding per residue).",
     )
     layer: int = Field(
         default=-1,

@@ -52,6 +52,18 @@ verbatim:
   # the old names as validation aliases.
   residue_embeddings:
     - "Per-residue embedding vectors."
+  # The INPUT option that REQUESTS per-residue embeddings converged to ONE
+  # canonical value across the catalog: "per_residue" (mirrors the canonical
+  # `residue_embeddings` output field above). Encode `include` enums (and
+  # zymctrl's `pooling` enum) expose `per_residue`; the legacy input literals
+  # `per_token` (esm2/esm1b/esmc/e1/msa_transformer/zymctrl) and `residue`
+  # (igbert/igt5/antifold) are still accepted via each enum's `_missing_` hook
+  # so existing request payloads keep validating. dsm/temberture already used
+  # `per_residue`. ablang2's `rescoding` is a documented exception: it is an
+  # embedding *mode* (seqcoding vs rescoding), not a per-residue include flag
+  # alongside `mean`, so it is intentionally left unconverged.
+  # (`include` descriptions are per-model — the option sets differ — so the
+  # field itself is not pinned verbatim here.)
   sequence_index:
     - "Index of the corresponding input sequence within the request batch."
   vocab_tokens:

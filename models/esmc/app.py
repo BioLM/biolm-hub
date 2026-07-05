@@ -88,7 +88,6 @@ app = modal.App(app_name, image=image)
 )
 @biolm_model_class
 class ESMCModel(ModelMixinSnap):
-    app_username: str = modal.parameter(default="default_user")
     model_size: str = model_size
     model_id: str = get_model_id(model_size)
 
@@ -195,7 +194,7 @@ class ESMCModel(ModelMixinSnap):
 
             if (
                 ESMCEncodeIncludeOptions.MEAN in include_options
-                or ESMCEncodeIncludeOptions.PER_TOKEN in include_options
+                or ESMCEncodeIncludeOptions.PER_RESIDUE in include_options
             ) and batch_out.hidden_states is not None:
                 n_layers = batch_out.hidden_states.shape[0]
 
@@ -231,7 +230,7 @@ class ESMCModel(ModelMixinSnap):
                     encode_res.embeddings = embedding_list
 
                 # residue_embeddings
-                if ESMCEncodeIncludeOptions.PER_TOKEN in include_options:
+                if ESMCEncodeIncludeOptions.PER_RESIDUE in include_options:
                     per_token_list = []
                     for lyr_idx in layers_to_use:
                         layer_emb = batch_out.hidden_states[lyr_idx][

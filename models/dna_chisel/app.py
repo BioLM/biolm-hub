@@ -54,7 +54,6 @@ app = modal.App(app_name, image=image)
 )
 @biolm_model_class
 class DnaChiselModel(ModelMixinSnap):
-    app_username: str = modal.parameter(default="default_user")
 
     @modal.enter(snap=True)
     def load_model(self) -> None:
@@ -374,10 +373,19 @@ class DnaChiselModel(ModelMixinSnap):
     def compute_kozak_sequence_strength(self, sequence: str) -> float:
         """
         Evaluate the Kozak sequence strength in a naive way:
-        Return 1.0 if the sequence starts with the consensus "GCCRCCATGG", else 0.0.
+        Return 1.0 if the sequence starts with the Kozak consensus GCCRCCATGG,
+        else 0.0.
+
+        The consensus contains the IUPAC ambiguity code ``R`` (a purine, i.e.
+        A or G), which never appears literally in a nucleotide sequence, so the
+        consensus is matched as the regex ``GCC[AG]CCATGG``. Matching the raw
+        string ``"GCCRCCATGG"`` would never succeed, so a perfect Kozak context
+        such as ``GCCACCATGG`` / ``GCCGCCATGG`` now correctly scores 1.0.
         """
-        kozak = "GCCRCCATGG"
-        if sequence.upper().startswith(kozak):
+        import re
+
+        kozak_pattern = re.compile("^GCC[AG]CCATGG")
+        if kozak_pattern.match(sequence.upper()):
             return 1.0
         return 0.0
 

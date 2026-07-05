@@ -73,8 +73,16 @@ def _validate_context_list(
 
 class E1EncodeIncludeOptions(EnhancedStringEnum):
     MEAN = "mean"
-    PER_TOKEN = "per_token"
+    PER_RESIDUE = "per_residue"
+    PER_TOKEN = "per_residue"  # deprecated alias of PER_RESIDUE (back-compat)
     LOGITS = "logits"
+
+    @classmethod
+    def _missing_(cls, value: object) -> "E1EncodeIncludeOptions | None":
+        # Back-compat: legacy per-residue value, normalized to the canonical name.
+        if isinstance(value, str) and value == "per_token":
+            return cls.PER_RESIDUE
+        return None
 
 
 class E1EncodeRequestParams(RequestModel):

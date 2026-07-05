@@ -69,7 +69,6 @@ app = modal.App(app_name, image=image)
 )
 @biolm_model_class
 class MSATransformerModel(ModelMixinSnap):
-    app_username: str = modal.parameter(default="default_user")
 
     @modal.enter(snap=True)
     def setup_model(self) -> None:
@@ -166,7 +165,7 @@ class MSATransformerModel(ModelMixinSnap):
         Args:
             msa: List of aligned sequences (first is query)
             repr_layers: Layer indices to extract representations from
-            include: What outputs to include (mean, per_token, row_attention, contacts)
+            include: What outputs to include (mean, per_residue, row_attention, contacts)
             sequence_index: Index of this MSA in the batch
 
         Returns:
@@ -225,7 +224,7 @@ class MSATransformerModel(ModelMixinSnap):
                 for layer_n, t in representations.items()
             ]
 
-        if "per_token" in include:
+        if "per_residue" in include:
             # Per-token embeddings of query sequence
             result_dict["residue_embeddings"] = [
                 LayerPerTokenEmbeddings(

@@ -97,7 +97,6 @@ app = modal.App(app_name, image=image)
 )
 @biolm_model_class
 class ProstT5Model(ModelMixinSnap):
-    app_username: str = modal.parameter(default="default_user")
     model_action: str = model_action
     model_direction: str = model_direction
 
@@ -277,7 +276,7 @@ class ProstT5Model(ModelMixinSnap):
             for i in range(len(seq_lens))
         ]
         return [
-            ProstT5EncodeResponseResult(mean_representation=embedding)
+            ProstT5EncodeResponseResult(embeddings=embedding)
             for embedding in embs_per_protein
         ]
 

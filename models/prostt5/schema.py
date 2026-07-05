@@ -1,7 +1,7 @@
 import re
 from typing import Annotated
 
-from pydantic import BeforeValidator, Field
+from pydantic import AliasChoices, BeforeValidator, Field
 
 from models.commons.data.validator import validate_aa_extended
 from models.commons.model.base import ModelParams
@@ -114,8 +114,11 @@ class ProstT5EncodeRequestFold(RequestModel):
 
 
 class ProstT5EncodeResponseResult(ResponseModel):
-    mean_representation: list[float] = Field(
-        description="Mean-pooled 1024-dimensional embedding vector for the input sequence."
+    model_config = {"populate_by_name": True}
+
+    embeddings: list[float] = Field(
+        validation_alias=AliasChoices("embeddings", "mean_representation"),
+        description="Mean-pooled 1024-dimensional embedding vector for the input sequence.",
     )
 
 

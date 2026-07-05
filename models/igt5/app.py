@@ -75,7 +75,6 @@ app = modal.App(app_name, image=image)
 )
 @biolm_model_class
 class IgT5Model(ModelMixinSnap):
-    app_username: str = modal.parameter(default="default_user")
     model_type: str = model_type
 
     @modal.enter(snap=True)
@@ -204,7 +203,7 @@ class IgT5Model(ModelMixinSnap):
             if IgT5EncodeIncludeOptions.MEAN in include:
                 result["embeddings"] = sequence_embeddings[idx].tolist()
 
-            if IgT5EncodeIncludeOptions.RESIDUE in include:
+            if IgT5EncodeIncludeOptions.PER_RESIDUE in include:
                 # Slice off special and pad tokens so each item's per-residue
                 # matrix has its own true sequence length rather than the batch-max
                 # padded length. special_tokens_mask == 0 selects the real residues

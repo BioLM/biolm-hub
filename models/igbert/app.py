@@ -88,7 +88,6 @@ app = modal.App(app_name, image=image)
 )
 @biolm_model_class
 class IgBertModel(ModelMixinSnap):
-    app_username: str = modal.parameter(default="default_user")
     model_type: str = model_type
 
     @modal.enter(snap=True)
@@ -224,7 +223,7 @@ class IgBertModel(ModelMixinSnap):
         ).to(self.device)
 
         need_hidden_states = (
-            IgBertEncodeIncludeOptions.RESIDUE in include
+            IgBertEncodeIncludeOptions.PER_RESIDUE in include
             or IgBertEncodeIncludeOptions.MEAN in include
         )
 
@@ -261,7 +260,7 @@ class IgBertModel(ModelMixinSnap):
             if IgBertEncodeIncludeOptions.MEAN in include:
                 result["embeddings"] = sequence_embeddings[idx].cpu().tolist()
 
-            if IgBertEncodeIncludeOptions.RESIDUE in include:
+            if IgBertEncodeIncludeOptions.PER_RESIDUE in include:
                 # Slice off special (CLS/SEP) and pad tokens so each item's
                 # per-residue matrix has its own true sequence length rather than
                 # the batch-max padded length. special_tokens_mask == 0 selects the

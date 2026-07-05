@@ -95,7 +95,6 @@ app = modal.App(app_name, image=image)
 )
 @biolm_model_class
 class E1Model(ModelMixin):
-    app_username: str = modal.parameter(default="default_user")
     model_size: str = model_size
     model_id: str = get_model_id(model_size)
 
@@ -329,7 +328,7 @@ class E1Model(ModelMixin):
 
             if (
                 E1EncodeIncludeOptions.MEAN in include_options
-                or E1EncodeIncludeOptions.PER_TOKEN in include_options
+                or E1EncodeIncludeOptions.PER_RESIDUE in include_options
             ) and batch_out.hidden_states is not None:
                 n_layers = len(batch_out.hidden_states)
 
@@ -366,7 +365,7 @@ class E1Model(ModelMixin):
                     encode_res.embeddings = embedding_list
 
                 # residue_embeddings
-                if E1EncodeIncludeOptions.PER_TOKEN in include_options:
+                if E1EncodeIncludeOptions.PER_RESIDUE in include_options:
                     per_token_list = []
                     for lyr_idx in layers_to_use:
                         layer_emb = batch_out.hidden_states[lyr_idx][

@@ -45,8 +45,16 @@ class IgBertModelTypes(EnhancedStringEnum):
 
 class IgBertEncodeIncludeOptions(EnhancedStringEnum):
     MEAN = "mean"  # mean embedding (default)
-    RESIDUE = "residue"  # per-residue embeddings
+    PER_RESIDUE = "per_residue"  # per-residue embeddings
+    RESIDUE = "per_residue"  # deprecated alias of PER_RESIDUE (back-compat)
     LOGITS = "logits"  # logits
+
+    @classmethod
+    def _missing_(cls, value: object) -> "IgBertEncodeIncludeOptions | None":
+        # Back-compat: legacy per-residue value, normalized to the canonical name.
+        if isinstance(value, str) and value == "residue":
+            return cls.PER_RESIDUE
+        return None
 
 
 class IgBertEncodeRequestParams(RequestModel):

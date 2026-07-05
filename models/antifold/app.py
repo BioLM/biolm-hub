@@ -116,7 +116,6 @@ app = modal.App(app_name, image=image)
 )
 @biolm_model_class
 class AntiFoldModel(ModelMixinSnap):
-    app_username: str = modal.parameter(default="default_user")
 
     @modal.enter(snap=True)
     def setup_model(self) -> None:
@@ -243,7 +242,7 @@ class AntiFoldModel(ModelMixinSnap):
                 results: dict[str, Any] = {}
                 if AntiFoldEncodeIncludeOptions.LOGITS in payload.params.include:
                     results["logits"] = logits[0][list(aa_unambiguous)].values.tolist()
-                    results["vocab"] = list(aa_unambiguous)
+                    results["vocab_tokens"] = list(aa_unambiguous)
                     results["pdb_posins"] = [
                         int(v) for v in logits[0]["pdb_posins"].tolist()
                     ]
@@ -257,7 +256,7 @@ class AntiFoldModel(ModelMixinSnap):
                     results["embeddings"] = embeddings.mean(
                         axis=0
                     ).tolist()  # shape (512,)
-                if AntiFoldEncodeIncludeOptions.RESIDUE in payload.params.include:
+                if AntiFoldEncodeIncludeOptions.PER_RESIDUE in payload.params.include:
                     results["residue_embeddings"] = (
                         embeddings.tolist()
                     )  # shape(seq_len, 512)
@@ -334,7 +333,7 @@ class AntiFoldModel(ModelMixinSnap):
                             results["logits"] = logits[
                                 list(aa_unambiguous)
                             ].values.tolist()
-                            results["vocab"] = list(aa_unambiguous)
+                            results["vocab_tokens"] = list(aa_unambiguous)
                             results["pdb_posins"] = [
                                 int(v) for v in logits["pdb_posins"].tolist()
                             ]
@@ -352,7 +351,7 @@ class AntiFoldModel(ModelMixinSnap):
                             results["logprobs"] = logprobs[
                                 list(aa_unambiguous)
                             ].values.tolist()
-                            results["vocab"] = list(aa_unambiguous)
+                            results["vocab_tokens"] = list(aa_unambiguous)
                     results_list.append(AntiFoldGenerateResponseResult(**results))
             finally:
                 if os.path.exists(tmp_pdb):

@@ -162,7 +162,6 @@ def calculate_sequence_perplexity(
 )
 @biolm_model_class
 class ZymCTRLModel(ModelMixinSnap):
-    app_username: str = modal.parameter(default="default_user")
 
     @modal.enter(snap=True)
     def setup_model(self) -> None:
@@ -377,7 +376,7 @@ class ZymCTRLModel(ModelMixinSnap):
                 embedding = valid_hidden[-1].cpu().tolist()
                 result_dict["embedding"] = embedding
 
-            elif pooling == ZymCTRLPoolingType.PER_TOKEN:
+            elif pooling == ZymCTRLPoolingType.PER_RESIDUE:
                 # All per-token embeddings
                 per_token = valid_hidden.cpu().tolist()
                 result_dict["residue_embeddings"] = per_token

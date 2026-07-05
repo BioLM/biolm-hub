@@ -71,7 +71,6 @@ app = modal.App(app_name, image=image)
 )
 @biolm_model_class
 class ESM1bModel(ModelMixinSnap):
-    app_username: str = modal.parameter(default="default_user")
 
     @modal.enter(snap=True)
     def setup_model(self) -> None:
@@ -281,7 +280,7 @@ class ESM1bModel(ModelMixinSnap):
             seq_len = len(seq)
 
             # Extract embeddings for requested layers
-            if "per_token" in include:
+            if "per_residue" in include:
                 result_dict["residue_embeddings"] = [
                     {
                         "layer": layer_idx,
