@@ -9,12 +9,14 @@ way. (The *why* behind them is in [`PHILOSOPHY.md`](PHILOSOPHY.md).)
 ```bash
 make install          # venv + all dev deps via uv, and pre-commit hooks
 make style            # ruff + black + hygiene hooks
-make mypy             # static type checking (enforced)
+make mypy             # static type checking (enforced, --strict)
 make test-unit        # fast tests — no Modal, no R2
 ```
 
-`make check` runs everything CI runs on every PR (style + mypy + unit). Keep it green locally before
-you push.
+`make check` runs the every-PR safe gate: **style + mypy + schema-doc check + CI-script tests + unit
+tests** (no Modal, no R2). Keep it green locally before you push. The docs build (`make docs`, i.e.
+`mkdocs build --strict`) is a separate check — run it after touching any schema, `Field(description=)`,
+or root doc.
 
 ## Adding a model
 
@@ -99,7 +101,7 @@ Tests are the coherence mechanism. There are four tiers (full detail in the test
 
 | Tier | What | Needs |
 |------|------|-------|
-| Static | `make style`, `make mypy`, `pytest --collect-only` | nothing |
+| Static | `make style`, `make mypy`, `make check-schema-docs`, `pytest --collect-only` | nothing |
 | Unit | `make test-unit` | nothing |
 | Integration | deploy to a Modal env + golden fixtures | Modal env + R2 |
 | Deployment | run against a live endpoint | Modal env + R2 |
@@ -124,9 +126,11 @@ Tests are the coherence mechanism. There are four tiers (full detail in the test
 
 Two workflows, split by trust:
 
-- **Every PR — safe checks** (`.github/workflows/ci.yml`): style + mypy + unit tests + the
-  CI change-detection script tests + a docs build. No Modal, no R2, no secrets — so it runs on PRs
-  from forks too. This is exactly what `make check` runs locally; keep it green before you push.
+- **Every PR — safe checks** (`.github/workflows/ci.yml`): three parallel jobs — (1) style + mypy +
+  the schema-doc check + the CI change-detection script tests + unit tests (this job is exactly
+  `make check`, so keep it green locally before you push); (2) a strict docs build
+  (`mkdocs build --strict`, the same as `make docs`); (3) a gitleaks secret scan. No Modal, no R2, no
+  secrets — so the whole workflow runs on PRs from forks too.
 - **Maintainer-gated — deploy + integration/deployment** (`.github/workflows/deploy.yml`): the
   expensive Modal jobs. Opening or updating a PR does **not** trigger these. A maintainer reviews the
   change, then applies the **`deploy-approved`** label, which deploys the affected models to the dev

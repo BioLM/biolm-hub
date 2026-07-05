@@ -83,6 +83,11 @@ bh setup                 # checks Modal (required) + R2 (optional) config
 bh deploy <model>        # deploys to your Modal workspace
 ```
 
+Without R2/HF secrets provisioned in your Modal workspace, prefix the deploy with
+`BIOLM_SKIP_MODAL_SECRETS=1` so it doesn't try to mount secrets that aren't there — public weights are
+then read anonymously over HTTPS (no self-population; that needs credentials). Maintainer deploys
+leave it unset and self-populate the public bucket.
+
 Deployed endpoints — and `bh serve --host 0.0.0.0` — are **unauthenticated** and bill your Modal
 account. Don't expose them publicly without your own access control.
 
