@@ -370,6 +370,7 @@ def validate_residue_lists(
 
 class MPNNGenerateRequest(RequestModel):
     params: AllMPNNGenerateParams = Field(
+        default_factory=AllMPNNGenerateParams,
         description="Optional parameters controlling this action (defaults are used when omitted).",
     )
     items: Annotated[

@@ -87,7 +87,7 @@ class ThermoMPNNPredictRequestItem(RequestModel):
 
 class ThermoMPNNPredictRequest(RequestModel):
     params: ThermoMPNNPredictParams = Field(
-        ...,
+        default_factory=ThermoMPNNPredictParams,
         description="Optional parameters controlling this action (defaults are used when omitted).",
     )
     items: Annotated[

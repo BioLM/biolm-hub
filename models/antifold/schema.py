@@ -221,7 +221,7 @@ class AntiFoldBaseRequestItem(RequestModel):
 
 class AntiFoldPredictRequest(RequestModel):
     params: AntiFoldPredictRequestParams = Field(
-        description="Optional parameters controlling this action (defaults are used when omitted).",
+        description="Parameters controlling this action; required because they carry the PDB chain selectors (at least one of heavy_chain_id / light_chain_id must be provided).",
     )
     items: list[AntiFoldBaseRequestItem] = Field(
         min_length=1,
@@ -256,7 +256,7 @@ class AntiFoldPredictRequest(RequestModel):
 
 class AntiFoldEncodeRequest(AntiFoldPredictRequest):
     params: AntiFoldEncodeRequestParams = Field(
-        description="Optional parameters controlling this action (defaults are used when omitted).",
+        description="Parameters controlling this action; required because they carry the PDB chain selectors (at least one of heavy_chain_id / light_chain_id must be provided).",
     )
 
 
@@ -308,7 +308,7 @@ class AntiFoldGenerateRequestParams(AntiFoldPredictRequestParams):
 
 class AntiFoldGenerateRequest(RequestModel):
     params: AntiFoldGenerateRequestParams = Field(
-        description="Optional parameters controlling this action (defaults are used when omitted).",
+        description="Parameters controlling this action; required because they carry the PDB chain selectors (at least one of heavy_chain_id / light_chain_id must be provided).",
     )
     items: list[AntiFoldBaseRequestItem] = Field(
         min_length=1,

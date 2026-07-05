@@ -144,7 +144,8 @@ class ThermoMPNNDPredictRequestItem(RequestModel):
 
 class ThermoMPNNDPredictRequest(RequestModel):
     params: ThermoMPNNDPredictParams = Field(
-        description="Optional parameters controlling this action (defaults are used when omitted)."
+        default_factory=ThermoMPNNDPredictParams,
+        description="Optional parameters controlling this action (defaults are used when omitted).",
     )
     items: Annotated[
         list[ThermoMPNNDPredictRequestItem],
