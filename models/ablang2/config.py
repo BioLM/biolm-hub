@@ -1,5 +1,6 @@
 from models.ablang2.schema import (
     AbLang2EncodeRequest,
+    AbLang2EncodeResponse,
     AbLang2GenerateRequest,
     AbLang2GenerateResponse,
     AbLang2LogProbRequest,
@@ -7,7 +8,6 @@ from models.ablang2.schema import (
     AbLang2Params,
     AbLang2PredictRequest,
     AbLang2PredictResponse,
-    AbLang2SeqcodingResponse,
 )
 from models.commons.model.config import ActionSchemaMap, ModelFamily
 from models.commons.model.schema import ModalResourceSpec, ModelActions
@@ -56,7 +56,7 @@ MODEL_FAMILY = ModelFamily(
         ActionSchemaMap(
             name=ModelActions.ENCODE,
             request_schema=AbLang2EncodeRequest,
-            response_schema=AbLang2SeqcodingResponse,  # Primary response type
+            response_schema=AbLang2EncodeResponse,
         ),
         ActionSchemaMap(
             name=ModelActions.PREDICT,

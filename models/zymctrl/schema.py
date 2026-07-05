@@ -1,7 +1,7 @@
 import re
 from typing import Annotated, Optional
 
-from pydantic import BeforeValidator, Field, field_validator
+from pydantic import AliasChoices, BeforeValidator, Field, field_validator
 
 from models.commons.data.validator import validate_aa_unambiguous
 from models.commons.model.base import ModelParams
@@ -206,9 +206,10 @@ class ZymCTRLEncodeResponseResult(ResponseModel):
         default=None,
         description="Embedding vector for the sequence; returned when pooling is 'mean' or 'last'.",
     )
-    per_token_embeddings: Optional[list[list[float]]] = Field(
+    residue_embeddings: Optional[list[list[float]]] = Field(
         default=None,
-        description="Per-residue (per-token) embedding vectors.",
+        validation_alias=AliasChoices("residue_embeddings", "per_token_embeddings"),
+        description="Per-residue embedding vectors.",
     )
 
 

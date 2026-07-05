@@ -81,7 +81,7 @@ Generates embeddings and optional auxiliary outputs (contacts, attentions, logit
 }
 ```
 
-Optional fields (`per_token_embeddings`, `bos_embeddings`, `contacts`, `logits`, `attentions`, `vocab_tokens`) are omitted from the response when their corresponding `include` option is not set.
+Optional fields (`residue_embeddings`, `bos_embeddings`, `contacts`, `logits`, `attentions`, `vocab_tokens`) are omitted from the response when their corresponding `include` option is not set.
 
 ### `predict`
 

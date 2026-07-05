@@ -31,17 +31,25 @@ verbatim:
   diffusion_batch_size:
     - "Number of diffusion samples to generate in parallel."
 
-  # Structure-confidence outputs. (pLDDT is intentionally NOT pinned: in folding
-  # models it's an output score, but in some models it's a boolean request flag.)
+  # Structure-confidence outputs. (Bare `plddt` is intentionally NOT pinned: in
+  # folding models it's a per-residue output list, but in some models it's a
+  # boolean request flag. `mean_plddt` — the scalar mean pLDDT over residues —
+  # has a single stable meaning, so it IS pinned.)
   ptm:
     - "Predicted TM-score (pTM) for the overall structure (0–1)."
   pae:
     - "Predicted aligned error (PAE) matrix, in Ångströms."
+  mean_plddt:
+    - "Mean per-residue pLDDT confidence score (0–100); higher values indicate more confident predictions."
 
   # Representation / token outputs. (`contacts` is NOT pinned: a predicted contact
   # map in language models but an input contact restraint in structure models.)
-  per_token_embeddings:
-    - "Per-residue (per-token) embedding vectors."
+  # Per-position embeddings converged to ONE canonical name across the catalog:
+  # `residue_embeddings`. All emitters are protein/antibody models (the DNA/RNA
+  # models only emit pooled/last embeddings), so the biology-appropriate,
+  # ESM-standard term is used. Models that formerly emitted `per_token_embeddings`
+  # or `per_residue_embeddings` now serialize `residue_embeddings` and still accept
+  # the old names as validation aliases.
   residue_embeddings:
     - "Per-residue embedding vectors."
   sequence_index:

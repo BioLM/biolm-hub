@@ -75,7 +75,7 @@ Generates embeddings and optional auxiliary outputs (attentions, logits) for one
     {
       "sequence_index": 0,
       "embeddings": [{"layer": 33, "embedding": [0.012, -0.034, ...]}],
-      "per_token_embeddings": null,
+      "residue_embeddings": null,
       "bos_embeddings": null,
       "logits": null,
       "attentions": null,

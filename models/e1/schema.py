@@ -2,7 +2,7 @@ from collections.abc import Callable
 from functools import partial
 from typing import Annotated, Optional
 
-from pydantic import BeforeValidator, Field, field_validator
+from pydantic import AliasChoices, BeforeValidator, Field, field_validator
 
 from models.commons.data.validator import (
     AAExtendedPlusExtra,
@@ -270,9 +270,10 @@ class E1EncodeResponseResult(ResponseModel):
         default=None,
         description="Per-layer mean-pooled embedding vectors for the query sequence.",
     )
-    per_token_embeddings: Optional[list[LayerPerTokenEmbeddings]] = Field(
+    residue_embeddings: Optional[list[LayerPerTokenEmbeddings]] = Field(
         default=None,
-        description="Per-residue (per-token) embedding vectors.",
+        validation_alias=AliasChoices("residue_embeddings", "per_token_embeddings"),
+        description="Per-residue embedding vectors.",
     )
     logits: Optional[list[list[float]]] = Field(
         default=None,

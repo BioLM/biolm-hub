@@ -173,7 +173,7 @@ class ESMCModel(ModelMixinSnap):
         We return the following fields in ESMCEncodeResponseResult,
         depending on what is in payload.params.include:
           - embeddings: [{layer: <int>, embedding: [d_embed]}, ...]
-          - per_token_embeddings: [{layer: <int>, embedding: [[d_embed]]}, ...]
+          - residue_embeddings: [{layer: <int>, embedding: [[d_embed]]}, ...]
           - logits: [[20], ...], restricted to canonical AAs only.
           - vocab_tokens: ["A", "C", ...]
 
@@ -230,7 +230,7 @@ class ESMCModel(ModelMixinSnap):
                         )
                     encode_res.embeddings = embedding_list
 
-                # per_token_embeddings
+                # residue_embeddings
                 if ESMCEncodeIncludeOptions.PER_TOKEN in include_options:
                     per_token_list = []
                     for lyr_idx in layers_to_use:
@@ -242,7 +242,7 @@ class ESMCModel(ModelMixinSnap):
                         per_token_list.append(
                             LayerPerTokenEmbeddings(layer=lyr_idx, embeddings=emb_2d)
                         )
-                    encode_res.per_token_embeddings = per_token_list
+                    encode_res.residue_embeddings = per_token_list
 
             if (
                 ESMCEncodeIncludeOptions.LOGITS in include_options

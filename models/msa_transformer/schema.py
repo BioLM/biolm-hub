@@ -2,7 +2,7 @@ import re
 from functools import partial
 from typing import Annotated, Optional
 
-from pydantic import BeforeValidator, Field
+from pydantic import AliasChoices, BeforeValidator, Field
 
 from models.commons.data.validator import aa_extended
 from models.commons.model.base import ModelParams
@@ -156,9 +156,10 @@ class MSATransformerEncodeResponseResult(ResponseModel):
         default=None,
         description="Mean-pooled embeddings of the query sequence, one entry per requested layer.",
     )
-    per_token_embeddings: Optional[list[LayerPerTokenEmbeddings]] = Field(
+    residue_embeddings: Optional[list[LayerPerTokenEmbeddings]] = Field(
         default=None,
-        description="Per-residue (per-token) embedding vectors.",
+        validation_alias=AliasChoices("residue_embeddings", "per_token_embeddings"),
+        description="Per-residue embedding vectors.",
     )
     row_attentions: Optional[list[list[list[float]]]] = Field(
         default=None,

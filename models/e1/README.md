@@ -71,7 +71,7 @@ Generates embeddings and optional logits for protein sequences, with optional re
   "results": [
     {
       "embeddings": [{"layer": 20, "embedding": [0.012, -0.034, ...]}],
-      "per_token_embeddings": null,
+      "residue_embeddings": null,
       "logits": null,
       "vocab_tokens": null,
       "context_sequence_count": 2

@@ -114,7 +114,7 @@ Extract embeddings from enzyme sequences using ZymCTRL's internal representation
 }
 ```
 
-Embedding dimension is 1280. For `per_token` pooling, `per_token_embeddings` (list of lists) is returned instead of `embedding`.
+Embedding dimension is 1280. For `per_token` pooling, `residue_embeddings` (list of lists) is returned instead of `embedding`.
 
 ## Usage Examples
 

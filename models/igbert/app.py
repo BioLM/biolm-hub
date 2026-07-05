@@ -262,7 +262,14 @@ class IgBertModel(ModelMixinSnap):
                 result["embeddings"] = sequence_embeddings[idx].cpu().tolist()
 
             if IgBertEncodeIncludeOptions.RESIDUE in include:
-                result["residue_embeddings"] = residue_embeddings[idx].cpu().tolist()
+                # Slice off special (CLS/SEP) and pad tokens so each item's
+                # per-residue matrix has its own true sequence length rather than
+                # the batch-max padded length. special_tokens_mask == 0 selects the
+                # real residues only (same basis as the mean-pool divisor above).
+                keep = tokens["special_tokens_mask"][idx] == 0
+                result["residue_embeddings"] = (
+                    residue_embeddings[idx][keep].cpu().tolist()
+                )
 
             if IgBertEncodeIncludeOptions.LOGITS in include and all_logits is not None:
                 result["logits"] = all_logits[idx].cpu().tolist()

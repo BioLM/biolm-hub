@@ -227,8 +227,9 @@ class ImmuneFoldPredictResponseResult(ResponseModel):
     ptm: float = Field(
         description="Predicted TM-score (pTM) for the overall structure (0–1)."
     )
-    full_plddt: float = Field(
-        description="Mean pLDDT confidence score averaged over all residues (0–100; higher is more confident)."
+    mean_plddt: float = Field(
+        validation_alias=AliasChoices("mean_plddt", "full_plddt"),
+        description="Mean per-residue pLDDT confidence score (0–100); higher values indicate more confident predictions.",
     )
     plddt: list[list[float]] = Field(
         description="Per-residue pLDDT confidence scores for the predicted structure (0–100; higher is more confident)."

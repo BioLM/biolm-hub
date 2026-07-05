@@ -434,7 +434,7 @@ class DSMModel(ModelMixinSnap):
                 hidden_states = outputs.last_hidden_state  # [1, seq_len, hidden_size]
 
                 embeddings: list[float] | None = None
-                per_residue_embeddings: list[list[float]] | None = None
+                residue_embeddings: list[list[float]] | None = None
                 cls_embeddings: list[float] | None = None
 
                 # Mean pooling
@@ -450,7 +450,7 @@ class DSMModel(ModelMixinSnap):
                 if DSMEncodeIncludeOptions.PER_RESIDUE in include:
                     attention_mask = encoded["attention_mask"]
                     seq_len = attention_mask.sum().item()
-                    per_residue_embeddings = (
+                    residue_embeddings = (
                         hidden_states[0, 1 : seq_len - 1].cpu().tolist()
                     )
 
@@ -462,7 +462,7 @@ class DSMModel(ModelMixinSnap):
                     DSMEncodeResponseResult(
                         sequence_index=i,
                         embeddings=embeddings,
-                        per_residue_embeddings=per_residue_embeddings,
+                        residue_embeddings=residue_embeddings,
                         cls_embeddings=cls_embeddings,
                     )
                 )

@@ -1,7 +1,7 @@
 from functools import partial
 from typing import Annotated, Optional
 
-from pydantic import BeforeValidator, Field
+from pydantic import AliasChoices, BeforeValidator, Field
 
 from models.commons.data.validator import (
     AAExtendedPlusExtra,
@@ -158,9 +158,10 @@ class ESMCEncodeResponseResult(ResponseModel):
         default=None,
         description="Mean-pooled embedding vectors for each requested layer.",
     )
-    per_token_embeddings: Optional[list[LayerPerTokenEmbeddings]] = Field(
+    residue_embeddings: Optional[list[LayerPerTokenEmbeddings]] = Field(
         default=None,
-        description="Per-residue (per-token) embedding vectors.",
+        validation_alias=AliasChoices("residue_embeddings", "per_token_embeddings"),
+        description="Per-residue embedding vectors.",
     )
     logits: Optional[list[list[float]]] = Field(
         default=None,

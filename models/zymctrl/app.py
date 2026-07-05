@@ -380,7 +380,7 @@ class ZymCTRLModel(ModelMixinSnap):
             elif pooling == ZymCTRLPoolingType.PER_TOKEN:
                 # All per-token embeddings
                 per_token = valid_hidden.cpu().tolist()
-                result_dict["per_token_embeddings"] = per_token
+                result_dict["residue_embeddings"] = per_token
 
             results.append(ZymCTRLEncodeResponseResult.model_validate(result_dict))
 

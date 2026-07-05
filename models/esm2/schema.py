@@ -1,6 +1,6 @@
 from typing import Annotated, Optional
 
-from pydantic import BeforeValidator, Field
+from pydantic import AliasChoices, BeforeValidator, Field
 
 from models.commons.data.validator import (
     AAExtendedPlusExtra,
@@ -155,9 +155,10 @@ class ESM2EncodeResponseResult(ResponseModel):
         default=None,
         description="Beginning-of-sequence (CLS) token embedding vectors, one per requested layer.",
     )
-    per_token_embeddings: Optional[list["LayerPerTokenEmbeddings"]] = Field(
+    residue_embeddings: Optional[list["LayerPerTokenEmbeddings"]] = Field(
         default=None,
-        description="Per-residue (per-token) embedding vectors.",
+        validation_alias=AliasChoices("residue_embeddings", "per_token_embeddings"),
+        description="Per-residue embedding vectors.",
     )
     contacts: Optional[list[list[float]]] = Field(
         default=None,

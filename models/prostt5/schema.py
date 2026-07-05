@@ -267,7 +267,7 @@ class ProstT5GenerateRequestFold(RequestModel):
 ### ProstT5 Generate Response
 
 
-class ProstT5GenerateResponseGenerated(RequestModel):
+class ProstT5GenerateResponseGenerated(ResponseModel):
     sequence: str = Field(
         description="A generated sequence in the target alphabet (uppercase amino acids for fold2AA; lowercase 3Di tokens for AA2fold).",
     )

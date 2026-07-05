@@ -282,7 +282,7 @@ class ESM1bModel(ModelMixinSnap):
 
             # Extract embeddings for requested layers
             if "per_token" in include:
-                result_dict["per_token_embeddings"] = [
+                result_dict["residue_embeddings"] = [
                     {
                         "layer": layer_idx,
                         "embeddings": hidden_states[layer_idx][i, 1 : seq_len + 1]

@@ -176,7 +176,7 @@ class Evo2GenerateRequest(RequestModel):
 ### Evo2 Responses
 
 
-class Evo2EncodeResponseEmbedding(RequestModel):
+class Evo2EncodeResponseEmbedding(ResponseModel):
     model_config = {
         "populate_by_name": True,  # Ensures alias names work as expected
         "json_schema_extra": {

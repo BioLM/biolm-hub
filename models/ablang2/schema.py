@@ -195,37 +195,35 @@ class AbLang2LogProbRequest(RequestModel):
 
 ######### Response Models
 
-### AbLang2 Rescoding Response
+### AbLang2 Encode Response
+#
+# A single encode endpoint returns EITHER a pooled sequence-level embedding
+# ("seqcoding") OR per-residue embeddings ("rescoding") depending on
+# params.include, so both fields are optional and mutually exclusive per item.
+# One unified response type keeps the declared/registered schema (docs + OpenAPI)
+# accurate for both modes, consistent with the other multi-output encode models
+# (e.g. esm2). serialize_model() drops the unset field via exclude_none, so the
+# wire shape is unchanged from the previous two separate response types.
 
 
-class AbLang2RescodingResult(ResponseModel):
-    residue_embeddings: list[list[float]] = Field(
-        description="Per-residue embedding vectors."
+class AbLang2EncodeResult(ResponseModel):
+    embeddings: Optional[list[float]] = Field(
+        default=None,
+        description="Germline-debiased sequence-level embedding vector for the antibody pair.",
+    )
+    residue_embeddings: Optional[list[list[float]]] = Field(
+        default=None,
+        description="Per-residue embedding vectors.",
     )
 
 
-class AbLang2RescodingResponse(ResponseModel):
-    results: list[AbLang2RescodingResult] = Field(
+class AbLang2EncodeResponse(ResponseModel):
+    results: list[AbLang2EncodeResult] = Field(
         description="Per-input results, returned in the same order as the request items."
     )
     number_alignment: Optional[list[str]] = Field(
         default=None,
-        description="Per-residue antibody numbering labels, populated when alignment is requested; null otherwise.",
-    )
-
-
-### AbLang2 Seqcoding Response
-
-
-class AbLang2SeqcodingResult(ResponseModel):
-    embeddings: list[float] = Field(
-        description="Germline-debiased sequence-level embedding vector for the antibody pair."
-    )
-
-
-class AbLang2SeqcodingResponse(ResponseModel):
-    results: list[AbLang2SeqcodingResult] = Field(
-        description="Per-input results, returned in the same order as the request items."
+        description="Per-residue antibody numbering labels, populated when alignment is requested (rescoding only); null otherwise.",
     )
 
 
@@ -255,7 +253,7 @@ AbLang2PredictResponse = _AbLang2LikelihoodResponse  # Alias to conform to Model
 ### AbLang2 Generate Response
 
 
-class AbLang2GenerateResponseResult(RequestModel):
+class AbLang2GenerateResponseResult(ResponseModel):
     # Generate output mirrors the canonical antibody field names.
     heavy_chain: str = Field(
         description="Restored heavy-chain amino-acid sequence with all masked positions filled."

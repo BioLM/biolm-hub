@@ -74,7 +74,7 @@ Predict 3D structure from immune protein sequences with confidence scores.
   "results": [
     {
       "ptm": 0.85,
-      "full_plddt": 82.5,
+      "mean_plddt": 82.5,
       "plddt": [[92.1, 88.3, ...]],
       "pdb": "ATOM      1  N   GLY H   1 ..."
     }

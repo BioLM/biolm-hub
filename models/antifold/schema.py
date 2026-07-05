@@ -397,7 +397,7 @@ class AntiFoldEncodeResponse(ResponseModel):
     )
 
 
-class AntiFoldGenerateResponseResultSamples(RequestModel):
+class AntiFoldGenerateResponseResultSamples(ResponseModel):
     model_config = {
         "populate_by_name": True,  # Ensures alias names work
         "json_schema_extra": {

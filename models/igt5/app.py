@@ -205,7 +205,13 @@ class IgT5Model(ModelMixinSnap):
                 result["embeddings"] = sequence_embeddings[idx].tolist()
 
             if IgT5EncodeIncludeOptions.RESIDUE in include:
-                result["residue_embeddings"] = residue_embeddings[idx].tolist()
+                # Slice off special and pad tokens so each item's per-residue
+                # matrix has its own true sequence length rather than the batch-max
+                # padded length. special_tokens_mask == 0 selects the real residues
+                # only (same basis as the mean-pool divisor above). residue_embeddings
+                # is already on CPU here, so bring the mask to CPU to index it.
+                keep = tokens["special_tokens_mask"][idx].detach().cpu() == 0
+                result["residue_embeddings"] = residue_embeddings[idx][keep].tolist()
 
             results_list.append(IgT5EncodeResponseResult.model_validate(result))
 

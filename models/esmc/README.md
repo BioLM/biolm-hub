@@ -66,7 +66,7 @@ Extract embeddings and/or logits from protein sequences.
       "embeddings": [
         {"layer": 29, "embedding": [0.1, -0.2, ...]}
       ],
-      "per_token_embeddings": [
+      "residue_embeddings": [
         {"layer": 29, "embeddings": [[0.1, ...], [0.2, ...], ...]}
       ],
       "logits": [[0.5, -0.3, ...], ...],
@@ -76,7 +76,7 @@ Extract embeddings and/or logits from protein sequences.
 }
 ```
 
-Fields are conditionally included based on the `include` parameter. `embeddings` and `per_token_embeddings` have BOS/EOS tokens removed. `logits` are restricted to 20 canonical amino acids.
+Fields are conditionally included based on the `include` parameter. `embeddings` and `residue_embeddings` have BOS/EOS tokens removed. `logits` are restricted to 20 canonical amino acids.
 
 ### `predict`
 

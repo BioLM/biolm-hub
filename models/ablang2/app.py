@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Union
 
 import modal
 
@@ -8,6 +7,8 @@ from models.ablang2.download import get_model_dir
 from models.ablang2.schema import (
     AbLang2EncodeOptions,
     AbLang2EncodeRequest,
+    AbLang2EncodeResponse,
+    AbLang2EncodeResult,
     AbLang2GenerateRequest,
     AbLang2GenerateResponse,
     AbLang2GenerateResponseResult,
@@ -18,10 +19,6 @@ from models.ablang2.schema import (
     AbLang2Params,
     AbLang2PredictRequest,
     AbLang2PredictResponse,
-    AbLang2RescodingResponse,
-    AbLang2RescodingResult,
-    AbLang2SeqcodingResponse,
-    AbLang2SeqcodingResult,
 )
 from models.commons.core.decorator import modal_endpoint
 from models.commons.core.error import ValidationError400
@@ -177,13 +174,12 @@ class AbLang2Model(ModelMixinSnap):
     def encode(
         self,
         payload: AbLang2EncodeRequest,
-    ) -> Union[AbLang2SeqcodingResponse, AbLang2RescodingResponse]:
+    ) -> AbLang2EncodeResponse:
         """
-        Single endpoint that runs either seqcoding or rescoding. Returns the
-        corresponding response schema:
-            - AbLang2SeqcodingResponse, or
-            - AbLang2RescodingResponse
-        depending on payload.params.include.
+        Single endpoint that runs either seqcoding or rescoding, returning a
+        unified AbLang2EncodeResponse. Per item, `embeddings` is populated for
+        seqcoding and `residue_embeddings` for rescoding (depending on
+        payload.params.include); the unused field is dropped on serialization.
         """
         input_batch = [(item.heavy_chain, item.light_chain) for item in payload.items]
         include = payload.params.include  # "seqcoding" or "rescoding"
@@ -204,13 +200,13 @@ class AbLang2Model(ModelMixinSnap):
                 batch_size=AbLang2Params.batch_size,
             )
 
-            results: list[AbLang2SeqcodingResult] = []
+            results: list[AbLang2EncodeResult] = []
             for emb_vector in raw_output:
                 results.append(
-                    AbLang2SeqcodingResult(embeddings=emb_vector.astype(float).tolist())
+                    AbLang2EncodeResult(embeddings=emb_vector.astype(float).tolist())
                 )
 
-            return AbLang2SeqcodingResponse(results=results)
+            return AbLang2EncodeResponse(results=results)
 
         else:
             raw_output = self.model(
@@ -220,7 +216,7 @@ class AbLang2Model(ModelMixinSnap):
                 batch_size=AbLang2Params.batch_size,
             )
 
-            rescoding_results: list[AbLang2RescodingResult] = []
+            rescoding_results: list[AbLang2EncodeResult] = []
             number_alignment = None
 
             if hasattr(raw_output, "aligned_embeds"):
@@ -229,7 +225,7 @@ class AbLang2Model(ModelMixinSnap):
                 for i in range(len(aligned_data)):
                     row = aligned_data[i].astype(float).tolist()
                     rescoding_results.append(
-                        AbLang2RescodingResult(residue_embeddings=row)
+                        AbLang2EncodeResult(residue_embeddings=row)
                     )
 
                 if hasattr(raw_output, "number_alignment"):
@@ -239,12 +235,12 @@ class AbLang2Model(ModelMixinSnap):
 
                 for per_item_matrix in raw_output:
                     rescoding_results.append(
-                        AbLang2RescodingResult(
+                        AbLang2EncodeResult(
                             residue_embeddings=per_item_matrix.astype(float).tolist()
                         )
                     )
 
-            return AbLang2RescodingResponse(
+            return AbLang2EncodeResponse(
                 results=rescoding_results,
                 number_alignment=number_alignment,
             )

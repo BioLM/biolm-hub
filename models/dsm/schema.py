@@ -1,7 +1,7 @@
 from functools import partial
 from typing import Annotated, Optional
 
-from pydantic import BeforeValidator, Field
+from pydantic import AliasChoices, BeforeValidator, Field
 
 from models.commons.data.validator import (
     AAExtendedPlusExtra,
@@ -253,9 +253,10 @@ class DSMEncodeResponseResult(ResponseModel):
         default=None,
         description="Mean-pooled embedding vector for the sequence.",
     )
-    per_residue_embeddings: Optional[list[list[float]]] = Field(
+    residue_embeddings: Optional[list[list[float]]] = Field(
         default=None,
-        description="Per-residue embedding vectors, shape [seq_len, hidden_dim].",
+        validation_alias=AliasChoices("residue_embeddings", "per_residue_embeddings"),
+        description="Per-residue embedding vectors.",
     )
     cls_embeddings: Optional[list[float]] = Field(
         default=None,

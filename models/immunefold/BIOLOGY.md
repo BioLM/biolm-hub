@@ -30,7 +30,7 @@ The model leverages ESM-2 protein language model representations for enhanced ac
 
 **How ImmuneFold helps**: By combining ESM-2 3B representations (encoding evolutionary information from 250M protein sequences) with immune-protein-specific structural supervision, ImmuneFold achieves the highest CDR-H3 accuracy among single-sequence methods. The pTM and pLDDT confidence scores allow users to assess prediction reliability and identify regions of uncertainty.
 
-**Output interpretation**: The `ptm` score (0--1) indicates global structural confidence (>0.7 is generally reliable). The `full_plddt` is the mean per-residue confidence. Per-residue `plddt` scores identify which regions are predicted most/least confidently -- typically framework regions score highest and CDR-H3 scores lowest.
+**Output interpretation**: The `ptm` score (0--1) indicates global structural confidence (>0.7 is generally reliable). The `mean_plddt` is the mean per-residue confidence. Per-residue `plddt` scores identify which regions are predicted most/least confidently -- typically framework regions score highest and CDR-H3 scores lowest.
 
 ### Antibody-Antigen Complex Prediction
 

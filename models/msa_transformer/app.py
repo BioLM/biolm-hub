@@ -227,7 +227,7 @@ class MSATransformerModel(ModelMixinSnap):
 
         if "per_token" in include:
             # Per-token embeddings of query sequence
-            result_dict["per_token_embeddings"] = [
+            result_dict["residue_embeddings"] = [
                 LayerPerTokenEmbeddings(
                     layer=layer_n,
                     # [1, num_seqs, seq_len+1, embed_dim] -> [seq_len, embed_dim]

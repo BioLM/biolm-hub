@@ -321,7 +321,7 @@ class ESM2Model(ModelMixinSnap):
                 # Call clone on tensors to ensure tensors are not views into a larger embeddings
                 # See https://github.com/pytorch/pytorch/issues/1995
                 if "per_token" in include:
-                    result_dict["per_token_embeddings"] = [
+                    result_dict["residue_embeddings"] = [
                         {
                             "layer": layer_n,
                             "embeddings": t[i, 1 : truncate_len + 1]

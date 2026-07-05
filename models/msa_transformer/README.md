@@ -83,7 +83,7 @@ Encodes MSAs and returns embeddings, attention maps, and/or contact predictions.
     {
       "sequence_index": 0,
       "embeddings": [{"layer": 12, "embedding": [0.012, -0.034, ...]}],
-      "per_token_embeddings": null,
+      "residue_embeddings": null,
       "row_attentions": null,
       "contacts": null
     }

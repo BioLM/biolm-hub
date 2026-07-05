@@ -63,16 +63,15 @@ def _validate_encode(
     for result in actual_output["results"]:
         assert "sequence_index" in result, "Result missing 'sequence_index'"
 
-        # Check embedding or per_token_embeddings
+        # Check embedding or residue_embeddings
         has_embedding = "embedding" in result and result["embedding"] is not None
         has_per_token = (
-            "per_token_embeddings" in result
-            and result["per_token_embeddings"] is not None
+            "residue_embeddings" in result and result["residue_embeddings"] is not None
         )
 
         assert (
             has_embedding or has_per_token
-        ), "Result must have either 'embedding' or 'per_token_embeddings'"
+        ), "Result must have either 'embedding' or 'residue_embeddings'"
 
         if has_embedding:
             embedding = result["embedding"]
@@ -85,7 +84,7 @@ def _validate_encode(
             ), "Embedding values should be numeric"
 
         if has_per_token:
-            per_token = result["per_token_embeddings"]
+            per_token = result["residue_embeddings"]
             assert isinstance(per_token, list), "Per-token embeddings should be a list"
             assert len(per_token) > 0, "Per-token embeddings should not be empty"
             for token_emb in per_token:
