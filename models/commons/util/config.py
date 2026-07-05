@@ -91,6 +91,43 @@ huggingface_api_token_secret_name = "hf-api-token"
 huggingface_api_token_secret = modal.Secret.from_name(huggingface_api_token_secret_name)
 
 
+# Credential-less deploys. A user whose Modal workspace has no `cloudflare-r2`
+# secret cannot mount it: Modal's `Secret.from_name` has no `required=False`, and a
+# missing named secret aborts the deploy before it starts. Set BIOLM_SKIP_MODAL_SECRETS=1
+# to mount NO secrets (build download layer AND runtime container) so a genuinely
+# credential-less deploy can start. Same truthy vocabulary as BIOLM_CACHE_ENABLED.
+_SKIP_SECRETS_TRUTHY = {"1", "true", "yes"}
+
+
+def skip_modal_secrets() -> bool:
+    """Return True if BIOLM_SKIP_MODAL_SECRETS opts out of mounting Modal secrets.
+
+    Shared by the build/download layer (models/commons/modal/downloader.py) and the
+    runtime container secret (`runtime_secrets`). Import-safe: a plain env check with
+    no Modal auth or network I/O. Truthy vocabulary matches BIOLM_CACHE_ENABLED
+    ("1", "true", "yes", case-insensitive); default off.
+    """
+    return (
+        os.getenv("BIOLM_SKIP_MODAL_SECRETS", "").strip().lower()
+        in _SKIP_SECRETS_TRUTHY
+    )
+
+
+def runtime_secrets() -> list[modal.Secret]:
+    """Secrets to mount on the runtime model container (`@app.cls(secrets=...)`).
+
+    Gates the runtime model-container secret so a credential-less deploy (no
+    `cloudflare-r2` secret provisioned) can start — weights are baked into the image
+    at build time, so runtime R2 access isn't needed on that path. Maintainer deploys
+    leave the flag unset and mount the secret.
+
+    Import-safe: only an env check (via `skip_modal_secrets`) plus the lazy
+    `cloudflare_r2_secret` object, which is already a lazy `Secret.from_name` resolved
+    by Modal at deploy time — no Modal network/auth call happens here.
+    """
+    return [] if skip_modal_secrets() else [cloudflare_r2_secret]
+
+
 # Modal environments
 # The deploy targets used by CI. The non-prod ("dev") environment runs PR
 # smoke/comprehensive checks; the prod environment serves the public catalog.

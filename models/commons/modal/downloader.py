@@ -9,6 +9,7 @@ from models.commons.core.logging import get_logger
 from models.commons.util.config import (
     cloudflare_r2_secret,
     huggingface_api_token_secret,
+    skip_modal_secrets,
 )
 
 logger = get_logger(__name__)
@@ -47,14 +48,9 @@ Primary APIs:
 # download layer is built at module scope). Importing app.py must stay credential-free
 # and network-free so unit-test collection, docs generation, and schema checks work with
 # no Modal token. `Secret.from_name` is lazy, so mounting the references is import-safe;
-# Modal resolves them at deploy/build time. Same truthy vocabulary as BIOLM_CACHE_ENABLED.
-_SKIP_SECRETS_TRUTHY = {"1", "true", "yes"}
-
-
-def _skip_modal_secrets() -> bool:
-    """True if BIOLM_SKIP_MODAL_SECRETS opts out of mounting download secrets."""
-    value = os.getenv("BIOLM_SKIP_MODAL_SECRETS", "").strip().lower()
-    return value in _SKIP_SECRETS_TRUTHY
+# Modal resolves them at deploy/build time. The skip-flag check (`skip_modal_secrets`,
+# same truthy vocabulary as BIOLM_CACHE_ENABLED) is centralized in
+# models.commons.util.config so the build and runtime layers stay in lockstep.
 
 
 def _available_download_secrets() -> list[modal.Secret]:
@@ -67,7 +63,7 @@ def _available_download_secrets() -> list[modal.Secret]:
       starts even with no secrets provisioned and the build/runtime reads public weights
       anonymously over r2.dev (`r2_credentials_present()` is False in-container).
     """
-    if _skip_modal_secrets():
+    if skip_modal_secrets():
         logger.info(
             "BIOLM_SKIP_MODAL_SECRETS set — mounting no download secrets; the build "
             "will read public weights anonymously over HTTP (no self-population)."

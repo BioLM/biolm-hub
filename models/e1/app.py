@@ -13,8 +13,8 @@ from models.commons.model.base import ModelMixin
 from models.commons.model.config import biolm_model_class
 from models.commons.storage.downloads import build_hf_snapshot_path
 from models.commons.util.config import (
-    cloudflare_r2_secret,
     common_requirements,
+    runtime_secrets,
 )
 from models.commons.util.device import get_torch_device
 from models.commons.util.environment import parse_variant
@@ -90,7 +90,7 @@ app = modal.App(app_name, image=image)
 
 @app.cls(
     image=image,
-    secrets=[cloudflare_r2_secret],
+    secrets=runtime_secrets(),
     **modal_resource_spec.to_modal_options(),
 )
 @biolm_model_class

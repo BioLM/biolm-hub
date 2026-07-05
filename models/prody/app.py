@@ -7,8 +7,8 @@ from models.commons.modal.source import setup_source_layer
 from models.commons.model.base import ModelMixin
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
-    cloudflare_r2_secret,
     common_requirements,
+    runtime_secrets,
 )
 from models.prody.config import MODEL_FAMILY
 from models.prody.schema import (
@@ -69,7 +69,7 @@ app = modal.App(app_name, image=image)
 
 @app.cls(
     image=image,
-    secrets=[cloudflare_r2_secret],
+    secrets=runtime_secrets(),
     enable_memory_snapshot=False,  # Disabled: snapshots cached stale code
     **modal_resource_spec.to_modal_options(),
 )

@@ -13,8 +13,8 @@ from models.commons.modal.source import setup_source_layer
 from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
 from models.commons.util.config import (
-    cloudflare_r2_secret,
     common_requirements,
+    runtime_secrets,
 )
 from models.commons.util.device import get_torch_device
 from models.commons.util.environment import parse_variants
@@ -163,7 +163,7 @@ app = modal.App(app_name, image=image)
 
 @app.cls(
     image=image,
-    secrets=[cloudflare_r2_secret],
+    secrets=runtime_secrets(),
     enable_memory_snapshot=True,
     experimental_options={"enable_gpu_snapshot": True},
     **modal_resource_spec.to_modal_options(),

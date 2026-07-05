@@ -14,8 +14,8 @@ from models.commons.storage.downloads import (
     build_hf_snapshot_path,
 )
 from models.commons.util.config import (
-    cloudflare_r2_secret,
     common_requirements,
+    runtime_secrets,
 )
 from models.esm2.download import get_model_dir as get_esm2_model_dir
 from models.esm2.schema import ESM2ModelSizes, ESM2Params
@@ -98,7 +98,7 @@ app = modal.App(app_name, image=image)
 
 @app.cls(
     image=image,
-    secrets=[cloudflare_r2_secret],
+    secrets=runtime_secrets(),
     enable_memory_snapshot=True,
     experimental_options={"enable_gpu_snapshot": True},
     **modal_resource_spec.to_modal_options(),
