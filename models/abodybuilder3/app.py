@@ -1,5 +1,4 @@
 import os
-import random
 from types import ModuleType
 from typing import TYPE_CHECKING
 
@@ -259,23 +258,12 @@ class AbodyBuilder3Model(ModelMixinSnap):
             seed (int): Seed value.
             deterministic (bool): If True, sets flags for deterministic behavior.
         """
-        import numpy as np
         import pytorch_lightning as pl
-        import torch
 
-        # Python & NumPy
-        random.seed(seed)
-        np.random.seed(seed)
+        from models.commons.util.device import seed_torch
 
-        # Torch
-        torch.manual_seed(seed)
-        if torch.cuda.is_available():
-            torch.cuda.manual_seed(seed)
-            torch.cuda.manual_seed_all(seed)  # for multi-GPU
-
-        # Torch determinism
-        torch.backends.cudnn.deterministic = deterministic
-        torch.backends.cudnn.benchmark = not deterministic
+        # Shared core: Python, NumPy, torch RNGs + cuDNN determinism.
+        seed_torch(seed, deterministic)
 
         # Lightning
         pl.seed_everything(seed, workers=True)

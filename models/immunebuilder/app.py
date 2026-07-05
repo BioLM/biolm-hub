@@ -1,5 +1,4 @@
 import os
-import random
 import tempfile
 from pathlib import Path
 from typing import Any, Optional
@@ -375,22 +374,10 @@ class ImmuneBuilderModel(ModelMixinSnap):
             seed (int): Seed value.
             deterministic (bool): If True, sets flags for deterministic behavior.
         """
-        import numpy as np
-        import torch
+        from models.commons.util.device import seed_torch
 
-        # Python & NumPy
-        random.seed(seed)
-        np.random.seed(seed)
-
-        # Torch
-        torch.manual_seed(seed)
-        if torch.cuda.is_available():
-            torch.cuda.manual_seed(seed)
-            torch.cuda.manual_seed_all(seed)  # for multi-GPU
-
-        # Torch determinism
-        torch.backends.cudnn.deterministic = deterministic
-        torch.backends.cudnn.benchmark = not deterministic
+        # Shared core: Python, NumPy, torch RNGs + cuDNN determinism.
+        seed_torch(seed, deterministic)
 
         logger.info(
             "Seeding everything with seed %s. Deterministic: %s", seed, deterministic

@@ -264,16 +264,23 @@ async def _call_function_with_cache(
         When raw_payload_dict is available, items are taken from it to preserve
         original request fields (e.g. smiles) that may be missing after validation.
         """
-        # Call the underlying function with only the incomplete items
-        partial_payload_dict = serialize_model(payload, debug_logger)
-        if raw_payload_dict is not None and "items" in raw_payload_dict:
-            partial_payload_dict["items"] = [
-                raw_payload_dict["items"][i] for i in indices_to_compute
-            ]
-        else:
-            partial_payload_dict["items"] = items_to_compute
-        # Validate with Pydantic (uses centralized _validate_payload for v1/v2 compatibility)
-        partial_payload = _validate_payload(partial_payload_dict, request_model_type)
+        # Reconstruct the cache-miss request via the shared commons helper so the
+        # merge-by-index partial-hit semantics stay identical to the cached
+        # gateway. full_items comes from the original request dict when available
+        # so request-only fields (e.g. smiles on a ligand) survive.
+        full_items = (
+            raw_payload_dict["items"]
+            if raw_payload_dict is not None and "items" in raw_payload_dict
+            else None
+        )
+        partial_payload = build_partial_payload(
+            payload=payload,
+            full_items=full_items,
+            items_to_compute=items_to_compute,
+            indices_to_compute=indices_to_compute,
+            request_model_type=request_model_type,
+            debug_logger=debug_logger,
+        )
 
         # Make a copy of bound_args, then modify "payload" in place:
         partial_bound_args = signature.bind(*bound_args.args, **bound_args.kwargs)
@@ -416,6 +423,43 @@ def _validate_payload(
     else:
         # Pydantic v1 fallback
         return request_model_type(**payload_dict)
+
+
+def build_partial_payload(
+    payload: BaseModel,
+    full_items: Optional[list[Any]],
+    items_to_compute: list[Any],
+    indices_to_compute: list[int],
+    request_model_type: type[BaseModel],
+    debug_logger: Optional[DebugLogger] = None,
+) -> BaseModel:
+    """Reconstruct a request payload restricted to the cache-miss items.
+
+    Shared by the decorator's in-container cache path
+    (:func:`_call_function_with_cache`) and the cached gateway
+    (``gateway.routing``) so the merge-by-index partial-hit semantics stay
+    identical in both. Serializes the full ``payload`` to a JSON-native dict,
+    then replaces its ``items`` with only the entries at ``indices_to_compute``:
+
+    - When ``full_items`` is provided (the original request's items, captured
+      *before* Pydantic's None-default fill and ``serialize_model``'s
+      exclude_none stripping), items are taken from it by index so no
+      request-only field (e.g. ``smiles`` on a ligand) is lost.
+    - Otherwise it falls back to ``items_to_compute`` directly.
+
+    The assembled dict is validated back into ``request_model_type`` via
+    :func:`_validate_payload` (Pydantic v1/v2 compatible).
+
+    NOTE: this lives in ``decorator.py`` rather than ``caching.py`` because it
+    depends on :func:`_validate_payload` here; ``caching.py`` is imported *by*
+    this module, so hosting the helper there would create an import cycle.
+    """
+    partial_payload_dict = serialize_model(payload, debug_logger)
+    if full_items is not None:
+        partial_payload_dict["items"] = [full_items[i] for i in indices_to_compute]
+    else:
+        partial_payload_dict["items"] = items_to_compute
+    return _validate_payload(partial_payload_dict, request_model_type)
 
 
 # Maps an exception type -> (http_status_code, detail_template). The string

@@ -96,10 +96,18 @@ async def _compute_remotely(
 ) -> dict[str, Any]:
     """Dispatch a single (possibly partial) request to the deployed Modal model.
 
-    The model is told to skip its own validation (the gateway already validated
-    via the FastAPI route's request schema) and its own response cache (the
-    cached gateway caches at this layer instead).
+    The validated request is serialized to a plain JSON-native dict (via
+    ``model_dump(mode="json")``) before crossing the Modal RPC boundary, so no
+    ``models.*`` Pydantic class must be importable or picklable inside the target
+    container. This keeps the boundary uniform for every model and is essential
+    for models whose container pins a different Pydantic major (e.g. sadie pins
+    v1) and therefore cannot unpickle a live Pydantic-v2 request object. The
+    model's decorator re-validates the dict against its own request schema — the
+    gateway already validated the inbound request via the FastAPI route schema,
+    so this is a cheap, idempotent second pass. ``_skip_cache`` still disables the
+    model-side response cache (the cached gateway caches at this layer instead).
     """
+    payload_dict = payload.model_dump(mode="json")
     try:
         instance = _model_class(modal_app_name, class_name)
         remote_function = getattr(instance, model_action)
@@ -108,9 +116,7 @@ async def _compute_remotely(
         # (a JSON-serializable response dict).
         return cast(
             dict[str, Any],
-            await remote_function.remote.aio(
-                payload=payload, _skip_validation=True, _skip_cache=True
-            ),
+            await remote_function.remote.aio(payload=payload_dict, _skip_cache=True),
         )
     except modal.exception.NotFoundError as e:
         raise HTTPException(
@@ -141,7 +147,11 @@ async def _run_cached(
     unless an operator opts in.
     """
     # Lazy import: only the cache path needs the storage/acquisition stack.
+    # build_partial_payload lives in the decorator module (which pulls in the
+    # cache stack at import); importing it here — inside the cache path only —
+    # keeps the bare (no-cache) gateway free of those deps.
     from models.commons.core.caching import process_with_cache
+    from models.commons.core.decorator import build_partial_payload
 
     items = getattr(payload, "items", [])
     params_obj = getattr(payload, "params", None)
@@ -155,9 +165,15 @@ async def _run_cached(
     async def _compute(
         items_to_compute: list[BaseModel], indices_to_compute: list[int]
     ) -> BaseModel:
-        partial_payload_dict = serialize_model(payload)
-        partial_payload_dict["items"] = [full_items[i] for i in indices_to_compute]
-        partial_payload = request_schema.model_validate(partial_payload_dict)
+        # Reconstruct the partial request via the shared commons helper so the
+        # merge-by-index semantics match the model-side decorator exactly.
+        partial_payload = build_partial_payload(
+            payload=payload,
+            full_items=full_items,
+            items_to_compute=items_to_compute,
+            indices_to_compute=indices_to_compute,
+            request_model_type=request_schema,
+        )
         result_dict = await _compute_remotely(
             partial_payload, modal_app_name, class_name, model_action
         )

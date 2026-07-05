@@ -28,3 +28,30 @@ def get_torch_device() -> "torch.device":
         device = torch.device("cpu")
 
     return device
+
+
+def seed_torch(seed: int = 42, deterministic: bool = True) -> None:
+    """Seed Python, NumPy, and torch RNGs for reproducibility.
+
+    Covers the seeding common to every model. Model-specific extras (e.g. a
+    framework's own ``seed_everything`` or ``PYTHONHASHSEED``) stay in the model.
+
+    Args:
+        seed: Seed value.
+        deterministic: If True, sets torch cuDNN flags for deterministic behavior.
+    """
+    import random
+
+    import numpy as np
+    import torch
+
+    random.seed(seed)
+    np.random.seed(seed)
+
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)  # for multi-GPU
+
+    torch.backends.cudnn.deterministic = deterministic
+    torch.backends.cudnn.benchmark = not deterministic
