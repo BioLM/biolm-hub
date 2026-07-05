@@ -10,8 +10,17 @@
 > D2 GitHub `modal-dev` env+secrets+label; D4 confirm support+security@/support+conduct@ inboxes are
 > monitored.
 >
-> **DONE this session (committed on `main`, HEAD=`8d7f1f0`, 5 commits past `98e91ff`; make check + docs
-> green locally; CI running):**
+> **✅ PHASE 1 (Modal-free code tail) COMPLETE — CI GREEN** (run 28731926137; HEAD=`c857e17`). CI caught +
+> fixed two env-specific issues my local gates missed: a black-formatting nit (pre-commit is the real
+> style gate, NOT `uvx black`) and — important — the credential-less secret switch had an import-time
+> `Secret.from_name().hydrate()` probe that needs Modal auth, crashing app.py import (test collection/
+> docs/schema) in a no-token env; fixed by deferring secret resolution to deploy time and making the
+> creds-less path the explicit `BIOLM_SKIP_MODAL_SECRETS=1` opt-out (import is now auth-free + network-free;
+> verified via no-auth full collection). **LESSON: always run `.venv/bin/python -m pre_commit run
+> --all-files` (not uvx black) before push, and remember CI has no Modal token — app.py imports must never
+> require auth.**
+>
+> **DONE this session (committed on `main`, HEAD=`c857e17`, CI green):**
 > - **R2 public-ready cleanup DONE + verified** — deleted legacy `biolm-hub/models/` (274 GB) +
 >   `model-store/` (36 GB) = 311 GB via `scratchpad/r2_cleanup.py --execute`. Bucket now = ONLY
 >   `model-weights/models/` (273.6 GB, 32 slugs, all markers complete) + `test-data/models/` (36 dirs).
