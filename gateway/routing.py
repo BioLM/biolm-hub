@@ -301,7 +301,7 @@ def _make_endpoint_handler(
 def _register_model_routes(
     fastapi_app: FastAPI, model_mapper: ModelMapper, *, use_cache: bool
 ) -> int:
-    """Register one ``POST /api/v3/{slug}/{action}`` route per (variant, action)."""
+    """Register one ``POST /api/v1/{slug}/{action}`` route per (variant, action)."""
     route_count = 0
     for public_slug, variant_info in model_mapper.get_all_variant_mappings().items():
         base_slug = variant_info["base_model_slug"]
@@ -326,7 +326,7 @@ def _register_model_routes(
                 response_schema=res_schema,
             )
             fastapi_app.add_api_route(
-                path=f"/api/v3/{public_slug}/{action}",
+                path=f"/api/v1/{public_slug}/{action}",
                 endpoint=handler,
                 methods=["POST"],
                 response_model=res_schema,

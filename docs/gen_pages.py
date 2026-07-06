@@ -236,7 +236,7 @@ def _api(fam: Any) -> str:
     example_slug = variants[0].public_endpoint_slug if variants else fam.base_model_slug
 
     out += [
-        "Call an action with `POST /api/v3/{slug}/{action}` — the request envelope is "
+        "Call an action with `POST /api/v1/{slug}/{action}` — the request envelope is "
         '`{"items": [...], "params": {...}}` and a success returns `{"results": [...]}`. '
         "See the [HTTP API](../api.md) page for the base URL, error shape, and full "
         "contract.",

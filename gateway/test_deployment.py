@@ -67,7 +67,7 @@ def execute_gateway_test_case(case: GatewayTestCase) -> None:
         )
 
     # 2. Construct the full API URL for the endpoint
-    url = f"{GATEWAY_URL}/api/v3/{case.model_slug}/{case.model_action}"
+    url = f"{GATEWAY_URL}/api/v1/{case.model_slug}/{case.model_action}"
     print(f"  - Posting to URL: {url}")
 
     # 3. Make the HTTP request to the live gateway endpoint

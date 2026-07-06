@@ -310,12 +310,12 @@ def example_request(schema_cls: Any) -> Any:
 
 
 def curl_snippet(base_url: str, slug: str, action: str, body: Any) -> str:
-    """A copy-pasteable ``curl`` block for ``POST {base_url}/api/v3/{slug}/{action}``."""
+    """A copy-pasteable ``curl`` block for ``POST {base_url}/api/v1/{slug}/{action}``."""
     body_json = json.dumps(body, indent=2)
     return "\n".join(
         [
             "```bash",
-            f"curl -X POST {base_url}/api/v3/{slug}/{action} \\",
+            f"curl -X POST {base_url}/api/v1/{slug}/{action} \\",
             '  -H "Content-Type: application/json" \\',
             "  -d '" + body_json + "'",
             "```",

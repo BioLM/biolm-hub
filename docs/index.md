@@ -20,7 +20,7 @@ bh deploy esm2                             # deploy to your Modal workspace
 
 bh serve                                   # local catalog UI + HTTP API → http://127.0.0.1:8000
 # then, in another terminal, call it:
-curl -X POST http://127.0.0.1:8000/api/v3/esm2-8m/encode \
+curl -X POST http://127.0.0.1:8000/api/v1/esm2-8m/encode \
   -H 'Content-Type: application/json' \
   -d '{"items": [{"sequence": "MKTAYIAKQR"}]}'
 ```

@@ -2,7 +2,7 @@
 
 The catalog is the *human face* of the gateway: a browsable list of models (with
 deployed/undeployed status) and a schema-driven form to run inference. Its forms
-POST to the gateway's own ``/api/v3/{slug}/{action}`` routes, so every run goes
+POST to the gateway's own ``/api/v1/{slug}/{action}`` routes, so every run goes
 through the same routing logic that programmatic callers use.
 
 :func:`mount_catalog` adds ``/static``, ``/catalog`` and ``/catalog/{slug}`` to an
@@ -37,7 +37,7 @@ def mount_catalog(
     """Mount the catalog UI (``/catalog``, ``/catalog/{slug}``, ``/static``).
 
     Must be called AFTER the model routes are registered (the catalog is built by
-    scanning the app's ``/api/v3`` routes).
+    scanning the app's ``/api/v1`` routes).
 
     Args:
         fastapi_app: The app returned by ``build_gateway_app``.

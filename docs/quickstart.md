@@ -51,14 +51,14 @@ its actions and request/response schema.
 
 A bare `bh deploy` deploys the model's Modal class — it isn't a public HTTP endpoint on its own.
 Expose it over HTTP one of two ways: run `bh serve` locally (next section), or deploy the unified
-gateway. Both serve the same contract — `POST /api/v3/{slug}/{action}` with a
+gateway. Both serve the same contract — `POST /api/v1/{slug}/{action}` with a
 `{"items": [...], "params": {...}}` body:
 
 ```bash
 bh serve   # in one terminal → http://127.0.0.1:8000
 
 # in another terminal:
-curl -X POST http://127.0.0.1:8000/api/v3/esm2-8m/encode \
+curl -X POST http://127.0.0.1:8000/api/v1/esm2-8m/encode \
   -H 'Content-Type: application/json' \
   -d '{"items": [{"sequence": "MKTAYIAKQR"}]}'
 ```

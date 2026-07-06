@@ -2,7 +2,7 @@
 
 This runs entirely on your machine. It does **not** require deploying the
 gateway: it serves the catalog UI and, in-process, reuses the routing logic to
-expose ``/api/v3/{slug}/{action}`` endpoints that call your **individual deployed
+expose ``/api/v1/{slug}/{action}`` endpoints that call your **individual deployed
 Modal models** directly (via the Modal SDK). Browse models, see which are
 deployed, and run inference from the form — no extra Modal function needed.
 

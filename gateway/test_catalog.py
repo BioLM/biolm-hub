@@ -29,7 +29,7 @@ def test_catalog_generation_produces_endpoints() -> None:
     endpoints = catalog["dna-chisel"]["endpoints"]
     assert endpoints
     assert all("path" in e and "method" in e for e in endpoints)
-    assert any(e["path"].startswith("/api/v3/dna-chisel/") for e in endpoints)
+    assert any(e["path"].startswith("/api/v1/dna-chisel/") for e in endpoints)
 
 
 def test_deployment_status_maps_deployed_and_undeployed(

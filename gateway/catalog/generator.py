@@ -268,7 +268,7 @@ def generate_catalog_data(app: FastAPI) -> dict[str, dict[str, Any]]:
     """Generates a structured dictionary of API endpoints from a FastAPI app."""
     catalog: dict[str, dict[str, Any]] = {}
     for route in app.routes:
-        if isinstance(route, APIRoute) and route.path.startswith("/api/v3/"):
+        if isinstance(route, APIRoute) and route.path.startswith("/api/v1/"):
             # Correctly parse the model_slug from the path, not the tag
             path_parts = route.path.strip("/").split("/")
             if len(path_parts) >= 3:

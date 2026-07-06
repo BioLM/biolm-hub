@@ -7,7 +7,7 @@ action's request/response schema (on the model's own page), not in the plumbing.
 
 ## Where the API lives
 
-The `/api/v3/...` routes are served in two places — pick whichever fits:
+The `/api/v1/...` routes are served in two places — pick whichever fits:
 
 - **`bh serve` (local, recommended for trying things).** Runs the catalog web
   app *and* the API in-process on your machine, calling your deployed Modal
@@ -38,7 +38,7 @@ both of which route to it.
 ## The calling contract
 
 ```
-POST {base_url}/api/v3/{slug}/{action}
+POST {base_url}/api/v1/{slug}/{action}
 Content-Type: application/json
 ```
 
@@ -98,7 +98,7 @@ Encoding two protein sequences with ESM-2 (the `650m` variant), against a local
 `bh serve`:
 
 ```bash
-curl -X POST http://127.0.0.1:8000/api/v3/esm2-650m/encode \
+curl -X POST http://127.0.0.1:8000/api/v1/esm2-650m/encode \
   -H "Content-Type: application/json" \
   -d '{
     "items": [

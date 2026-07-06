@@ -1,7 +1,7 @@
 """Bare biolm-hub gateway — routing only, no response cache.
 
 This is the minimal gateway: it discovers deployed models from their
-``config.py`` files and exposes one ``POST /api/v3/{slug}/{action}`` route per
+``config.py`` files and exposes one ``POST /api/v1/{slug}/{action}`` route per
 (variant, action), forwarding each validated request to the deployed Modal
 model class. No auth, no billing, no analytics, no caching.
 
@@ -80,7 +80,7 @@ def web() -> "FastAPI":
     fastapi_app = build_gateway_app(mapper, use_cache=False)
     if catalog_enabled():
         # The catalog is a cosmetic, opt-in layer — never let mounting it fail
-        # the no-auth /api/v3 API. Deployment status is skipped here: a deployed
+        # the no-auth /api/v1 API. Deployment status is skipped here: a deployed
         # container has no Modal CLI credentials to query it.
         try:
             from gateway.catalog.mount import mount_catalog
