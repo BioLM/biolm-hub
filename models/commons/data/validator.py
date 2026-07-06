@@ -1,40 +1,17 @@
 import re
-from collections.abc import Callable
-from enum import Enum
-from typing import Any, TypeVar
 
 aa_unambiguous = "ACDEFGHIKLMNPQRSTVWY"
 aa_extended = aa_unambiguous + "BXZUO"
 
 dna_unambiguous = "ACTG"
-dna_extended = dna_unambiguous + "XNU"
 
 rna_unambiguous = "ACUG"
 
 regexes = {
-    "empty_or_aa_unambiguous": re.compile(f"^[{aa_unambiguous}]*$"),
     "aa_extended": re.compile(f"^[{aa_extended}]+$"),
     "aa_unambiguous": re.compile(f"^[{aa_unambiguous}]+$"),
-    "empty_or_dna_unambiguous": re.compile(f"^[{dna_unambiguous}]*$"),
     "dna_unambiguous": re.compile(f"^[{dna_unambiguous}]+$"),
-    "ec_number": re.compile(r"^\d+\.\d+\.\d+\.\d+$"),
 }
-
-
-def validate_empty_or_aa_unambiguous(text: str) -> str:
-    if not regexes["empty_or_aa_unambiguous"].match(text):
-        raise ValueError(
-            f"Residues can only be represented with '{aa_unambiguous}' characters"
-        )
-    return text
-
-
-def validate_empty_or_dna_unambiguous(text: str) -> str:
-    if not regexes["empty_or_dna_unambiguous"].match(text):
-        raise ValueError(
-            f"Nucleotides can only be represented with '{dna_unambiguous}' characters"
-        )
-    return text
 
 
 def validate_aa_extended(text: str) -> str:
@@ -58,12 +35,6 @@ def validate_dna_unambiguous(text: str) -> str:
         raise ValueError(
             f"Nucleotides can only be represented with '{dna_unambiguous}' characters"
         )
-    return text
-
-
-def validate_ec_number(text: str) -> str:
-    if not regexes["ec_number"].match(text):
-        raise ValueError("EC string does not appear to be a valid EC")
     return text
 
 
@@ -145,13 +116,6 @@ class UpToNNonConsecutiveOccurrencesOf:
         return value
 
 
-class AAUnambiguous:
-    def __call__(self, value: str) -> str:
-        text_clean = value
-        validate_aa_unambiguous(text_clean)
-        return value
-
-
 ### SMILES validators
 
 # Characters permitted in a SMILES string.
@@ -181,55 +145,3 @@ def validate_smiles(smiles: str) -> str:
     if smiles.count("(") != smiles.count(")"):
         raise ValueError(f"SMILES string has unbalanced parentheses: {smiles!r}")
     return smiles
-
-
-def validate_smiles_with_rdkit(smiles: str) -> str:
-    """SMILES validation using rdkit.
-
-    Performs full chemical parsing via rdkit, which catches errors such as
-    invalid valences and un-kekulizable aromatic systems.  Falls back to
-    :func:`validate_smiles` if rdkit is not installed.
-
-    Raises ``ValueError`` with a user-facing message on any parse failure so
-    callers receive a clear error rather than an opaque downstream traceback.
-    """
-    smiles = validate_smiles(smiles)
-    try:
-        from rdkit import Chem
-    except ImportError:
-        return smiles  # rdkit not available; basic check already done above
-
-    try:
-        mol = Chem.MolFromSmiles(smiles)
-    except Exception as exc:
-        raise ValueError(
-            f"Error parsing SMILES string: {smiles!r}. Details: {exc}"
-        ) from exc
-
-    if mol is None:
-        raise ValueError(
-            f"rdkit could not parse SMILES string: {smiles!r}. "
-            "Please verify the SMILES notation is correct."
-        )
-    return smiles
-
-
-_EnumT = TypeVar("_EnumT", bound=Enum)
-
-
-def allow_str_to_enum(enum_cls: type[_EnumT]) -> Callable[[Any], Any]:
-    """
-    Returns a pydantic BeforeValidator that converts raw strings
-    (or list-of-strings) to the given Enum, even in strict mode.
-    """
-
-    def _convert(v: Any) -> Any:
-        if isinstance(v, enum_cls):
-            return v
-        if isinstance(v, str):
-            return enum_cls(v)
-        if isinstance(v, list):
-            return [enum_cls(item) if isinstance(item, str) else item for item in v]
-        return v
-
-    return _convert

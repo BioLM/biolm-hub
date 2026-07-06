@@ -268,38 +268,6 @@ async def _safe_cache_update_aio(
             return False
 
 
-def clear_short_term_model_cache(
-    model_slug: Optional[str] = None, force: bool = False
-) -> None:
-    """Clear the short-term cache for a specific model or all cached models.
-
-    By default, a confirmation flag is required. If `force` is set to True,
-    the cache(s) will be cleared.
-
-    Args:
-        model_slug: If provided, clears only this model's cache. If None,
-            clears all model caches in the registry.
-        force: Whether to proceed with clearing without further checks.
-
-    Returns:
-        None
-    """
-    if not force:
-        logger.info("Not clearing cache. Set force=True to proceed.")
-        return
-
-    if model_slug:
-        cache = get_model_cache(model_slug)
-        cache.clear()
-        logger.info("Cleared short-term cache for model: %s", model_slug)
-    else:
-        for slug, cache in _model_cache_registry.items():
-            cache.clear()
-            logger.info("Cleared short-term cache for model: %s", slug)
-        if not _model_cache_registry:
-            logger.info("No model caches in registry to clear.")
-
-
 ### ------- Reusable Cache Handler
 
 

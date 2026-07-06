@@ -70,7 +70,7 @@ class MyModelResponse(ResponseModel):
 | Protein (20 AA + ambiguous X, B, Z) | `validate_aa_extended` |
 | Protein (20 AA only) | `validate_aa_unambiguous` |
 | DNA | `validate_dna_unambiguous` |
-| SMILES | `validate_smiles` (or `validate_smiles_with_rdkit`) |
+| SMILES | `validate_smiles` |
 | RNA | *no ready-made `validate_*` function* — see the RNA note below |
 
 > **RNA note:** there is no `validate_rna_unambiguous`. `models.commons.data.validator` exports an
