@@ -35,8 +35,8 @@ model-cache/
 # mkdocs build output
 site/
 
-# NOTE: .planning/ is intentionally NOT ignored — it is tracked in the private repo
-# during development and removed (with git history) before the repo goes public.
+# Internal dev/planning docs — kept locally, never part of the repo.
+.planning/
 scratchpad/
 
 # Generated docs pages (built virtually by docs/gen_pages.py at mkdocs build time;
