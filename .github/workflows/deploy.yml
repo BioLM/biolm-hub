@@ -103,7 +103,7 @@ jobs:
       has_models: ${{ steps.detect.outputs.has_models }}
       models_with_code_changes: ${{ steps.detect.outputs.models_with_code_changes }}
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           # labeled → the exact reviewed PR commit; dispatch → the chosen ref.
           # fetch-depth: 0 so detect_models.py can diff against the base.
@@ -194,7 +194,7 @@ jobs:
           fi
           echo "biolm-hub-dev environment secrets present; proceeding."
 
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           # This job runs untrusted PR code and needs no git creds afterward.
