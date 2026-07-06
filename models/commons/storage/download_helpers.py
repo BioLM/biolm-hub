@@ -10,7 +10,6 @@ from models.commons.storage.acquisition import (
     CacheConfig,
     CustomSourceConfig,
     HfSourceConfig,
-    LibrarySourceConfig,
     R2OnlyConfig,
     UrlSourceConfig,
     ValidationConfig,
@@ -254,10 +253,13 @@ def r2_then_library(
     required_files: Optional[list[str]] = None,
     cache_to_r2: bool = True,
 ) -> AcquisitionResult:
-    """Try R2 first, fall back to library-managed download with R2 caching.
+    """Try R2 first, fall back to a library-managed download with R2 caching.
 
     The ``init_fn`` is called with ``target_dir`` and should trigger the
-    library's own download mechanism (e.g. ``ESM3.from_pretrained``).
+    library's own download mechanism (e.g. ``ESM3.from_pretrained``). The source
+    fetch runs through the CUSTOM strategy: ``init_fn`` becomes the acquisition
+    function, and ``env_vars`` (if any) are applied for the duration of the fetch
+    and restored afterwards.
 
     Args:
         cache_to_r2: When True (default) the library output is uploaded to R2
@@ -285,16 +287,21 @@ def r2_then_library(
         target_dir=target_dir,
     )
 
+    # ``init_fn`` is invoked as ``acquisition_fn(target_dir=target_dir)`` — the
+    # same single-``target_dir`` call the library-managed path used. It writes
+    # into (and returns) target_dir, so actual_model_path stays target_dir and
+    # the whole tree is cached back to R2, exactly as before.
     fallback = AcquisitionConfig(
-        strategy=AcquisitionStrategy.LIBRARY_MANAGED,
+        strategy=AcquisitionStrategy.CUSTOM,
         target_dir=target_dir,
         cache_config=CacheConfig(enable_r2_cache=cache_to_r2),
         validation_config=ValidationConfig(required_files=required_files),
-        library_config=LibrarySourceConfig(
-            library_name=library_name,
+        custom_config=CustomSourceConfig(
+            acquisition_fn=init_fn,
+            name=library_name,
+            description=f"library-managed download via {library_name}",
             env_vars=env_vars,
         ),
-        custom_function=init_fn,
     )
 
     return download_with_fallback(primary, fallback)

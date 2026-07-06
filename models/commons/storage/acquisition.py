@@ -29,7 +29,8 @@ Uses downloads.py (low-level ops) and r2_utils.py (atomic R2 cache ops).
 
 Key APIs:
 - acquire_model_weights(): Strategy router and validator
-- AcquisitionConfig (+ R2OnlyConfig, HfSourceConfig, LibrarySourceConfig, UrlSourceConfig)
+- AcquisitionConfig (+ R2OnlyConfig, HfSourceConfig, UrlSourceConfig,
+  CustomSourceConfig)
 - AcquisitionResult: reports actual path, cache hits, and validation details
 
 Non-obvious details:
@@ -37,15 +38,11 @@ Non-obvious details:
   snapshot subdir). Callers should use result.actual_model_path when loading.
 - R2 cache prefixes are derived from the intended target_dir so restores land in
   the same directory structure the model expects.
-- Library-managed flows can set env vars via LibrarySourceConfig.env_vars and/or
-  call custom init functions; parameters for downloads are passed via kwargs,
-  not environment variables.
-
-Notes on current state:
-- Library-managed strategies pass a small `custom_function` (the library init
-  entry point) to trigger the third-party library downloads. It is required by
-  the LIBRARY_MANAGED strategy and is NOT deprecated; CustomSourceConfig serves
-  the separate CUSTOM strategy.
+- The CUSTOM strategy covers both "run my acquisition function" and the former
+  "library-managed" flow: CustomSourceConfig.env_vars are applied for the
+  duration of the acquisition function (and restored afterwards), so an init
+  function can trigger a third-party library's own download (e.g.
+  ESM3.from_pretrained). The r2_then_library wrapper builds a CUSTOM config.
 """
 
 logger = get_logger(__name__)
@@ -56,7 +53,6 @@ class AcquisitionStrategy(Enum):
 
     R2_ONLY = "r2_only"
     HUGGINGFACE_HUB = "huggingface_hub"
-    LIBRARY_MANAGED = "library_managed"
     DIRECT_URLS = "direct_urls"
     CUSTOM = "custom"
 
@@ -99,14 +95,6 @@ class HfSourceConfig:
 
 
 @dataclass
-class LibrarySourceConfig:
-    """Configuration for library-managed acquisition strategy."""
-
-    library_name: str
-    env_vars: Optional[dict[str, str]] = None
-
-
-@dataclass
 class UrlSourceConfig:
     """Configuration for direct URL downloads"""
 
@@ -134,6 +122,11 @@ class CustomSourceConfig:
     post_process_kwargs: dict[str, Any] = field(
         default_factory=dict
     )  # Additional kwargs for post-processing
+    # Env vars applied for the duration of acquisition_fn (and post-processing +
+    # R2 caching) and restored afterwards. Lets an init function redirect a
+    # third-party library's own download into target_dir (the former
+    # library-managed flow, now folded into CUSTOM).
+    env_vars: Optional[dict[str, str]] = None
 
 
 @dataclass
@@ -148,12 +141,8 @@ class AcquisitionConfig:
     # Strategy-specific configs (only one should be set)
     r2_config: Optional[R2OnlyConfig] = None
     hf_config: Optional[HfSourceConfig] = None
-    library_config: Optional[LibrarySourceConfig] = None
     url_config: Optional[UrlSourceConfig] = None
     custom_config: Optional[CustomSourceConfig] = None
-    custom_function: Optional[Callable[[Path], Any]] = (
-        None  # Library-managed init entry point (required by LIBRARY_MANAGED)
-    )
 
 
 @dataclass
@@ -704,14 +693,14 @@ def _acquire_huggingface_hub(config: AcquisitionConfig) -> AcquisitionResult:
         )
 
 
-def _setup_library_environment(
-    library_config: LibrarySourceConfig,
+def _apply_env_vars(
+    env_vars: Optional[dict[str, str]],
 ) -> dict[str, Optional[str]]:
-    """Set environment variables for library and return original values."""
+    """Set environment variables and return their original values for restore."""
     original_env: dict[str, Optional[str]] = {}
-    if library_config.env_vars:
-        logger.info("Setting %s environment variables", len(library_config.env_vars))
-        for var, value in library_config.env_vars.items():
+    if env_vars:
+        logger.info("Setting %s environment variables", len(env_vars))
+        for var, value in env_vars.items():
             original_env[var] = os.environ.get(var)
             os.environ[var] = value
             logger.debug("   Set env var: %s", var)
@@ -725,114 +714,6 @@ def _restore_environment(original_env: dict[str, Optional[str]]) -> None:
             os.environ.pop(var, None)
         else:
             os.environ[var] = value
-
-
-def _acquire_library_managed(config: AcquisitionConfig) -> AcquisitionResult:
-    """Implement library-managed acquisition strategy."""
-    start_time = time.time()
-
-    if not config.library_config or not config.custom_function:
-        return AcquisitionResult(
-            success=False,
-            target_dir=config.target_dir,
-            error_message="LibrarySourceConfig and custom_function required for LIBRARY_MANAGED strategy",
-            acquisition_time_seconds=time.time() - start_time,
-        )
-
-    library_config = config.library_config
-    target_dir = config.target_dir
-    target_dir.mkdir(parents=True, exist_ok=True)
-
-    logger.info("Acquiring model weights using %s library", library_config.library_name)
-
-    # Check R2 cache first
-    cache_result = _try_r2_restore(
-        config,
-        target_dir,
-        start_time,
-        "library_managed",
-        extra_metadata={"library_name": library_config.library_name},
-    )
-    if cache_result:
-        return cache_result
-
-    # Setup environment
-    original_env = _setup_library_environment(library_config)
-
-    try:
-        logger.info(
-            "Calling library initialization function for %s",
-            library_config.library_name,
-        )
-
-        # Record initial state
-        initial_files = list(target_dir.rglob("*"))
-        initial_file_count = len([f for f in initial_files if f.is_file()])
-
-        # Call the custom function
-        result = config.custom_function(target_dir)
-        actual_model_dir = (
-            Path(result) if isinstance(result, str | Path) else target_dir
-        )
-
-        # Calculate files downloaded
-        final_files = list(actual_model_dir.rglob("*"))
-        final_file_count = len([f for f in final_files if f.is_file()])
-        files_downloaded = final_file_count - initial_file_count
-
-        logger.info(
-            "Library function completed, %s files added to target directory",
-            files_downloaded,
-        )
-
-        # Ensure the library actually wrote files to the target directory.
-        # Required-file validation is handled centrally by
-        # _perform_comprehensive_validation after this handler returns.
-        if not any(actual_model_dir.rglob("*")):
-            raise RuntimeError("library-managed download wrote no files")
-
-        # Cache to R2 (use target_dir for prefix so _try_r2_restore can find it)
-        upload_success = _cache_to_r2(
-            config,
-            actual_model_dir,
-            r2_prefix_dir=target_dir,
-            skip_if_no_files=True,
-            files_downloaded=files_downloaded,
-        )
-
-        return AcquisitionResult(
-            success=True,
-            target_dir=target_dir,
-            actual_model_path=actual_model_dir,
-            files_downloaded=files_downloaded,
-            cache_hit=False,
-            acquisition_time_seconds=time.time() - start_time,
-            metadata={
-                "strategy": "library_managed",
-                "library_name": library_config.library_name,
-                "r2_upload_success": upload_success,
-                "initial_file_count": initial_file_count,
-                "final_file_count": final_file_count,
-            },
-        )
-
-    except Exception as e:
-        error_msg = f"Library-managed download failed: {str(e)}"
-        logger.error("%s", error_msg, exc_info=True)
-
-        return AcquisitionResult(
-            success=False,
-            target_dir=target_dir,
-            error_message=error_msg,
-            acquisition_time_seconds=time.time() - start_time,
-            metadata={
-                "strategy": "library_managed",
-                "library_name": library_config.library_name,
-            },
-        )
-
-    finally:
-        _restore_environment(original_env)
 
 
 def _validate_required_files_custom(
@@ -1034,15 +915,22 @@ def _acquire_custom(config: AcquisitionConfig) -> AcquisitionResult:
     if cache_result:
         return cache_result
 
-    # Execute custom acquisition function
-    return _execute_custom_function(
-        custom_config=custom_config,
-        target_dir=target_dir,
-        validation_config=validation_config,
-        cache_config=cache_config,
-        custom_name=custom_name,
-        start_time=start_time,
-    )
+    # Apply any env vars for the duration of the acquisition (e.g. to redirect a
+    # third-party library's own download into target_dir — the former
+    # library-managed flow). Restored afterwards regardless of outcome.
+    original_env = _apply_env_vars(custom_config.env_vars)
+    try:
+        # Execute custom acquisition function
+        return _execute_custom_function(
+            custom_config=custom_config,
+            target_dir=target_dir,
+            validation_config=validation_config,
+            cache_config=cache_config,
+            custom_name=custom_name,
+            start_time=start_time,
+        )
+    finally:
+        _restore_environment(original_env)
 
 
 def _validate_required_files(
@@ -1102,7 +990,6 @@ def acquire_model_weights(config: AcquisitionConfig) -> AcquisitionResult:
     strategy_handlers = {
         AcquisitionStrategy.R2_ONLY: _acquire_r2_only,
         AcquisitionStrategy.HUGGINGFACE_HUB: _acquire_huggingface_hub,
-        AcquisitionStrategy.LIBRARY_MANAGED: _acquire_library_managed,
         AcquisitionStrategy.DIRECT_URLS: _acquire_direct_urls,
         AcquisitionStrategy.CUSTOM: _acquire_custom,
     }
