@@ -1,4 +1,4 @@
-"""BioLM Models CLI (``bh``).
+"""biolm-hub CLI (``bh``).
 
 Command-line tools for deploying and running BioLM models on Modal.
 """

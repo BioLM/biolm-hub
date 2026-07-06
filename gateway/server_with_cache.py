@@ -1,4 +1,4 @@
-"""Cached BioLM Models gateway — routing + optional response cache.
+"""Cached biolm-hub gateway — routing + optional response cache.
 
 Identical to the bare ``gateway/server.py`` except it routes requests through
 the response-cache machinery. **Both cache tiers (modal.Dict short-term + R2

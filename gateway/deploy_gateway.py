@@ -1,4 +1,4 @@
-"""Deploy a BioLM Models gateway.
+"""Deploy a biolm-hub gateway.
 
 Run from the repo root:
 
@@ -19,7 +19,7 @@ logger = get_logger(__name__)
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Deploy a BioLM Models gateway.")
+    parser = argparse.ArgumentParser(description="Deploy a biolm-hub gateway.")
     parser.add_argument(
         "--cache",
         action="store_true",

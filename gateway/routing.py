@@ -347,7 +347,7 @@ def build_gateway_app(model_mapper: ModelMapper, *, use_cache: bool) -> FastAPI:
             every request goes straight to the model.
     """
     fastapi_app = FastAPI(
-        title="BioLM Models Gateway",
+        title="biolm-hub gateway",
         description=(
             "A unified, self-hostable gateway for the BioLM open biological "
             "ML model catalog. Routes requests to deployed Modal model apps."
@@ -389,7 +389,7 @@ def build_gateway_app(model_mapper: ModelMapper, *, use_cache: bool) -> FastAPI:
         """Confirm the gateway is running and list supported models."""
         return {
             "status": "ok",
-            "message": "BioLM Models Gateway is running",
+            "message": "biolm-hub gateway is running",
             "cache_enabled_at_build": use_cache,
             "supported_models": model_mapper.get_all_registered_models(),
         }

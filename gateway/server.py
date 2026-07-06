@@ -1,4 +1,4 @@
-"""Bare BioLM Models gateway — routing only, no response cache.
+"""Bare biolm-hub gateway — routing only, no response cache.
 
 This is the minimal gateway: it discovers deployed models from their
 ``config.py`` files and exposes one ``POST /api/v3/{slug}/{action}`` route per
