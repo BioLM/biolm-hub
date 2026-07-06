@@ -23,7 +23,7 @@ def get_model_dir() -> Path:
     )
 
 
-def download_model_assets(  # noqa: C901
+def download_model_assets(
     base_model_slug: str,
     weights_version: str,
     variant_config: Optional[dict[str, Any]] = None,

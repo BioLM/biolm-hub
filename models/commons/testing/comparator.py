@@ -179,8 +179,6 @@ class DictComparator:
 
         cos_dist = (1 - cos_sim) / 2  # Reorient to distance (0=identical, 1=opposite)
 
-        # print(f"Computed cosine distance at {self._diff_path_str(path)}: {cos_dist}")
-
         if cos_dist <= self.cosine_distance_threshold:
             # Within the cosine tolerance: record a pass by zeroing diff, exactly
             # like the PDB/MSA/generated-seq comparators. Recording cos_dist here
@@ -263,8 +261,6 @@ class DictComparator:
             else:
                 expected_seq = self._extract_sequence(expected_structure)
                 result_seq = self._extract_sequence(result_structure)
-                # print(f"Extracted expected sequence: {expected_seq}")
-                # print(f"Extracted result sequence: {result_seq}")
                 diff = 0.0 if expected_seq == result_seq else self._inf_diff
             self._update_max_diff(diff, path, (value1, value2))
             return

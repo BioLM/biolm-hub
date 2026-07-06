@@ -6,7 +6,7 @@ if TYPE_CHECKING:
     from torch import Tensor
 
 from models.commons.core.decorator import modal_endpoint
-from models.commons.core.error import UnsupportedOptionError
+from models.commons.core.error import ServerError, UnsupportedOptionError
 from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
@@ -182,8 +182,7 @@ class DSMModel(ModelMixinSnap):
     """
 
     @modal.enter(snap=True)
-    def setup_model(self) -> None:  # noqa: C901
-        # FIXME(noqa: C901): Refactor complex dynamic import logic to reduce complexity.
+    def setup_model(self) -> None:
         """Load DSM model directly on GPU for GPU memory snapshot."""
         import sys
 
@@ -205,7 +204,7 @@ class DSMModel(ModelMixinSnap):
                 submodule_search_locations=[os.path.join(dsm_root, "models")],
             )
             if pkg_spec is None or pkg_spec.loader is None:
-                raise RuntimeError(
+                raise ServerError(
                     "Could not build a module spec for the DSM 'models' package"
                 )
             dsm_models_pkg = importlib.util.module_from_spec(pkg_spec)
@@ -220,7 +219,7 @@ class DSMModel(ModelMixinSnap):
             submodule_search_locations=[os.path.join(dsm_root, "models")],
         )
         if spec is None or spec.loader is None:
-            raise RuntimeError(
+            raise ServerError(
                 "Could not build a module spec for dsm_models.modeling_dsm"
             )
         modeling_dsm = importlib.util.module_from_spec(spec)
@@ -264,7 +263,7 @@ class DSMModel(ModelMixinSnap):
         snapshot_path_obj = Path(snapshot_path).resolve()
 
         if not snapshot_path_obj.exists():
-            raise RuntimeError(
+            raise ServerError(
                 f"Model snapshot path does not exist: {snapshot_path_obj}. "
                 f"Model should have been downloaded during image build."
             )

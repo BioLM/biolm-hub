@@ -163,9 +163,7 @@ class ESMCModel(ModelMixinSnap):
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def encode(self, payload: ESMCEncodeRequest) -> ESMCEncodeResponse:  # noqa: C901
-        # FIXME(noqa: C901): Refactor to reduce complexity below the linter's threshold.
-
+    def encode(self, payload: ESMCEncodeRequest) -> ESMCEncodeResponse:
         """
         Encode sequences with ESM C, possibly across multiple layers.
 

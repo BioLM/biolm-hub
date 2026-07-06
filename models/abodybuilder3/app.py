@@ -79,7 +79,7 @@ image = (
         f"cd abodybuilder3 && "
         f"git switch --detach {abodybuilder3_commit_hash}"
     )
-    .workdir("./abodybuilder3")  # Needed since relative imports withing the repo
+    .workdir("./abodybuilder3")  # Needed since relative imports within the repo
     # Remove any legacy simtk.openmm references
     .run_commands(
         "pip uninstall -y simtk.openmm || true",

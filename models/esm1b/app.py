@@ -210,7 +210,7 @@ class ESM1bModel(ModelMixinSnap):
         results = [ESM1bLogProbResponseResult(log_prob=lp) for lp in log_prob_sums]
         return ESM1bLogProbResponse(results=results)
 
-    def _encode_forward_pass(  # noqa: C901
+    def _encode_forward_pass(
         self,
         sequences: list[str],
         repr_layers: list[int],

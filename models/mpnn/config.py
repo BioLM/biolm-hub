@@ -83,13 +83,16 @@ MODEL_FAMILY = ModelFamily(
             response_schema=MPNNGenerateResponse,
         )
     ],
-    # Single axis: MODEL_TYPE with 6 values (excluding SIDE_CHAIN)
+    # Single axis: MODEL_TYPE. SIDE_CHAIN is not a deployable variant on its own —
+    # it is an auxiliary side-chain packer that is always loaded alongside the
+    # selected backbone model (see load_mpnn / model_sc in app.py), so it is
+    # excluded from the deployed variant set here.
     variant_axes={
         "MODEL_TYPE": [
             v
             for v in MPNNModelTypes
             if v
-            != MPNNModelTypes.SIDE_CHAIN  # We are disabling this for now, can always re-enable
+            != MPNNModelTypes.SIDE_CHAIN  # auxiliary packer, not a standalone variant
         ],
     },
     # Resource function - all variants use the same resource spec

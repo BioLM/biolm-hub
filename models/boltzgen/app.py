@@ -231,7 +231,7 @@ class BoltzGenModel(BoltzGenPipelineMixin, ModelMixinSnap):
                 for name in zip_ref.namelist():
                     member_path = (mols_dir / name).resolve()
                     if not str(member_path).startswith(str(mols_dir.resolve())):
-                        raise ValueError(f"Zip path traversal detected: {name}")
+                        raise UserError(f"Zip path traversal detected: {name}")
                 zip_ref.extractall(mols_dir)
 
         # Set moldir path - boltzgen expects the path to the extracted mols directory

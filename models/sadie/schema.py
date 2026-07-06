@@ -1,4 +1,4 @@
-from pydantic import Field, StrictBool, StrictStr, validator
+from pydantic import AliasChoices, Field, StrictBool, StrictStr, validator
 
 from models.commons.data.validator import validate_aa_extended
 from models.commons.model.base import ModelParams
@@ -138,12 +138,15 @@ class SADIEPredictResponseResult(ResponseModel):
         description="Percent identity of the input sequence to the assigned J-gene.",
     )
     Chain: str = Field(
+        validation_alias=AliasChoices("Chain", "chain"),
         description="Chain identifier used for this domain (H, K, L, A, B, G, or D).",
     )
     Numbering: list[int] = Field(
+        validation_alias=AliasChoices("Numbering", "numbering"),
         description="Per-residue position numbers assigned according to the selected numbering scheme.",
     )
     Insertion: list[str] = Field(
+        validation_alias=AliasChoices("Insertion", "insertion"),
         description="Per-residue insertion codes paired with the numbering (empty string when no insertion).",
     )
     scheme: str = Field(

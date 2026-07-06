@@ -3,6 +3,7 @@ from pathlib import Path
 import modal
 
 from models.commons.core.decorator import modal_endpoint
+from models.commons.core.error import ServerError
 from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
@@ -150,7 +151,7 @@ class TemBERTureModel(ModelMixinSnap):
         logger.info("Checking adapter directory: %s", adapter_dir)
 
         if not Path(self.base_model_dir).exists():
-            raise RuntimeError(
+            raise ServerError(
                 f"Shared base model snapshot directory not found: {self.base_model_dir}"
             )
 
@@ -160,10 +161,10 @@ class TemBERTureModel(ModelMixinSnap):
             if Path(self.adapter_dir).exists():
                 for item in Path(self.adapter_dir).iterdir():
                     logger.debug("  - %s", item)
-            raise RuntimeError(f"Adapter directory not found: {adapter_dir}")
+            raise ServerError(f"Adapter directory not found: {adapter_dir}")
 
         if not Path(head_dir).exists():
-            raise RuntimeError(f"Head directory not found: {head_dir}")
+            raise ServerError(f"Head directory not found: {head_dir}")
 
         # Load adapter and head directly from local paths
         self.model.load_adapter(

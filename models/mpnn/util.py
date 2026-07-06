@@ -491,7 +491,6 @@ def infer(  # noqa: C901
             output_fasta = base_folder + "/seqs/" + name + args.file_ending + ".fa"
             output_backbones = base_folder + "/backbones/"
             output_packed = base_folder + "/packed/"
-            # output_stats_path = base_folder + "stats/" + name + args.file_ending + ".pt"
 
             out_dict = {}
             out_dict["generated_sequences"] = S_stack.cpu()
@@ -529,7 +528,7 @@ def infer(  # noqa: C901
                                 sc_feature_dict[k] = v.repeat(B, 1, 1, 1)
                             elif num_dim == 5:
                                 sc_feature_dict[k] = v.repeat(B, 1, 1, 1, 1)
-                        except:  # noqa: E722
+                        except Exception:
                             pass
                 X_stack_list = []
                 X_m_stack_list = []
@@ -560,22 +559,6 @@ def infer(  # noqa: C901
                     b_factor_stack_list.append(b_factor_stack)
 
             with open(output_fasta, "w") as f:  # noqa: F841
-                # f.write(
-                #     ">{}, T={}, seed={}, num_res={}, num_ligand_res={}, use_ligand_context={}, ligand_cutoff_distance={}, batch_size={}, number_of_batches={}, model_path={}\n{}\n".format(
-                #         name,
-                #         args.temperature,
-                #         seed,
-                #         torch.sum(rec_mask).cpu().numpy(),
-                #         torch.sum(combined_mask[:1]).cpu().numpy(),
-                #         bool(args.ligand_mpnn_use_atom_context),
-                #         float(args.ligand_mpnn_cutoff_for_score),
-                #         args.batch_size,
-                #         args.number_of_batches,
-                #         checkpoint_path,
-                #         seq_out_str,
-                #     )
-                # )
-
                 for ix in range(S_stack.shape[0]):
                     results_dict: dict[str, Any] = {}
 
@@ -688,31 +671,4 @@ def infer(  # noqa: C901
                         ix
                     ].tolist()
                     results_dict_list.append(results_dict)
-                    # if ix == S_stack.shape[0] - 1:
-                    #     # final 2 lines
-                    #     f.write(
-                    #         ">{}, id={}, T={}, seed={}, overall_confidence={}, ligand_confidence={}, seq_rec={}\n{}".format(
-                    #             name,
-                    #             ix_suffix,
-                    #             args.temperature,
-                    #             seed,
-                    #             loss_np,
-                    #             loss_XY_np,
-                    #             seq_rec_print,
-                    #             seq_out_str,
-                    #         )
-                    #     )
-                    # else:
-                    #     f.write(
-                    #         ">{}, id={}, T={}, seed={}, overall_confidence={}, ligand_confidence={}, seq_rec={}\n{}\n".format(
-                    #             name,
-                    #             ix_suffix,
-                    #             args.temperature,
-                    #             seed,
-                    #             loss_np,
-                    #             loss_XY_np,
-                    #             seq_rec_print,
-                    #             seq_out_str,
-                    #         )
-                    #     )
     return results_dict_list

@@ -220,7 +220,7 @@ class ProstT5Model(ModelMixinSnap):
         )
         return translations
 
-    def prostt5_compute_embeddings(  # noqa: C901
+    def prostt5_compute_embeddings(
         self,
         sequences: list[str],
         model_direction: str = "AA2fold",
@@ -280,7 +280,7 @@ class ProstT5Model(ModelMixinSnap):
             for embedding in embs_per_protein
         ]
 
-    def prostt5_translate(  # noqa: C901
+    def prostt5_translate(
         self,
         sequences: list[str],
         top_p: float = 0.95,

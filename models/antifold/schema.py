@@ -238,8 +238,7 @@ class AntiFoldPredictRequest(RequestModel):
     )
 
     @model_validator(mode="after")
-    def validate_params(self) -> "AntiFoldPredictRequest":  # noqa: C901
-        # FIXME(noqa: C901): Refactor to reduce complexity below the linter's threshold.
+    def validate_params(self) -> "AntiFoldPredictRequest":
 
         params = self.params
         items = self.items
@@ -325,8 +324,7 @@ class AntiFoldGenerateRequest(RequestModel):
     )
 
     @model_validator(mode="after")
-    def validate_params(self) -> "AntiFoldGenerateRequest":  # noqa: C901
-        # FIXME(noqa: C901): Refactor to reduce complexity below the linter's threshold.
+    def validate_params(self) -> "AntiFoldGenerateRequest":
 
         params = self.params
         items = self.items

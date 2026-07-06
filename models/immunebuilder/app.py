@@ -6,7 +6,11 @@ from typing import Any, Optional
 import modal
 
 from models.commons.core.decorator import modal_endpoint
-from models.commons.core.error import UnsupportedOptionError, ValidationError400
+from models.commons.core.error import (
+    ServerError,
+    UnsupportedOptionError,
+    ValidationError400,
+)
 from models.commons.core.logging import get_logger
 from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
@@ -176,7 +180,7 @@ class ImmuneBuilderModel(ModelMixinSnap):
         from ImmuneBuilder import ABodyBuilder2, NanoBodyBuilder2, TCRBuilder2
 
         if weights_dir is None:
-            raise ValueError("weights_dir is required for _load_model_by_type()")
+            raise ServerError("weights_dir is required for _load_model_by_type()")
 
         logger.info("Loading %s with weights_dir: %s", self.model_type, weights_dir)
 

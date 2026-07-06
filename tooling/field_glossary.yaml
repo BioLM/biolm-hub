@@ -93,3 +93,12 @@ verbatim:
   log_prob:
     - "Pseudo-log-likelihood of the sequence under the model."
     - "Log-likelihood of the sequence under the model."
+
+  # sadie is a documented naming exception: its per-domain annotation output
+  # retains three upstream ANARCI column names verbatim — `Chain`, `Numbering`,
+  # and `Insertion` (PascalCase) — as a faithful passthrough of the numbering
+  # tool's own output. These are single-model fields (not shared across the
+  # catalog), so they are not pinned here, and the non-snake_case spelling is
+  # intentional. The fields also accept the snake_case forms (`chain`/
+  # `numbering`/`insertion`) as validation aliases; the emitted names are
+  # unchanged.

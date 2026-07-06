@@ -27,12 +27,10 @@ from models.commons.data.serializer import serialize_model
 from models.commons.util.config import cache_enabled
 
 
-def modal_endpoint(  # noqa: C901
+def modal_endpoint(
     app_name: str,
     debug: bool = False,
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-    # FIXME(noqa: C901): Refactor to reduce complexity below the linter's threshold.
-
     """
     Creates a decorator that wraps a Modal function with additional features.
 
@@ -66,9 +64,7 @@ def modal_endpoint(  # noqa: C901
         }
     """
 
-    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:  # noqa: C901
-        # FIXME(noqa: C901): Refactor to reduce complexity below the linter's threshold.
-
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         # Mark the function as a BioLM action (public API action). Callable has
         # no such attribute in typeshed; this is a deliberate dynamic marker.
         func._is_biolm_action = True  # type: ignore[attr-defined]
@@ -87,11 +83,7 @@ def modal_endpoint(  # noqa: C901
         request_model_type: type[BaseModel] = payload_param.annotation
 
         @functools.wraps(func)
-        async def async_wrapper(
-            *args: Any, **kwargs: Any
-        ) -> dict[str, Any]:  # noqa: C901
-            # FIXME(noqa: C901): Refactor to reduce complexity below the linter's threshold.
-
+        async def async_wrapper(*args: Any, **kwargs: Any) -> dict[str, Any]:
             ### ------- Return payload schema for the Python SDK (schema introspection) -------
             _return_payload_schema = kwargs.pop("_return_payload_schema", False)
             if _return_payload_schema:

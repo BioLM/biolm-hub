@@ -1,7 +1,7 @@
 from functools import partial
 from typing import Annotated, Optional
 
-from pydantic import BeforeValidator, Field
+from pydantic import AliasChoices, BeforeValidator, Field
 
 from models.commons.data.validator import (
     AAExtendedPlusExtra,
@@ -119,6 +119,7 @@ class TemBERTureEncodeResponseResult(ResponseModel):
     )
     residue_embeddings: Optional[list[list[float]]] = Field(
         default=None,
+        validation_alias=AliasChoices("residue_embeddings", "per_residue_embeddings"),
         description="Per-residue embedding vectors.",
     )
     cls_embeddings: Optional[list[float]] = Field(
@@ -135,6 +136,7 @@ class TemBERTureEncodeResponse(ResponseModel):
 
 class TemBERTurePredictResponseResult(ResponseModel):
     score: float = Field(
+        validation_alias=AliasChoices("score", "prediction"),
         description="Thermophilicity probability (0-1) in classifier mode, or melting temperature in degrees Celsius in regression mode.",
     )
     classification: Optional[str] = Field(
