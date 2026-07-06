@@ -1,5 +1,4 @@
-from urllib.error import URLError
-from urllib.request import urlopen
+from pathlib import Path
 
 from models.commons.core.logging import get_logger
 from models.commons.model.schema import ModelActions
@@ -14,27 +13,26 @@ from models.esm_if1.schema import (
 
 logger = get_logger(__name__)
 
-# Test input/output filenames. Inputs are self-contained (fetched inside
-# generate() below), so generation needs no pre-existing R2 assets — the
+# Test input/output filenames. Inputs are self-contained (read from a local
+# fixture file below), so generation needs no pre-existing R2 assets — the
 # generator writes these inputs to R2 alongside the generated outputs.
 GENERATE_INPUT = "generate_input.json"
 GENERATE_OUTPUT = "generate_expected_output.json"
 
-
-def _download_pdb(pdb_id: str) -> str:
-    """Download a PDB-format structure file from RCSB and return it as text."""
-    url = f"https://files.rcsb.org/download/{pdb_id}.pdb"
-    try:
-        with urlopen(url, timeout=10) as response:
-            pdb_text: str = response.read().decode("utf-8")
-            return pdb_text
-    except URLError as e:
-        raise ValueError(f"Failed to download PDB for {pdb_id}: {e}") from e
+# 1CRN (Crambin, a small 46-residue single-chain protein) committed locally as
+# byte-identical to `https://files.rcsb.org/download/1CRN.pdb` so golden
+# generation is self-contained and doesn't depend on RCSB being reachable.
+_TEST_DATA_DIR = Path(__file__).parent / "test_data"
+_1CRN_PDB_PATH = _TEST_DATA_DIR / "1CRN.pdb"
 
 
-# TestSuite skeleton — the test case is built lazily inside generate() to avoid
-# a module-scope network call (the RCSB PDB download) that would break
-# --collect-only / plain imports of this module.
+def _load_pdb(path: Path) -> str:
+    """Read a local PDB-format structure file and return it as text."""
+    return path.read_text(encoding="utf-8")
+
+
+# TestSuite skeleton — the test case is built lazily inside generate() to keep
+# file I/O out of module scope / plain imports of this module.
 fixture_generation_suite = TestSuite(
     model_family=MODEL_FAMILY,
     r2_fixture_subdir="models",
@@ -52,9 +50,9 @@ def generate() -> None:
     # 1CRN: Crambin, a small (46-residue) single-chain protein — a fast, cheap
     # canonical structure for inverse folding (chain "A", matching the schema's
     # default `params.chain`).
-    logger.info("Downloading PDB structure from RCSB...")
-    pdb_1crn = _download_pdb("1CRN")
-    logger.info("PDB structure downloaded successfully")
+    logger.info("Loading local PDB structure...")
+    pdb_1crn = _load_pdb(_1CRN_PDB_PATH)
+    logger.info("PDB structure loaded successfully")
 
     fixture_generation_suite.variant_test_mappings[0].test_cases = [
         ActionTestCase(

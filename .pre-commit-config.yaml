@@ -5,8 +5,16 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
+      # Committed structure fixtures (models/*/test_data/*.pdb|*.cif) are
+      # byte-identical copies of files fetched over the network for golden
+      # generation (see MED-12). PDB is a fixed-column format and both
+      # formats round-trip through fixture.py as raw text, so these two
+      # hooks must not rewrite them -- doing so would silently desync the
+      # committed copy from the bytes the existing goldens were built from.
       - id: trailing-whitespace
+        exclude: 'models/[^/]+/test_data/.*\.(pdb|cif)$'
       - id: end-of-file-fixer
+        exclude: 'models/[^/]+/test_data/.*\.(pdb|cif)$'
       - id: check-yaml
       - id: check-toml
       - id: check-merge-conflict

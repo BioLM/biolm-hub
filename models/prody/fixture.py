@@ -1,6 +1,4 @@
-from typing import cast
-from urllib.error import URLError
-from urllib.request import urlopen
+from pathlib import Path
 
 from models.commons.core.logging import get_logger
 from models.commons.model.schema import ModelActions
@@ -27,19 +25,20 @@ PREDICT_INPUT = "predict_input.json"
 PREDICT_OUTPUT = "predict_expected_output.json"
 
 
-# Download CIF files from RCSB inline
-def _download_cif(pdb_id: str) -> str:
-    """Download CIF file from RCSB and return as string."""
-    url = f"https://files.rcsb.org/download/{pdb_id}.cif"
-    try:
-        with urlopen(url, timeout=10) as response:
-            return cast(str, response.read().decode("utf-8"))
-    except URLError as e:
-        raise ValueError(f"Failed to download CIF for {pdb_id}: {e}") from e
+# CIF files committed locally under test_data/, byte-identical to the RCSB
+# source they were fetched from (`https://files.rcsb.org/download/<id>.cif`),
+# so golden generation is self-contained and doesn't depend on RCSB being
+# reachable.
+_TEST_DATA_DIR = Path(__file__).parent / "test_data"
 
 
-# TestSuite skeleton — test cases are built lazily inside generate() to avoid
-# module-scope network calls (RCSB CIF downloads) that would break --collect-only.
+def _load_cif(pdb_id: str) -> str:
+    """Read a local CIF-format structure file and return it as text."""
+    return (_TEST_DATA_DIR / f"{pdb_id}.cif").read_text(encoding="utf-8")
+
+
+# TestSuite skeleton — test cases are built lazily inside generate() to keep
+# file I/O out of module scope / plain imports of this module.
 fixture_generation_suite = TestSuite(
     model_family=MODEL_FAMILY,
     r2_fixture_subdir="models",
@@ -54,17 +53,17 @@ fixture_generation_suite = TestSuite(
 
 def generate() -> None:
     """Configures and runs the fixture generator for prody model"""
-    # Download test structures lazily (inside generate, not at module scope)
+    # Load test structures lazily (inside generate, not at module scope)
     # 3IY3: Multi-chain complex with A and B protein chains (good for multi-chain tests)
     # 1UBQ: Ubiquitin - single chain, small protein (~76 residues)
     # 1CRN: Crambin - single chain, small protein (~46 residues, different length from 1UBQ)
-    logger.info("Downloading CIF files from RCSB...")
-    cif_3iy3 = _download_cif("3IY3")
-    cif_1ubq = _download_cif("1UBQ")
-    cif_1crn = _download_cif("1CRN")
-    logger.info("CIF files downloaded successfully")
+    logger.info("Loading local CIF files...")
+    cif_3iy3 = _load_cif("3IY3")
+    cif_1ubq = _load_cif("1UBQ")
+    cif_1crn = _load_cif("1CRN")
+    logger.info("CIF files loaded successfully")
 
-    # Rebuild test cases with the freshly downloaded CIFs
+    # Rebuild test cases with the freshly loaded CIFs
     fixture_generation_suite.variant_test_mappings[0].test_cases = [
         # Test Case 1: Encode (InSty) - Single chain (1UBQ)
         ActionTestCase(

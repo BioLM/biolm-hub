@@ -1,5 +1,4 @@
-from urllib.error import URLError
-from urllib.request import urlopen
+from pathlib import Path
 
 from models.commons.core.logging import get_logger
 from models.commons.model.schema import ModelActions
@@ -27,9 +26,17 @@ PREDICT_VARIANT_OUTPUT = "predict_variant_expected_output.json"
 # high-resolution (1.8 A) structure with no missing/disordered residues, so
 # chain A's observed CA sequence is exactly the full 76-residue sequence below
 # (verified independently against the fetched CIF; see fixture.py history /
-# task notes). Fetched fresh from RCSB inside generate() (not at module scope)
-# so importing this module never touches the network.
+# task notes).
+#
+# Golden self-containment (MED-12): this used to be fetched fresh from RCSB
+# inside generate(). RCSB is unpinned (no content hash / commit guarantee), so
+# a byte-for-byte identical copy of the CIF fetched for the existing goldens
+# is committed locally at test_data/1UBQ.cif. generate() now reads that file
+# instead of hitting the network at all, so fixture generation is fully
+# reproducible offline. (Verified byte-identical against a fresh RCSB fetch
+# at commit time -- see MED-12 fix notes.)
 _PDB_ID = "1UBQ"
+_LOCAL_CIF_PATH = Path(__file__).parent / "test_data" / "1UBQ.cif"
 
 # Sequence corresponds 1:1 to 1UBQ chain A (verified against the CIF's observed
 # CA residues -- no gaps, no non-standard residues).
@@ -38,20 +45,16 @@ _SAMPLE_SEQUENCE = (
 )
 
 
-def _download_cif(pdb_id: str) -> str:
-    """Download a CIF structure from RCSB and return it as text.
+def _load_cif(pdb_id: str) -> str:
+    """Load the committed local CIF structure for ``pdb_id``.
 
-    Network access lives here, NOT at module scope, so importing this module
-    (e.g. for ``pytest --collect-only`` via test.py) never touches the network.
-    Only ``generate()`` (run explicitly) downloads the structure.
+    No network access: the CIF is committed at ``test_data/<pdb_id>.cif`` so
+    that both importing this module and running ``generate()`` are fully
+    offline and reproducible.
     """
-    url = f"https://files.rcsb.org/download/{pdb_id}.cif"
-    try:
-        with urlopen(url, timeout=10) as response:
-            raw: bytes = response.read()
-            return raw.decode("utf-8")
-    except URLError as e:
-        raise ValueError(f"Failed to download CIF for {pdb_id}: {e}") from e
+    if pdb_id != _PDB_ID:
+        raise ValueError(f"No local CIF committed for {pdb_id!r}; expected {_PDB_ID!r}")
+    return _LOCAL_CIF_PATH.read_text(encoding="utf-8")
 
 
 # Create TestSuite for fixture generation with programmatic inputs
@@ -69,9 +72,9 @@ fixture_generation_suite = TestSuite(
 
 def generate() -> None:
     """Configures and runs the fixture generator"""
-    logger.info("Downloading CIF structure from RCSB...")
-    ubq_cif = _download_cif(_PDB_ID)
-    logger.info("CIF structure downloaded successfully")
+    logger.info("Loading committed CIF structure from test_data/...")
+    ubq_cif = _load_cif(_PDB_ID)
+    logger.info("CIF structure loaded successfully")
 
     # Variant sequence with K48R and K63R applied (0-indexed positions 47, 62),
     # for the variant_sequence auto-calculation test case (Test Case 4 below).

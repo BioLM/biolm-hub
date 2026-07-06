@@ -1,5 +1,4 @@
-from urllib.error import URLError
-from urllib.request import urlopen
+from pathlib import Path
 
 from models.commons.core.logging import get_logger
 from models.commons.model.schema import ModelActions
@@ -14,8 +13,8 @@ from models.mpnn.schema import (
 
 logger = get_logger(__name__)
 
-# Test input/output filenames. Inputs are self-contained (fetched inside
-# generate() below), so generation needs no pre-existing R2 assets — the
+# Test input/output filenames. Inputs are self-contained (read from a local
+# fixture file below), so generation needs no pre-existing R2 assets — the
 # generator writes these inputs to R2 itself, alongside the generated outputs.
 #
 # MPNN's wire schema (MPNNGenerateRequest / AllMPNNGenerateParams) is the same
@@ -28,22 +27,21 @@ INPUT2 = "input2.json"
 INPUT3 = "input3.json"
 INPUT4 = "input4.json"
 
-
-def _download_pdb(pdb_id: str) -> str:
-    """Download a PDB-format structure file from RCSB and return it as text."""
-    url = f"https://files.rcsb.org/download/{pdb_id}.pdb"
-    try:
-        with urlopen(url, timeout=10) as response:
-            raw_bytes: bytes = response.read()
-            return raw_bytes.decode("utf-8")
-    except URLError as e:
-        raise ValueError(f"Failed to download PDB for {pdb_id}: {e}") from e
+# 1CRN (Crambin, a small 46-residue single-chain protein) committed locally as
+# byte-identical to `https://files.rcsb.org/download/1CRN.pdb` so golden
+# generation is self-contained and doesn't depend on RCSB being reachable.
+_TEST_DATA_DIR = Path(__file__).parent / "test_data"
+_1CRN_PDB_PATH = _TEST_DATA_DIR / "1CRN.pdb"
 
 
-# TestSuite skeleton — test cases are built lazily inside generate() to avoid
-# a module-scope network call (the RCSB PDB download) that would break
-# --collect-only / plain imports of this module (test.py imports INPUT1 above
-# at import time).
+def _load_pdb(path: Path) -> str:
+    """Read a local PDB-format structure file and return it as text."""
+    return path.read_text(encoding="utf-8")
+
+
+# TestSuite skeleton — test cases are built lazily inside generate() to keep
+# file I/O out of module scope / plain imports of this module (test.py
+# imports INPUT1 above at import time).
 fixture_generation_suite = TestSuite(
     model_family=MODEL_FAMILY,
     r2_fixture_subdir="models",
@@ -59,15 +57,15 @@ fixture_generation_suite = TestSuite(
 
 def _build_test_cases() -> list[ActionTestCase]:
     """
-    Fetches a canonical small structure from RCSB and builds the 4 GENERATE
-    test cases (same backbone, 4 different parameter settings) shared across
-    all MPNN variants.
+    Loads a canonical small structure from a local fixture file and builds the
+    4 GENERATE test cases (same backbone, 4 different parameter settings)
+    shared across all MPNN variants.
     """
-    logger.info("Downloading PDB structure from RCSB...")
+    logger.info("Loading local PDB structure...")
     # 1CRN: Crambin, a small (46-residue) single-chain protein — a fast, cheap
     # canonical backbone for inverse folding (chain "A", residues 1-46).
-    pdb_1crn = _download_pdb("1CRN")
-    logger.info("PDB structure downloaded successfully")
+    pdb_1crn = _load_pdb(_1CRN_PDB_PATH)
+    logger.info("PDB structure loaded successfully")
 
     return [
         # Baseline design: near-greedy sampling, small batch.

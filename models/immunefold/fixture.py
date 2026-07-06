@@ -1,14 +1,14 @@
 """ImmuneFold golden-fixture generation.
 
 Inputs are self-contained: the paired-antibody, nanobody, and TCR cases use
-inline canonical sequences, and the antibody-antigen complex case fetches a
-small antigen structure from RCSB at generation time (never at import/module
-scope). No pre-existing R2 input is required — the generator writes each
-input to R2 alongside the generated expected output.
+inline canonical sequences, and the antibody-antigen complex case reads a
+small antigen structure committed locally under `test_data/` (byte-identical
+to the RCSB source it was fetched from). No pre-existing R2 input is
+required — the generator writes each input to R2 alongside the generated
+expected output.
 """
 
-from urllib.error import URLError
-from urllib.request import urlopen
+from pathlib import Path
 
 from models.commons.core.logging import get_logger
 from models.commons.model.schema import ModelActions
@@ -22,9 +22,10 @@ from models.immunefold.schema import (
 
 logger = get_logger(__name__)
 
-# Test input/output filenames. Inputs are self-contained (inlined/fetched
-# below), so generation needs no pre-existing R2 assets — the generator
-# writes these inputs to R2 alongside the generated outputs.
+# Test input/output filenames. Inputs are self-contained (inlined sequences
+# / a local fixture file below), so generation needs no pre-existing R2
+# assets — the generator writes these inputs to R2 alongside the generated
+# outputs.
 # ImmuNeFold has multiple input files per variant type
 ANTIGEN_PREDICT_INPUT = "antigen_predict_input.json"
 ANTIBODY_PREDICT_INPUT = "antibody_predict_input.json"
@@ -69,29 +70,25 @@ TCR_MHC = (
     "QTHRVDLGTLRGYYNQSEAGSHTVQRMYGCDVGSDWRFLRGYHQYAYDGKDY"
 )
 
-# Small antigen structure for the antibody-antigen complex test case, fetched
-# from RCSB (legacy PDB format, required by the `pdb` field) at generation
-# time — never at import/module scope.
+# Small antigen structure for the antibody-antigen complex test case,
+# committed locally (legacy PDB format, required by the `pdb` field) as
+# byte-identical to `https://files.rcsb.org/download/1LYZ.pdb` so golden
+# generation is self-contained and doesn't depend on RCSB being reachable.
 _ANTIGEN_PDB_ID = "1LYZ"  # Hen egg-white lysozyme; small (~129 aa) single-chain antigen
+_TEST_DATA_DIR = Path(__file__).parent / "test_data"
+_ANTIGEN_PDB_PATH = _TEST_DATA_DIR / f"{_ANTIGEN_PDB_ID}.pdb"
 
 
-def _download_pdb(pdb_id: str) -> str:
-    """Download a legacy PDB-format structure file from RCSB."""
-    url = f"https://files.rcsb.org/download/{pdb_id}.pdb"
-    try:
-        with urlopen(url, timeout=10) as response:
-            content: bytes = response.read()
-            return content.decode("utf-8")
-    except URLError as e:
-        raise ValueError(f"Failed to download PDB for {pdb_id}: {e}") from e
+def _load_pdb(path: Path) -> str:
+    """Read a local legacy PDB-format structure file and return it as text."""
+    return path.read_text(encoding="utf-8")
 
 
 def _build_fixture_generation_suite() -> TestSuite:
     """Build the fixture-generation suite skeleton (antibody + tcr variants).
 
     The antibody-antigen complex test case is appended in generate() once the
-    antigen PDB has been downloaded, so importing this module never touches
-    the network.
+    antigen PDB has been loaded from the local `test_data/` fixture.
     """
     antibody_request = ImmuneFoldPredictRequest(
         items=[
@@ -160,9 +157,9 @@ def generate() -> None:
     """Configures and runs the fixture generator for both ImmuneFold variants."""
     suite = _build_fixture_generation_suite()
 
-    logger.info(f"Downloading antigen PDB {_ANTIGEN_PDB_ID} from RCSB...")
-    antigen_pdb = _download_pdb(_ANTIGEN_PDB_ID)
-    logger.info("Antigen PDB downloaded successfully")
+    logger.info(f"Loading local antigen PDB {_ANTIGEN_PDB_ID}...")
+    antigen_pdb = _load_pdb(_ANTIGEN_PDB_PATH)
+    logger.info("Antigen PDB loaded successfully")
 
     antigen_request = ImmuneFoldPredictRequest(
         items=[

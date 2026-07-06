@@ -1,5 +1,4 @@
-from urllib.error import URLError
-from urllib.request import urlopen
+from pathlib import Path
 
 from models.antifold.config import MODEL_FAMILY, antifold_commit_hash
 from models.antifold.schema import (
@@ -49,7 +48,7 @@ GENERATE_6Y1L_OUTPUT = "6y1l_imgt_generate_expected_output.json"
 # for `generate` region selection to be meaningful — a plain structure fetched
 # fresh from RCSB would not carry that numbering.
 #
-# Rather than invent our own IMGT renumbering here, we fetch the exact example
+# Rather than invent our own IMGT renumbering here, we use the exact example
 # PDBs bundled in the upstream AntiFold repo (pinned to the same commit already
 # used to build the model image, see `antifold_commit_hash` in config.py). These
 # are the canonical inputs the upstream project itself uses to demonstrate each
@@ -59,26 +58,32 @@ GENERATE_6Y1L_OUTPUT = "6y1l_imgt_generate_expected_output.json"
 #   - data/pdbs/6y1l_imgt.pdb          -- paired VH/VL (H, L), IMGT-numbered
 # (See upstream README.md "Run AntiFold" examples for the exact chain args used
 # with each file.)
-
-_ANTIFOLD_RAW_BASE = (
-    f"https://raw.githubusercontent.com/oxpig/AntiFold/{antifold_commit_hash}"
-)
-
-
-def _download_pdb(repo_relative_path: str) -> str:
-    """Download a canonical example PDB from the pinned upstream AntiFold repo."""
-    url = f"{_ANTIFOLD_RAW_BASE}/{repo_relative_path}"
-    try:
-        with urlopen(url, timeout=10) as response:
-            raw_bytes: bytes = response.read()
-            return raw_bytes.decode("utf-8")
-    except URLError as e:
-        raise ValueError(f"Failed to download PDB from {url}: {e}") from e
+#
+# Golden self-containment (MED-12): these were previously fetched at gen-time
+# from raw.githubusercontent.com at the pinned commit above. That fetch was
+# already reproducible (full 40-char commit SHA => immutable git blob
+# content), but full self-containment is stronger and these three files are
+# small (394 KB / 402 KB / 134 KB), so byte-identical copies fetched from that
+# same pinned commit are committed locally under test_data/. generate() now
+# reads them from disk; importing/running this module never touches the
+# network. (Verified byte-identical against a fresh fetch from the pinned
+# commit at commit time -- see MED-12 fix notes.)
+_ANTIFOLD_TEST_DATA_DIR = Path(__file__).parent / "test_data"
 
 
-# TestSuite skeleton — test cases are built lazily inside generate() to avoid
-# module-scope network calls (GitHub PDB downloads) that would break
-# --collect-only / import-time behavior.
+def _load_local_pdb(filename: str) -> str:
+    """Load a committed local copy of a canonical AntiFold example PDB.
+
+    ``filename`` matches the basename originally fetched from
+    ``raw.githubusercontent.com/oxpig/AntiFold/{antifold_commit_hash}/...``
+    (see module docstring above for the exact upstream paths / commit).
+    """
+    return (_ANTIFOLD_TEST_DATA_DIR / filename).read_text(encoding="utf-8")
+
+
+# TestSuite skeleton — test cases are built lazily inside generate() rather
+# than at module scope, matching the other models' fixture.py structure
+# (no network calls either way; the example PDBs are loaded from test_data/).
 fixture_generation_suite = TestSuite(
     model_family=MODEL_FAMILY,
     r2_fixture_subdir="models",
@@ -93,16 +98,20 @@ fixture_generation_suite = TestSuite(
 
 def generate() -> None:
     """Configures and runs the fixture generator for the antifold model."""
-    logger.info("Downloading canonical example PDBs from the AntiFold repo...")
+    logger.info(
+        "Loading committed example PDBs from test_data/ (originally sourced "
+        "from upstream AntiFold @ %s)...",
+        antifold_commit_hash,
+    )
     # 3HFM: HyHel-10 Fab / hen-egg-lysozyme antibody-antigen complex.
     # Chains: H (heavy), L (light), Y (antigen).
-    pdb_3hfm = _download_pdb("data/antibody_antigen/3hfm.pdb")
+    pdb_3hfm = _load_local_pdb("3hfm.pdb")
     # 8OI2: ALB1 megabody (nanobody scaffold) bound to human serum albumin,
     # IMGT-renumbered. Chains: A (antigen/albumin), B (nanobody/VHH).
-    pdb_8oi2_imgt = _download_pdb("data/nanobody/8oi2_imgt.pdb")
+    pdb_8oi2_imgt = _load_local_pdb("8oi2_imgt.pdb")
     # 6Y1L: paired VH/VL Fab fragment, IMGT-renumbered. Chains: H, L.
-    pdb_6y1l_imgt = _download_pdb("data/pdbs/6y1l_imgt.pdb")
-    logger.info("Downloaded all example PDBs successfully.")
+    pdb_6y1l_imgt = _load_local_pdb("6y1l_imgt.pdb")
+    logger.info("Loaded all example PDBs successfully.")
 
     # Rebuild test cases with the freshly downloaded PDBs.
     fixture_generation_suite.variant_test_mappings[0].test_cases = [

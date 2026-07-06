@@ -1,3 +1,5 @@
+import hashlib
+
 import requests
 
 from models.boltzgen.config import MODEL_FAMILY
@@ -32,6 +34,29 @@ BOLTZGEN_BASE_URL = (
     f"https://raw.githubusercontent.com/{BOLTZGEN_REPO}/{BOLTZGEN_COMMIT}/example"
 )
 
+# Golden self-containment (MED-12): evaluated committing local copies of these
+# example structures (as done for spurs/antifold), but declined for boltzgen
+# specifically:
+#   - The 5 files fetched below total ~7.5 MB, and one (9d3d.cif, ~1.8 MB)
+#     exceeds this repo's `check-added-large-files --maxkb=1024` pre-commit
+#     limit outright, so the full set can't be committed as-is.
+#   - The fetch is already pinned to a full 40-character commit SHA
+#     (BOLTZGEN_COMMIT), which is git's content address -- the bytes served
+#     for that exact commit cannot change -- so this fetch is already
+#     reproducible, just not vendored into the repo.
+# As a cheap extra safety net (since we're relying on the network rather than
+# a committed copy), each fetched file's sha256 is checked against a pin
+# recorded below; any drift (wrong path, CDN corruption, etc.) fails loudly
+# instead of silently producing different fixtures. Hashes were computed from
+# two independent fetches at commit time, confirmed byte-identical.
+EXPECTED_SHA256 = {
+    "9d3d.cif": "919d69e75aaaf59e4bee90bd9d072d18d05f0bae18a38e455b60f9a805adad43",
+    "1mk5.cif": "7ede44c5fb72bf4ca3ff366c5b3efa46846669854c71cef00fe3c2d33debabe6",
+    "7eow.cif": "c642dd357cd364463d9cc78203ee31dc67b3ee0dad6efc3043b94576897dcbea",
+    "1g13.cif": "bdcb6b09837ad2ac30e66b13ecc738914c6ff6b98998f6a2425e6829d0c46185",
+    "7xl0.cif": "0042fd3761f1aee883db62f72f86b8a5fca75198d9e2f265be197b7d44320c34",
+}
+
 
 def fetch_structure_file(example_path: str, filename: str) -> str:
     """
@@ -45,19 +70,37 @@ def fetch_structure_file(example_path: str, filename: str) -> str:
         The file content as a string
 
     Raises:
-        RuntimeError: If the file cannot be fetched
+        RuntimeError: If the file cannot be fetched, or if its content does
+            not match the sha256 pinned in EXPECTED_SHA256 (see MED-12 note
+            above -- this fetch is not vendored locally, so we verify the
+            pinned commit still serves exactly the bytes goldens were built
+            from).
     """
     url = f"{BOLTZGEN_BASE_URL}/{example_path}/{filename}"
 
     try:
         response = requests.get(url, timeout=30)
         response.raise_for_status()
-        return response.text
+        raw_bytes = response.content
     except requests.RequestException as e:
         raise RuntimeError(
             f"Failed to fetch structure file from {url}: {e}\n"
             f"Make sure the file exists in the boltzgen repository."
         ) from e
+
+    expected_hash = EXPECTED_SHA256.get(filename)
+    if expected_hash is not None:
+        actual_hash = hashlib.sha256(raw_bytes).hexdigest()
+        if actual_hash != expected_hash:
+            raise RuntimeError(
+                f"sha256 mismatch for {filename} fetched from {url}: "
+                f"expected {expected_hash}, got {actual_hash}. The pinned "
+                f"commit ({BOLTZGEN_COMMIT}) should be immutable -- this "
+                f"means either the fetch path is wrong or the content was "
+                f"corrupted in transit. Re-verify before regenerating goldens."
+            )
+
+    return response.text
 
 
 def strip_water_from_cif(cif_content: str) -> str:
