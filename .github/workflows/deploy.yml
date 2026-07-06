@@ -1,56 +1,87 @@
-# Maintainer-gated deploy + integration/deployment tests.
+# Tier 2 of a two-tier gated CI: the maintainer-gated, secret-bearing pipeline.
 #
-# Opening or updating a PR NEVER runs this with secrets. It runs only after a
-# maintainer applies the `deploy-approved` label, and any new push to the PR
-# auto-removes that label — so a maintainer always re-reviews the exact commit
-# that gets deployed. Safe lint/type/unit checks live in ci.yml (every PR).
+# Tier 1 (ci.yml) — lint/ruff/black, mypy, unit tests, docs build, gitleaks —
+# runs automatically on every push/PR and carries NO secrets. This workflow is
+# the ONLY one that touches Modal/R2, so it is locked behind TWO maintainer
+# gates that GitHub enforces server-side (neither can be bypassed by editing
+# this file in a PR):
+#
+#   Gate 1 — the `deploy-approved` label. This workflow only STARTS when the
+#     label is added to a PR (`pull_request: types: [labeled]`) or when a
+#     maintainer manually runs it (`workflow_dispatch`). Applying a label needs
+#     repo write, so only maintainers can trigger it — opening/updating a PR
+#     does nothing here.
+#   Gate 2 — the `modal-dev` GitHub Environment. The only secret-bearing job
+#     (`deploy-and-test`) declares `environment: modal-dev`, which must be
+#     configured with REQUIRED REVIEWERS. GitHub pauses the job for manual
+#     approval before exposing the environment's secrets, and the approval
+#     prompt shows the exact commit SHA being deployed.
 #
 # ─────────────────────────  SECURITY MODEL (read first)  ─────────────────────────
-#  • `pull_request_target` runs the workflow definition from the BASE branch
-#    (this file), so a fork PR cannot modify the gating logic itself.
-#  • Repository secrets are referenced ONLY in `deploy-and-test`, which runs ONLY
-#    on the `labeled` event for the `deploy-approved` label.
 #  • Deploying a PR's model necessarily runs that PR's code (config.py / app.py)
-#    on Modal with the maintainer's Modal token in scope. The label IS the trust
-#    boundary: a maintainer MUST review the PR's code before approving.
-#  • `revoke-on-push` removes the label on every new commit, binding the approval
-#    to the exact reviewed commit (no sneaking code in after review).
-#  • `detect` checks out PR code but is secret-free (read-only token, no secrets),
-#    so running the PR's detector can at most influence WHICH of the PR's models
-#    deploy — all still gated + reviewed.
+#    on Modal with the maintainer's Modal token in scope. The review-then-label
+#    step IS the code-trust boundary: a maintainer MUST read the full diff before
+#    applying `deploy-approved`.
+#  • Secrets live ONLY as `modal-dev` ENVIRONMENT secrets (never repo-wide). A
+#    job can read an environment's secrets only if it declares that environment,
+#    so the required-reviewer gate is unavoidable. Repo-wide secrets would
+#    silently skip that gate — the `preflight` step below fails fast if an
+#    environment-only sentinel secret is missing, so a misconfiguration can't
+#    quietly run with repo-wide creds.
+#  • `detect` checks out PR code but is secret-free (read-only token, no
+#    secrets), so a PR's detector can at most influence WHICH of the PR's models
+#    deploy — all still gated by Gate 2 + reviewed under Gate 1.
+#  • Commit-binding: the `labeled` event pins the run to the PR HEAD at click
+#    time, and a later push does NOT trigger a deploy (there is no `synchronize`
+#    trigger). The Gate-2 approval prompt shows that pinned SHA, so the code that
+#    deploys is exactly what the maintainer reviewed. To deploy a newer commit,
+#    remove and re-add the label (re-review first).
 #
-# Maintainer setup (one-time):
+# Maintainer setup (one-time — see CONTRIBUTING.md "Continuous integration &
+# deploys" for the full checklist):
 #   1. Create a `deploy-approved` label.
-#   2. Configure a `modal-dev` GitHub Environment with REQUIRED REVIEWERS, and
-#      store the secrets below as ENVIRONMENT secrets on it (not repo-wide). The
-#      approval prompt then shows the exact commit SHA being deployed (closing
-#      the pre-label window below), and the secrets resolve ONLY in this job.
-#   3. Before applying the label, confirm the PR's HEAD is the commit you
-#      reviewed: the `labeled` event deploys whatever HEAD is at click time, so a
-#      push landing between your review and the click is what would deploy.
+#   2. Create a `modal-dev` GitHub Environment with REQUIRED REVIEWERS (the
+#      maintainers), and store the secrets below as ENVIRONMENT secrets on it
+#      (NOT repo-wide).
+#   3. Scope the Modal token to the `biolm-hub-dev` workspace and the R2 creds to
+#      a READ-ONLY dev bucket, so an approved deploy can only touch dev infra.
 #
 # Note: one approval can fan out to MANY models — a change under `models/commons/`
 # (or a PR that edits the detector) can mark every model affected. The matrix is
 # bounded only by your review, so review the full diff before labeling.
 #
-# Required secrets (store on the `modal-dev` Environment):
-#   MODAL_TOKEN_ID / MODAL_TOKEN_SECRET  — Modal auth (deploys to biolm-hub-dev)
+# Required secrets (store on the `modal-dev` Environment, not repo-wide):
+#   MODAL_DEV_ENVIRONMENT_SENTINEL       — any non-empty value; its presence
+#       proves the job resolved ENVIRONMENT secrets (the preflight fails if
+#       absent, catching secrets mistakenly stored repo-wide).
+#   MODAL_TOKEN_ID / MODAL_TOKEN_SECRET  — Modal auth (token scoped to the
+#       biolm-hub-dev workspace).
 #   R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY / R2_REGION / R2_ENDPOINT
-#       — Cloudflare R2 read creds, so the local test process can load golden
-#         fixtures (mapped to the AWS_* env vars the storage client reads).
+#       — Cloudflare R2 read creds for a read-only dev bucket, so the local test
+#         process can load golden fixtures (mapped to the AWS_* env vars the
+#         storage client reads).
 
 name: Gated Deploy & Test
 
 on:
-  pull_request_target:
-    types: [labeled, synchronize]
+  # Gate 1: only a maintainer adding the `deploy-approved` label (job `if:`
+  # filters to that label name) or a manual dispatch can start this workflow.
+  # There is deliberately NO push/PR-open/synchronize trigger.
+  pull_request:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      models:
+        description: "Models to deploy to biolm-hub-dev (space- or comma-separated slugs, e.g. `esm2 prostt5`)."
+        required: true
+        type: string
 
-# Read-only by default; individual jobs widen only what they need.
+# Read-only by default; no job needs more.
 permissions:
   contents: read
 
 concurrency:
-  group: gated-deploy-${{ github.event.pull_request.number }}
+  group: gated-deploy-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 env:
@@ -60,37 +91,12 @@ env:
   MODAL_ENVIRONMENT: biolm-hub-dev
 
 jobs:
-  # Commit-binding: any push to the PR revokes approval, forcing re-review of
-  # the new code before it can be deployed.
-  revoke-on-push:
-    if: github.event.action == 'synchronize'
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-    steps:
-      - name: Remove the deploy-approved label
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
-        with:
-          script: |
-            try {
-              await github.rest.issues.removeLabel({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.payload.pull_request.number,
-                name: process.env.APPROVAL_LABEL,
-              });
-              core.info('Approval revoked: removed the deploy-approved label after a new push.');
-            } catch (e) {
-              if (e.status === 404) {
-                core.info('No deploy-approved label present; nothing to revoke.');
-              } else {
-                throw e;
-              }
-            }
-
-  # Secret-free change detection. Runs only when a maintainer approves.
+  # Secret-free target resolution. Runs only when a maintainer approves (label)
+  # or manually dispatches.
   detect:
-    if: github.event.action == 'labeled' && github.event.label.name == 'deploy-approved'
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.action == 'labeled' && github.event.label.name == 'deploy-approved')
     runs-on: ubuntu-latest
     outputs:
       models_changed: ${{ steps.detect.outputs.models_changed }}
@@ -99,8 +105,9 @@ jobs:
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
-          # The exact reviewed commit. fetch-depth: 0 so detect_models.py can diff.
-          ref: ${{ github.event.pull_request.head.sha }}
+          # labeled → the exact reviewed PR commit; dispatch → the chosen ref.
+          # fetch-depth: 0 so detect_models.py can diff against the base.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
 
       - name: Set up Python
@@ -108,33 +115,88 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Detect changed models
+      - name: Resolve target models
         id: detect
-        # detect_models.py is stdlib-only — no project deps needed. BASE_REF is
-        # passed via env and quoted so a PR-controlled value can't inject shell.
-        # Two-dot diff (base tip vs HEAD) may over-detect if base advanced; that
-        # only costs extra (gated) deploys, never correctness.
+        # labeled           → diff the reviewed commit vs the PR base (detect_models.py,
+        #                     stdlib-only). BASE_REF is quoted so a PR-controlled value
+        #                     can't inject shell. Two-dot diff may over-detect if base
+        #                     advanced — that only costs extra (gated) deploys.
+        # workflow_dispatch → deploy exactly the `models` input. Names are validated
+        #                     against the same ^[A-Za-z0-9_-]+$ slug rule detect_models.py
+        #                     uses, and read via env (never interpolated into the shell).
         env:
+          EVENT_NAME: ${{ github.event_name }}
+          DISPATCH_MODELS: ${{ inputs.models }}
           BASE_REF: ${{ github.event.pull_request.base.ref }}
         run: |
-          git fetch origin "$BASE_REF" --depth=1
-          python .github/scripts/detect_models.py "origin/$BASE_REF" --smart
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            python3 - <<'PY'
+          import json, os, re, sys
+
+          raw = os.environ.get("DISPATCH_MODELS", "")
+          names = [n for n in re.split(r"[\s,]+", raw.strip()) if n]
+          if not names:
+              sys.exit("workflow_dispatch requires a non-empty `models` input")
+          safe = re.compile(r"^[A-Za-z0-9_-]+$")
+          bad = [n for n in names if not safe.match(n)]
+          if bad:
+              sys.exit(f"Refusing unsafe model name(s): {bad!r}")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
+              fh.write(f"models_changed={json.dumps(names)}\n")
+              fh.write(f"models_with_code_changes={json.dumps(names)}\n")
+              fh.write("has_models=true\n")
+          print(f"Dispatch will deploy: {names}")
+          PY
+          else
+            git fetch origin "$BASE_REF" --depth=1
+            python .github/scripts/detect_models.py "origin/$BASE_REF" --smart
+          fi
 
   # The ONLY job with secrets. One model per matrix leg.
   deploy-and-test:
     needs: detect
     if: needs.detect.outputs.has_models == 'true'
     runs-on: ubuntu-latest
-    # Scopes secrets to a GitHub Environment that can require manual approval.
+    # Gate 2: binds secrets to the `modal-dev` Environment, whose required
+    # reviewers must approve (showing the commit SHA) before this job runs.
     environment: modal-dev
     strategy:
       fail-fast: false
       matrix:
         model: ${{ fromJson(needs.detect.outputs.models_changed) }}
     steps:
+      # Fail-fast BEFORE checking out any (untrusted) PR code: confirm the
+      # secrets actually resolved from the `modal-dev` Environment. The sentinel
+      # exists only as an environment secret, so if it's blank the creds are
+      # misconfigured (e.g. stored repo-wide) and we must not proceed.
+      - name: Preflight — confirm modal-dev environment secrets
+        env:
+          SENTINEL: ${{ secrets.MODAL_DEV_ENVIRONMENT_SENTINEL }}
+          MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+          MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+        run: |
+          missing=""
+          [ -n "$SENTINEL" ] || missing="$missing MODAL_DEV_ENVIRONMENT_SENTINEL(environment-only-sentinel)"
+          [ -n "$MODAL_TOKEN_ID" ] || missing="$missing MODAL_TOKEN_ID"
+          [ -n "$MODAL_TOKEN_SECRET" ] || missing="$missing MODAL_TOKEN_SECRET"
+          [ -n "$R2_ACCESS_KEY_ID" ] || missing="$missing R2_ACCESS_KEY_ID"
+          [ -n "$R2_SECRET_ACCESS_KEY" ] || missing="$missing R2_SECRET_ACCESS_KEY"
+          [ -n "$R2_ENDPOINT" ] || missing="$missing R2_ENDPOINT"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing required modal-dev ENVIRONMENT secret(s):$missing"
+            echo "These must be set as ENVIRONMENT secrets on the 'modal-dev' Environment"
+            echo "(Settings → Environments → modal-dev), NOT as repo-wide secrets — otherwise"
+            echo "the required-reviewer approval gate is silently skipped. See CONTRIBUTING.md."
+            exit 1
+          fi
+          echo "modal-dev environment secrets present; proceeding."
+
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           # This job runs untrusted PR code and needs no git creds afterward.
           persist-credentials: false
 
@@ -147,9 +209,9 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-extras
 
-      # matrix.model originates from PR-controlled directory names. It is
-      # validated to ^[A-Za-z0-9_-]+$ by detect_models.py, and passed via a
-      # quoted env var here as defense-in-depth against shell injection.
+      # matrix.model originates from PR-controlled directory names (or the
+      # dispatch input). It is validated to ^[A-Za-z0-9_-]+$ before reaching the
+      # matrix, and passed via a quoted env var here as defense-in-depth.
       - name: Deploy ${{ matrix.model }} to ${{ env.MODAL_ENVIRONMENT }}
         env:
           MODEL: ${{ matrix.model }}

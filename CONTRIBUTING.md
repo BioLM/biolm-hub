@@ -130,7 +130,8 @@ Before opening a PR for a new or changed model, confirm it lands in house style 
   `python -m pytest models/<name>/test.py`. The golden output is the oracle — regenerate goldens only
   when an output change is *intended*, and say so in the PR. Integration and deployment tests
   (which need a Modal env + R2) run in the maintainer-gated `deploy.yml` workflow once a maintainer
-  applies the `deploy-approved` label.
+  applies the `deploy-approved` label and approves the `modal-dev` deploy (see
+  [Continuous integration & deploys](#continuous-integration--deploys)).
 
 ## Pull requests
 
@@ -138,29 +139,43 @@ Before opening a PR for a new or changed model, confirm it lands in house style 
 - Fix failures locally before pushing — don't push just to re-trigger CI.
 - Be kind and assume good faith.
 
-### How CI works
+## Continuous integration & deploys
 
-Two workflows, split by trust:
+CI is **two-tier, split by trust** — cheap, safe checks run automatically, while anything that spends
+Modal/R2 or touches secrets is maintainer-gated.
 
-- **Every PR — safe checks** (`.github/workflows/ci.yml`): three parallel jobs — (1) style + mypy +
-  the schema-doc check + the CI change-detection script tests + unit tests (this job is exactly
-  `make check`, so keep it green locally before you push); (2) a strict docs build
-  (`mkdocs build --strict`, the same as `make docs`); (3) a gitleaks secret scan. No Modal, no R2, no
-  secrets — so the whole workflow runs on PRs from forks too.
-- **Maintainer-gated — deploy + integration/deployment** (`.github/workflows/deploy.yml`): the
-  expensive Modal jobs. Opening or updating a PR does **not** trigger these. A maintainer reviews the
-  change, then applies the **`deploy-approved`** label, which deploys the affected models to the dev
-  Modal environment and runs their integration + deployment tests. The set of "affected models" is
-  computed by `.github/scripts/detect_models.py` (a change under `models/commons/` fans out to every
-  model that imports it).
+**Tier 1 — automatic, no secrets** (`.github/workflows/ci.yml`). Runs on every push and PR (forks
+included), because it never needs Modal, R2, or any secret:
 
-**Pushing new commits revokes approval.** Any push to an approved PR automatically removes the
-`deploy-approved` label, so the deploy always runs the exact commit a maintainer reviewed. Just ping a
-maintainer to re-approve once your change is ready.
+- **lint · types · unit** — style (ruff + black + hooks) + mypy + the schema-doc check + the CI
+  change-detection script tests + unit tests. This job is exactly `make check`, so keep it green
+  locally before you push.
+- **docs build** — `mkdocs build --strict` (the same as `make docs`).
+- **secret scan** — gitleaks.
 
-> **Maintainers:** approving runs the PR's *code* (`config.py`/`app.py`) on Modal with secrets in
-> scope — **review the full diff before labeling**, and confirm the PR's HEAD is the commit you
-> reviewed (the label deploys whatever HEAD is at click time). One approval can fan out to *every*
-> model if `models/commons/` changed. One-time setup: create the `deploy-approved` label and configure
-> a `modal-dev` GitHub Environment with **required reviewers**, holding the `MODAL_TOKEN_*` and `R2_*`
-> secrets as **environment** secrets. Full details are in the header of `.github/workflows/deploy.yml`.
+**Tier 2 — maintainer-gated, secret-bearing** (`.github/workflows/deploy.yml`). The expensive Modal
+deploy + integration/deployment tests. Opening or updating a PR does **not** trigger this — it runs
+only when a maintainer clears **both** gates:
+
+1. **adds the `deploy-approved` label** to the PR (applying a label needs repo write, so only a
+   maintainer can start the pipeline), and
+2. **approves the `modal-dev` GitHub Environment** — the deploy job pauses for a required reviewer,
+   and the approval prompt shows the exact commit SHA before any secret is exposed.
+
+Once both gates pass, the affected models — computed by `.github/scripts/detect_models.py`, where a
+change under `models/commons/` fans out to every model that imports it — are deployed to the
+`biolm-hub-dev` Modal environment and their integration + deployment tests run. A maintainer can also
+run the pipeline manually from the Actions tab (**workflow_dispatch**), passing the model slugs to
+deploy.
+
+The `deploy-approved` label pins the run to the commit it was added on; a later push does **not**
+deploy, so the code that runs is exactly what was reviewed. To ship a newer commit, re-review and then
+remove and re-add the label.
+
+> **Maintainers:** approving runs the PR's *code* (`config.py`/`app.py`) on Modal with credentials in
+> scope, so **review the full diff before labeling** (one approval can fan out to *every* model if
+> `models/commons/` changed). One-time setup: create the `deploy-approved` label and a `modal-dev`
+> GitHub Environment with **required reviewers**, and store `MODAL_TOKEN_*`, `R2_*`, and the
+> `MODAL_DEV_ENVIRONMENT_SENTINEL` as **environment** secrets (never repo-wide — the workflow's
+> preflight fails fast otherwise). Scope the Modal token to the `biolm-hub-dev` workspace and the R2
+> creds to a read-only dev bucket. Full details are in the header of `.github/workflows/deploy.yml`.
