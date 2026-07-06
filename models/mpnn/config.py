@@ -83,7 +83,7 @@ MODEL_FAMILY = ModelFamily(
             response_schema=MPNNGenerateResponse,
         )
     ],
-    # Single axis: MODEL_TYPE with 5 values (excluding SIDE_CHAIN)
+    # Single axis: MODEL_TYPE with 6 values (excluding SIDE_CHAIN)
     variant_axes={
         "MODEL_TYPE": [
             v

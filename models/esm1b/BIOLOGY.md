@@ -14,7 +14,7 @@ ESM-1b handles **globular, soluble proteins** best, as these dominate the traini
 - **Multi-domain proteins**: Each domain is reasonably represented, but the 1022-residue limit means many multi-domain proteins must be truncated.
 - **Fibrous proteins** (collagen, keratin): Under-represented in training data. Repetitive sequences may produce degenerate embeddings.
 
-**Legacy note**: ESM-2 (the successor model) covers the same molecule types with improved representation quality and a longer maximum sequence length (2046 residues). For new work, ESM-2 is preferred.
+**Legacy note**: ESM-2 (the successor model) covers the same molecule types with improved representation quality and a longer maximum sequence length (2048 residues). For new work, ESM-2 is preferred.
 
 ### Cross-Applicability
 

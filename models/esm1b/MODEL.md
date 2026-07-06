@@ -124,7 +124,7 @@ Additional biological verification:
 - Superseded by ESM-2 for all tasks -- ESM-2 provides strictly better representations
 - Encoder-only architecture cannot generate sequences
 - Single-chain only -- no multi-chain or complex modeling
-- Maximum 1022 residues (shorter than ESM-2's 2046 limit)
+- Maximum 1022 residues (shorter than ESM-2's 2048 limit)
 - No contact map extraction in BioLM implementation (ESM-2 provides this)
 
 ### Known Failure Modes
@@ -190,8 +190,7 @@ Response caching is handled by the serving infrastructure upstream of the model 
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v1 | 2025-12 | Initial implementation with encode, predict, and log_prob actions |
-| v1 | 2025-12 | Biological verification against ubiquitin and hemoglobin test cases |
+| v1 | 2025-12 | Initial implementation with encode, predict, and log_prob actions; biological verification against ubiquitin and hemoglobin test cases |
 
 ---
 

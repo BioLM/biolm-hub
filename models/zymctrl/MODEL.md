@@ -175,7 +175,7 @@ Request (sequence + optional EC number + pooling params)
   |-- 6. Pool embeddings:
   |     |-- mean: average over non-padding positions
   |     |-- last: final non-padding token
-  |     |-- per_token: all non-padding token embeddings
+  |     |-- per_residue: all non-padding token embeddings
   |-- 7. Return embeddings
 ```
 

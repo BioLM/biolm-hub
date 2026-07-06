@@ -10,7 +10,7 @@ The key innovation of ProteinMPNN (Dauparas et al., Science 2022) over prior inv
 
 **LigandMPNN** extends ProteinMPNN to be aware of non-protein atoms --- ligands, nucleic acids, metals, water molecules, and non-standard residues --- by incorporating atomic context from HETATM records in the PDB input. Additional specialized variants handle membrane proteins through global or per-residue transmembrane labels.
 
-**HyperMPNN** is a variant retrained with hypernetwork-based conditioning, using the same ProteinMPNN architecture but with different checkpoint weights tuned for improved sampling diversity.
+**HyperMPNN** is a ProteinMPNN variant retrained on protein structures from hyperthermophilic organisms to design sequences with improved thermostability. It uses the same ProteinMPNN architecture but with different checkpoint weights.
 
 ### Parameters & Layers
 
@@ -167,7 +167,7 @@ The model runs entirely on CPU with no GPU requirement.
 - **User-provided seed**: When `seed` is specified in the request, all RNG sources are seeded (Python `random`, NumPy, PyTorch CPU, PyTorch CUDA) for reproducible results
 - **Default behavior**: When no seed is provided, a time-based seed (`time.time_ns() % 2^32`) is used, producing different designs each call
 - **Model loading**: `torch.manual_seed(42)` is set during CPU snapshot loading for consistent initialization
-- **Note**: cuDNN benchmark mode is not explicitly disabled, so minor numerical differences may occur across different hardware
+- **Note**: Inference runs entirely on CPU, so there is no GPU/cuDNN nondeterminism; results are reproducible for a given seed, though minor numerical differences may still occur across different CPU hardware
 
 ### Caching Behavior
 

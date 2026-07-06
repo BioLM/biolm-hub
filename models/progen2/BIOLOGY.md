@@ -20,7 +20,7 @@ Performance characteristics by protein type:
 
 | Molecule Type | Applicability | Evidence | Caveats |
 |--------------|---------------|----------|---------|
-| Antibodies | High (OAS variant) / Moderate (general variants) | OAS variant trained on ~1.5B antibody sequences | OAS variant is antibody-only; general variants lack CDR-specific knowledge |
+| Antibodies | High (OAS variant) / Moderate (general variants) | OAS variant trained on 554M antibody sequences (clustered at 85% identity from ~1.5B raw OAS sequences) | OAS variant is antibody-only; general variants lack CDR-specific knowledge |
 | Enzymes | High | BFD90 and UniRef90 training data are rich in enzyme families | No explicit modeling of active sites, cofactor binding, or catalytic residues |
 | Peptides | Low--Moderate | Short sequences provide limited context for autoregressive generation | Context window may be too short for meaningful conditioning; consider peptide-specific models |
 | Therapeutic proteins (non-antibody) | Moderate | General protein training covers many therapeutic targets | No explicit optimization for developability, immunogenicity, or stability |

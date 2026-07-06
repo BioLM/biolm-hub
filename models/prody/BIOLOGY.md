@@ -102,7 +102,7 @@ ProDy is an established bioinformatics tool (published 2011, >2500 citations). A
 **RMSD (Root Mean Square Deviation)**: The standard metric for quantifying structural similarity between two protein conformations. Calculated as the square root of the mean squared distance between corresponding atom positions after optimal superposition. Lower RMSD indicates more similar structures.
 
 **Key terminology**:
-- **InSty**: ProDy's Interactions by Structural Topology module for computing non-covalent interactions
+- **InSty**: ProDy's Interactions and Stability module for computing non-covalent interactions
 - **Hotspot residue**: A residue that contributes disproportionately to binding affinity; often identified by having many interaction contacts
 - **Structural alignment**: Superimposing structures by minimizing RMSD between corresponding atoms
 - **Sequence alignment**: Matching structures by aligning their amino acid sequences before RMSD calculation

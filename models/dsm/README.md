@@ -60,7 +60,7 @@ Variant axes: `MODEL_SIZE` (150m, 650m) x `VARIANT` (base, ppi). Excluded combin
 | `items[].sequence` | str | "" | 0-2048 | Input sequence: empty=unconditional (canvas of `max_length` masks), `<mask>` tokens=infilling, plain AA=conditional |
 | `params.num_sequences` | int | 1 | 1-32 | Number of sequences to generate |
 | `params.temperature` | float | 1.0 | 0.1-2.0 | Sampling temperature |
-| `params.max_length` | int | None | 10-2048 | Canvas size (mask tokens) for unconditional generation; default 100; ignored for infilling/conditional modes |
+| `params.max_length` | int | None (→100) | 10-2048 | Canvas size (mask tokens) for unconditional generation; when unset, defaults to a 100-mask canvas; ignored for infilling/conditional modes |
 | `params.step_divisor` | int | 100 | 1-1000 | Diffusion steps (lower=slower but better) |
 | `params.remasking` | str | "random" | "low_confidence", "random", "low_logit", "dual" | Remasking strategy |
 | `params.seed` | int | None | -- | Random seed (None=time-based) |

@@ -98,7 +98,7 @@ Extract embeddings from enzyme sequences using ZymCTRL's internal representation
 |-----------|------|---------|-------|-------------|
 | `items[].sequence` | str | - | 1-1024 residues, standard amino acids | Amino acid sequence to encode |
 | `items[].ec_number` | str | null | Valid EC format or null | Optional EC number for context |
-| `params.pooling` | str | "mean" | "mean", "last", "per_token" | Embedding pooling strategy |
+| `params.pooling` | str | "mean" | "mean", "last", "per_residue" | Embedding pooling strategy (the legacy value `per_token` is still accepted as a deprecated alias of `per_residue`) |
 | `params.layer` | int | -1 | -36 to 36 | Hidden layer to extract embeddings from |
 
 **Response:**
@@ -114,7 +114,7 @@ Extract embeddings from enzyme sequences using ZymCTRL's internal representation
 }
 ```
 
-Embedding dimension is 1280. For `per_token` pooling, `residue_embeddings` (list of lists) is returned instead of `embedding`.
+Embedding dimension is 1280. For `per_residue` pooling (the value `per_token` is still accepted as a deprecated alias), `residue_embeddings` (list of lists) is returned instead of `embedding`.
 
 ## Usage Examples
 

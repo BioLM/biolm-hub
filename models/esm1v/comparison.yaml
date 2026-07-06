@@ -9,11 +9,11 @@ strengths:
   - "Validated in genome-wide variant effect prediction — ESM1b (closely related) was used to predict all ~450 million possible missense variants in the human genome, outperforming existing methods on ClinVar/HGMD"
   - "Simple, focused API — single predict action that returns sorted amino acid probabilities at masked positions, purpose-optimized for the variant scoring use case"
   - "MIT license with no commercial restrictions, suitable for clinical, academic, and commercial variant interpretation applications"
-  - "Published benchmarks across 87 DMS datasets demonstrate consistent performance gains from the ensemble approach over single-model baselines"
+  - "Published benchmarks across 41 DMS datasets demonstrate consistent performance gains from the ensemble approach over single-model baselines"
 
 weaknesses:
   - "Single-task model — only variant scoring via masked prediction; no encode action for general-purpose embeddings and no log-probability scoring for full-sequence fitness assessment"
-  - "Maximum sequence length of 1022 residues — shorter than ESM2 (2046) and ESMC (2048), though matching ESM-1b's architectural limit; large proteins approaching this limit may see degraded predictions"
+  - "Maximum sequence length of 1022 residues — shorter than ESM2 (2048) and ESMC (2048), though matching ESM-1b's architectural limit; large proteins approaching this limit may see degraded predictions"
   - "Requires exactly one mask token per sequence — cannot score multiple positions simultaneously or perform multi-site variant assessment in a single call"
   - "No structure awareness — purely sequence-based scoring misses structural context that can distinguish surface mutations from buried core disruptions"
   - "The 'all' variant loads all 5 models simultaneously, requiring T4 GPU and 28GB RAM — individual models are cheap but the full ensemble has higher resource requirements"
@@ -30,7 +30,7 @@ use_when:
 
 dont_use_when:
   - "You need general-purpose protein embeddings for downstream ML tasks — use ESM2 or ESMC, which provide rich embed/encode actions alongside variant scoring"
-  - "You need to score protein sequences longer than 1022 residues — use ESM2 (up to 2046 residues) or ESMC (up to 2048 residues)"
+  - "You need to score protein sequences longer than 1022 residues — use ESM2 (up to 2048 residues) or ESMC (up to 2048 residues)"
   - "You need to score insertions or deletions (indels) — use PoET, which is the only model in this group that natively handles variable-length variants"
   - "You need structure-aware variant scoring — structure-integrated models outperform sequence-only methods; ESM1v has no structural awareness"
   - "You need MSA-conditioned variant scoring for maximum accuracy on proteins with deep evolutionary alignments — use MSA Transformer"
@@ -38,7 +38,7 @@ dont_use_when:
 
 alternatives:
   - model: esm2
-    when_better: "ESM2 provides log_prob for variant scoring plus embeddings, masked prediction, and contact maps in a single model; longer context (2046 residues), five size variants, and broader functionality make it more versatile"
+    when_better: "ESM2 provides log_prob for variant scoring plus embeddings, masked prediction, and contact maps in a single model; longer context (2048 residues), five size variants, and broader functionality make it more versatile"
     when_worse: "ESM2 uses a single model for variant scoring, not a 5-model ensemble, so predictions may have higher variance; ESM1v's dedicated optimization on UniRef90 can yield marginally better variant effect correlations"
 
   - model: esmc

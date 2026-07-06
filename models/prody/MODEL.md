@@ -4,7 +4,7 @@
 
 ### Model Type & Innovation
 
-ProDy is not a neural network -- it is an algorithmic protein structure analysis library that computes molecular interactions and structural comparisons using physics-based distance and angle cutoffs. The BioLM implementation wraps ProDy's InSty (Interactions by Structural Topology) module and RMSD calculation into a serving endpoint.
+ProDy is not a neural network -- it is an algorithmic protein structure analysis library that computes molecular interactions and structural comparisons using physics-based distance and angle cutoffs. The BioLM implementation wraps ProDy's InSty (Interactions and Stability) module and RMSD calculation into a serving endpoint.
 
 The key utility is that ProDy computes **non-covalent interactions** (hydrogen bonds, salt bridges, hydrophobic contacts, pi-stacking, cation-pi, repulsive ionic) between residues using standardized geometric criteria, and **RMSD** between protein structures using structural or sequence-based alignment.
 

@@ -204,7 +204,7 @@ Deterministic output comparison: test fixtures compare computed features against
 
 ### Papers
 
-1. Zulkower V, Rosser S. "DnaChisel, a versatile sequence optimizer." Edinburgh Genome Foundry (2020).
+1. Zulkower V, Rosser S. "DNA Chisel, a versatile sequence optimizer." *Bioinformatics* 36(16), 4508--4509 (2020). [DOI](https://doi.org/10.1093/bioinformatics/btaa558)
 
 ### Links
 

@@ -57,12 +57,11 @@ From Hsu et al., *ICML* (2022):
 | Model | Sequence Recovery (%) ↑ | Training Data |
 |-------|------------------------|---------------|
 | **ESM-IF1** | **51.0** | CATH + 12M AF2 structures |
-| ProteinMPNN | 52.4 | CATH experimental only |
 | GVP | 39.4 | CATH experimental only |
 | StructGNN | 35.0 | CATH experimental only |
 | GraphTrans | 34.8 | CATH experimental only |
 
-Note: ProteinMPNN achieves slightly higher recovery on experimental structures, but ESM-IF1's training on predicted structures gives it broader coverage of the protein structure space.
+Note: ProteinMPNN (Dauparas et al., Science 2022) reports slightly higher recovery (~52%) on experimental structures, but ESM-IF1's training on predicted structures gives it broader coverage of the protein structure space.
 
 ### BioLM Verification Results
 

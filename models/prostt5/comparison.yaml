@@ -8,7 +8,7 @@ strengths:
   - "Three orders of magnitude faster than AlphaFold2 for deriving 3Di structural representations from sequence, enabling rapid structural annotation of large protein databases"
   - "T5 encoder-decoder architecture enables generative capability — can design novel amino acid sequences conditioned on target 3Di structural constraints (inverse folding)"
   - "MIT license with no commercial restrictions, suitable for any deployment scenario"
-  - "Fine-tuned from ProtT5-XL-U50 pretrained weights, inheriting strong sequence modeling from 3 billion protein sequences while adding structural translation capability"
+  - "Fine-tuned from the 3-billion-parameter ProtT5-XL-U50 model (pretrained on UniRef50, ~45M sequences), inheriting strong sequence modeling while adding structural translation capability"
   - "Validated for protein-protein binding site prediction (GraphPBSP, 2024) outperforming state-of-the-art methods, demonstrating utility beyond fold classification"
   - "Two complementary actions (encode, generate) with direction control (AA2fold, fold2AA) provide flexible workflows for both analysis and design tasks"
 

@@ -33,7 +33,7 @@ TemBERTure is a deep learning model for protein thermostability prediction devel
 - Screening protein libraries for thermostable candidates
 
 **CANNOT be used for:**
-- Sequences longer than 512 residues (truncated)
+- Sequences longer than 512 residues (rejected with a validation error, not truncated)
 - Structure-based stability prediction (use ThermoMPNN instead)
 - Per-mutation ddG prediction (use ThermoMPNN instead)
 - Non-standard amino acids beyond the extended alphabet plus gap character

@@ -64,7 +64,7 @@ Both classifier and regression variants have been verified through integration t
 
 ### Known Failure Modes
 
-- Very long proteins (>512 residues) are truncated, which may affect predictions
+- Proteins longer than 512 residues are rejected at the API boundary by the request-schema length limit (they are not silently truncated), so they must be shortened or split before submission
 - Non-standard amino acids beyond extended alphabet may cause tokenization issues
 
 ## Implementation Details

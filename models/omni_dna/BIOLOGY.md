@@ -45,8 +45,6 @@ The model is applicable to:
 
 ## Applied Use Cases
 
-Applied use cases for Omni-DNA are pending curation as the model is newly published.
-
 ### Use Case 1: Multi-Task DNA Analysis (Published)
 
 **Source**: Li et al. "Omni-DNA: A Unified Genomic Foundation Model for Cross-Modal and Multi-Task Learning." arXiv:2502.03499 (2025).

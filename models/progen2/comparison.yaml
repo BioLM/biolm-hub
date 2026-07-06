@@ -8,7 +8,7 @@ strengths:
   - "Published in Cell Systems (2023) with extensive protein generation benchmarks, including scaling law analysis showing predictable quality improvement with model size"
   - "Context-conditioned generation enables directed sequence extension from a seed, mimicking natural sequence diversification for directed evolution applications"
   - "Temperature and top-p sampling controls allow fine-grained diversity tuning — from conservative (low temperature, close to natural) to exploratory (high temperature, novel sequences)"
-  - "OAS variant trained on ~1.5B antibody sequences provides the most comprehensive antibody generation model available on the platform"
+  - "OAS variant trained on 554M antibody sequences (clustered at 85% identity from ~1.5B raw OAS sequences) provides the most comprehensive antibody generation model available on the platform"
   - "BSD-3-Clause license permits commercial use with minimal restrictions"
   - "Benchmarked in Nature Biotechnology (2024) enzyme design evaluation, demonstrating practical relevance for computational enzyme engineering workflows"
 
@@ -23,7 +23,7 @@ weaknesses:
 
 use_when:
   - "You need general-purpose autoregressive protein sequence generation from a context seed, with controllable diversity through temperature and top-p sampling"
-  - "You are designing antibody variable region sequences and need a model trained on the largest available antibody sequence database (OAS variant with ~1.5B sequences)"
+  - "You are designing antibody variable region sequences and need a model trained on the largest available antibody sequence database (the OAS variant, trained on 554M sequences clustered at 85% identity from OAS's ~1.5B raw sequences)"
   - "You need to generate diverse protein sequence libraries for experimental screening, ranking candidates by bidirectional log-likelihood scores"
   - "You are exploring protein sequence space around a known protein family by extending seed sequences from conserved regions"
   - "You need protein fitness scoring via log-likelihood to rank mutant libraries or guide directed evolution campaigns without task-specific training data"

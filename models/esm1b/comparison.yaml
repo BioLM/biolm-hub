@@ -12,7 +12,7 @@ strengths:
 
 weaknesses:
   - "Strictly superseded by ESM2-650M on every benchmark — ESM2 provides better representations at the same parameter count with a longer context window (2048 vs 1024 tokens)"
-  - "Maximum sequence length of only 1022 residues (1024 tokens including BOS/EOS) — shorter than ESM2's 2046 residues, causing more frequent truncation of large proteins"
+  - "Maximum sequence length of only 1022 residues (1024 tokens including BOS/EOS) — shorter than ESM2's 2048 residues, causing more frequent truncation of large proteins"
   - "Single size variant only (650M) — no scaling flexibility; ESM2 offers 8M to 3B parameters for different compute budgets"
   - "No structure awareness — purely sequence-based, missing structural context that structure-aware models such as ProstT5 provide"
   - "Training on UniRef50 with older procedures — ESMC and ESM2 benefit from improved training techniques and potentially broader data coverage"
@@ -30,13 +30,13 @@ dont_use_when:
   - "You are starting a new project with no legacy constraints — use ESM2-650M instead, which is strictly superior on all benchmarks with the same parameter count and longer context"
   - "You need the highest-quality protein embeddings — use ESM2-3B or ESMC for improved representation quality"
   - "You need structure-aware representations — use ProstT5 when structural information is available"
-  - "You need to process sequences longer than 1022 residues — use ESM2 (up to 2046 residues) or ESMC (up to 2048 residues)"
+  - "You need to process sequences longer than 1022 residues — use ESM2 (up to 2048 residues) or ESMC (up to 2048 residues)"
   - "You need variant effect prediction with competitive accuracy — use ESM1v (5-model ensemble optimized for this task), ESM2 log_prob, or PoET (MSA-conditioned scoring)"
   - "You need multiple size variants for cost-performance optimization — use ESM2, which offers 8M to 3B parameters"
 
 alternatives:
   - model: esm2
-    when_better: "ESM2-650M is strictly superior on every evaluated benchmark with the same architecture and parameter count, plus longer context (2046 vs 1022 residues) and five size variants for flexible deployment"
+    when_better: "ESM2-650M is strictly superior on every evaluated benchmark with the same architecture and parameter count, plus longer context (2048 vs 1022 residues) and five size variants for flexible deployment"
     when_worse: "Never — ESM2 dominates ESM-1b in all respects; the only reason to use ESM-1b is backward compatibility with existing pipelines"
 
   - model: esmc

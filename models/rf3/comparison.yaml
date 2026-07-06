@@ -10,7 +10,7 @@ strengths:
   - "Comprehensive confidence metrics: pTM (global), ipTM (interface-specific), pLDDT (per-residue), PAE (pairwise aligned error), and composite ranking_score for automated quality triage"
   - "BSD-3-Clause open-source license from RosettaCommons allows academic and commercial use with minimal restrictions"
   - "Supports cyclic_chains parameter for cyclic peptide structure prediction, a specialized capability not available in most competing models"
-  - "Built on the foundry framework with the established three-track (1D/2D/3D) architecture, combining evolutionary (MSA), pairwise, and structural information tracks for robust predictions"
+  - "Built on the foundry framework, pairing a Transformer-based trunk (informed by evolutionary MSA and pairwise information) with a diffusion-based structure generation module for robust all-atom predictions"
 
 weaknesses:
   - "Requires A100 40GB GPU with 64GB system RAM -- expensive infrastructure that limits accessibility for routine use or large-scale screening"

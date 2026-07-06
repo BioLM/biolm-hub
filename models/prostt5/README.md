@@ -71,7 +71,7 @@ Extract a 1024-dimensional mean-pooled embedding from a protein sequence or 3Di 
 {
   "results": [
     {
-      "mean_representation": [0.123, -0.456, ...]
+      "embeddings": [0.123, -0.456, ...]
     }
   ]
 }

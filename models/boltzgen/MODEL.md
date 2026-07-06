@@ -164,7 +164,7 @@ BoltzGen is a stochastic generative model. Each run produces different designs:
 - **Water molecules in CIF**: Water atoms in input structure files cause SASA calculation failures in the analysis stage. Input structures should be stripped of water molecules.
 - **Incorrect CDR region indices**: Nanobody scaffold redesign requires precise residue index specification matching the PDB numbering. Incorrect indices produce meaningless designs.
 - **Short peptide designs**: Very short peptides (< 8 residues) may not have sufficient structural context for reliable design.
-- **Subprocess timeout**: Individual pipeline runs have a 1-hour timeout. Very large `num_designs` values with complex targets can exceed this limit.
+- **Function timeout**: Each request runs under a 24-hour Modal function timeout. Very large `num_designs` values with complex targets can approach this limit.
 - **CIF writer IndexError**: Upstream bug when chains are filtered (patched in BioLM build -- see Bug Fixes in README.md).
 - **Design mask all-False**: Upstream bug in exclude handler (patched in BioLM build -- see Bug Fixes in README.md).
 
@@ -185,7 +185,7 @@ Request (BoltzGenDesignRequest)
   |     |-- Configure checkpoint paths (diverse/adherence, ifold, folding, affinity)
   |     |-- Set pipeline steps (7-stage default or user-specified subset)
   |     \-- Set diffusion parameters (step_scale, noise_scale, batch_size)
-  |-- 4. Execute subprocess with timeout (1 hour)
+  |-- 4. Execute subprocess (within the 24-hour function timeout)
   |-- 5. Process output directory
   |     |-- Find top-ranked CIF files (sorted by pipeline scoring)
   |     |-- Extract amino acid sequence from each CIF (gemmi)

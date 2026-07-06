@@ -38,7 +38,7 @@ dont_use_when:
   - "You need to generate or design novel protein sequences — use ProteinMPNN for structure-conditioned inverse folding, ProGen2 for unconditional generation, or ZymCTRL for enzyme generation with EC number conditioning"
   - "You need accurate 3D protein structure prediction — use ESMFold (which uses ESM2 internally but adds a structure module), Chai-1, RF3, or AF2 NIM for higher-accuracy structure prediction"
   - "You are working exclusively with antibody sequences and need CDR-specific representations — use AbLang2 or IgBERT, which are trained on antibody-specific corpora and outperform general protein LMs on antibody tasks"
-  - "You need to analyze protein sequences longer than ~1022 residues without truncation — consider Evo or Evo2 which support much longer context lengths (up to 131K tokens for Evo2)"
+  - "You need to analyze protein sequences longer than ~2048 residues without truncation — consider Evo or Evo2 which support much longer context lengths (up to 131K tokens for Evo2)"
   - "You need to model protein-protein complexes or multi-chain assemblies — use Chai-1 or RF3 which accept multi-chain inputs with covalent and non-covalent interaction modeling"
   - "You need an MSA-aware model that explicitly leverages evolutionary coupling information from alignments — use MSA Transformer or PoET, which process MSA columns jointly rather than single sequences"
 

@@ -493,7 +493,7 @@ Note: Exact metrics available depend on which pipeline stages are run. The full 
 
 ## Bug Fixes (Upstream Patches)
 
-Two `sed` patches are applied during container image build to fix upstream bugs in the BoltzGen codebase (pinned commit `617e549`). Both are applied in `app.py` with grep-based verification that fails the build if the patch didn't apply. Neither has been fixed upstream as of March 2025.
+Two `sed` patches are applied during container image build to fix upstream bugs in the BoltzGen codebase (pinned commit `617e549`). Both are applied in `app.py` with grep-based verification that fails the build if the patch didn't apply. Neither has been fixed upstream as of the pinned commit (`617e549`) or current `main`.
 
 ### Patch 1: `_pdbx_poly_seq_scheme` IndexError (`mmcif.py:441`)
 

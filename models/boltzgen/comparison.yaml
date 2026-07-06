@@ -13,7 +13,7 @@ strengths:
   - "MIT license with no usage restrictions -- fully open-source design pipeline suitable for academic research and commercial drug discovery"
 
 weaknesses:
-  - "Requires A100 40GB GPU with 64GB system RAM and up to 24 hours for large design campaigns (default 10,000 candidates filtered to 100) -- expensive infrastructure for iterative optimization"
+  - "Requires A100 40GB GPU with 64GB system RAM and up to 24 hours for large design campaigns (up to 500 candidate designs per request; default 100) -- expensive infrastructure for iterative optimization"
   - "Affinity predictions from the integrated affinity module carry high stochastic variance (80%+ between runs), requiring ensemble averaging for reliable ranking -- not a deterministic affinity oracle"
   - "Nanobody CDR redesign requires precise CDR residue index specification matching PDB numbering -- incorrect indices silently produce meaningless designs"
   - "Not a structure prediction model: cannot predict the native fold of an existing protein sequence; use Chai-1, RF3, or AF2 NIM for prediction tasks"

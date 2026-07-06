@@ -34,7 +34,7 @@ All variants share the same GNN architecture but use different checkpoint weight
 | `soluble-mpnn` | `solublempnn_v_48_020.pt` | Solubility-optimized | Designing soluble proteins |
 | `global-label-membrane-mpnn` | `global_label_membrane_mpnn_v_48_020.pt` | Global membrane label | Membrane protein design (whole-protein label) |
 | `per-residue-label-membrane-mpnn` | `per_residue_label_membrane_mpnn_v_48_020.pt` | Per-residue membrane labels | Membrane protein design (fine-grained) |
-| `hyper-mpnn` | `v48_020_epoch300_hyper.pt` | HyperMPNN retrained variant | Improved sampling diversity |
+| `hyper-mpnn` | `v48_020_epoch300_hyper.pt` | HyperMPNN retrained variant | Improved thermostability (retrained on hyperthermophiles) |
 
 All variants run on CPU (no GPU required) with 3 GB memory.
 
@@ -271,7 +271,7 @@ Integration tests validate all 6 active variants (protein, ligand, soluble, glob
 
 ## Implementation Notes
 
-- **Memory snapshots**: Uses `@modal.enter(snap=True)` to load model on CPU, then `@modal.enter(snap=False)` to transfer to GPU (if available) for faster cold starts
+- **Memory snapshots**: Uses `@modal.enter(snap=True)` to load the model on CPU into a memory snapshot, then `@modal.enter(snap=False)` to place it on the compute device (CPU for this model) on restore, for faster cold starts
 - **External code**: Clones the official LigandMPNN repository (`github.com/dauparas/LigandMPNN`) at a pinned commit into the container
 - **Custom util.py**: A modified `util.py` replaces the repository's version, adapting `load_mpnn` and `infer` for API use
 - **Side-chain model**: The side-chain packer checkpoint (`ligandmpnn_sc_v_32_002_16.pt`) is always loaded alongside the primary model

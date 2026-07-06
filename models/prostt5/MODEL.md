@@ -130,7 +130,7 @@ Request
   |-- 5. Forward pass through T5EncoderModel
   |-- 6. Extract last hidden state, trim padding and special tokens
   |-- 7. Compute mean-pool embedding (1024-dim per protein)
-  |-- 8. Return mean_representation
+  |-- 8. Return embeddings
 ```
 
 #### Generate Action

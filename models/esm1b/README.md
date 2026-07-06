@@ -41,7 +41,7 @@ Single variant -- no size options. The sole deployment is the full 650M paramete
 - Remote homology detection via embedding space similarity
 
 **CANNOT be used for:**
-- Sequences longer than 1022 residues (use ESM-2 for up to 2046)
+- Sequences longer than 1022 residues (use ESM-2 for up to 2048)
 - 3D structure prediction (use ESMFold or Chai-1)
 - Sequence generation or design (encoder-only model)
 - Non-protein molecules (DNA, RNA, small molecules)

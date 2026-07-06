@@ -150,7 +150,8 @@ Request
 | Variant | GPU | Memory | CPU |
 |---------|-----|--------|-----|
 | evo2-1b-base | L4 | 16 GB | 4 cores |
-| evo2-7b-base | L4 | 16 GB | 4 cores |
+
+Only `evo2-1b-base` is currently enabled and tested. Larger variants (7b-base and up) are planned; see [README.md](README.md) for the full variant list. Their resource requirements will be higher and are not yet finalized.
 
 ### Determinism & Reproducibility
 
@@ -173,7 +174,7 @@ Response caching is handled outside the model container at the platform level:
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v1 | -- | Initial implementation with encode, log_prob, and generate actions; 1b-base and 7b-base variants |
+| v1 | -- | Initial implementation with encode, log_prob, and generate actions; 1b-base variant enabled (7b-base and larger planned) |
 
 ---
 
