@@ -163,17 +163,17 @@ def _at_a_glance(cmp: dict[str, Any], known: set[str]) -> str:
     if cmp.get("use_when"):
         out += ["**Use it when**", "", _bullets(cmp["use_when"]), ""]
     if cmp.get("strengths"):
-        out += ['??? success "Strengths"', "", _indent(_bullets(cmp["strengths"])), ""]
+        out += ['???+ success "Strengths"', "", _indent(_bullets(cmp["strengths"])), ""]
     if cmp.get("weaknesses"):
         out += [
-            '??? warning "Limitations"',
+            '???+ warning "Limitations"',
             "",
             _indent(_bullets(cmp["weaknesses"])),
             "",
         ]
     if cmp.get("dont_use_when"):
         out += [
-            '??? failure "Reach for something else when"',
+            '???+ failure "Reach for something else when"',
             "",
             _indent(_bullets(cmp["dont_use_when"])),
             "",
@@ -394,8 +394,9 @@ def _catalog_row(name: str) -> str | None:
     mol = ", ".join(src.get("molecule_types") or []) or "—"
     tasks = ", ".join(src.get("tasks") or []) or "—"
     actions = ", ".join(f"`{a.name}`" for a in fam.action_schemas)
+    variants = ", ".join(f"`{v.public_endpoint_slug}`" for v in fam.resolved_variants)
     disp = fam.display_name or name
-    return f"| [{disp}]({name}.md) | {mol} | {tasks} | {actions} | {lic} |"
+    return f"| [{disp}]({name}.md) | {mol} | {tasks} | {actions} | {variants} | {lic} |"
 
 
 def _discover() -> list[str]:
@@ -524,8 +525,8 @@ def main() -> None:
         "machine-readable knowledge graph. Pick a model below for its API schema, "
         "when-to-use guidance, architecture, and license.",
         "",
-        "| Model | Molecules | Tasks | Actions | License |",
-        "|-------|-----------|-------|---------|---------|",
+        "| Model | Molecules | Tasks | Actions | Variants (endpoint slugs) | License |",
+        "|-------|-----------|-------|---------|---------------------------|---------|",
         *rows,
         "",
     ]

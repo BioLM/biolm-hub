@@ -223,13 +223,13 @@ def render_schema_md(schema_cls: Any) -> str:
                 tbl = _fields_table(block)
                 nested.append(tbl if tbl else "_No fields._")
             nested.append("")
-        out.append('??? note "Nested types"\n')
+        out.append('???+ note "Nested types"\n')
         body = "\n".join(nested)
         out.append("\n".join("    " + ln if ln else "" for ln in body.split("\n")))
 
     raw = json.dumps(js, indent=2)
     out.append(
-        '??? abstract "Raw JSON Schema"\n\n'
+        '???+ abstract "Raw JSON Schema"\n\n'
         + "\n".join("    " + ln for ln in (["```json", *raw.split("\n"), "```"]))
     )
     return "\n\n".join(out)
