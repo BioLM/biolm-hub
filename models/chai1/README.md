@@ -97,21 +97,21 @@ The response contains a nested list: the outer list corresponds to input items, 
 from models.chai1.schema import (
     Chai1Molecule,
     Chai1EntityType,
-    Chai1PredictRequest,
-    Chai1PredictRequestInput,
-    Chai1PredictRequestParams,
+    Chai1FoldRequest,
+    Chai1FoldRequestInput,
+    Chai1FoldRequestParams,
 )
 
 # Predict structure of a protein-ligand complex
-request = Chai1PredictRequest(
-    params=Chai1PredictRequestParams(
+request = Chai1FoldRequest(
+    params=Chai1FoldRequestParams(
         num_trunk_recycles=3,
         num_diffusion_timesteps=200,
         num_diffn_samples=1,
         seed=42,
     ),
     items=[
-        Chai1PredictRequestInput(
+        Chai1FoldRequestInput(
             molecules=[
                 Chai1Molecule(
                     name="target_protein",
@@ -131,9 +131,9 @@ request = Chai1PredictRequest(
 
 ```python
 # Protein-DNA complex with MSA alignment
-request = Chai1PredictRequest(
+request = Chai1FoldRequest(
     items=[
-        Chai1PredictRequestInput(
+        Chai1FoldRequestInput(
             molecules=[
                 Chai1Molecule(
                     name="transcription_factor",

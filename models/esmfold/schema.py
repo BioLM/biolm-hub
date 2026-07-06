@@ -28,7 +28,7 @@ class ESMFoldParams(ModelParams):
 ### ESMFold Request
 
 
-class ESMFoldPredictRequestItem(RequestModel):
+class ESMFoldRequestItem(RequestModel):
     sequence: Annotated[
         str,
         BeforeValidator(
@@ -48,9 +48,9 @@ class ESMFoldPredictRequestItem(RequestModel):
     ]
 
 
-class ESMFoldPredictRequest(RequestModel):
+class ESMFoldRequest(RequestModel):
     items: Annotated[
-        list[ESMFoldPredictRequestItem],
+        list[ESMFoldRequestItem],
         Field(
             min_length=1,
             max_length=ESMFoldParams.batch_size,
@@ -62,7 +62,7 @@ class ESMFoldPredictRequest(RequestModel):
 ### ESMFold Response
 
 
-class ESMFoldPredictResponseResult(ResponseModel):
+class ESMFoldResponseResult(ResponseModel):
     pdb: str = Field(description="Predicted structure in PDB format.")
     mean_plddt: float = Field(
         description="Mean per-residue pLDDT confidence score (0–100); higher values indicate more confident predictions."
@@ -72,7 +72,7 @@ class ESMFoldPredictResponseResult(ResponseModel):
     )
 
 
-class ESMFoldPredictResponse(ResponseModel):
-    results: list[ESMFoldPredictResponseResult] = Field(
+class ESMFoldResponse(ResponseModel):
+    results: list[ESMFoldResponseResult] = Field(
         description="Per-input results, returned in the same order as the request items."
     )

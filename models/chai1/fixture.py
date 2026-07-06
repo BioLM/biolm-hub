@@ -2,10 +2,10 @@ from models.chai1.config import MODEL_FAMILY
 from models.chai1.schema import (
     Chai1AlignmentDatabase,
     Chai1EntityType,
+    Chai1FoldRequest,
+    Chai1FoldRequestInput,
+    Chai1FoldRequestParams,
     Chai1Molecule,
-    Chai1PredictRequest,
-    Chai1PredictRequestInput,
-    Chai1PredictRequestParams,
 )
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
@@ -29,7 +29,7 @@ _PROTEIN_SEQUENCE = "MKTVRQERLKSIVRILERSKEPVSG"
 # comparisons already use a wide rel_tol (0.5) and generous RMSD thresholds
 # (this model uses stochastic diffusion for structure generation), so there is
 # no need to pay for the slower/higher-quality default settings here.
-_FAST_PARAMS = Chai1PredictRequestParams(
+_FAST_PARAMS = Chai1FoldRequestParams(
     num_trunk_recycles=1,
     num_diffusion_timesteps=50,
     num_diffn_samples=1,
@@ -39,10 +39,10 @@ _FAST_PARAMS = Chai1PredictRequestParams(
 )
 
 # Plain single-chain protein fold, no precomputed MSA alignment.
-_single_chain_request = Chai1PredictRequest(
+_single_chain_request = Chai1FoldRequest(
     params=_FAST_PARAMS,
     items=[
-        Chai1PredictRequestInput(
+        Chai1FoldRequestInput(
             molecules=[
                 Chai1Molecule(
                     name="protein_chain",
@@ -58,10 +58,10 @@ _single_chain_request = Chai1PredictRequest(
 # — reuses the exact minimal alignment shape documented in this model's
 # README.md ("Protein-DNA complex with MSA alignment" example), trimmed to a
 # lone protein chain to keep the golden self-contained and minimal.
-_msa_alignment_request = Chai1PredictRequest(
+_msa_alignment_request = Chai1FoldRequest(
     params=_FAST_PARAMS,
     items=[
-        Chai1PredictRequestInput(
+        Chai1FoldRequestInput(
             molecules=[
                 Chai1Molecule(
                     name="protein_chain",

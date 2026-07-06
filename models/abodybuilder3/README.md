@@ -52,7 +52,7 @@ Predict 3D structure of an antibody Fv region from paired sequences.
 |-----------|------|---------|-------|-------------|
 | `params.plddt` | bool | false | true/false | Whether to include per-residue pLDDT scores |
 | `params.seed` | int | 42 | Any int or null | Random seed for reproducibility |
-| `items` | list[AbodyBuilder3PredictRequestItem] | (required) | 1--4 items | List of paired heavy/light chain sequences |
+| `items` | list[AbodyBuilder3FoldRequestItem] | (required) | 1--4 items | List of paired heavy/light chain sequences |
 | `items[].heavy_chain` | str | (required) | 1--2048 chars | Heavy chain amino acid sequence (legacy alias: `H`) |
 | `items[].light_chain` | str | (required) | 1--2048 chars | Light chain amino acid sequence (legacy alias: `L`) |
 
@@ -78,15 +78,15 @@ Predict 3D structure of an antibody Fv region from paired sequences.
 
 ```python
 from models.abodybuilder3.schema import (
-    AbodyBuilder3PredictRequest,
-    AbodyBuilder3PredictRequestItem,
-    AbodyBuilder3PredictRequestParams,
+    AbodyBuilder3FoldRequest,
+    AbodyBuilder3FoldRequestItem,
+    AbodyBuilder3FoldRequestParams,
 )
 
-request = AbodyBuilder3PredictRequest(
-    params=AbodyBuilder3PredictRequestParams(plddt=False, seed=42),
+request = AbodyBuilder3FoldRequest(
+    params=AbodyBuilder3FoldRequestParams(plddt=False, seed=42),
     items=[
-        AbodyBuilder3PredictRequestItem(
+        AbodyBuilder3FoldRequestItem(
             heavy_chain="EVQLVESGGGLVQPGGSLRLSCAASGFTFSSYAMSWVRQAPGKGLEWVSAISGSGGSTYYADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAVYYCAR",
             light_chain="DIQMTQSPSSLSASVGDRVTITCRASQSISSYLNWYQQKPGKAPKLLIYAASSLQSGVPSRFSGSGSGTDFTLTISSLQPEDFATYYCQQSYSTPLT",
         )
@@ -98,15 +98,15 @@ request = AbodyBuilder3PredictRequest(
 
 ```python
 from models.abodybuilder3.schema import (
-    AbodyBuilder3PredictRequest,
-    AbodyBuilder3PredictRequestItem,
-    AbodyBuilder3PredictRequestParams,
+    AbodyBuilder3FoldRequest,
+    AbodyBuilder3FoldRequestItem,
+    AbodyBuilder3FoldRequestParams,
 )
 
-request = AbodyBuilder3PredictRequest(
-    params=AbodyBuilder3PredictRequestParams(plddt=True, seed=42),
+request = AbodyBuilder3FoldRequest(
+    params=AbodyBuilder3FoldRequestParams(plddt=True, seed=42),
     items=[
-        AbodyBuilder3PredictRequestItem(
+        AbodyBuilder3FoldRequestItem(
             heavy_chain="QVQLQQSGPGLVKPSQTLSLTCAISGDSVSSNSAAWNWIRQSPSRGLEWLGRTYYRSKWYNDYAVSVKSRITINPDTSKNQFSLQLNSVTPEDTAVYYCAR",
             light_chain="EIVLTQSPGTLSLSPGERATLSCRASQSVSSSYLAWYQQKPGQAPRLLIYGASSRATGIPDRFSGSGSGTDFTLTISRLEPEDFAVYYCQQYGSSPRT",
         )

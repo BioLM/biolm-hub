@@ -11,10 +11,10 @@ from models.chai1.fixture import (
 )
 from models.chai1.schema import (
     Chai1EntityType,
+    Chai1FoldRequest,
+    Chai1FoldRequestInput,
+    Chai1FoldRequestParams,
     Chai1Molecule,
-    Chai1PredictRequest,
-    Chai1PredictRequestInput,
-    Chai1PredictRequestParams,
 )
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
@@ -75,8 +75,8 @@ deployment_test_suite = TestSuite(
             test_cases=[
                 ActionTestCase(
                     action_name=ModelActions.FOLD,
-                    input_fixture=Chai1PredictRequest(
-                        params=Chai1PredictRequestParams(
+                    input_fixture=Chai1FoldRequest(
+                        params=Chai1FoldRequestParams(
                             num_trunk_recycles=1,
                             num_diffusion_timesteps=50,
                             use_esm_embeddings=False,
@@ -84,7 +84,7 @@ deployment_test_suite = TestSuite(
                             include=[],
                         ),
                         items=[
-                            Chai1PredictRequestInput(
+                            Chai1FoldRequestInput(
                                 molecules=[
                                     Chai1Molecule(
                                         name="minimal-protein",

@@ -14,9 +14,9 @@ from models.commons.model.tag import (
     Task,
 )
 from models.rf3.schema import (
+    RF3FoldRequest,
+    RF3FoldResponse,
     RF3Params,
-    RF3PredictRequest,
-    RF3PredictResponse,
 )
 
 ### RF3 Modal Resource Specs
@@ -58,8 +58,8 @@ MODEL_FAMILY = ModelFamily(
     action_schemas=[
         ActionSchemaMap(
             name=ModelActions.FOLD,
-            request_schema=RF3PredictRequest,
-            response_schema=RF3PredictResponse,
+            request_schema=RF3FoldRequest,
+            response_schema=RF3FoldResponse,
         )
     ],
     # No variant axes - single variant model

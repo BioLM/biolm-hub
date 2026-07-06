@@ -147,7 +147,7 @@ Request
   |     |     |-- mean_plddt: average per-residue confidence
   |     |     \-- ptm: predicted TM-score
   |     \-- Handle CUDA OOM: raise ModelExecutionError (propagates as typed server error)
-  \-- 5. Return ESMFoldPredictResponse with results list
+  \-- 5. Return ESMFoldResponse with results list
 ```
 
 ### Memory & Compute Profile

@@ -5,10 +5,10 @@ import modal
 from models.chai1.config import MODEL_FAMILY
 from models.chai1.download import get_model_dir
 from models.chai1.schema import (
+    Chai1FoldRequest,
+    Chai1FoldResponse,
+    Chai1FoldResponseResult,
     Chai1Params,
-    Chai1PredictRequest,
-    Chai1PredictResponse,
-    Chai1PredictResponseResult,
 )
 from models.commons.core.decorator import modal_endpoint
 from models.commons.core.error import ServerError, UserError
@@ -176,8 +176,8 @@ class Chai1Model(ModelMixinSnap):
     def fold(  # noqa: C901
         # FIXME(noqa: C901): Refactor to reduce complexity below the linter's threshold.
         self,
-        payload: Chai1PredictRequest,
-    ) -> Chai1PredictResponse:
+        payload: Chai1FoldRequest,
+    ) -> Chai1FoldResponse:
         """
         Performs prediction using the Chai-1 model.
         """
@@ -298,13 +298,13 @@ class Chai1Model(ModelMixinSnap):
                             cif_content = cif_file.read()
 
                         # Create the response entry for this CIF file
-                        result = Chai1PredictResponseResult(cif=cif_content)
+                        result = Chai1FoldResponseResult(cif=cif_content)
                         results.append(result)
 
                     logger.info("All CIF files processed successfully.")
 
         # Return the response with all CIF files and their metadata
-        return Chai1PredictResponse(results=[results])
+        return Chai1FoldResponse(results=[results])
 
 
 if __name__ == "__main__":

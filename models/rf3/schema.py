@@ -112,7 +112,7 @@ class RF3Component(RequestModel):
         return self
 
 
-class RF3PredictParams(RequestModel):
+class RF3FoldParams(RequestModel):
     """Parameters for RF3 structure prediction."""
 
     # Recycling and sampling parameters
@@ -181,7 +181,7 @@ class RF3PredictParams(RequestModel):
     )
 
 
-class RF3PredictRequestInput(RequestModel):
+class RF3FoldRequestInput(RequestModel):
     """Input specification for a structure prediction task."""
 
     name: str = Field(
@@ -199,15 +199,15 @@ class RF3PredictRequestInput(RequestModel):
     )
 
 
-class RF3PredictRequest(RequestModel):
+class RF3FoldRequest(RequestModel):
     """Request for RF3 structure prediction."""
 
-    params: RF3PredictParams = Field(
-        default_factory=RF3PredictParams,
+    params: RF3FoldParams = Field(
+        default_factory=RF3FoldParams,
         description="Optional parameters controlling this action (defaults are used when omitted).",
     )
     items: Annotated[
-        list[RF3PredictRequestInput],
+        list[RF3FoldRequestInput],
         Field(
             min_length=1,
             max_length=RF3Params.batch_size,
@@ -246,7 +246,7 @@ class RF3ConfidenceScores(ResponseModel):
     )
 
 
-class RF3PredictResponseResult(ResponseModel):
+class RF3FoldResponseResult(ResponseModel):
     """Single prediction output from RF3."""
 
     structure_cif: str = Field(..., description="Predicted structure in mmCIF format.")
@@ -263,10 +263,10 @@ class RF3PredictResponseResult(ResponseModel):
     )
 
 
-class RF3PredictResponse(ResponseModel):
+class RF3FoldResponse(ResponseModel):
     """Response from RF3 structure prediction."""
 
-    results: list[list[RF3PredictResponseResult]] = Field(
+    results: list[list[RF3FoldResponseResult]] = Field(
         ...,
         description="Per-input results, returned in the same order as the request items.",
     )

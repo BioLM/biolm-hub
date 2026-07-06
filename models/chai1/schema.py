@@ -142,7 +142,7 @@ class Chai1ScoreOptions(EnhancedStringEnum):
     PLDDT = "plddt"
 
 
-class Chai1PredictRequestParams(RequestModel):
+class Chai1FoldRequestParams(RequestModel):
     num_trunk_recycles: int = Field(
         default=3,
         ge=1,
@@ -185,7 +185,7 @@ class Chai1PredictRequestParams(RequestModel):
         return []
 
 
-class Chai1PredictRequestInput(RequestModel):
+class Chai1FoldRequestInput(RequestModel):
     molecules: list[Chai1Molecule] = Field(
         description="List of molecules forming the complex to predict (up to 5 entities per request)."
     )
@@ -202,13 +202,13 @@ class Chai1PredictRequestInput(RequestModel):
         return v
 
 
-class Chai1PredictRequest(RequestModel):
-    params: Chai1PredictRequestParams = Field(
-        default_factory=Chai1PredictRequestParams,
+class Chai1FoldRequest(RequestModel):
+    params: Chai1FoldRequestParams = Field(
+        default_factory=Chai1FoldRequestParams,
         description="Optional parameters controlling this action (defaults are used when omitted).",
     )
     items: Annotated[
-        list[Chai1PredictRequestInput],
+        list[Chai1FoldRequestInput],
         Field(
             min_length=1,
             max_length=Chai1Params.batch_size,
@@ -220,7 +220,7 @@ class Chai1PredictRequest(RequestModel):
 ### Chai-1 Predict Response
 
 
-class Chai1PredictResponseResult(ResponseModel):
+class Chai1FoldResponseResult(ResponseModel):
     model_config = {
         "populate_by_name": True,  # Ensures alias names work as expected
         "json_schema_extra": {
@@ -240,7 +240,7 @@ class Chai1PredictResponseResult(ResponseModel):
     )
 
 
-class Chai1PredictResponse(ResponseModel):
-    results: list[list[Chai1PredictResponseResult]] = Field(
+class Chai1FoldResponse(ResponseModel):
+    results: list[list[Chai1FoldResponseResult]] = Field(
         description="Per-input results, returned in the same order as the request items."
     )  # multiple samples in list must correspond to idx of input items

@@ -119,21 +119,21 @@ Predicts all-atom biomolecular structures from sequences, SMILES strings, and/or
 
 ```python
 from models.rf3.schema import (
-    RF3PredictRequest,
-    RF3PredictRequestInput,
-    RF3PredictParams,
+    RF3FoldRequest,
+    RF3FoldRequestInput,
+    RF3FoldParams,
     RF3Component,
     RF3EntityType,
 )
 
-request = RF3PredictRequest(
-    params=RF3PredictParams(
+request = RF3FoldRequest(
+    params=RF3FoldParams(
         n_recycles=10,
         num_steps=200,
         diffusion_batch_size=5,
     ),
     items=[
-        RF3PredictRequestInput(
+        RF3FoldRequestInput(
             name="simple_fold",
             components=[
                 RF3Component(
@@ -152,20 +152,20 @@ request = RF3PredictRequest(
 
 ```python
 from models.rf3.schema import (
-    RF3PredictRequest,
-    RF3PredictRequestInput,
-    RF3PredictParams,
+    RF3FoldRequest,
+    RF3FoldRequestInput,
+    RF3FoldParams,
     RF3Component,
     RF3EntityType,
 )
 
-request = RF3PredictRequest(
-    params=RF3PredictParams(
+request = RF3FoldRequest(
+    params=RF3FoldParams(
         n_recycles=10,
         include_plddt=True,
     ),
     items=[
-        RF3PredictRequestInput(
+        RF3FoldRequestInput(
             name="with_msa",
             components=[
                 RF3Component(
@@ -185,20 +185,20 @@ request = RF3PredictRequest(
 
 ```python
 from models.rf3.schema import (
-    RF3PredictRequest,
-    RF3PredictRequestInput,
-    RF3PredictParams,
+    RF3FoldRequest,
+    RF3FoldRequestInput,
+    RF3FoldParams,
     RF3Component,
     RF3EntityType,
 )
 
-request = RF3PredictRequest(
-    params=RF3PredictParams(
+request = RF3FoldRequest(
+    params=RF3FoldParams(
         diffusion_batch_size=5,
         ground_truth_conformer_selection=["B"],
     ),
     items=[
-        RF3PredictRequestInput(
+        RF3FoldRequestInput(
             name="protein_ligand",
             components=[
                 RF3Component(
@@ -223,20 +223,20 @@ request = RF3PredictRequest(
 
 ```python
 from models.rf3.schema import (
-    RF3PredictRequest,
-    RF3PredictRequestInput,
-    RF3PredictParams,
+    RF3FoldRequest,
+    RF3FoldRequestInput,
+    RF3FoldParams,
     RF3Component,
     RF3EntityType,
 )
 
-request = RF3PredictRequest(
-    params=RF3PredictParams(
+request = RF3FoldRequest(
+    params=RF3FoldParams(
         template_selection=["A/*/1-50"],
         n_recycles=10,
     ),
     items=[
-        RF3PredictRequestInput(
+        RF3FoldRequestInput(
             name="templated_fold",
             components=[
                 RF3Component(

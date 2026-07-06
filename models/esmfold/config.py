@@ -10,8 +10,8 @@ from models.commons.model.tag import (
 )
 from models.esmfold.schema import (
     ESMFoldParams,
-    ESMFoldPredictRequest,
-    ESMFoldPredictResponse,
+    ESMFoldRequest,
+    ESMFoldResponse,
 )
 
 ### ESMFold Modal Resource Specs
@@ -41,8 +41,8 @@ MODEL_FAMILY = ModelFamily(
     action_schemas=[
         ActionSchemaMap(
             name=ModelActions.FOLD,
-            request_schema=ESMFoldPredictRequest,
-            response_schema=ESMFoldPredictResponse,
+            request_schema=ESMFoldRequest,
+            response_schema=ESMFoldResponse,
         )
     ],
     # No variant axes - single model configuration

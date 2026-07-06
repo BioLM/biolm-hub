@@ -3,8 +3,8 @@ from models.commons.testing.config import ActionTestCase, TestSuite, VariantTest
 from models.commons.testing.fixture import FixtureGenerator
 from models.immunebuilder.config import MODEL_FAMILY
 from models.immunebuilder.schema import (
+    ImmuneBuilderFoldRequest,
     ImmuneBuilderModelTypes,
-    ImmuneBuilderPredictRequest,
 )
 
 # Test input/output filenames. Inputs are self-contained (inlined below), so
@@ -54,7 +54,7 @@ def _build_fixture_generation_suite() -> TestSuite:
     requires a different chain combination (paired H+L, H-only, or A+B), so
     each gets its own variant-scoped mapping with the matching request.
     """
-    abody_request = ImmuneBuilderPredictRequest.model_validate(
+    abody_request = ImmuneBuilderFoldRequest.model_validate(
         {
             "items": [
                 {
@@ -64,10 +64,10 @@ def _build_fixture_generation_suite() -> TestSuite:
             ]
         }
     )
-    nanobody_request = ImmuneBuilderPredictRequest.model_validate(
+    nanobody_request = ImmuneBuilderFoldRequest.model_validate(
         {"items": [{"heavy_chain": NANOBODY_HEAVY_CHAIN}]}
     )
-    tcr_request = ImmuneBuilderPredictRequest.model_validate(
+    tcr_request = ImmuneBuilderFoldRequest.model_validate(
         {
             "items": [
                 {

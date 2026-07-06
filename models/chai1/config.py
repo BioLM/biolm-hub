@@ -1,7 +1,7 @@
 from models.chai1.schema import (
+    Chai1FoldRequest,
+    Chai1FoldResponse,
     Chai1Params,
-    Chai1PredictRequest,
-    Chai1PredictResponse,
 )
 from models.commons.model.config import ActionSchemaMap, ModelFamily
 from models.commons.model.schema import ModalGPU, ModalResourceSpec, ModelActions
@@ -50,8 +50,8 @@ MODEL_FAMILY = ModelFamily(
     action_schemas=[
         ActionSchemaMap(
             name=ModelActions.FOLD,
-            request_schema=Chai1PredictRequest,
-            response_schema=Chai1PredictResponse,
+            request_schema=Chai1FoldRequest,
+            response_schema=Chai1FoldResponse,
         )
     ],
     # No variant axes - single variant model

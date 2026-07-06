@@ -116,9 +116,8 @@ def restore_weights_via_http(target_dir: Path, r2_prefix: str, public_url: str) 
     complete restore, and False on a cache miss (no completion marker, or no
     manifest to enumerate from) so the caller falls back to the original source.
 
-    Note: the completion-marker timeout (`cache_timeout_hours` on the S3 path) is
-    intentionally NOT enforced here — public weights are immutable, so an existence
-    gate is sufficient.
+    Note: no completion-marker freshness/timeout check is enforced here (unlike the
+    S3 path) — public weights are immutable, so an existence gate is sufficient.
 
     Args:
         target_dir: Local directory to restore weights into.

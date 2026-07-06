@@ -30,12 +30,12 @@ from models.rf3.config import MODEL_FAMILY
 from models.rf3.download import get_model_dir
 from models.rf3.schema import (
     RF3ConfidenceScores,
+    RF3FoldParams,
+    RF3FoldRequest,
+    RF3FoldRequestInput,
+    RF3FoldResponse,
+    RF3FoldResponseResult,
     RF3Params,
-    RF3PredictParams,
-    RF3PredictRequest,
-    RF3PredictRequestInput,
-    RF3PredictResponse,
-    RF3PredictResponseResult,
 )
 
 logger = get_logger(__name__)
@@ -170,7 +170,7 @@ class RF3Model(ModelMixinSnap):
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def fold(self, payload: RF3PredictRequest) -> RF3PredictResponse:  # noqa: C901
+    def fold(self, payload: RF3FoldRequest) -> RF3FoldResponse:  # noqa: C901
         """
         Performs structure prediction using RosettaFold3.
 
@@ -271,7 +271,7 @@ class RF3Model(ModelMixinSnap):
                 if score_file.exists():
                     logger.warning("Prediction was early-stopped due to low confidence")
                     # Return empty result with early_stopped flag
-                    result = RF3PredictResponseResult(
+                    result = RF3FoldResponseResult(
                         structure_cif="",
                         confidence=RF3ConfidenceScores(),
                         early_stopped=True,
@@ -348,7 +348,7 @@ class RF3Model(ModelMixinSnap):
                         pae=pae,
                     )
 
-                    result = RF3PredictResponseResult(
+                    result = RF3FoldResponseResult(
                         structure_cif=cif_content,
                         confidence=confidence,
                         early_stopped=False,
@@ -358,19 +358,19 @@ class RF3Model(ModelMixinSnap):
 
             logger.info("Processed %s prediction results", len(results))
 
-        return RF3PredictResponse(results=[results])
+        return RF3FoldResponse(results=[results])
 
     def _create_input_specification(  # noqa: C901
         self,
-        item: RF3PredictRequestInput,
-        params: RF3PredictParams,
+        item: RF3FoldRequestInput,
+        params: RF3FoldParams,
         temp_dir_path: Path,
     ) -> list[dict[str, Any]]:
         """Convert API input to RF3 input specification JSON format.
 
         Args:
-            item: RF3PredictRequestInput item
-            params: RF3PredictParams
+            item: RF3FoldRequestInput item
+            params: RF3FoldParams
             temp_dir_path: Path to temporary directory for writing MSA files
         """
         spec: dict[str, Any] = {

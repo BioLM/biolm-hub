@@ -1,8 +1,8 @@
 from models.abodybuilder3.schema import (
+    AbodyBuilder3FoldRequest,
+    AbodyBuilder3FoldResponse,
     AbodyBuilder3ModelTypes,
     AbodyBuilder3Params,
-    AbodyBuilder3PredictRequest,
-    AbodyBuilder3PredictResponse,
 )
 from models.commons.model.config import ActionSchemaMap, ModelFamily
 from models.commons.model.schema import (
@@ -55,8 +55,8 @@ MODEL_FAMILY = ModelFamily(
     action_schemas=[
         ActionSchemaMap(
             name=ModelActions.FOLD,
-            request_schema=AbodyBuilder3PredictRequest,
-            response_schema=AbodyBuilder3PredictResponse,
+            request_schema=AbodyBuilder3FoldRequest,
+            response_schema=AbodyBuilder3FoldResponse,
         )
     ],
     # Single axis: MODEL_TYPE with values plddt, language

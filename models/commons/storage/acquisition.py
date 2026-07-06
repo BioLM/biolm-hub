@@ -67,8 +67,6 @@ class CacheConfig:
 
     enable_r2_cache: bool = True
     force_download: bool = False
-    cache_timeout_hours: Optional[int] = None
-    validate_checksums: bool = True
 
 
 @dataclass
@@ -76,9 +74,6 @@ class ValidationConfig:
     """Configuration for validating acquired weights."""
 
     required_files: Optional[list[str]] = None
-    custom_validator: Optional[Callable[[Path], bool]] = None
-    min_size_bytes: Optional[int] = None
-    max_size_bytes: Optional[int] = None
 
 
 @dataclass
@@ -177,26 +172,6 @@ class AcquisitionResult:
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
-def _calculate_directory_size(directory: Path) -> int:
-    """
-    Calculate total size of all files in directory recursively.
-
-    Args:
-        directory: Directory to calculate size for
-
-    Returns:
-        Total size in bytes
-    """
-    total_size = 0
-    try:
-        for file_path in directory.rglob("*"):
-            if file_path.is_file():
-                total_size += file_path.stat().st_size
-    except Exception as e:
-        logger.warning("Error calculating directory size: %s", e)
-    return total_size
-
-
 def _try_r2_restore(
     config: AcquisitionConfig,
     target_dir: Path,
@@ -231,19 +206,13 @@ def _try_r2_restore(
     r2_prefix = R2Utils.get_r2_prefix_from_target_dir(target_dir)
     logger.info("Checking R2 cache at %s", r2_prefix)
 
-    # Extract cache config parameters
-    timeout_hours = None
-    if config.cache_config.cache_timeout_hours:
-        timeout_hours = config.cache_config.cache_timeout_hours
-    validate_manifest = config.cache_config.validate_checksums
-
     logger.info("[acquisition.py] Starting atomic restore from R2: %s", r2_prefix)
     restored = R2Utils.restore_from_r2_atomic(
         target_dir=target_dir,
         r2_prefix=r2_prefix,
         bucket_name=r2_bucket_name,
-        validate_manifest=validate_manifest,
-        timeout_hours=timeout_hours,
+        validate_manifest=True,
+        timeout_hours=None,
     )
 
     if not restored:
@@ -533,7 +502,7 @@ def _acquire_r2_only(config: AcquisitionConfig) -> AcquisitionResult:
             r2_prefix=r2_prefix,
             bucket_name=r2_bucket_name,
             validate_manifest=False,
-            timeout_hours=config.cache_config.cache_timeout_hours,
+            timeout_hours=None,
             filter_func=r2_config.filter_func,
         )
 
@@ -1090,53 +1059,6 @@ def _validate_required_files(
         return f"Required files check failed: {e}"
 
 
-def _validate_size_constraints(
-    actual_path: Path, validation_config: ValidationConfig
-) -> list[str]:
-    """Validate directory size against min/max constraints."""
-    errors: list[str] = []
-    if not (validation_config.min_size_bytes or validation_config.max_size_bytes):
-        return errors
-
-    total_size = _calculate_directory_size(actual_path)
-    logger.info(f"Directory size: {total_size/(1024**3):.2f}GB")
-
-    if (
-        validation_config.min_size_bytes
-        and total_size < validation_config.min_size_bytes
-    ):
-        errors.append(
-            f"Directory too small: {total_size} bytes < {validation_config.min_size_bytes} bytes"
-        )
-
-    if (
-        validation_config.max_size_bytes
-        and total_size > validation_config.max_size_bytes
-    ):
-        errors.append(
-            f"Directory too large: {total_size} bytes > {validation_config.max_size_bytes} bytes"
-        )
-
-    if not errors:
-        logger.info("Size constraints validation successful")
-    return errors
-
-
-def _run_custom_validator(
-    actual_path: Path, custom_validator: Callable[[Path], bool]
-) -> Optional[str]:
-    """Run custom validation function."""
-    logger.info("Running custom validator...")
-    try:
-        custom_result = custom_validator(actual_path)
-        if not custom_result:
-            return "Custom validator returned False"
-        logger.info("Custom validation successful")
-        return None
-    except Exception as e:
-        return f"Custom validator failed: {e}"
-
-
 def _perform_comprehensive_validation(
     result: AcquisitionResult, config: AcquisitionConfig
 ) -> list[str]:
@@ -1151,18 +1073,6 @@ def _perform_comprehensive_validation(
     if config.validation_config.required_files:
         error = _validate_required_files(
             actual_path, config.validation_config.required_files
-        )
-        if error:
-            validation_errors.append(error)
-
-    # Size constraints validation
-    size_errors = _validate_size_constraints(actual_path, config.validation_config)
-    validation_errors.extend(size_errors)
-
-    # Custom validator
-    if config.validation_config.custom_validator:
-        error = _run_custom_validator(
-            actual_path, config.validation_config.custom_validator
         )
         if error:
             validation_errors.append(error)
@@ -1216,14 +1126,7 @@ def acquire_model_weights(config: AcquisitionConfig) -> AcquisitionResult:
             result.success = False
             result.error_message = f"Validation failed: {'; '.join(validation_errors)}"
             logger.error("Validation failed: %s", result.error_message)
-        elif any(
-            [
-                config.validation_config.required_files,
-                config.validation_config.min_size_bytes,
-                config.validation_config.max_size_bytes,
-                config.validation_config.custom_validator,
-            ]
-        ):
+        elif config.validation_config.required_files:
             actual_path = result.actual_model_path or result.target_dir
             logger.info("All validations passed for %s", actual_path)
 

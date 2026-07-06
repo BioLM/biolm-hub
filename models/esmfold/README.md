@@ -99,22 +99,22 @@ Predicts the 3D structure of one or more protein sequences. Returns PDB-formatte
 ```python
 # Single-chain structure prediction
 from models.esmfold.schema import (
-    ESMFoldPredictRequest,
-    ESMFoldPredictRequestItem,
+    ESMFoldRequest,
+    ESMFoldRequestItem,
 )
 
-single_chain_request = ESMFoldPredictRequest(
+single_chain_request = ESMFoldRequest(
     items=[
-        ESMFoldPredictRequestItem(
+        ESMFoldRequestItem(
             sequence="MKTVRQERLKSIVRILERSKEPVSGAQLAEELSVSRQVIVQDIAYLRSLGYNIVATPRGYVLAGG"
         ),
     ],
 )
 
 # Multi-chain complex prediction (chains separated by ":")
-multi_chain_request = ESMFoldPredictRequest(
+multi_chain_request = ESMFoldRequest(
     items=[
-        ESMFoldPredictRequestItem(
+        ESMFoldRequestItem(
             sequence="MKTVRQERLKSIVRILERSKEPVSGAQ:LAEELSVSRQVIVQDIAYLRSLGYN"
         ),
     ],

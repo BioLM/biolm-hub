@@ -1,8 +1,8 @@
 from models.abodybuilder3.config import MODEL_FAMILY
 from models.abodybuilder3.schema import (
-    AbodyBuilder3PredictRequest,
-    AbodyBuilder3PredictRequestItem,
-    AbodyBuilder3PredictRequestParams,
+    AbodyBuilder3FoldRequest,
+    AbodyBuilder3FoldRequestItem,
+    AbodyBuilder3FoldRequestParams,
 )
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
@@ -33,10 +33,10 @@ def _build_fixture_generation_suite() -> TestSuite:
     touches R2 or the network — `generate()` writes the input to R2 alongside
     the generated outputs for each resolved variant (language, plddt).
     """
-    predict_request = AbodyBuilder3PredictRequest(
-        params=AbodyBuilder3PredictRequestParams(plddt=False, seed=42),
+    predict_request = AbodyBuilder3FoldRequest(
+        params=AbodyBuilder3FoldRequestParams(plddt=False, seed=42),
         items=[
-            AbodyBuilder3PredictRequestItem(
+            AbodyBuilder3FoldRequestItem(
                 heavy_chain=HEAVY_CHAIN,
                 light_chain=LIGHT_CHAIN,
             )

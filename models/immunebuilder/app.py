@@ -25,13 +25,13 @@ from models.commons.util.environment import parse_variant
 from models.immunebuilder.config import MODEL_FAMILY
 from models.immunebuilder.download import get_model_dir
 from models.immunebuilder.schema import (
+    ImmuneBuilderFoldParams,
+    ImmuneBuilderFoldRequest,
+    ImmuneBuilderFoldRequestItem,
+    ImmuneBuilderFoldResponse,
+    ImmuneBuilderFoldResponseResult,
     ImmuneBuilderModelTypes,
     ImmuneBuilderParams,
-    ImmuneBuilderPredictParams,
-    ImmuneBuilderPredictRequest,
-    ImmuneBuilderPredictRequestItem,
-    ImmuneBuilderPredictResponse,
-    ImmuneBuilderPredictResponseResult,
 )
 
 logger = get_logger(__name__)
@@ -277,8 +277,8 @@ class ImmuneBuilderModel(ModelMixinSnap):
         logger.info("Load end time: %s", time.strftime("%H:%M:%S"))
 
     def _pre_process_payload(
-        self, payload: ImmuneBuilderPredictRequest
-    ) -> list[ImmuneBuilderPredictRequestItem]:
+        self, payload: ImmuneBuilderFoldRequest
+    ) -> list[ImmuneBuilderFoldRequestItem]:
         for item in payload.items:
             if item._kind == self.model_type:
                 continue  # Valid case
@@ -301,25 +301,23 @@ class ImmuneBuilderModel(ModelMixinSnap):
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def fold(
-        self, payload: ImmuneBuilderPredictRequest
-    ) -> ImmuneBuilderPredictResponse:
+    def fold(self, payload: ImmuneBuilderFoldRequest) -> ImmuneBuilderFoldResponse:
         """
         Performs structure prediction using the ImmuneBuilder models.
 
         Parameters:
-        - payload (ImmuneBuilderPredictRequest): The request object containing sequences and parameters.
+        - payload (ImmuneBuilderFoldRequest): The request object containing sequences and parameters.
 
         Returns:
-        - ImmuneBuilderPredictResponse: The response containing pdb predictions results.
+        - ImmuneBuilderFoldResponse: The response containing pdb predictions results.
         """
         inputs = self._pre_process_payload(payload)
 
         # Set seed for reproducibility (params is optional; fall back to defaults).
-        params = payload.params or ImmuneBuilderPredictParams()
+        params = payload.params or ImmuneBuilderFoldParams()
         self.seed_everything(params.seed)
 
-        results: list[ImmuneBuilderPredictResponseResult] = []
+        results: list[ImmuneBuilderFoldResponseResult] = []
         try:
             for input in inputs:
                 with tempfile.NamedTemporaryFile(
@@ -344,7 +342,7 @@ class ImmuneBuilderModel(ModelMixinSnap):
                     result_obj.save(output_file)
                     with open(output_file) as f:
                         pdb_str = f.read()
-                        results.append(ImmuneBuilderPredictResponseResult(pdb=pdb_str))
+                        results.append(ImmuneBuilderFoldResponseResult(pdb=pdb_str))
 
                 finally:
                     if os.path.exists(output_file):
@@ -368,7 +366,7 @@ class ImmuneBuilderModel(ModelMixinSnap):
             logger.error("Model call failed", exc_info=True)
             raise
 
-        return ImmuneBuilderPredictResponse(results=results)
+        return ImmuneBuilderFoldResponse(results=results)
 
     def seed_everything(self, seed: int = 42, deterministic: bool = True) -> None:
         """Set seed for reproducibility across random, NumPy, and torch.

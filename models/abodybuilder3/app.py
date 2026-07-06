@@ -10,11 +10,11 @@ from models.abodybuilder3.config import (
 )
 from models.abodybuilder3.download import get_model_dir
 from models.abodybuilder3.schema import (
+    AbodyBuilder3FoldRequest,
+    AbodyBuilder3FoldResponse,
+    AbodyBuilder3FoldResponseResult,
     AbodyBuilder3ModelTypes,
     AbodyBuilder3Params,
-    AbodyBuilder3PredictRequest,
-    AbodyBuilder3PredictResponse,
-    AbodyBuilder3PredictResponseResult,
 )
 from models.commons.core.decorator import modal_endpoint
 from models.commons.core.error import UnsupportedOptionError
@@ -184,17 +184,15 @@ class AbodyBuilder3Model(ModelMixinSnap):
 
     @modal.method()
     @modal_endpoint(app_name=app_name)
-    def fold(
-        self, payload: AbodyBuilder3PredictRequest
-    ) -> AbodyBuilder3PredictResponse:
+    def fold(self, payload: AbodyBuilder3FoldRequest) -> AbodyBuilder3FoldResponse:
         """
         Performs structure prediction using the AbodyBuilder3 models.
 
         Parameters:
-        - payload (AbodyBuilder3PredictRequest): The request object containing sequences and parameters.
+        - payload (AbodyBuilder3FoldRequest): The request object containing sequences and parameters.
 
         Returns:
-        - AbodyBuilder3PredictResponse: The response containing pdb predictions results.
+        - AbodyBuilder3FoldResponse: The response containing pdb predictions results.
         """
         from abodybuilder3.utils import (
             add_atom37_to_output,
@@ -242,13 +240,13 @@ class AbodyBuilder3Model(ModelMixinSnap):
                 if payload.params.plddt:
                     result_dict["plddt"] = output["plddt"].squeeze(0).tolist()
 
-                results.append(AbodyBuilder3PredictResponseResult(**result_dict))
+                results.append(AbodyBuilder3FoldResponseResult(**result_dict))
 
         except Exception as e:
             logger.error("Model call failed with error [%s]", e, exc_info=True)
             raise
 
-        return AbodyBuilder3PredictResponse(results=results)
+        return AbodyBuilder3FoldResponse(results=results)
 
     def seed_everything(self, seed: int = 42, deterministic: bool = True) -> None:
         """Set seed for reproducibility across random, NumPy, torch, and PyTorch Lightning.

@@ -38,7 +38,7 @@ class AbodyBuilder3ModelTypes(EnhancedStringEnum):
 ### AbodyBuilder3 Request
 
 
-class AbodyBuilder3PredictRequestParams(RequestModel):
+class AbodyBuilder3FoldRequestParams(RequestModel):
     plddt: bool = Field(
         default=False,
         description="Whether to return per-residue pLDDT confidence scores in the response.",
@@ -49,7 +49,7 @@ class AbodyBuilder3PredictRequestParams(RequestModel):
     )
 
 
-class AbodyBuilder3PredictRequestItem(RequestModel):
+class AbodyBuilder3FoldRequestItem(RequestModel):
     # Canonical antibody field names; old `H`/`L` accepted via input alias.
     model_config = ConfigDict(populate_by_name=True)
 
@@ -78,13 +78,13 @@ class AbodyBuilder3PredictRequestItem(RequestModel):
     ]
 
 
-class AbodyBuilder3PredictRequest(RequestModel):
-    params: AbodyBuilder3PredictRequestParams = Field(
-        default=AbodyBuilder3PredictRequestParams(),
+class AbodyBuilder3FoldRequest(RequestModel):
+    params: AbodyBuilder3FoldRequestParams = Field(
+        default=AbodyBuilder3FoldRequestParams(),
         description="Optional parameters controlling this action (defaults are used when omitted).",
     )
     items: Annotated[
-        list[AbodyBuilder3PredictRequestItem],
+        list[AbodyBuilder3FoldRequestItem],
         Field(
             min_length=1,
             max_length=AbodyBuilder3Params.batch_size,
@@ -96,7 +96,7 @@ class AbodyBuilder3PredictRequest(RequestModel):
 ### AbodyBuilder3 Response
 
 
-class AbodyBuilder3PredictResponseResult(ResponseModel):
+class AbodyBuilder3FoldResponseResult(ResponseModel):
     model_config = {
         "populate_by_name": True,  # Ensures alias names work as expected
         "json_schema_extra": {
@@ -111,7 +111,7 @@ class AbodyBuilder3PredictResponseResult(ResponseModel):
     )
 
 
-class AbodyBuilder3PredictResponse(ResponseModel):
-    results: list[AbodyBuilder3PredictResponseResult] = Field(
+class AbodyBuilder3FoldResponse(ResponseModel):
+    results: list[AbodyBuilder3FoldResponseResult] = Field(
         description="Per-input results, returned in the same order as the request items."
     )

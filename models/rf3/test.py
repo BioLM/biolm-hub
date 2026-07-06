@@ -5,11 +5,11 @@ from models.commons.testing.config import ActionTestCase, TestSuite, VariantTest
 from models.commons.testing.runner import generate_tests_from_suite
 from models.rf3.config import MODEL_FAMILY
 from models.rf3.schema import (
-    RF3PredictRequest,
+    RF3FoldRequest,
 )
 
 # Define test inputs inline as Pydantic models (same as fixture.py)
-INPUT1 = RF3PredictRequest.model_validate(
+INPUT1 = RF3FoldRequest.model_validate(
     {
         "params": {
             "n_recycles": 3,
@@ -36,7 +36,7 @@ INPUT1 = RF3PredictRequest.model_validate(
     }
 )
 
-INPUT2 = RF3PredictRequest.model_validate(
+INPUT2 = RF3FoldRequest.model_validate(
     {
         "params": {
             "n_recycles": 5,
@@ -67,7 +67,7 @@ INPUT2 = RF3PredictRequest.model_validate(
     }
 )
 
-INPUT3 = RF3PredictRequest.model_validate(
+INPUT3 = RF3FoldRequest.model_validate(
     {
         "params": {
             "n_recycles": 8,
@@ -100,7 +100,7 @@ INPUT3 = RF3PredictRequest.model_validate(
 )
 
 # Small MSA test input
-INPUT4_MSA = RF3PredictRequest.model_validate(
+INPUT4_MSA = RF3FoldRequest.model_validate(
     {
         "params": {
             "n_recycles": 3,

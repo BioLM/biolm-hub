@@ -2,7 +2,7 @@ from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
 from models.commons.testing.fixture import FixtureGenerator
 from models.esmfold.config import MODEL_FAMILY
-from models.esmfold.schema import ESMFoldPredictRequest, ESMFoldPredictRequestItem
+from models.esmfold.schema import ESMFoldRequest, ESMFoldRequestItem
 
 # Fixture input/output filenames. Inputs are self-contained (inlined below), so
 # generation needs no pre-existing R2 assets — the generator writes these inputs
@@ -29,11 +29,11 @@ def _build_fixture_generation_suite() -> TestSuite:
     R2 and `generate()` needs no manually-placed R2 inputs — it writes these
     inputs to R2 alongside the generated outputs.
     """
-    singlechain_request = ESMFoldPredictRequest(
-        items=[ESMFoldPredictRequestItem(sequence=_SINGLECHAIN_SEQUENCE)]
+    singlechain_request = ESMFoldRequest(
+        items=[ESMFoldRequestItem(sequence=_SINGLECHAIN_SEQUENCE)]
     )
-    multichain_request = ESMFoldPredictRequest(
-        items=[ESMFoldPredictRequestItem(sequence=_MULTICHAIN_SEQUENCE)]
+    multichain_request = ESMFoldRequest(
+        items=[ESMFoldRequestItem(sequence=_MULTICHAIN_SEQUENCE)]
     )
 
     return TestSuite(

@@ -9,10 +9,10 @@ from models.commons.model.tag import (
     Task,
 )
 from models.immunebuilder.schema import (
+    ImmuneBuilderFoldRequest,
+    ImmuneBuilderFoldResponse,
     ImmuneBuilderModelTypes,
     ImmuneBuilderParams,
-    ImmuneBuilderPredictRequest,
-    ImmuneBuilderPredictResponse,
 )
 
 ### ImmuneBuilder Modal Resource Specs
@@ -55,8 +55,8 @@ MODEL_FAMILY = ModelFamily(
     action_schemas=[
         ActionSchemaMap(
             name=ModelActions.FOLD,
-            request_schema=ImmuneBuilderPredictRequest,
-            response_schema=ImmuneBuilderPredictResponse,
+            request_schema=ImmuneBuilderFoldRequest,
+            response_schema=ImmuneBuilderFoldResponse,
         )
     ],
     # Single axis: MODEL_TYPE with 4 values

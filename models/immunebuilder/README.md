@@ -66,7 +66,7 @@ Predict 3D structure from immune protein sequences.
 - `tcr_alpha` + `tcr_beta` => TCRBuilder2 / TCRBuilder2Plus (TCR)
 - Cannot mix antibody chains (`heavy_chain`/`light_chain`) with TCR chains (`tcr_alpha`/`tcr_beta`)
 
-**Request Schema:** `ImmuneBuilderPredictRequest`
+**Request Schema:** `ImmuneBuilderFoldRequest`
 
 **Response:**
 
@@ -80,7 +80,7 @@ Predict 3D structure from immune protein sequences.
 }
 ```
 
-**Response Schema:** `ImmuneBuilderPredictResponse`
+**Response Schema:** `ImmuneBuilderFoldResponse`
 
 ## Usage Examples
 
@@ -88,28 +88,28 @@ Predict 3D structure from immune protein sequences.
 
 ```python
 from models.immunebuilder.schema import (
-    ImmuneBuilderPredictRequest,
-    ImmuneBuilderPredictRequestItem,
-    ImmuneBuilderPredictParams,
+    ImmuneBuilderFoldRequest,
+    ImmuneBuilderFoldRequestItem,
+    ImmuneBuilderFoldParams,
 )
 
-request = ImmuneBuilderPredictRequest(
+request = ImmuneBuilderFoldRequest(
     items=[
-        ImmuneBuilderPredictRequestItem(
+        ImmuneBuilderFoldRequestItem(
             heavy_chain="EVQLVESGGGLVQPGGSLRLSCAASGFTFSDYAMSWVRQAPGKGLEWVSGISGSGGSTYYADSVKGRFTISRDNSKNTLYLQMNSLRAEDTAVYYCAKDRLSITIRPRYYGLDVWGQGTTVTVSS",
             light_chain="DIQMTQSPSSLSASVGDRVTITCRASQSISSYLNWYQQKPGKAPKLLIYAASSLQSGVPSRFSGSGSGTDFTLTISSLQPEDFATYYCQQSYSTPLTFGGGTKVEIK",
         )
     ],
-    params=ImmuneBuilderPredictParams(seed=42),
+    params=ImmuneBuilderFoldParams(seed=42),
 )
 ```
 
 ### Nanobody structure prediction
 
 ```python
-request = ImmuneBuilderPredictRequest(
+request = ImmuneBuilderFoldRequest(
     items=[
-        ImmuneBuilderPredictRequestItem(
+        ImmuneBuilderFoldRequestItem(
             heavy_chain="QVQLQESGGGLVQPGGSLRLSCAASGRTFSSYAMGWFRQAPGKEREFVAAISWSGGSTYYADSVKGRFTISRDNAKNTVYLQMNSLKPEDTAVYYCAADSTIYASYYECGHGLSTGGYGYDSWGQGTQVTVSS",
         )
     ],
@@ -119,9 +119,9 @@ request = ImmuneBuilderPredictRequest(
 ### TCR structure prediction
 
 ```python
-request = ImmuneBuilderPredictRequest(
+request = ImmuneBuilderFoldRequest(
     items=[
-        ImmuneBuilderPredictRequestItem(
+        ImmuneBuilderFoldRequestItem(
             tcr_alpha="AQEVTQIPAALSVPEGENLVLNCSFTDSAIYNLQWFRQDPGKGLTSLLLIQSSQREQTSGRLNASLDKSSGRSTLYIAASQPGDSATYLCAVRPTSGGSYIPTFGRGTSLIVHPY",
             tcr_beta="DAGVTQTPRNHVTISEGDKITVRCEKSTVSNFLYELFWYRQDPGLGLRLIYFSYDVKMKEKGDIPDGYSVSRNKKPNFYEALISKLNVSDSALYFCASSQETQYFGPGTRLTVL",
         )

@@ -39,13 +39,13 @@ class ImmuneBuilderModelTypes(EnhancedStringEnum):
 ### ImmuneBuilder Request
 
 
-class ImmuneBuilderPredictParams(RequestModel):
+class ImmuneBuilderFoldParams(RequestModel):
     seed: int = Field(
         default=42, ge=0, description="Random seed for reproducible sampling."
     )
 
 
-class ImmuneBuilderPredictRequestItem(RequestModel):
+class ImmuneBuilderFoldRequestItem(RequestModel):
     # Canonical antibody/TCR field names; old single-letter chain keys
     # (`H`/`L`/`A`/`B`) are accepted via input alias for back-compat.
     model_config = ConfigDict(populate_by_name=True)
@@ -106,7 +106,7 @@ class ImmuneBuilderPredictRequestItem(RequestModel):
     _kind2: Optional[str] = PrivateAttr()
 
     @model_validator(mode="after")
-    def validate_and_infer_type(self) -> "ImmuneBuilderPredictRequestItem":
+    def validate_and_infer_type(self) -> "ImmuneBuilderFoldRequestItem":
         """
         Infer request type and ensure valid field combos:
           - If `heavy_chain` and `light_chain` => "abody"
@@ -143,14 +143,14 @@ class ImmuneBuilderPredictRequestItem(RequestModel):
         return self
 
 
-class ImmuneBuilderPredictRequest(RequestModel):
-    items: list[ImmuneBuilderPredictRequestItem] = Field(
+class ImmuneBuilderFoldRequest(RequestModel):
+    items: list[ImmuneBuilderFoldRequestItem] = Field(
         min_length=1,
         max_length=ImmuneBuilderParams.batch_size,
         description="Batch of inputs to process in a single request. Up to 8 sequences per request.",
     )
-    params: Optional[ImmuneBuilderPredictParams] = Field(
-        default_factory=ImmuneBuilderPredictParams,
+    params: Optional[ImmuneBuilderFoldParams] = Field(
+        default_factory=ImmuneBuilderFoldParams,
         description="Optional parameters controlling this action (defaults are used when omitted).",
     )
 
@@ -158,11 +158,11 @@ class ImmuneBuilderPredictRequest(RequestModel):
 ### ImmuneBuilder Response
 
 
-class ImmuneBuilderPredictResponseResult(ResponseModel):
+class ImmuneBuilderFoldResponseResult(ResponseModel):
     pdb: str = Field(description="Predicted structure in PDB format.")
 
 
-class ImmuneBuilderPredictResponse(ResponseModel):
-    results: list[ImmuneBuilderPredictResponseResult] = Field(
+class ImmuneBuilderFoldResponse(ResponseModel):
+    results: list[ImmuneBuilderFoldResponseResult] = Field(
         description="Per-input results, returned in the same order as the request items."
     )

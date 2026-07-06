@@ -18,9 +18,9 @@ from models.esmfold.config import MODEL_FAMILY, ESMFoldResourceSpec
 from models.esmfold.download import get_model_dir
 from models.esmfold.schema import (
     ESMFoldParams,
-    ESMFoldPredictRequest,
-    ESMFoldPredictResponse,
-    ESMFoldPredictResponseResult,
+    ESMFoldRequest,
+    ESMFoldResponse,
+    ESMFoldResponseResult,
 )
 
 logger = get_logger(__name__)
@@ -135,16 +135,16 @@ class ESMFoldModel(ModelMixinSnap):
     @modal_endpoint(app_name=app_name)
     def fold(
         self,
-        payload: ESMFoldPredictRequest,
-    ) -> ESMFoldPredictResponse:
+        payload: ESMFoldRequest,
+    ) -> ESMFoldResponse:
         """
         Performs structure prediction (folding) using the ESMFold model.
 
         Parameters:
-        - payload (ESMFoldPredictRequest): The request object containing sequences.
+        - payload (ESMFoldRequest): The request object containing sequences.
 
         Returns:
-        - ESMFoldPredictResponse: The response containing folding results.
+        - ESMFoldResponse: The response containing folding results.
         """
         sequences = [item.sequence for item in payload.items]
         max_tokens_per_batch = ESMFoldParams.max_tokens_per_batch
@@ -168,7 +168,7 @@ class ESMFoldModel(ModelMixinSnap):
                     mean_plddt = float(outputs["mean_plddt"][idx].cpu())
                     ptm = float(outputs["ptm"][idx].cpu())
 
-                    result = ESMFoldPredictResponseResult(
+                    result = ESMFoldResponseResult(
                         pdb=pdb,
                         mean_plddt=mean_plddt,
                         ptm=ptm,
@@ -186,7 +186,7 @@ class ESMFoldModel(ModelMixinSnap):
                     ) from e
                 raise
 
-        return ESMFoldPredictResponse(results=results)
+        return ESMFoldResponse(results=results)
 
     def create_batched_sequences(
         self, sequences: list[str], max_tokens_per_batch: int = 1024
