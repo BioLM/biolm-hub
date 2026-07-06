@@ -37,7 +37,15 @@ integration_test_suite = TestSuite(
                     input_fixture=INPUT_FILE,  # "input.json"
                     expected_output_fixture=EXPECTED_OUTPUT_FILE,  # "expected_output.json"
                     tolerances={
-                        "rel_tol": 0.5,  # High rel_tol since this model uses diffusion to generate structure
+                        # Structural agreement is governed by pdb_rmsd_threshold
+                        # (kept loose — this model uses stochastic diffusion).
+                        # rel_tol only ever gates scalar fields, so keep it tight:
+                        # a passing RMSD contributes 0 to max_diff, so tightening
+                        # rel_tol below the RMSD threshold cannot fail the
+                        # structure check, but it does bound any confidence scalar
+                        # (e.g. plddt/pae, currently disabled) to +/-10% instead of
+                        # the previous +/-50%.
+                        "rel_tol": 0.1,
                         "pdb_rmsd_threshold": 0.5,
                     },
                 ),
@@ -46,7 +54,9 @@ integration_test_suite = TestSuite(
                     input_fixture=MSA_INPUT_FILE,  # "msa_input.json"
                     expected_output_fixture=MSA_EXPECTED_OUTPUT_FILE,  # "msa_expected_output.json"
                     tolerances={
-                        "rel_tol": 0.5,
+                        # See the note above: loose structural threshold, tight
+                        # rel_tol for scalar fields.
+                        "rel_tol": 0.1,
                         "pdb_rmsd_threshold": 3.5,  # Even higher threshold for MSA test
                     },
                 ),

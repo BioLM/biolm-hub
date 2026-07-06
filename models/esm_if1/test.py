@@ -26,7 +26,17 @@ test_suite = TestSuite(
                     input_fixture=GENERATE_INPUT,
                     expected_output_fixture=GENERATE_OUTPUT,
                     tolerances={
-                        "rel_tol": 0.5,
+                        # The generated `sequence` is length-only compared
+                        # (is_generated_seq) because temperature sampling changes
+                        # the exact residues run to run. The only numeric field is
+                        # `recovery` (native-match fraction, on [0, 1]). The old
+                        # rel_tol=0.5 let it drift +/-50% (e.g. 0.5 -> 0.25 would
+                        # pass), masking a real regression. Bound it instead to
+                        # ~+/-0.1 absolute (about two residues for a ~46-residue
+                        # test protein) / +/-10% relative — tight enough to catch a
+                        # genuine drop, loose enough for run-to-run sampling jitter.
+                        "rel_tol": 0.1,
+                        "abs_tol": 0.1,
                         "is_generated_seq": True,
                     },
                 ),

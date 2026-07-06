@@ -49,8 +49,11 @@ def test_pdb_rmsds_are_close() -> None:
         {"pdb": pdb5}, {"pdb": pdb6}, pdb_rmsd_threshold=1.5
     ), "Computed RMSD is more than threshold"
 
-    # PDBs with different number of atoms should NOT pass comparison
-    # (even with RMSD threshold, since we can't compute meaningful RMSD)
+    # Structures with differing atom counts are now compared over the atoms they
+    # share, keyed by (chain, residue, atom name) — mirroring the multi-entity
+    # comparator — instead of being rejected outright. pdb7 has two extra atoms
+    # (CA GLU A1, N VAL Z101) absent from pdb8; the three atoms they share
+    # (N A1, CA Z100, CA Z200) superimpose to a low RMSD, so this now PASSES.
     pdb7 = (
         "ATOM      1  N   GLU A   1      17.183  53.112   2.287  1.00 17.07           N  \n"
         "ATOM      2  CA  GLU A   1      16.166  52.498   3.309  1.00 15.02           C  \n"
@@ -64,10 +67,49 @@ def test_pdb_rmsds_are_close() -> None:
         "ATOM      2  CA  LYS Z 100      31.524  42.195   1.386  1.00 11.23           C  \n"
         "ATOM      3  CA  TYR Z 200      21.434  32.295   2.286  1.00 11.23           C  "
     )
-    # This should fail because structures have different atom counts
-    assert not compare_outputs(
+    assert compare_outputs(
         {"pdb": pdb7}, {"pdb": pdb8}, pdb_rmsd_threshold=1.5
-    ), "Structures with different atom counts should not pass comparison"
+    ), "Shared atoms superimpose within threshold — should pass on the intersection"
+
+
+def test_pdb_rmsd_atom_reordering() -> None:
+    """LOW-21: atoms are paired by (chain, residue, atom name), not list order.
+
+    The same three atoms serialised in a different order must still superimpose
+    onto themselves at ~0 RMSD. Under the old positional pairing they were
+    matched to the wrong partners and produced a large (~2.5 Å) RMSD.
+    """
+    pdb = (
+        "ATOM      1  N   MET A   1      57.182  31.812   3.287  1.00 17.07           N\n"
+        "ATOM      2  CA  MET A   1      56.266  31.198   4.309  1.00 15.02           C\n"
+        "ATOM      3  CA  LYS A 100      51.224  32.195   2.176  1.00 11.23           C"
+    )
+    # Identical structure, atoms emitted in reverse serial order.
+    pdb_reordered = (
+        "ATOM      3  CA  LYS A 100      51.224  32.195   2.176  1.00 11.23           C\n"
+        "ATOM      1  N   MET A   1      57.182  31.812   3.287  1.00 17.07           N\n"
+        "ATOM      2  CA  MET A   1      56.266  31.198   4.309  1.00 15.02           C"
+    )
+    # A very tight threshold: only correct atom pairing yields ~0 RMSD.
+    assert compare_outputs(
+        {"pdb": pdb}, {"pdb": pdb_reordered}, pdb_rmsd_threshold=0.001
+    ), "Re-ordered identical atoms should pair by identity and give ~0 RMSD"
+
+
+def test_pdb_rmsd_disjoint_atoms_fail() -> None:
+    """Structures sharing no (chain, residue, atom name) key cannot be compared."""
+    pdb = (
+        "ATOM      1  N   MET A   1      57.182  31.812   3.287  1.00 17.07           N\n"
+        "ATOM      2  CA  MET A   1      56.266  31.198   4.309  1.00 15.02           C"
+    )
+    # Different chain and residue numbering → no shared atom identity.
+    pdb_disjoint = (
+        "ATOM      1  N   GLY B   5      57.182  31.812   3.287  1.00 17.07           N\n"
+        "ATOM      2  CA  GLY B   5      56.266  31.198   4.309  1.00 15.02           C"
+    )
+    assert not compare_outputs(
+        {"pdb": pdb}, {"pdb": pdb_disjoint}, pdb_rmsd_threshold=8.0
+    ), "Structures with no shared atoms must not pass, even under a loose threshold"
 
 
 def test_compare_outputs() -> None:
@@ -134,11 +176,73 @@ def test_cosine_vectors_within_threshold() -> None:
     # Two almost-parallel 3-D vectors → very small distance
     v1 = [1.0, 0.0, 0.0]
     v2 = [0.9999, 0.01, 0.0]
-    # Note: cosine distance is ~2.5e-5, but final check uses rel_tol,
-    # so we need to pass a rel_tol that's at least as large
+    # Two gates now apply once cosine passes: the cosine distance (~2.5e-5) and
+    # the L2-norm magnitude ratio (~5e-5, since the vectors differ slightly in
+    # length). Both are re-checked against rel_tol at the end, so rel_tol must be
+    # at least as large as the larger of the two.
     assert compare_outputs(
-        {"vec": v1}, {"vec": v2}, cosine_distance_threshold=0.01, rel_tol=3e-5
+        {"vec": v1}, {"vec": v2}, cosine_distance_threshold=0.01, rel_tol=1e-4
     )
+
+
+def test_cosine_uniform_scale_fails() -> None:
+    # MED-11: a uniform rescale (all components ×2) is a genuine magnitude
+    # regression that cosine alone is blind to (the vectors are parallel, so
+    # cosine distance is exactly 0). The L2-norm magnitude gate must reject it.
+    v_expected = [1.0, 2.0, 3.0]
+    v_actual = [2.0, 4.0, 6.0]  # exactly 2× → norm ratio 2 → |2 - 1| = 1 > rel_tol
+    assert not compare_outputs(
+        {"vec": v_actual},
+        {"vec": v_expected},
+        cosine_distance_threshold=0.01,
+        rel_tol=1e-4,
+    ), "A uniform ×2 rescale must fail the magnitude gate even though cosine passes"
+
+    # Same blind spot at matrix (2-D) granularity: every row scaled by the same
+    # factor is parallel after flattening, so only the magnitude gate catches it.
+    m_expected = [[1.0, 0.0], [0.0, 1.0]]
+    m_actual = [[3.0, 0.0], [0.0, 3.0]]
+    assert not compare_outputs(
+        {"mat": m_actual},
+        {"mat": m_expected},
+        cosine_distance_threshold=0.01,
+        rel_tol=1e-4,
+    ), "A uniformly rescaled matrix must fail the magnitude gate"
+
+
+def test_cosine_identical_vector_passes() -> None:
+    # MED-11 (b): identical vectors pass (cosine distance 0, norm ratio 1).
+    v = [0.5, -1.5, 2.0, 0.0]
+    assert compare_outputs(
+        {"vec": list(v)}, {"vec": list(v)}, cosine_distance_threshold=0.0, rel_tol=1e-6
+    )
+
+    # A tiny perturbation that keeps both cosine distance and the norm ratio
+    # within rel_tol still passes (deterministic goldens with ~equal norms).
+    v_expected = [1.0, 2.0, 3.0]
+    v_actual = [1.00001, 2.00002, 3.00001]
+    assert compare_outputs(
+        {"vec": v_actual},
+        {"vec": v_expected},
+        cosine_distance_threshold=0.01,
+        rel_tol=1e-4,
+    )
+
+
+def test_cosine_same_magnitude_rotation_passes() -> None:
+    # MED-11 (c): the existing cosine behavior is preserved — a small rotation
+    # that keeps the L2 norm unchanged (unit → unit) still passes on the cosine
+    # tolerance, and the magnitude gate does not spuriously reject it.
+    v_expected = [1.0, 0.0, 0.0]
+    # Unit vector rotated ~8° in-plane: cosine distance ≈ (1 - 0.99)/2 = 0.005,
+    # comfortably inside the 0.01 threshold; ‖·‖ stays 1.0.
+    v_actual = [0.99, (1.0 - 0.99**2) ** 0.5, 0.0]
+    assert compare_outputs(
+        {"vec": v_actual},
+        {"vec": v_expected},
+        cosine_distance_threshold=0.01,
+        rel_tol=1e-6,
+    ), "A same-magnitude rotation within the cosine tolerance must still pass"
 
 
 def test_cosine_vectors_over_threshold() -> None:

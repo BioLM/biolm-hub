@@ -161,14 +161,15 @@ class DictComparator:
         self, path: list[Any], flat1: list[float], flat2: list[float]
     ) -> None:
         # Only called from _compare_lists after confirming cosine_distance_threshold
-        # is not None.
+        # is not None. flat1 is the actual vector, flat2 the expected golden
+        # (compare() is invoked as compare(actual, expected)).
         assert self.cosine_distance_threshold is not None
         # Compute cosine similarity first (in pure Python), then derive distance
         dot = sum(a * b for a, b in zip(flat1, flat2, strict=True))
         norm1_sq = sum(a**2 for a in flat1)
         norm2_sq = sum(b**2 for b in flat2)
-        norm1 = sqrt(norm1_sq)
-        norm2 = sqrt(norm2_sq)
+        norm1 = sqrt(norm1_sq)  # ‖actual‖
+        norm2 = sqrt(norm2_sq)  # ‖expected‖
 
         if norm1 == 0 and norm2 == 0:
             cos_sim = 1.0  # Both zero: identical
@@ -179,20 +180,43 @@ class DictComparator:
 
         cos_dist = (1 - cos_sim) / 2  # Reorient to distance (0=identical, 1=opposite)
 
-        if cos_dist <= self.cosine_distance_threshold:
-            # Within the cosine tolerance: record a pass by zeroing diff, exactly
-            # like the PDB/MSA/generated-seq comparators. Recording cos_dist here
-            # would re-gate it against the stricter final rel_tol check in
-            # compare(), silently overriding cosine_distance_threshold.
-            diff = 0.0
-        else:
+        if cos_dist > self.cosine_distance_threshold:
             print(
                 f">>> Vectors/matrices at {self._diff_path_str(path)} differ beyond threshold: "
                 f"cosine distance {cos_dist} > {self.cosine_distance_threshold}."
             )
-            diff = self._inf_diff
+            self._update_max_diff(self._inf_diff, path, (flat1, flat2))
+            return
 
-        self._update_max_diff(diff, path, (flat1, flat2))
+        # Direction matches within the cosine tolerance. Cosine similarity is
+        # scale-invariant, so a uniform rescale of every component (e.g. all
+        # embeddings ×2) leaves cos_dist=0 yet is a genuine magnitude regression,
+        # and a lone cosine-per-item is blind to it. Add an L2-norm magnitude
+        # gate: require |‖actual‖/‖expected‖ − 1| <= rel_tol.
+        #
+        # Note the asymmetry with cos_dist: we deliberately do NOT record cos_dist
+        # (that would re-gate the cosine tolerance against the stricter final
+        # rel_tol check in compare(), silently overriding cosine_distance_threshold).
+        # The norm-ratio deviation, by contrast, IS meant to be gated by rel_tol,
+        # so we record it directly. It is ~0 for correct deterministic goldens
+        # (equal norms), so those keep passing.
+        mag_abs_floor = 1e-12  # guard divide-by-zero for (near-)zero vectors
+        if norm1 <= mag_abs_floor and norm2 <= mag_abs_floor:
+            # Both vectors are effectively zero → identical magnitude.
+            norm_ratio_diff = 0.0
+        else:
+            denom = norm2 if norm2 > mag_abs_floor else mag_abs_floor
+            norm_ratio_diff = abs(norm1 / denom - 1.0)
+
+        if norm_ratio_diff > self.rel_tol:
+            print(
+                f">>> Vectors/matrices at {self._diff_path_str(path)} match in direction "
+                f"(cosine distance {cos_dist} <= {self.cosine_distance_threshold}) but "
+                f"differ in magnitude: L2-norm ratio |{norm1} / {norm2} - 1| = "
+                f"{norm_ratio_diff} > rel_tol {self.rel_tol}."
+            )
+
+        self._update_max_diff(norm_ratio_diff, path, (flat1, flat2))
 
     def _compare_nums(self, path: list[Any], value1: Any, value2: Any) -> None:
         if value1 == value2:
@@ -286,28 +310,78 @@ class DictComparator:
             self._update_max_diff(diff, path, (value1, value2))
             return
 
-        if len(expected_atoms) == len(result_atoms):
-            from Bio.PDB.Superimposer import Superimposer
+        # Pair atoms by (chain, residue, atom name) instead of by list order.
+        # Superimposer.set_atoms pairs positionally, so the old
+        # equal-count/list-order path silently mismatched atoms whenever the two
+        # structures serialised their atoms in a different order (and rejected any
+        # differing count outright). Matching by identity — mirroring the
+        # multi-entity comparator's _match_atoms — is order-independent and robust
+        # to a missing atom. For an identical, identically-ordered atom set it
+        # reproduces the previous pairing exactly (same RMSD).
+        expected_atoms, result_atoms = self._pair_atoms_by_id(
+            expected_structure, result_structure
+        )
 
-            # Only reached when not pdb_seq_match, so _are_pdbs already guarantees
-            # pdb_rmsd_threshold is set.
-            assert self.pdb_rmsd_threshold is not None
-            super_imposer = Superimposer()  # type: ignore[no-untyped-call]  # biopython Superimposer ctor is untyped
-            super_imposer.set_atoms(  # type: ignore[no-untyped-call]  # biopython set_atoms is untyped
-                expected_atoms, result_atoms
-            )
-            rmsd = (
-                super_imposer.rms if super_imposer.rms is not None else self._inf_diff
-            )
-            print(f"Computed RMSD at {self._diff_path_str(path)}: {rmsd}")
-            diff = 0.0 if rmsd < self.pdb_rmsd_threshold else rmsd
-        else:
+        if not expected_atoms or not result_atoms:
+            # No atoms shared by (chain, residue, atom name): nothing meaningful to
+            # superimpose (e.g. disjoint structures).
             print(
-                f">>> Structures have different numbers of atoms at {self._diff_path_str(path)}"
+                f">>> Structures share no comparable atoms at {self._diff_path_str(path)}"
             )
-            diff = self._inf_diff
+            self._update_max_diff(self._inf_diff, path, (value1, value2))
+            return
+
+        from Bio.PDB.Superimposer import Superimposer
+
+        # Only reached when not pdb_seq_match, so _are_pdbs already guarantees
+        # pdb_rmsd_threshold is set.
+        assert self.pdb_rmsd_threshold is not None
+        super_imposer = Superimposer()  # type: ignore[no-untyped-call]  # biopython Superimposer ctor is untyped
+        super_imposer.set_atoms(  # type: ignore[no-untyped-call]  # biopython set_atoms is untyped
+            expected_atoms, result_atoms
+        )
+        rmsd = super_imposer.rms if super_imposer.rms is not None else self._inf_diff
+        print(f"Computed RMSD at {self._diff_path_str(path)}: {rmsd}")
+        diff = 0.0 if rmsd < self.pdb_rmsd_threshold else rmsd
 
         self._update_max_diff(diff, path, (value1, value2))
+
+    def _pair_atoms_by_id(
+        self, structure1: Any, structure2: Any
+    ) -> tuple[list[Any], list[Any]]:
+        """Pair atoms shared by two structures, keyed by (chain, residue, atom name).
+
+        Returns two equal-length atom lists in corresponding order, containing
+        only atoms present in both structures. ``structure1`` is walked in its
+        native ``get_atoms()`` order, so an identical, identically-ordered pair is
+        paired exactly as the old list-order path would have been (preserving its
+        RMSD); atom re-ordering or a missing atom no longer forces a spurious
+        mismatch. Mirrors ``MultiEntitymmCIFComparator._match_atoms``.
+
+        A residue that carries two atoms of the same name (e.g. alternate
+        locations) keeps only the last, matching the multi-entity comparator.
+        """
+
+        def _index(structure: Any) -> dict[tuple[Any, Any, Any], Any]:
+            atoms_by_key: dict[tuple[Any, Any, Any], Any] = {}
+            for model in structure:
+                for chain in model:
+                    for residue in chain:
+                        for atom in residue:
+                            atoms_by_key[(chain.id, residue.id, atom.name)] = atom
+            return atoms_by_key
+
+        atoms1_by_key = _index(structure1)
+        atoms2_by_key = _index(structure2)
+
+        paired1: list[Any] = []
+        paired2: list[Any] = []
+        for key, atom1 in atoms1_by_key.items():
+            atom2 = atoms2_by_key.get(key)
+            if atom2 is not None:
+                paired1.append(atom1)
+                paired2.append(atom2)
+        return paired1, paired2
 
     def _compare_msa_contents(self, path: list[Any], value1: str, value2: str) -> None:
         """
