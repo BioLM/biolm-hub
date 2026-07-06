@@ -35,10 +35,6 @@ model-cache/
 # mkdocs build output
 site/
 
-# Internal dev/planning docs — kept locally, never part of the repo.
-.planning/
-scratchpad/
-
 # Generated docs pages (built virtually by docs/gen_pages.py at mkdocs build time;
 # a standalone `python docs/gen_pages.py` run leaks them to disk — never commit).
 docs/models/
