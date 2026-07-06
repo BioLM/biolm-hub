@@ -21,7 +21,6 @@ tasks:
 primary_papers:
 - title: Large scale paired antibody language models
   arxiv: '2403.17889'
-  doi: ''
   venue: arXiv preprint, 2024
   year: 2024
   authors:

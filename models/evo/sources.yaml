@@ -65,7 +65,7 @@ applied_literature:
   md_r2: pending
 - title: Genome modelling and design across all domains of life with Evo 2
   doi: 10.1038/s41586-026-10176-5
-  year: 2025
+  year: 2026
   relevance: Successor model trained on 9T nucleotides with 1M-token context, predicting pathogenic variant effects zero-shot
     and generating eukaryotic genomes.
   molecule_focus: dna

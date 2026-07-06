@@ -17,7 +17,6 @@ tasks:
 primary_papers:
 - title: Diffusion Sequence Models for Enhanced Protein Representation and Generation
   arxiv: '2506.08293'
-  doi: ''
   venue: arXiv preprint, 2025
   year: 2025
   authors:

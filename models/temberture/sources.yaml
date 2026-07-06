@@ -15,7 +15,6 @@ tasks:
 - property_prediction
 primary_papers:
 - title: 'TemBERTure: advancing protein thermostability prediction with deep learning and attention mechanisms'
-  arxiv: ''
   doi: 10.1093/bioadv/vbae103
   venue: Bioinformatics Advances, 2024
   year: 2024

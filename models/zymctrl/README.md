@@ -46,7 +46,7 @@ Single variant -- no size options. The model slug is `zymctrl`.
 **Other considerations:**
 - Generate outputs are stochastic: different runs produce different sequences. Use the `seed` parameter for reproducibility.
 - Broad-substrate EC classes (e.g., hexokinases EC 2.7.1.1) produce more heterogeneous outputs. Narrow-substrate classes yield more consistent results.
-- Recommended workflow: generate 100-1000 sequences, rank by perplexity, select top 5% (perplexity < 1.75).
+- Recommended workflow: generate 100-1000 sequences, rank by perplexity, and keep the best ~5%. The model card recommends aiming for perplexity below ~1.5-1.75 (lower is better); the "best ~5%" is a separate selection heuristic, not a fixed perplexity cutoff.
 - Fine-tuning on a specific EC class can improve quality for that class (demonstrated in the paper for lactate dehydrogenase).
 
 ## Actions / Endpoints
@@ -175,7 +175,7 @@ encode_request = ZymCTRLEncodeRequest(
 | 1.1.1.27 | Lactate dehydrogenase | ~2.3 | - | Fine-tuning target in paper |
 
 Key metrics:
-- Perplexity < 1.75 indicates high-quality generated sequences
+- Perplexity below ~1.5-1.75 indicates high-quality generated sequences (model card guidance; lower is better)
 - Generated sequences average ~53% identity to closest natural proteins
 - Experimentally validated carbonic anhydrases showed catalytic activity
 
@@ -201,11 +201,11 @@ Combined Option A (Published Values) + Option B (Known Extremes): Tested EC numb
 *Notes: Carbonic anhydrase shows high variance but produces excellent min perplexity (1.17). Partial EC (1.1) correctly shows higher uncertainty since model was trained on full 4-level EC numbers.
 
 ### Results Summary
-**5/5 core behaviors verified.** Key finding: Valid ECs produce average perplexity of 2.15 vs 8.92 for implausible ECs (4.1x difference), confirming the paper's claim that the model differentiates between valid and random EC labels. Glucokinase achieved perplexity 1.11, well below the paper's 1.5 quality threshold.
+**5/5 core behaviors verified.** Key finding: Valid ECs produce average perplexity of 2.15 vs 8.92 for implausible ECs (4.1x difference), confirming the paper's claim that the model differentiates between valid and random EC labels. Glucokinase achieved perplexity 1.11, comfortably within the model card's recommended good-perplexity range (below ~1.5-1.75).
 
 ### Key Observations
 - Model correctly assigns higher perplexity to implausible EC numbers
-- Well-represented EC classes (glucokinase) achieve perplexity < 1.5 as expected
+- Well-represented EC classes (glucokinase) achieve perplexity around 1.1, within the recommended good range (below ~1.5-1.75)
 - Perplexity computed on amino acid tokens only (excluding EC/control tokens), matching paper methodology
 - Prompt format matches training: `<ec_number><sep><start>` then model generates `<sequence><end>`
 

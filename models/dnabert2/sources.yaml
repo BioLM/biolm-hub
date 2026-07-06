@@ -15,7 +15,6 @@ tasks:
 primary_papers:
 - title: 'DNABERT-2: Efficient Foundation Model and Benchmark For Multi-Species Genome'
   arxiv: '2306.15006'
-  doi: ''
   venue: arXiv preprint, 2023
   year: 2023
   authors:

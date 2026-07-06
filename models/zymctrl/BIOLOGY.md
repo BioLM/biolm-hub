@@ -35,8 +35,8 @@ Coverage characteristics:
 **Practical workflow**:
 1. Specify the target EC number for the desired catalytic activity
 2. Generate hundreds to thousands of candidate sequences
-3. Rank by perplexity (threshold: <1.75 for high confidence)
-4. Filter top 5% of candidates
+3. Rank by perplexity (aim for below ~1.5-1.75 for high confidence; lower is better)
+4. Keep the best ~5% of candidates
 5. Validate computationally (e.g., structure prediction with ESMFold/Chai-1, active site analysis)
 6. Synthesize and test experimentally
 
@@ -122,7 +122,7 @@ Traditional enzyme engineering (directed evolution) requires multiple rounds of 
 ### Key Terminology
 
 - **EC number**: Enzyme Commission classification number specifying catalytic function (e.g., 3.5.5.1)
-- **Perplexity**: Information-theoretic measure of how well a sequence fits the model's learned distribution. Lower values indicate the model considers the sequence more "enzyme-like" for the given EC class. Threshold of <1.75 recommended for high-quality candidates.
+- **Perplexity**: Information-theoretic measure of how well a sequence fits the model's learned distribution. Lower values indicate the model considers the sequence more "enzyme-like" for the given EC class. Values below ~1.5-1.75 are recommended for high-quality candidates (model card guidance).
 - **Control tag**: The EC number prepended to the sequence during training and generation, which conditions the model's output on a specific catalytic function
 - **Zero-shot generation**: Generating enzymes for an EC class without additional fine-tuning on that specific class
 - **Biocatalysis**: Using enzymes to catalyze chemical reactions in industrial processes

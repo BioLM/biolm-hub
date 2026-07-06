@@ -15,7 +15,6 @@ tasks:
 primary_papers:
 - title: 'ProstT5: Bilingual Language Model for Protein Sequence and Structure'
   arxiv: '2310.07083'
-  doi: ''
   venue: bioRxiv preprint, 2023
   year: 2023
   authors:

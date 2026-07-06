@@ -92,7 +92,7 @@ def modal_endpoint(  # noqa: C901
         ) -> dict[str, Any]:  # noqa: C901
             # FIXME(noqa: C901): Refactor to reduce complexity below the linter's threshold.
 
-            ### ------- [Temporary] Return payload schema logic for Python SDK -------
+            ### ------- Return payload schema for the Python SDK (schema introspection) -------
             _return_payload_schema = kwargs.pop("_return_payload_schema", False)
             if _return_payload_schema:
                 # hasattr guard: sadie's container downgrades to pydantic v1

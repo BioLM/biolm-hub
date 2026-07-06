@@ -32,9 +32,9 @@ When to use this comparator:
 - Need per-entity type RMSD thresholds
 - Standard comparator gives unrealistic high RMSD (>10Å)
 
-Models currently using: boltz1, boltz2
-Potential future users: chai1 (multi-chain complexes), af2_nim (AlphaFold predictions),
-                       esmfold (protein structures), immunebuilder (antibody complexes)
+Models currently using: rf3 (via the multientity_mmcif_comparison test flag)
+Potential future users: chai1 (multi-chain complexes), esmfold (protein structures),
+                       immunebuilder (antibody complexes)
 """
 
 import warnings

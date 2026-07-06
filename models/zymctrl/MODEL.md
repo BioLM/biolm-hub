@@ -107,7 +107,7 @@ Valid ECs produce average perplexity of 2.15 vs 8.92 for implausible ECs (4.1x d
 ZymCTRL generation is stochastic. Key variance characteristics:
 
 - **Perplexity variance**: Within an EC class, generated sequences show a range of perplexities. Well-represented classes (e.g., glucokinase) show tighter distributions; under-represented classes show wider variance.
-- **Recommended workflow**: Generate 100-1000 sequences, rank by perplexity, select top 5% (perplexity < 1.75 threshold).
+- **Recommended workflow**: Generate 100-1000 sequences, rank by perplexity, and keep the best ~5%. The model card recommends aiming for perplexity below ~1.5-1.75 (lower is better); the "best ~5%" is a separate selection heuristic rather than a fixed perplexity cutoff.
 - **Seed control**: The implementation supports explicit seeds for reproducibility. Without a seed, time-based entropy is used for diversity.
 
 ## Strengths & Limitations

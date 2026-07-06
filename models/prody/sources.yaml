@@ -17,7 +17,6 @@ tasks:
 - utility
 primary_papers:
 - title: 'ProDy: Protein Dynamics Inferred from Theory and Experiments'
-  arxiv: ''
   doi: 10.1093/bioinformatics/btr168
   venue: Bioinformatics, 2011
   year: 2011

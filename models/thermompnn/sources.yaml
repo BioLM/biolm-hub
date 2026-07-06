@@ -15,7 +15,6 @@ tasks:
 - stability_prediction
 primary_papers:
 - title: Transfer learning to leverage larger datasets for improved prediction of protein stability changes
-  arxiv: ''
   doi: 10.1101/2023.07.27.550881
   venue: bioRxiv preprint, 2023
   year: 2023

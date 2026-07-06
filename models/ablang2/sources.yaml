@@ -18,7 +18,6 @@ tasks:
 - property_prediction
 primary_papers:
 - title: 'AbLang2: Addressing the Antibody Germline Bias and Its Effect on Language Models for Improved Antibody Design'
-  arxiv: ''
   doi: 10.1101/2024.02.02.578678
   venue: bioRxiv preprint, 2024
   year: 2024
@@ -30,7 +29,6 @@ primary_papers:
   md_r2: knowledge-base/models/ablang2/primary/papers-md/th2024.md
   figures_of_note: []
 - title: 'AbLang: An antibody language model for completing antibody sequences'
-  arxiv: ''
   doi: 10.1093/bioadv/vbac046
   venue: Bioinformatics Advances, 2022
   year: 2022

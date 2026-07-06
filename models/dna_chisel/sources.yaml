@@ -13,7 +13,6 @@ tasks:
 - feature_extraction
 primary_papers:
 - title: DNA Chisel, a versatile sequence optimizer
-  arxiv: ''
   doi: 10.1093/bioinformatics/btaa558
   venue: Bioinformatics, 36(16), 4508-4509, 2020
   year: 2020

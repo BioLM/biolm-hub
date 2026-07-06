@@ -20,8 +20,6 @@ tasks:
 - property_prediction
 primary_papers:
 - title: 'ESM Cambrian: Revealing the mysteries of proteins with unsupervised learning'
-  arxiv: ''
-  doi: ''
   venue: EvolutionaryScale blog post (not a peer-reviewed paper), 2024
   year: 2024
   url: https://www.evolutionaryscale.ai/blog/esm-cambrian
@@ -84,7 +82,6 @@ applied_literature:
   pdf_r2: pending
   md_r2: pending
 - title: Assessing Quantization and Efficient Inference of Protein Language Models
-  doi: ''
   venue: GEM Workshop, ICLR 2025
   year: 2025
   relevance: Benchmarks 4-bit quantized ESM-C 300M and 600M against ESM-2 variants on GFP brightness prediction and variant

@@ -17,7 +17,6 @@ tasks:
 - inverse_folding
 primary_papers:
 - title: Robust deep learning-based protein sequence design using ProteinMPNN
-  arxiv: ''
   doi: 10.1126/science.add2187
   venue: Science, 2022
   year: 2022
@@ -31,7 +30,6 @@ primary_papers:
   md_r2: pending
   figures_of_note: []
 - title: Atomically accurate de novo design of single-domain antibodies
-  arxiv: ''
   doi: 10.1101/2024.03.14.585103
   venue: bioRxiv preprint, 2024
   year: 2024

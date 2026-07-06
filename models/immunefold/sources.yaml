@@ -18,7 +18,6 @@ tasks:
 - structure_prediction
 primary_papers:
 - title: 'ImmuneFold: Improved antibody and TCR structure prediction with a pre-trained protein language model'
-  arxiv: ''
   doi: 10.1101/2024.12.23.630212
   venue: bioRxiv preprint, 2024
   year: 2024

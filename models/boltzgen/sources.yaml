@@ -63,13 +63,11 @@ applied_literature:
   relevance: Alternative binder design method inverting Boltz-1 structure prediction; directly comparable to BoltzGen's unified
     design-and-folding approach
 - title: 'BoltzGen: Validated de novo binder design for diverse targets'
-  doi: ''
   venue: Tamarind Bio blog, 2025
   year: 2025
   relevance: Independent analysis of BoltzGen experimental validation across 26 targets, 66% nanomolar binder success rate,
     and comparison with RFDiffusion/EvoDiff baselines
 - title: 'Behind the Model: Building BoltzGen with Hannes Stark'
-  doi: ''
   venue: Benchling Blog, 2025
   year: 2025
   relevance: Technical interview covering BoltzGen design decisions, geometry-based residue representation, and practical

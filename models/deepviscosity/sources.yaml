@@ -13,7 +13,6 @@ tasks:
 primary_papers:
 - title: Accelerating high-concentration monoclonal antibody development with large-scale viscosity data and ensemble deep
     learning
-  arxiv: ''
   doi: 10.1080/19420862.2025.2483944
   venue: mAbs, 2025
   year: 2025

@@ -16,7 +16,6 @@ tasks:
 - property_prediction
 primary_papers:
 - title: Genome modeling and design across all domains of life with Evo 2
-  arxiv: ''
   doi: 10.1101/2025.02.18.638918
   venue: bioRxiv, 2025
   year: 2025
@@ -46,7 +45,7 @@ source_repos:
 applied_literature:
 - title: Genome modelling and design across all domains of life with Evo 2
   doi: 10.1038/s41586-026-10176-5
-  year: 2025
+  year: 2026
   relevance: Published Nature version of the Evo 2 paper demonstrating zero-shot prediction of BRCA1 variant pathogenicity
     with over 90% accuracy, gene essentiality identification, and whole-genome design across all domains of life.
   molecule_focus: dna

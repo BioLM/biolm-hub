@@ -15,7 +15,6 @@ tasks:
 primary_papers:
 - title: 'Omni-DNA: A Unified Genomic Foundation Model for Cross-Modal and Multi-Task Learning'
   arxiv: '2502.03499'
-  doi: ''
   venue: arXiv preprint, 2025
   year: 2025
   authors:

@@ -14,7 +14,6 @@ tasks:
 - stability_prediction
 primary_papers:
 - title: Generalizable and scalable protein stability prediction with rewired protein generative models
-  arxiv: ''
   doi: 10.1038/s41467-025-67609-4
   venue: Nature Communications, 2025
   year: 2025

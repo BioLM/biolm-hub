@@ -13,7 +13,6 @@ tasks:
 - stability_prediction
 primary_papers:
 - title: Predicting the effect of single and multiple mutations on protein stability
-  arxiv: ''
   doi: 10.1101/2024.10.10.617658
   venue: bioRxiv preprint, 2024
   year: 2024

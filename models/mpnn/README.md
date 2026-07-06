@@ -19,7 +19,7 @@ LigandMPNN extends ProteinMPNN to handle non-protein atoms including small-molec
 | Graph type | k-nearest neighbor on backbone CA atoms |
 | Input | PDB-format backbone coordinates |
 | Output | Amino acid sequences + confidence scores |
-| Max sequence length | 1024 residues |
+| Max sequence length | recommended up to ~1024 residues |
 
 For detailed architecture specifications see [MODEL.md](MODEL.md).
 
@@ -52,7 +52,7 @@ All variants run on CPU (no GPU required) with 3 GB memory.
 
 **CANNOT be used for:**
 - Backbone structure generation or remodeling (use RFdiffusion or Chroma for that)
-- Sequences longer than 1024 residues
+- Sequences beyond the recommended ~1024 residues (advisory guidance, not a hard-enforced cap)
 - Predicting protein structure from sequence (use AlphaFold2, ESMFold, or Chai-1)
 - Directly predicting or optimizing catalytic activity
 - Handling non-PDB input formats (requires valid PDB string)

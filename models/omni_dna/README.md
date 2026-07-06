@@ -85,6 +85,8 @@ Returns embeddings for each DNA sequence. Embeddings are extracted from the fina
 
 Fields are omitted when not included in the `include` parameter.
 
+> **Note on field names**: omni_dna is a dual-pooling encoder, so its `encode` response returns pooled embeddings under `mean` (mean-pooled) and `last` (last-token) rather than the catalog-standard single `embeddings` field. This is a deliberate, documented exception to the schema-uniformity convention (see `tooling/field_glossary.yaml`).
+
 ### `log_prob`
 
 Computes the total log-probability of each DNA sequence under the auto-regressive model. The model processes the batch in one forward pass, applies log-softmax over the entire vocabulary, and sums the log probabilities corresponding to the actual tokens (ignoring padded positions).

@@ -17,7 +17,6 @@ tasks:
 - property_prediction
 primary_papers:
 - title: Biological structure and function emerge from scaling unsupervised learning to 250 million protein sequences
-  arxiv: ''
   doi: 10.1073/pnas.2016239118
   venue: Proceedings of the National Academy of Sciences, 2021
   year: 2021

@@ -22,7 +22,6 @@ tasks:
 - structure_prediction
 primary_papers:
 - title: 'Chai-1: Decoding the molecular interactions of life'
-  arxiv: ''
   doi: 10.1101/2024.10.10.615955
   venue: bioRxiv preprint, 2024
   year: 2024

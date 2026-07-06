@@ -74,6 +74,19 @@ verbatim:
     - "Model layer this representation was taken from."
   logits:
     - "Per-position logits over the model vocabulary."
+  # Per-residue probability matrices (currently mpnn only): one row per residue
+  # over the 21-amino-acid vocabulary. Distinct from the singular per-sequence
+  # `log_prob` scalar below — these are the full per-position distributions.
+  log_probs:
+    - "Per-residue log probabilities over 21 amino acid types, in the model's canonical order."
+  sampling_probs:
+    - "Per-residue sampling probabilities over 21 amino acid types, corresponding to log_probs."
+
+  # Pooled (per-sequence) embeddings serialize as `embeddings`/`embedding` in most
+  # encoders. omni_dna is a documented exception: it is a dual-pooling encoder that
+  # returns BOTH a `mean` (mean-pooled) and a `last` (last-token) vector as separate
+  # fields, selected via its `include` option, rather than a single `embeddings`
+  # field. The field names are intentionally left unconverged for that model.
 
   # Per-sequence likelihood — masked-LM models report a pseudo-log-likelihood;
   # autoregressive models report an exact (joint) log-likelihood. Both allowed.

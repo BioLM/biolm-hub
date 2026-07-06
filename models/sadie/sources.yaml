@@ -18,8 +18,6 @@ tasks:
 - annotation
 primary_papers:
 - title: 'SADIE: Sequencing Analysis and Data library for Immunoinformatics Exploration'
-  arxiv: ''
-  doi: ''
   venue: "Software tool \u2014 no peer-reviewed paper published. Available via GitHub and PyPI."
   year: 2022
   authors:

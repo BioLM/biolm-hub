@@ -15,7 +15,6 @@ tasks:
 - property_prediction
 primary_papers:
 - title: 'E1: Retrieval-Augmented Protein Encoder Models'
-  arxiv: ''
   doi: 10.1101/2025.11.12.688125
   venue: bioRxiv preprint, 2025
   year: 2025
