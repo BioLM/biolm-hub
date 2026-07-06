@@ -20,12 +20,12 @@ jobs:
     name: lint · types · unit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 0 # change-detection tests diff against HEAD^ (need parent commit)
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39 # v3.2.4
 
       - name: Set up Python
         run: uv python install 3.12
@@ -52,8 +52,8 @@ jobs:
     name: docs build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v3
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39 # v3.2.4
       - run: uv python install 3.12
       - run: uv sync --all-extras
       - run: uv run mkdocs build --strict
@@ -62,7 +62,7 @@ jobs:
     name: secret scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 0 # full history so gitleaks can scan all commits
       # Use the gitleaks CLI (MIT, free) rather than gitleaks-action@v2, which now
@@ -70,7 +70,13 @@ jobs:
       - name: Install gitleaks
         run: |
           GITLEAKS_VERSION=8.18.4
-          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" | tar -xz gitleaks
+          # sha256 of gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz, from that release's
+          # published gitleaks_${GITLEAKS_VERSION}_checksums.txt — bump both together.
+          GITLEAKS_SHA256=ba6dbb656933921c775ee5a2d1c13a91046e7952e9d919f9bac4cec61d628e7d
+          curl -sSfLo gitleaks.tar.gz "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  gitleaks.tar.gz" | sha256sum -c -
+          tar -xzf gitleaks.tar.gz gitleaks
+          rm -f gitleaks.tar.gz
           sudo mv gitleaks /usr/local/bin/gitleaks
           gitleaks version
       - name: Run gitleaks

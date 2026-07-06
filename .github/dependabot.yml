@@ -1,0 +1,15 @@
+version: 2
+updates:
+  # Keep third-party Actions current — the SHA pins in workflows/*.yml still need a human
+  # to bump the trailing version comment when Dependabot opens one of these PRs.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  # Python dependencies (pyproject.toml). ML dependencies are pinned to exact versions on
+  # purpose (see CONTRIBUTING.md) — review each bump for compatibility, don't auto-merge.
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"

@@ -38,6 +38,7 @@ source .venv/bin/activate                 # puts the `bh` CLI on your PATH
 
 bh setup            # verify your Modal auth; it tells you exactly what to fix
 bh deploy esm2      # deploy ESM-2's default variant (the small, CPU-only 8M model)
+bh serve &          # local HTTP endpoint + browser UI for your deployed models, on :8000
 ```
 
 Skipping the `source .venv/bin/activate` step? Run `.venv/bin/bh …` or `uv run bh …` instead — either
@@ -52,11 +53,23 @@ automatically**: public model weights are read anonymously over HTTPS from a rea
 you configure your own R2 credentials (via `bh setup`), deploys self-populate your bucket instead. (Set
 `BIOLM_SKIP_MODAL_SECRETS` explicitly to force either mode.)
 
-Deploy prints your endpoint URL. Every model speaks the same verbs — `predict`, `fold`, `encode`,
-`generate`, `score`, `log_prob` — over HTTP, so once you know one you know them all. See the
-[ESM-2 model page](models/esm2/) for its exact request/response schema, then POST to your endpoint —
-or run `bh serve` for a local web app that lets you fill in a form and call your deployed models from
-the browser.
+`bh deploy` makes the model callable on Modal; `bh serve` is what gives you an HTTP endpoint to call
+it with — it exposes every deployed model at `POST /api/v3/<model>/<action>` locally (plus a browser
+UI to fill in a form and run inference by hand, at `http://127.0.0.1:8000/catalog`). Every model
+speaks the same verbs — `predict`, `fold`, `encode`, `generate`, `score`, `log_prob` — over HTTP, so
+once you know one you know them all:
+
+```bash
+curl -s http://127.0.0.1:8000/api/v3/esm2/encode \
+  -H "Content-Type: application/json" \
+  -d '{"items": [{"sequence": "MKTVRQERLKSIVRILERSKEPVSGAQLAEELSVSRQVIVQDIAYLRSLGYNIVATPRGYVLAGG"}]}'
+```
+
+The response is `{"results": [{"sequence_index": 0, "embeddings": [...]}]}` — one entry per input
+sequence, with the mean-pooled embedding under `results[].embeddings` by default (pass
+`params.include` for per-residue embeddings, contacts, logits, or attentions instead). See the
+[ESM-2 model page](models/esm2/) for the exact request/response schema — every model's page documents
+its own.
 
 > **Deployed endpoints are unauthenticated.** A deployed model, a deployed gateway, or
 > `bh serve --host 0.0.0.0` exposes inference **without authentication**, and every call bills *your*

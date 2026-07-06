@@ -1,0 +1,82 @@
+name: Propose a new model
+description: Suggest a biological ML model to add to the catalog.
+title: "[model]: "
+labels: ["new-model", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        New models are welcome — the catalog is meant to be self-extending. Before implementing,
+        skim [`CONTRIBUTING.md`](../../CONTRIBUTING.md) and `models/dummy/` (the template).
+        **License first:** only permissively-licensed models (MIT / Apache-2.0 / BSD and
+        compatible) are accepted.
+
+  - type: input
+    id: model-name
+    attributes:
+      label: Model name
+      placeholder: "e.g. ProtT5, RFdiffusion, AbLang3"
+    validations:
+      required: true
+
+  - type: input
+    id: source
+    attributes:
+      label: Paper / source repo
+      description: Link to the paper (arXiv/bioRxiv) and the upstream code and/or weights (GitHub, Hugging Face).
+      placeholder: "https://arxiv.org/abs/..., https://github.com/..., https://huggingface.co/..."
+    validations:
+      required: true
+
+  - type: input
+    id: license
+    attributes:
+      label: License
+      description: The upstream license for the code and, separately, the weights (they sometimes differ).
+      placeholder: "e.g. code: MIT, weights: MIT"
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it belongs in the catalog
+      description: What biological problem does it solve, and how is it distinct from models already in `models/`? (Check `comparison.yaml` of similar models first.)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: actions
+    attributes:
+      label: Action verb(s) it would need
+      description: The catalog's closed action set — pick the one(s) matching intent (see PHILOSOPHY.md).
+      multiple: true
+      options:
+        - predict
+        - fold
+        - encode
+        - generate
+        - score
+        - log_prob
+        - Not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: willing
+    attributes:
+      label: Are you willing to implement it?
+      options:
+        - "Yes, I'll open a PR"
+        - "Maybe, with some guidance"
+        - "No, just suggesting"
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Compute requirements, known quirks, existing third-party wrappers, anything else useful.
+    validations:
+      required: false

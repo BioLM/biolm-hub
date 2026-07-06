@@ -1,0 +1,14 @@
+# CODEOWNERS
+#
+# PLACEHOLDER — @BioLM/biolm-hub-maintainers does not exist. A maintainer must replace it
+# below with a real GitHub team (Settings → Teams) or real @handles before this has any
+# effect (GitHub silently ignores CODEOWNERS entries that resolve to nobody).
+#
+# These paths carry the most cross-model blast radius (shared framework, CI/CD trust
+# boundary, the unified gateway, and the CLI) — everything else falls through to normal
+# review. See PHILOSOPHY.md for why models/commons/ changes are reviewed with extra care.
+
+/models/commons/  @BioLM/biolm-hub-maintainers
+/.github/         @BioLM/biolm-hub-maintainers
+/gateway/         @BioLM/biolm-hub-maintainers
+/cli/             @BioLM/biolm-hub-maintainers
