@@ -1,9 +1,11 @@
 # Philosophy
 
-`biolm-hub` exists because the hard part of bio-ML has moved. Implementing a model used to be the
-moat — fragile research code, undocumented dependencies, one-off serving. Coding agents have made
-that work cheap. The remaining, durable value is **not making everyone reinvent the wheel**: a clean,
-standardized, deploy-anywhere catalog that an agent or human can pull from and run.
+`biolm-hub` exists so nobody has to keep reinventing the same plumbing. Open biological ML models
+usually arrive as fragile research code — undocumented dependencies, a one-off serving story — so
+every person (and every agent acting for them) re-solves the same problems before getting a single
+prediction. The durable value is **not making everyone reinvent the wheel**: a clean, standardized,
+deploy-anywhere catalog that any human or agent can pull from and run, and that the community can
+extend.
 
 So the design center is **agent-first**. Every choice optimizes for an LLM/agent consumer, because an
 interface that an agent can use reliably is also one a human can use reliably.

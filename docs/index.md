@@ -3,10 +3,12 @@
 A standardized, **agent-first** catalog of open biological ML models that deploy on
 [Modal](https://modal.com) in a couple of commands.
 
-The per-model implementation is no longer the hard part — coding agents have commoditized it.
-What's still missing is a **clean, uniform, documented, deploy-anywhere** substrate so nobody has to
-reinvent the wheel. That's what this repo is: ready-to-run bio-models an agent (or human) can pull
-off the shelf and run.
+Running an open biological ML model shouldn't mean re-solving the same plumbing every time —
+dependencies, an undocumented interface, a one-off deployment — before you get a single prediction,
+for every model and every person or agent who tries. What's still missing is a **clean, uniform,
+documented, deploy-anywhere** substrate so nobody has to reinvent the wheel. That's what this repo is:
+ready-to-run bio-models anyone — human or agent — can pull off the shelf and run, growing as the
+community adds more.
 
 ## Five-minute success
 
