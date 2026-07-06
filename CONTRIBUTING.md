@@ -130,7 +130,7 @@ Before opening a PR for a new or changed model, confirm it lands in house style 
   `python -m pytest models/<name>/test.py`. The golden output is the oracle — regenerate goldens only
   when an output change is *intended*, and say so in the PR. Integration and deployment tests
   (which need a Modal env + R2) run in the maintainer-gated `deploy.yml` workflow once a maintainer
-  applies the `deploy-approved` label and approves the `modal-dev` deploy (see
+  applies the `deploy-approved` label and approves the `biolm-hub-dev` deploy (see
   [Continuous integration & deploys](#continuous-integration--deploys)).
 
 ## Pull requests
@@ -159,7 +159,7 @@ only when a maintainer clears **both** gates:
 
 1. **adds the `deploy-approved` label** to the PR (applying a label needs repo write, so only a
    maintainer can start the pipeline), and
-2. **approves the `modal-dev` GitHub Environment** — the deploy job pauses for a required reviewer,
+2. **approves the `biolm-hub-dev` GitHub Environment** — the deploy job pauses for a required reviewer,
    and the approval prompt shows the exact commit SHA before any secret is exposed.
 
 Once both gates pass, the affected models — computed by `.github/scripts/detect_models.py`, where a
@@ -174,8 +174,8 @@ remove and re-add the label.
 
 > **Maintainers:** approving runs the PR's *code* (`config.py`/`app.py`) on Modal with credentials in
 > scope, so **review the full diff before labeling** (one approval can fan out to *every* model if
-> `models/commons/` changed). One-time setup: create the `deploy-approved` label and a `modal-dev`
+> `models/commons/` changed). One-time setup: create the `deploy-approved` label and a `biolm-hub-dev`
 > GitHub Environment with **required reviewers**, and store `MODAL_TOKEN_*`, `R2_*`, and the
-> `MODAL_DEV_ENVIRONMENT_SENTINEL` as **environment** secrets (never repo-wide — the workflow's
+> `BIOLM_HUB_DEV_ENVIRONMENT_SENTINEL` as **environment** secrets (never repo-wide — the workflow's
 > preflight fails fast otherwise). Scope the Modal token to the `biolm-hub-dev` workspace and the R2
 > creds to a read-only dev bucket. Full details are in the header of `.github/workflows/deploy.yml`.

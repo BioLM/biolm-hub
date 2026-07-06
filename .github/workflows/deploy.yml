@@ -11,8 +11,8 @@
 #     maintainer manually runs it (`workflow_dispatch`). Applying a label needs
 #     repo write, so only maintainers can trigger it — opening/updating a PR
 #     does nothing here.
-#   Gate 2 — the `modal-dev` GitHub Environment. The only secret-bearing job
-#     (`deploy-and-test`) declares `environment: modal-dev`, which must be
+#   Gate 2 — the `biolm-hub-dev` GitHub Environment. The only secret-bearing job
+#     (`deploy-and-test`) declares `environment: biolm-hub-dev`, which must be
 #     configured with REQUIRED REVIEWERS. GitHub pauses the job for manual
 #     approval before exposing the environment's secrets, and the approval
 #     prompt shows the exact commit SHA being deployed.
@@ -22,7 +22,7 @@
 #    on Modal with the maintainer's Modal token in scope. The review-then-label
 #    step IS the code-trust boundary: a maintainer MUST read the full diff before
 #    applying `deploy-approved`.
-#  • Secrets live ONLY as `modal-dev` ENVIRONMENT secrets (never repo-wide). A
+#  • Secrets live ONLY as `biolm-hub-dev` ENVIRONMENT secrets (never repo-wide). A
 #    job can read an environment's secrets only if it declares that environment,
 #    so the required-reviewer gate is unavoidable. Repo-wide secrets would
 #    silently skip that gate — the `preflight` step below fails fast if an
@@ -40,7 +40,7 @@
 # Maintainer setup (one-time — see CONTRIBUTING.md "Continuous integration &
 # deploys" for the full checklist):
 #   1. Create a `deploy-approved` label.
-#   2. Create a `modal-dev` GitHub Environment with REQUIRED REVIEWERS (the
+#   2. Create a `biolm-hub-dev` GitHub Environment with REQUIRED REVIEWERS (the
 #      maintainers), and store the secrets below as ENVIRONMENT secrets on it
 #      (NOT repo-wide).
 #   3. Scope the Modal token to the `biolm-hub-dev` workspace and the R2 creds to
@@ -50,8 +50,8 @@
 # (or a PR that edits the detector) can mark every model affected. The matrix is
 # bounded only by your review, so review the full diff before labeling.
 #
-# Required secrets (store on the `modal-dev` Environment, not repo-wide):
-#   MODAL_DEV_ENVIRONMENT_SENTINEL       — any non-empty value; its presence
+# Required secrets (store on the `biolm-hub-dev` Environment, not repo-wide):
+#   BIOLM_HUB_DEV_ENVIRONMENT_SENTINEL       — any non-empty value; its presence
 #       proves the job resolved ENVIRONMENT secrets (the preflight fails if
 #       absent, catching secrets mistakenly stored repo-wide).
 #   MODAL_TOKEN_ID / MODAL_TOKEN_SECRET  — Modal auth (token scoped to the
@@ -157,21 +157,21 @@ jobs:
     needs: detect
     if: needs.detect.outputs.has_models == 'true'
     runs-on: ubuntu-latest
-    # Gate 2: binds secrets to the `modal-dev` Environment, whose required
+    # Gate 2: binds secrets to the `biolm-hub-dev` Environment, whose required
     # reviewers must approve (showing the commit SHA) before this job runs.
-    environment: modal-dev
+    environment: biolm-hub-dev
     strategy:
       fail-fast: false
       matrix:
         model: ${{ fromJson(needs.detect.outputs.models_changed) }}
     steps:
       # Fail-fast BEFORE checking out any (untrusted) PR code: confirm the
-      # secrets actually resolved from the `modal-dev` Environment. The sentinel
+      # secrets actually resolved from the `biolm-hub-dev` Environment. The sentinel
       # exists only as an environment secret, so if it's blank the creds are
       # misconfigured (e.g. stored repo-wide) and we must not proceed.
-      - name: Preflight — confirm modal-dev environment secrets
+      - name: Preflight — confirm biolm-hub-dev environment secrets
         env:
-          SENTINEL: ${{ secrets.MODAL_DEV_ENVIRONMENT_SENTINEL }}
+          SENTINEL: ${{ secrets.BIOLM_HUB_DEV_ENVIRONMENT_SENTINEL }}
           MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
           MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
@@ -179,20 +179,20 @@ jobs:
           R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
         run: |
           missing=""
-          [ -n "$SENTINEL" ] || missing="$missing MODAL_DEV_ENVIRONMENT_SENTINEL(environment-only-sentinel)"
+          [ -n "$SENTINEL" ] || missing="$missing BIOLM_HUB_DEV_ENVIRONMENT_SENTINEL(environment-only-sentinel)"
           [ -n "$MODAL_TOKEN_ID" ] || missing="$missing MODAL_TOKEN_ID"
           [ -n "$MODAL_TOKEN_SECRET" ] || missing="$missing MODAL_TOKEN_SECRET"
           [ -n "$R2_ACCESS_KEY_ID" ] || missing="$missing R2_ACCESS_KEY_ID"
           [ -n "$R2_SECRET_ACCESS_KEY" ] || missing="$missing R2_SECRET_ACCESS_KEY"
           [ -n "$R2_ENDPOINT" ] || missing="$missing R2_ENDPOINT"
           if [ -n "$missing" ]; then
-            echo "::error::Missing required modal-dev ENVIRONMENT secret(s):$missing"
-            echo "These must be set as ENVIRONMENT secrets on the 'modal-dev' Environment"
-            echo "(Settings → Environments → modal-dev), NOT as repo-wide secrets — otherwise"
+            echo "::error::Missing required biolm-hub-dev ENVIRONMENT secret(s):$missing"
+            echo "These must be set as ENVIRONMENT secrets on the 'biolm-hub-dev' Environment"
+            echo "(Settings → Environments → biolm-hub-dev), NOT as repo-wide secrets — otherwise"
             echo "the required-reviewer approval gate is silently skipped. See CONTRIBUTING.md."
             exit 1
           fi
-          echo "modal-dev environment secrets present; proceeding."
+          echo "biolm-hub-dev environment secrets present; proceeding."
 
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
