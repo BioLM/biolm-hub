@@ -20,13 +20,16 @@
 
 ---
 
-Implementing a bio-ML model used to be a moat — research code is dependency hell, undocumented, and
-fragile. Coding agents have commoditized that work. What's still missing is a **clean, uniform,
-documented, deploy-anywhere** substrate so nobody has to reinvent the wheel.
+Running an open biological ML model shouldn't mean re-solving the same plumbing every time — hunting
+down dependencies, reverse-engineering an undocumented interface, and wiring up a deployment before you
+get a single prediction. That friction repeats for every model, and for every person or agent who
+tries to use one. What's still missing is a **clean, uniform, documented, deploy-anywhere** substrate
+so nobody has to reinvent the wheel.
 
 `biolm-hub` is that substrate: every model has the same layout, the same action verbs, the same
-schemas, and a machine-readable knowledge graph — so an agent (or a human) can pull any model off the
-shelf and run it. The catalog ships **36 models** today, each with an identical interface.
+schemas, and a machine-readable knowledge graph — so anyone, human or agent, can pull a model off the
+shelf and have it running in minutes instead of days. The catalog ships **36 models** today, each with
+an identical interface, and it's built to grow as the community adds more.
 
 ## Quickstart — five-minute success
 
@@ -88,7 +91,8 @@ its own.
 
 ## Why it's "agent-first"
 
-Every design choice optimizes for an LLM/agent consumer:
+Every design choice optimizes for an LLM/agent consumer — and humans get the same clean, predictable
+surface for free:
 
 - **Uniform action verbs** — `predict`, `fold`, `encode`, `generate`, `score`, `log_prob`. Learn one
   model and you know them all.
@@ -103,10 +107,13 @@ See [`PHILOSOPHY.md`](PHILOSOPHY.md) for the full design center.
 
 ## Adding a model
 
-The catalog is meant to be **self-extending**: a contributor's agent can add a new model that matches
-house style end-to-end. Start from `models/dummy/` (the template) and follow
-[`CONTRIBUTING.md`](CONTRIBUTING.md). Each model's license is declared in its `sources.yaml`; only
-permissively-licensed (MIT / Apache-2.0 / BSD and compatible) models are included.
+The catalog grows with its community, and adding a model is meant to be approachable for you and your
+agent alike — because the layout is uniform, a new model follows a well-worn path instead of being a
+research project. Have one you'd like to see? Open a
+[discussion](https://github.com/BioLM/biolm-hub/discussions) or an issue to propose it, then start from
+`models/dummy/` (the template) and follow [`CONTRIBUTING.md`](CONTRIBUTING.md). Each model's license is
+declared in its `sources.yaml`; only permissively-licensed (MIT / Apache-2.0 / BSD and compatible)
+models are included.
 
 ## Security
 
