@@ -29,7 +29,7 @@ shape of the call across the whole catalog.
 <!-- BEGIN GENERATED CATALOG (tooling/gen_model_catalog.py — do not edit by hand) -->
 ## Models
 
-**36 models · 68 deployable variants.** Each row is one variant — everything you need to call it. When `bh serve` is running, invoke an action with `POST /api/v1/{endpoint-slug}/{action}`; to call the Modal class directly, use `modal.Cls.from_name("{modal-app}", ...)`. The **Actions** column lists the closed-set verbs the variant's family supports.
+**37 models · 69 deployable variants.** Each row is one variant — everything you need to call it. When `bh serve` is running, invoke an action with `POST /api/v1/{endpoint-slug}/{action}`; to call the Modal class directly, use `modal.Cls.from_name("{modal-app}", ...)`. The **Actions** column lists the closed-set verbs the variant's family supports.
 
 | Model | Base slug | Endpoint slug | Modal app | Actions | GPU |
 |-------|-----------|---------------|-----------|---------|-----|
@@ -40,6 +40,7 @@ shape of the call across the whole catalog.
 | [Biotite](biotite/) | `biotite` | `biotite` | `biotite` | `generate`, `predict` | CPU |
 | [BoltzGen](boltzgen/) | `boltzgen` | `boltzgen` | `boltzgen` | `generate` | A100 |
 | [Chai-1](chai1/) | `chai1` | `chai1` | `chai1` | `fold` | A100-80GB |
+| [ChemBERTa](chemberta/) | `chemberta` | `chemberta` | `chemberta` | `encode`, `log_prob` | CPU |
 | [DeepViscosity](deepviscosity/) | `deepviscosity` | `deepviscosity` | `deepviscosity` | `predict` | CPU |
 | [DNA-Chisel](dna_chisel/) | `dna-chisel` | `dna-chisel` | `dna-chisel` | `encode` | CPU |
 | [DNABERT-2](dnabert2/) | `dnabert2` | `dnabert2` | `dnabert2` | `encode`, `log_prob` | T4 |

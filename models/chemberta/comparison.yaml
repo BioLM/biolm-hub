@@ -1,0 +1,64 @@
+# comparison.yaml — Model Comparison Metadata
+# Machine-readable guidance for model selection.
+#
+# Requirements:
+#   - strengths, weaknesses, use_when, dont_use_when: 5+ entries each (min 3)
+#   - alternatives, complements: 1+ entries where applicable
+#   - All referenced model slugs must exist in models/
+
+model_slug: "chemberta"
+display_name: "ChemBERTa"
+last_updated: "2026-07-08"
+
+strengths:
+  - "Opens the small-molecule (SMILES) modality for the catalog — a chemical language model where every other sequence model targets protein, DNA, or RNA"
+  - "Lightweight at ~92M parameters and runs comfortably on CPU, making SMILES embedding and scoring cheap for high-throughput virtual screening"
+  - "MIT license (declared via the HuggingFace card) permits unrestricted commercial and academic use, unlike many non-commercial cheminformatics assets"
+  - "Standard RobertaForMaskedLM + byte-level BPE tokenizer — loads without trust_remote_code, so it is robust across transformers versions and easy to audit"
+  - "Byte-level BPE over SMILES tokenizes arbitrary molecules without a hand-curated atom vocabulary, learning multi-character chemical motifs (rings, functional groups) as single tokens"
+  - "Pretrained self-supervised on a large 100M-molecule subset of ZINC20, covering broad drug-like / purchasable chemical space"
+  - "Dual-action API (encode + log_prob) covers both fixed-length molecular embeddings and a pseudo-log-likelihood plausibility score from one deployment"
+
+weaknesses:
+  - "Encoder-only masked LM: it cannot generate or design novel molecules — it only embeds and scores existing SMILES"
+  - "This checkpoint uses the MLM objective; the ChemBERTa-2 paper reports that the multi-task-regression (MTR) variant often outperforms MLM on supervised property prediction, so MLM embeddings may be suboptimal for that use"
+  - "Independent benchmarking (Praski et al., 2025) finds pretrained molecular embeddings frequently give negligible improvement over the classical ECFP fingerprint baseline — validate lift on your task before adopting"
+  - "Consumes 1D SMILES only — no explicit 3D conformer or molecular-graph information, and results can depend on SMILES canonicalization/kekulization of the input"
+  - "Input validation is a lightweight character/bracket check (no rdkit): it does not guarantee chemical validity or a canonical form, so garbage-but-well-formed SMILES are accepted"
+  - "The log_prob output is a pseudo-log-likelihood summed over byte-level BPE tokens (not per-atom), so it is not directly comparable across molecules of very different SMILES length"
+  - "512-position context and a ZINC20-drug-like training distribution mean very large molecules (long peptides, polymers) are truncated and exotic chemotypes are out-of-distribution"
+
+use_when:
+  - "You need fast, cheap fixed-length embeddings for small molecules from SMILES to feed a downstream classifier or regressor (QSAR / molecular property prediction)"
+  - "You are building a small-molecule pipeline and need a permissively licensed (MIT) SMILES featurizer that runs on CPU"
+  - "You want a pretrained chemical language model baseline to compare against ECFP fingerprints or graph neural networks on MoleculeNet-style tasks"
+  - "You need a pseudo-log-likelihood 'plausibility' score to rank or flag unusual SMILES (e.g., filtering generative-model outputs) rather than a supervised property value"
+  - "You are clustering, deduplicating, or performing similarity search over a compound library using learned molecular representations"
+  - "You need a chemical embedding to concatenate with protein embeddings (e.g., ESM-2) for a protein–ligand interaction model"
+
+dont_use_when:
+  - "You need to generate, optimize, or design novel molecules (ChemBERTa is encoder-only; use a generative chemical model, which the catalog does not yet host)"
+  - "You need a 3D structure or binding pose for a molecule or a protein–ligand complex (use chai1 or boltzgen, which consume SMILES ligands and predict structure)"
+  - "You require guaranteed chemical validity or canonicalization of inputs (run rdkit upstream; this model's validator is a lightweight format check only)"
+  - "You are working with proteins, DNA, or RNA rather than small molecules (use esm2/esmc for protein, dnabert2/evo for DNA)"
+  - "Your task already has a strong ECFP-fingerprint or graph-neural-network baseline that a pretrained SMILES embedding has not been shown to beat"
+  - "You need the best available supervised property predictor and can fine-tune — a task-specific fine-tuned model (or the ChemBERTa-2 MTR variant) will typically outperform frozen MLM embeddings"
+
+alternatives:
+  - model: "dnabert2"
+    when_better: "Your inputs are DNA sequences rather than small molecules — dnabert2 is the analogous BPE-tokenized masked-LM encoder (encode + log_prob) for genomics"
+    when_worse: "Operates on nucleotides, not chemical SMILES; it is not a substitute for small-molecule representations"
+  - model: "esm2"
+    when_better: "Your inputs are proteins — ESM-2 is the analogous masked-LM encoder for amino-acid sequences with richer, more heavily benchmarked representations"
+    when_worse: "Operates on protein sequences, not small molecules; cannot embed or score SMILES"
+
+complements:
+  - model: "chai1"
+    workflow: "Use ChemBERTa to embed and pre-filter/rank a library of candidate small-molecule SMILES, then pass the top ligands (with a protein target) to Chai-1 for protein–ligand co-folding and binding-pose prediction"
+    example_protocol: null
+  - model: "boltzgen"
+    workflow: "Screen or cluster candidate ligand SMILES with ChemBERTa embeddings, then use BoltzGen for structure-based modeling of the shortlisted small molecules"
+    example_protocol: null
+  - model: "esm2"
+    workflow: "Combine ChemBERTa small-molecule embeddings with ESM-2 protein embeddings as joint features for a protein–ligand interaction or affinity predictor"
+    example_protocol: null

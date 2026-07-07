@@ -1,0 +1,104 @@
+model_slug: chemberta
+display_name: ChemBERTa
+license:
+  type: MIT
+  url: https://huggingface.co/DeepChem/ChemBERTa-100M-MLM
+  notes: >-
+    Upstream ships no LICENSE file; the license is declared only via the
+    HuggingFace model-card metadata tag `license: mit`. MIT is permissive
+    (OSI-approved) — no commercial or academic-use restrictions.
+molecule_types:
+- ligand
+applicable_to:
+- ligand
+- small_molecule
+- drug_discovery
+- cheminformatics
+tasks:
+- embedding
+- property_prediction
+primary_papers:
+- title: 'ChemBERTa-2: Towards Chemical Foundation Models'
+  arxiv: '2209.01712'
+  venue: ELLIS Machine Learning for Molecule Discovery Workshop, 2022
+  year: 2022
+  authors:
+  - Walid Ahmad
+  - Elana Simon
+  - Seyone Chithrananda
+  - Gabriel Grand
+  - Bharath Ramsundar
+  pdf_r2: ''
+  md_r2: ''
+  figures_of_note: []
+  notes: >-
+    Direct methodological lineage of the DeepChem/ChemBERTa-*-MLM checkpoints.
+    Explores masked language modeling (MLM) and multi-task regression (MTR)
+    pretraining objectives and scales SMILES pretraining up to 77M PubChem
+    compounds, reporting competitiveness with prior art on MoleculeNet.
+- title: 'ChemBERTa: Large-Scale Self-Supervised Pretraining for Molecular Property
+    Prediction'
+  arxiv: '2010.09885'
+  venue: ML4Molecules Workshop, NeurIPS 2020
+  year: 2020
+  authors:
+  - Seyone Chithrananda
+  - Gabriel Grand
+  - Bharath Ramsundar
+  pdf_r2: ''
+  md_r2: ''
+  figures_of_note: []
+  notes: >-
+    Original ChemBERTa: a RoBERTa transformer over SMILES, showing that
+    downstream property-prediction performance scales with pretraining set size.
+source_repos:
+- type: huggingface
+  url: https://huggingface.co/DeepChem/ChemBERTa-100M-MLM
+  commit: f5c45f44d3061f0346888f5c09db17ec1146d29d
+  page_md_r2: ''
+  notes: >-
+    The exact checkpoint served. Pretrained on a subset of 100M molecules from
+    the ZINC20 dataset using masked language modeling (per the model card).
+    RobertaForMaskedLM, 12 layers, 768 hidden, 12 heads, byte-level BPE vocab
+    of 7,924, 512 max positions, ~92.1M parameters, float32.
+- type: github
+  url: https://github.com/deepchem/deepchem
+  commit: ''
+  branch: master
+  snapshot_r2: ''
+  notes: >-
+    DeepChem maintains the ChemBERTa checkpoints and tooling. ChemBERTa-2
+    reference code lives at https://github.com/seyonechithrananda/bert-loves-chemistry.
+applied_literature:
+- title: 'MolPROP: Molecular Property prediction with multimodal language and graph
+    fusion'
+  doi: 10.1186/s13321-024-00846-9
+  year: 2024
+  relevance: >-
+    Fuses ChemBERTa-2 SMILES embeddings with a graph neural network for molecular
+    property prediction, evaluated on seven MoleculeNet datasets (FreeSolv, ESOL,
+    Lipophilicity, QM7, BACE, BBBP, ClinTox) under scaffold splits — a concrete
+    demonstration of ChemBERTa embeddings as features in a multimodal model.
+  molecule_focus: ligand
+  task_focus:
+  - property_prediction
+  pdf_r2: ''
+  md_r2: ''
+- title: Benchmarking Pretrained Molecular Embedding Models For Molecular Representation
+    Learning
+  arxiv: '2508.06199'
+  year: 2025
+  relevance: >-
+    Benchmarks pretrained molecular embedding models (the model class ChemBERTa
+    belongs to) across 25 datasets, finding that most neural embeddings give
+    negligible improvement over the classical ECFP fingerprint baseline —
+    important context when choosing ChemBERTa embeddings for downstream tasks.
+  molecule_focus: ligand
+  task_focus:
+  - embedding
+  - property_prediction
+  pdf_r2: ''
+  md_r2: ''
+# Applied-literature note: ChemBERTa is widely used as a SMILES featurizer/baseline
+# across cheminformatics; the two entries above are representative (verified to
+# use or directly bear on ChemBERTa embeddings), not exhaustive.
