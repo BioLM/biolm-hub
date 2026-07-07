@@ -10,7 +10,7 @@ import pytest
 
 from gateway.catalog import deployment_status as ds
 from gateway.catalog.deployment_status import get_deployment_status
-from gateway.catalog.generator import generate_catalog_data
+from gateway.catalog.generator import generate_catalog_data, group_models_by_base
 from gateway.model_discovery import get_model_mapper
 from gateway.routing import build_gateway_app
 
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 def test_catalog_generation_produces_endpoints() -> None:
     mapper = get_model_mapper()
     app = build_gateway_app(mapper, use_cache=False)
-    catalog = generate_catalog_data(app)
+    catalog = generate_catalog_data(app, mapper)
 
     assert catalog, "catalog should not be empty"
     # dna-chisel is a known single-variant model with an encode endpoint.
@@ -30,6 +30,23 @@ def test_catalog_generation_produces_endpoints() -> None:
     assert endpoints
     assert all("path" in e and "method" in e for e in endpoints)
     assert any(e["path"].startswith("/api/v1/dna-chisel/") for e in endpoints)
+
+
+def test_catalog_generation_uses_config_display_names() -> None:
+    """Group titles and variant labels must come from ModelFamily config, not
+    a title-cased slug (e.g. 'dna-chisel' -> 'DNA-Chisel', not 'Dna Chisel')."""
+    mapper = get_model_mapper()
+    app = build_gateway_app(mapper, use_cache=False)
+    catalog = generate_catalog_data(app, mapper)
+    grouped = group_models_by_base(catalog, mapper)
+
+    assert catalog["dna-chisel"]["display_name"] == "DNA-Chisel"
+    assert grouped["dna-chisel"]["display_name"] == "DNA-Chisel"
+
+    thermompnn_d_family = mapper.get_model_family("thermompnn-d")
+    assert thermompnn_d_family is not None
+    assert grouped["thermompnn-d"]["display_name"] == thermompnn_d_family.display_name
+    assert thermompnn_d_family.display_name == "ThermoMPNN-D"
 
 
 def test_deployment_status_maps_deployed_and_undeployed(

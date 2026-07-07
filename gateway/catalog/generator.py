@@ -5,6 +5,7 @@ from fastapi.routing import APIRoute
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 
+from gateway.model_discovery import ModelMapper
 from models.commons.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -264,8 +265,17 @@ def _sanitize_schema_dict(schema_dict: dict[str, Any]) -> dict[str, Any]:
     return sanitized
 
 
-def generate_catalog_data(app: FastAPI) -> dict[str, dict[str, Any]]:
-    """Generates a structured dictionary of API endpoints from a FastAPI app."""
+def generate_catalog_data(
+    app: FastAPI, model_mapper: ModelMapper
+) -> dict[str, dict[str, Any]]:
+    """Generates a structured dictionary of API endpoints from a FastAPI app.
+
+    ``model_slug`` (the path segment right after ``/api/v1/``) is always a
+    variant's ``public_endpoint_slug``, so ``model_mapper`` resolves the exact
+    same config-driven ``base_model_slug`` and ``public_display_name`` that
+    ``tooling/gen_model_catalog.py`` and ``docs/gen_pages.py`` render — never a
+    title-cased guess derived from the slug text.
+    """
     catalog: dict[str, dict[str, Any]] = {}
     for route in app.routes:
         if isinstance(route, APIRoute) and route.path.startswith("/api/v1/"):
@@ -277,10 +287,22 @@ def generate_catalog_data(app: FastAPI) -> dict[str, dict[str, Any]]:
                 continue  # Skip routes that don't match the expected format
 
             if model_slug not in catalog:
-                # Extract base model slug for grouping
-                base_model_slug = _extract_base_model_slug(model_slug)
+                variant_info = model_mapper.get_variant_info(model_slug)
+                if variant_info is not None:
+                    base_model_slug = variant_info["base_model_slug"]
+                    display_name = variant_info["display_name"]
+                else:
+                    # Should not happen (every registered route comes from a
+                    # known variant), but degrade gracefully rather than 500.
+                    logger.warning(
+                        "No variant info for routed model slug '%s'; falling "
+                        "back to a title-cased slug for its display name.",
+                        model_slug,
+                    )
+                    base_model_slug = _extract_base_model_slug(model_slug)
+                    display_name = model_slug.replace("-", " ").title()
                 catalog[model_slug] = {
-                    "display_name": model_slug.replace("-", " ").title(),
+                    "display_name": display_name,
                     "base_model_slug": base_model_slug,
                     "endpoints": [],
                 }
@@ -316,16 +338,34 @@ def _extract_base_model_slug(model_slug: str) -> str:
 
 def group_models_by_base(
     catalog: dict[str, dict[str, Any]],
+    model_mapper: ModelMapper,
 ) -> dict[str, dict[str, Any]]:
-    """Group models by their base model slug."""
+    """Group models by their base model slug.
+
+    The group title is the family's ``ModelFamily.display_name`` (e.g.
+    "DNA-Chisel", "ThermoMPNN-D") — the same field the README/docs catalog
+    generators read — never a title-cased ``base_model_slug``.
+    """
     grouped: dict[str, dict[str, Any]] = {}
 
     for model_slug, model_info in catalog.items():
         base_slug = model_info.get("base_model_slug", model_slug)
 
         if base_slug not in grouped:
+            family = model_mapper.get_model_family(base_slug)
+            if family is not None:
+                display_name = family.display_name
+            else:
+                # Fallback for the (unexpected) case of an unregistered base
+                # slug; keeps the catalog rendering instead of erroring.
+                logger.warning(
+                    "No ModelFamily registered for base slug '%s'; falling "
+                    "back to a title-cased slug for its group display name.",
+                    base_slug,
+                )
+                display_name = base_slug.replace("-", " ").title()
             grouped[base_slug] = {
-                "display_name": base_slug.replace("-", " ").title(),
+                "display_name": display_name,
                 "variants": [],
             }
 

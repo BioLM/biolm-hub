@@ -224,6 +224,22 @@ class ModelMapper:
         """
         return list(self._model_families.keys())
 
+    def get_model_family(self, base_model_slug: str) -> Optional[ModelFamily]:
+        """
+        Get the loaded ``ModelFamily`` config for a base model slug.
+
+        This is the single source of truth for a model family's human-readable
+        ``display_name`` (e.g. "DNA-Chisel", "ThermoMPNN-D") — the same object
+        ``tooling/gen_model_catalog.py`` and ``docs/gen_pages.py`` read from.
+
+        Args:
+            base_model_slug: The base model identifier (e.g., 'esm2')
+
+        Returns:
+            The ``ModelFamily`` instance, or None if not found.
+        """
+        return self._model_families.get(base_model_slug)
+
 
 # Global singleton instance
 _discovery_instance: Optional[ModelMapper] = None

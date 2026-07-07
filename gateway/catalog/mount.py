@@ -66,8 +66,8 @@ def mount_catalog(
 
     # Static structure (routes don't change after startup); deployment status is
     # queried per request so the catalog reflects newly deployed models.
-    catalog_data = generate_catalog_data(fastapi_app)
-    grouped_catalog = group_models_by_base(catalog_data)
+    catalog_data = generate_catalog_data(fastapi_app, model_mapper)
+    grouped_catalog = group_models_by_base(catalog_data, model_mapper)
     logger.info("Catalog mounted for %d model variants", len(catalog_data))
 
     async def _status() -> dict[str, Optional[bool]]:
