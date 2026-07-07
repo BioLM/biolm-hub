@@ -169,7 +169,7 @@ def test_real_optional_params_models_render_their_param_fields() -> None:
     from models.immunebuilder.schema import ImmuneBuilderFoldRequest
     from models.immunefold.schema import ImmuneFoldPredictRequest
 
-    cases = [
+    cases: list[tuple[type[BaseModel], str]] = [
         (DeepViscosityPredictRequest, "include_deepsp_features"),
         (ImmuneBuilderFoldRequest, "seed"),
         (ImmuneFoldPredictRequest, "contact_idx"),

@@ -239,8 +239,8 @@ def _extract_function_validator_hint(validator: Any) -> str:
     return function_hints.get(validator.__name__, "")
 
 
-def analyze_schema(schema: BaseModel) -> dict[str, Any]:
-    """Analyzes a Pydantic schema and returns a dictionary of its fields."""
+def analyze_schema(schema: type[BaseModel] | None) -> dict[str, Any]:
+    """Analyzes a Pydantic model class and returns a dictionary of its fields."""
     if schema is None:
         return {}
 
