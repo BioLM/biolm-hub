@@ -1,42 +1,53 @@
 
+// A per-model page can render several action forms (e.g. encode / log_prob /
+// predict). Each `form.api-form` is wired INDEPENDENTLY: every element it needs
+// (params/items containers, add-item button, response area) is resolved RELATIVE
+// to that form, and every generated element id is namespaced per-form, so no two
+// forms ever share an id or clobber each other's fields.
 document.addEventListener('DOMContentLoaded', () => {
-    const form = document.querySelector('.api-form');
-    if (!form) return;
+    document.querySelectorAll('.api-form').forEach((form, formIndex) => {
+        try {
+            initForm(form, formIndex);
+        } catch (e) {
+            console.error('Failed to initialise form', formIndex, e);
+        }
+    });
+});
+
+function initForm(form, formIndex) {
+    // Unique prefix for this form's element ids (label `for=` targets, checkbox ids…).
+    const idPrefix = `f${formIndex}-`;
 
     let schema;
     try {
-        const schemaData = form.dataset.schema || '{}';
-        console.log('Raw schema data:', schemaData);
-        schema = JSON.parse(schemaData);
-        console.log('Parsed schema:', schema);
+        schema = JSON.parse(form.dataset.schema || '{}');
     } catch (e) {
         console.error('Failed to parse schema:', e);
         schema = {};
     }
 
-    const paramsContainer = document.getElementById('params-container');
-    const itemsContainer = document.getElementById('items-container');
-    const addItemBtn = document.getElementById('add-item-btn');
-    const responseArea = form.nextElementSibling;
-    const responseCode = responseArea.querySelector('code');
+    // Everything below is scoped to THIS form's card.
+    const paramsContainer = form.querySelector('.params-container');
+    const itemsContainer = form.querySelector('.items-container');
+    const addItemBtn = form.querySelector('.add-item-btn');
+    const itemsSection = form.querySelector('.items-section');
+    const card = form.closest('.endpoint-card') || form.parentNode;
+    const responseArea = card ? card.querySelector('.response-area') : null;
+    const responseCode = responseArea ? responseArea.querySelector('code') : null;
+
+    if (!paramsContainer || !itemsSection) {
+        console.error('Form is missing its params/items containers; skipping.');
+        return;
+    }
 
     let itemCounter = 0;
 
-    // Debug: log container elements
-    console.log('Containers found:', {
-        paramsContainer: !!paramsContainer,
-        itemsContainer: !!itemsContainer,
-        addItemBtn: !!addItemBtn
-    });
-
     function createField(name, details, container, itemIndex = null) {
-        const fieldId = itemIndex !== null ? `items-${itemIndex}-${name}` : name;
+        const fieldId = idPrefix + (itemIndex !== null ? `items-${itemIndex}-${name}` : name);
         const fieldName = itemIndex !== null ? `items[${itemIndex}][${name}]` : `params[${name}]`;
 
         const group = document.createElement('div');
         group.className = 'form-group';
-
-        console.log(`Creating field "${name}" with details:`, details);
 
         let input;
         if (details.is_nested_model && details.nested_fields) {
@@ -56,7 +67,14 @@ document.addEventListener('DOMContentLoaded', () => {
             label.textContent = name;
             group.appendChild(label);
 
-            if (details.enum) {
+            if (details.is_list) {
+                // A list of scalars (e.g. list[int]); entered as a JSON array so
+                // it round-trips correctly (the number branch below would coerce
+                // it to a single scalar).
+                input = document.createElement('input');
+                input.type = 'text';
+                input.placeholder = 'JSON array, e.g. [1, 2]';
+            } else if (details.enum) {
                 input = document.createElement('select');
                 details.enum.forEach(val => {
                 const option = document.createElement('option');
@@ -97,8 +115,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         input.id = fieldId;
         input.name = fieldName;
-        if (details.default !== null) {
-            input.value = details.default;
+        if (details.default !== null && details.default !== undefined) {
+            // Array defaults must be JSON-encoded so they parse back to a list.
+            input.value = Array.isArray(details.default)
+                ? JSON.stringify(details.default)
+                : details.default;
         }
         if (details.required) {
             input.required = true;
@@ -230,7 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.value = option;
-            checkbox.id = `${name}-${option}`;
+            checkbox.id = `${idPrefix}${name}-${option}`;
             checkbox.checked = selectedValues.has(option);
 
             const label = document.createElement('label');
@@ -540,17 +561,6 @@ document.addEventListener('DOMContentLoaded', () => {
         itemsContainer.appendChild(itemDiv);
     }
 
-    // Initial setup
-    console.log('Schema structure check:', {
-        hasParams: !!schema.params,
-        hasItems: !!schema.items,
-        schemaKeys: Object.keys(schema),
-        fullSchema: schema
-    });
-
-    // Get the items section element
-    const itemsSection = document.getElementById('items-section');
-
     // Process schema structure
     let hasParameters = false;
     let hasItems = false;
@@ -563,12 +573,12 @@ document.addEventListener('DOMContentLoaded', () => {
         noSchemaMsg.className = 'no-schema-message';
         paramsContainer.appendChild(noSchemaMsg);
         itemsSection.style.display = 'none';
+        wireSubmit();
         return;
     }
 
     // Check if schema has typical request structure with params and items
     if (schema.params && typeof schema.params === 'object') {
-        console.log('Processing nested schema structure');
         // Handle params - check if it's a nested model with fields
         if (schema.params.is_nested_model && schema.params.nested_fields) {
             hasParameters = true;
@@ -593,7 +603,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Handle items if they exist - check if it's a list with nested fields
         if (schema.items && schema.items.is_list) {
-            console.log('Found items list field:', schema.items);
             // For items that are lists of models, we need to extract the item structure
             // The type tells us it's a list, but we need to get the item model schema
             if (schema.items.nested_fields) {
@@ -601,10 +610,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 itemsSchema = {
                     properties: schema.items.nested_fields
                 };
-                console.log('Extracted items schema from nested_fields:', itemsSchema);
             } else {
                 // If no nested_fields but we know it's a list, create a generic text input for now
-                console.log('Items field found but no nested_fields - creating generic item input');
                 hasItems = true;
                 itemsSchema = {
                     properties: {
@@ -630,23 +637,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     } else {
         // Handle flattened schema structure
-        console.log('Processing flattened schema structure');
-
         for (const fieldName in schema) {
             const fieldValue = schema[fieldName];
-            console.log(`Processing field: ${fieldName}`, fieldValue);
 
             if (fieldValue && typeof fieldValue === 'object' && (fieldValue.type || fieldValue.properties)) {
                 // This could be a regular parameter field or an items field
                 if (fieldName === 'items') {
                     // This is the items field - extract its structure
-                    console.log('Found items field:', fieldValue);
                     if (fieldValue.is_list && fieldValue.nested_fields) {
                         hasItems = true;
                         itemsSchema = {
                             properties: fieldValue.nested_fields
                         };
-                        console.log('Extracted items schema:', itemsSchema);
                     }
                     // Don't create a field for items - it's handled separately
                 } else {
@@ -657,30 +659,33 @@ document.addEventListener('DOMContentLoaded', () => {
                         paramsHeader.textContent = 'Parameters';
                         paramsContainer.appendChild(paramsHeader);
                     }
-                    console.log(`Creating field for: ${fieldName}`);
                     createField(fieldName, fieldValue, paramsContainer);
                 }
             }
         }
     }
 
-    // If no parameters were found but we have schema fields, try treating all as parameters
-    // BUT exclude 'items' field from being treated as a parameter
-    if (!hasParameters && Object.keys(schema).length > 0) {
-        console.log('No clear structure found, treating non-items fields as parameters');
-        hasParameters = true;
-        const paramsHeader = document.createElement('h3');
-        paramsHeader.textContent = 'Parameters';
-        paramsContainer.appendChild(paramsHeader);
+    // If no parameters were found but we have schema fields, try treating all as
+    // parameters — but EXCLUDE the 'items' field, and only add the "Parameters"
+    // header if there is at least one real param field (an items-only action, e.g.
+    // `predict`, must not render a dangling empty "Parameters" heading).
+    if (!hasParameters) {
+        const paramFieldNames = Object.keys(schema).filter(
+            (fieldName) =>
+                fieldName !== 'items' &&
+                schema[fieldName] &&
+                typeof schema[fieldName] === 'object'
+        );
 
-        for (const fieldName in schema) {
-            if (fieldName !== 'items') { // Skip items field
-                const fieldValue = schema[fieldName];
-                if (fieldValue && typeof fieldValue === 'object') {
-                    console.log(`Creating parameter field for: ${fieldName}`);
-                    createField(fieldName, fieldValue, paramsContainer);
-                }
-            }
+        if (paramFieldNames.length > 0) {
+            hasParameters = true;
+            const paramsHeader = document.createElement('h3');
+            paramsHeader.textContent = 'Parameters';
+            paramsContainer.appendChild(paramsHeader);
+
+            paramFieldNames.forEach((fieldName) => {
+                createField(fieldName, schema[fieldName], paramsContainer);
+            });
         }
     }
 
@@ -694,149 +699,173 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Show/hide items section based on whether we found items schema
     if (hasItems && itemsSchema) {
-        console.log('Showing items section with schema:', itemsSchema);
         itemsSection.style.display = 'block';
 
         // Store items schema for createItem function
         schema.items = itemsSchema;
 
         createItem(); // Start with one item
-        addItemBtn.addEventListener('click', createItem);
+        if (addItemBtn) addItemBtn.addEventListener('click', createItem);
     } else {
-        console.log('Hiding items section - no items schema found');
         itemsSection.style.display = 'none';
     }
 
-    form.addEventListener('submit', async (event) => {
-        event.preventDefault();
+    wireSubmit();
 
-        const formData = new FormData(form);
-        const payload = { params: {}, items: [] };
-        const itemsMap = {};
+    function wireSubmit() {
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
 
-        formData.forEach((value, key) => {
-            const paramMatch = key.match(/^params\[(.+)\]$/);
-            if (paramMatch) {
-                const paramName = paramMatch[1];
-                // Try to parse as JSON for multi-select fields
-                try {
-                    const parsed = JSON.parse(value);
-                    payload.params[paramName] = parsed;
-                } catch {
-                    payload.params[paramName] = value;
+            const formData = new FormData(form);
+            const payload = { params: {}, items: [] };
+            const itemsMap = {};
+
+            formData.forEach((value, key) => {
+                const paramMatch = key.match(/^params\[(.+)\]$/);
+                if (paramMatch) {
+                    const paramName = paramMatch[1];
+                    // An untouched optional field submits as ""; omit it so the
+                    // server's own default (incl. default_factory) applies instead
+                    // of failing validation on an empty value.
+                    if (value === '') return;
+                    // Try to parse as JSON for multi-select fields
+                    try {
+                        const parsed = JSON.parse(value);
+                        payload.params[paramName] = parsed;
+                    } catch {
+                        payload.params[paramName] = value;
+                    }
+                    return;
                 }
-                return;
-            }
 
-            const itemMatch = key.match(/^items\[(\d+)\]\[(.+)\]$/);
-            if (itemMatch) {
-                const index = itemMatch[1];
-                const field = itemMatch[2];
-                if (!itemsMap[index]) itemsMap[index] = {};
-                // Try to parse as JSON for multi-select fields
-                try {
-                    const parsed = JSON.parse(value);
-                    itemsMap[index][field] = parsed;
-                } catch {
-                    itemsMap[index][field] = value;
-                }
-            }
-        });
-
-        payload.items = Object.values(itemsMap);
-
-        // Type conversion for params
-        if (schema.params && schema.params.properties) {
-            Object.keys(payload.params).forEach(key => {
-                const schemaInfo = schema.params.properties[key];
-                if (schemaInfo && schemaInfo.type) {
-                    if (schemaInfo.type.includes('int') || schemaInfo.type.includes('float')) {
-                        payload.params[key] = Number(payload.params[key]);
-                    } else if (schemaInfo.type.includes('bool')) {
-                        payload.params[key] = payload.params[key] === 'true';
+                const itemMatch = key.match(/^items\[(\d+)\]\[(.+)\]$/);
+                if (itemMatch) {
+                    const index = itemMatch[1];
+                    const field = itemMatch[2];
+                    if (!itemsMap[index]) itemsMap[index] = {};
+                    // Try to parse as JSON for multi-select fields
+                    try {
+                        const parsed = JSON.parse(value);
+                        itemsMap[index][field] = parsed;
+                    } catch {
+                        itemsMap[index][field] = value;
                     }
                 }
             });
-        } else {
-            // Handle flattened schema structure
-            Object.keys(payload.params).forEach(key => {
-                const schemaInfo = schema[key];
-                if (schemaInfo && schemaInfo.type) {
-                    if (schemaInfo.type.includes('int') || schemaInfo.type.includes('float')) {
-                        payload.params[key] = Number(payload.params[key]);
-                    } else if (schemaInfo.type.includes('bool')) {
-                        payload.params[key] = payload.params[key] === 'true';
-                    }
-                }
-            });
-        }
 
-        // Type conversion for items
-        if (schema.items && schema.items.properties) {
-            payload.items.forEach(item => {
-                Object.keys(item).forEach(key => {
-                    const schemaInfo = schema.items.properties[key];
+            payload.items = Object.values(itemsMap);
+
+            // Type conversion for params
+            if (schema.params && schema.params.properties) {
+                Object.keys(payload.params).forEach(key => {
+                    const schemaInfo = schema.params.properties[key];
                     if (schemaInfo && schemaInfo.type) {
                         if (schemaInfo.type.includes('int') || schemaInfo.type.includes('float')) {
-                            item[key] = Number(item[key]);
+                            payload.params[key] = Number(payload.params[key]);
                         } else if (schemaInfo.type.includes('bool')) {
-                            item[key] = item[key] === 'true';
+                            payload.params[key] = payload.params[key] === 'true';
                         }
                     }
                 });
-            });
-        }
-
-        responseArea.className = 'response-area loading';
-        responseCode.textContent = 'Sending request...';
-
-        try {
-            const response = await fetch(form.dataset.endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            });
-
-            const result = await response.json();
-
-            if (response.ok) {
-                responseArea.className = 'response-area success';
-                responseCode.textContent = JSON.stringify(result, null, 2);
             } else {
-                responseArea.className = 'response-area error';
-
-                // Handle validation errors
-                if (result && result.detail && Array.isArray(result.detail)) {
-                    handleFieldValidationErrors(result.detail);
-                    responseCode.textContent = 'Please fix the validation errors above';
-                } else {
-                    responseCode.textContent = JSON.stringify(result, null, 2) || `HTTP Error: ${response.status}`;
-                }
+                // Handle flattened schema structure
+                Object.keys(payload.params).forEach(key => {
+                    const schemaInfo = schema[key];
+                    if (schemaInfo && schemaInfo.type) {
+                        if (schemaInfo.type.includes('int') || schemaInfo.type.includes('float')) {
+                            payload.params[key] = Number(payload.params[key]);
+                        } else if (schemaInfo.type.includes('bool')) {
+                            payload.params[key] = payload.params[key] === 'true';
+                        }
+                    }
+                });
             }
 
-        } catch (error) {
-            responseArea.className = 'response-area error';
-            responseCode.textContent = `Network or parsing error: ${error.message}`;
-        }
-    });
+            // Type conversion for items
+            if (schema.items && schema.items.properties) {
+                payload.items.forEach(item => {
+                    Object.keys(item).forEach(key => {
+                        const schemaInfo = schema.items.properties[key];
+                        if (schemaInfo && schemaInfo.type) {
+                            if (schemaInfo.type.includes('int') || schemaInfo.type.includes('float')) {
+                                item[key] = Number(item[key]);
+                            } else if (schemaInfo.type.includes('bool')) {
+                                item[key] = item[key] === 'true';
+                            }
+                        }
+                    });
+                });
+            }
 
-    // Field validation error handling
+            if (responseArea) responseArea.className = 'response-area loading';
+            if (responseCode) responseCode.textContent = 'Sending request...';
+
+            try {
+                const response = await fetch(form.dataset.endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    if (responseArea) responseArea.className = 'response-area success';
+                    if (responseCode) responseCode.textContent = JSON.stringify(result, null, 2);
+                } else {
+                    if (responseArea) responseArea.className = 'response-area error';
+
+                    // Handle validation errors
+                    if (result && result.detail && Array.isArray(result.detail)) {
+                        handleFieldValidationErrors(result.detail);
+                        if (responseCode) responseCode.textContent = JSON.stringify(result, null, 2);
+                    } else if (responseCode) {
+                        responseCode.textContent = JSON.stringify(result, null, 2) || `HTTP Error: ${response.status}`;
+                    }
+                }
+
+            } catch (error) {
+                if (responseArea) responseArea.className = 'response-area error';
+                if (responseCode) responseCode.textContent = `Network or parsing error: ${error.message}`;
+            }
+        });
+    }
+
+    // Map a FastAPI 422 `loc` (e.g. ["body","params","sequence"] or
+    // ["body","items",0,"sequence"]) to the input's `name` attribute so the error
+    // lands on the right field within THIS form.
+    function locToName(loc) {
+        if (!Array.isArray(loc) || loc.length === 0) return null;
+        const parts = loc.slice();
+        if (parts[0] === 'body') parts.shift();
+        if (parts[0] === 'params' && parts.length >= 2) return `params[${parts[1]}]`;
+        if (parts[0] === 'items' && parts.length >= 3) return `items[${parts[1]}][${parts[2]}]`;
+        return null;
+    }
+
+    // Field validation error handling (scoped to this form)
     function handleFieldValidationErrors(errors) {
-        // Clear previous errors
-        document.querySelectorAll('.field-error').forEach(el => el.remove());
-        document.querySelectorAll('.error-state').forEach(el => el.classList.remove('error-state'));
+        // Clear previous errors on this form only
+        form.querySelectorAll('.field-error').forEach(el => el.remove());
+        form.querySelectorAll('.error-state').forEach(el => el.classList.remove('error-state'));
 
         errors.forEach(error => {
-            if (error.loc && error.loc.length > 0) {
-                const fieldPath = error.loc.join('.');
-                // Try different selectors to find the field
-                let input = document.querySelector(`[name="${fieldPath}"]`) ||
-                           document.querySelector(`[name*="${fieldPath}"]`) ||
-                           document.querySelector(`[id*="${fieldPath}"]`);
+            if (!error.loc || error.loc.length === 0) return;
 
-                if (input) {
-                    showFieldError(input, error.msg);
-                }
+            let input = null;
+            const name = locToName(error.loc);
+            if (name) input = form.querySelector(`[name="${name}"]`);
+
+            if (!input) {
+                // Fallback: best-effort match on the joined loc path.
+                const fieldPath = error.loc.join('.');
+                input = form.querySelector(`[name="${fieldPath}"]`) ||
+                        form.querySelector(`[name*="${fieldPath}"]`) ||
+                        form.querySelector(`[id*="${fieldPath}"]`);
+            }
+
+            if (input) {
+                showFieldError(input, error.msg);
             }
         });
     }
@@ -868,4 +897,4 @@ document.addEventListener('DOMContentLoaded', () => {
         input.addEventListener('input', removeError);
         input.addEventListener('change', removeError);
     }
-});
+}

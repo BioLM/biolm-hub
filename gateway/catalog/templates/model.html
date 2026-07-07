@@ -47,15 +47,17 @@
                         <p>{{ endpoint.description }}</p>
                     {% endif %}
 
+                    {# Every element inside a form is resolved RELATIVE to that form in script.js
+                       (via per-form classes), so multiple action forms on one page work independently. #}
                     <form class="api-form" data-endpoint="{{ gateway_url }}{{ endpoint.path }}" data-schema='{{ (endpoint.request_schema or {}) | tojson }}'>
 
-                        <div id="params-container"></div>
+                        <div class="params-container"></div>
 
-                        <div id="items-section" style="display: none;">
+                        <div class="items-section" style="display: none;">
                             <h3>Items</h3>
-                            <div id="items-container"></div>
+                            <div class="items-container"></div>
                             <div class="item-controls">
-                                <button type="button" id="add-item-btn">+ Add Item</button>
+                                <button type="button" class="add-item-btn">+ Add Item</button>
                             </div>
                         </div>
 
@@ -63,9 +65,13 @@
                         <button type="submit"{% if deployed == false %} disabled title="Model not deployed"{% endif %}>Submit</button>
                     </form>
 
-                    <div class="response-area">
+                    <div class="response-area" aria-live="polite">
                         <pre><code>Response will appear here...</code></pre>
                     </div>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <p>This model exposes no inference endpoints.</p>
                 </div>
             {% endfor %}
         </main>

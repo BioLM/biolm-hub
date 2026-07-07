@@ -28,6 +28,11 @@
             <p class="catalog-subtitle">A uniform, agent-first catalog of open biological ML models. Pick a model to explore its schema and run inference.</p>
         </header>
         <main>
+            {% if not grouped_catalog %}
+                <div class="empty-state">
+                    <p>No models are registered in this gateway yet.</p>
+                </div>
+            {% endif %}
             <div class="model-groups">
                 {% for base_slug, group in grouped_catalog.items() %}
                     <div class="model-group">

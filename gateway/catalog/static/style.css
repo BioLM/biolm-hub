@@ -47,14 +47,14 @@
     --radius-xl: 24px;
     --radius-pill: 9999px;
 
-    /* Spacing scale */
+    /* Spacing scale (compact: the larger steps are trimmed a notch for density) */
     --space-1: 0.25rem;
-    --space-2: 0.5rem;
-    --space-3: 0.75rem;
-    --space-4: 1rem;
-    --space-5: 1.5rem;
-    --space-6: 2rem;
-    --space-8: 3rem;
+    --space-2: 0.4rem;
+    --space-3: 0.6rem;
+    --space-4: 0.85rem;
+    --space-5: 1.15rem;
+    --space-6: 1.5rem;
+    --space-8: 2.25rem;
 
     /* Shadows */
     --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
@@ -82,8 +82,8 @@ body {
         radial-gradient(1200px 480px at 50% -220px, rgba(53, 117, 246, 0.08), transparent 70%);
     background-repeat: no-repeat;
     color: var(--text-secondary);
-    font-size: 16px;
-    line-height: 1.6;
+    font-size: 15px;
+    line-height: 1.55;
     min-height: 100vh;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
@@ -110,32 +110,32 @@ a:hover {
 /* Typography ------------------------------------------------------------- */
 h1 {
     color: var(--text-primary);
-    font-size: clamp(1.9rem, 3.4vw, 2.6rem);
+    font-size: clamp(1.55rem, 2.8vw, 2.05rem);
     font-weight: 700;
-    line-height: 1.12;
+    line-height: 1.14;
     letter-spacing: -0.025em;
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 0.75rem;
+    gap: 0.6rem;
 }
 
 h2 {
     color: var(--text-primary);
-    font-size: 1.375rem;
+    font-size: 1.15rem;
     font-weight: 600;
     line-height: 1.25;
     letter-spacing: -0.015em;
-    margin-bottom: var(--space-3);
+    margin-bottom: var(--space-2);
 }
 
 h3 {
     color: var(--text-primary);
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    margin: var(--space-6) 0 var(--space-4);
+    margin: var(--space-5) 0 var(--space-3);
 }
 
 p {
@@ -250,9 +250,9 @@ header {
 
 .catalog-subtitle {
     color: var(--text-muted);
-    font-size: 1.05rem;
-    margin-top: var(--space-3);
-    max-width: 60ch;
+    font-size: 0.95rem;
+    margin-top: var(--space-2);
+    max-width: 62ch;
 }
 
 /* Catalog index — model groups & cards ----------------------------------- */
@@ -272,11 +272,11 @@ header {
 
 .group-title {
     color: var(--text-primary);
-    font-size: 1.2rem;
+    font-size: 1.05rem;
     font-weight: 600;
     letter-spacing: -0.01em;
-    margin-bottom: var(--space-4);
-    padding-bottom: var(--space-3);
+    margin-bottom: var(--space-3);
+    padding-bottom: var(--space-2);
     border-bottom: 1px solid var(--border);
 }
 
@@ -292,7 +292,7 @@ header {
     justify-content: space-between;
     gap: var(--space-3);
     text-decoration: none;
-    padding: var(--space-4) var(--space-5);
+    padding: var(--space-3) var(--space-4);
     border-radius: var(--radius);
     border: 1px solid var(--border);
     background: var(--bg-surface);
@@ -319,7 +319,7 @@ header {
 .model-name {
     color: var(--text-primary);
     font-weight: 600;
-    font-size: 1rem;
+    font-size: 0.95rem;
     letter-spacing: -0.01em;
 }
 
@@ -454,8 +454,8 @@ label {
     display: block;
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: var(--space-2);
-    font-size: 0.9rem;
+    margin-bottom: var(--space-1);
+    font-size: 0.85rem;
     letter-spacing: -0.005em;
 }
 
@@ -463,12 +463,12 @@ input,
 textarea,
 select {
     width: 100%;
-    padding: 0.7rem 0.9rem;
+    padding: 0.55rem 0.8rem;
     background: var(--bg-surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     color: var(--text-primary);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-family: var(--font-sans);
     transition: border-color 0.15s var(--ease), box-shadow 0.15s var(--ease);
 }
@@ -498,15 +498,15 @@ select {
 
 textarea {
     resize: vertical;
-    min-height: 96px;
+    min-height: 80px;
     line-height: 1.5;
 }
 
 small {
     display: block;
     color: var(--text-muted);
-    font-size: 0.83rem;
-    margin-top: var(--space-2);
+    font-size: 0.8rem;
+    margin-top: var(--space-1);
     line-height: 1.5;
 }
 
@@ -530,9 +530,9 @@ button:disabled {
 button[type="submit"] {
     background: var(--brand);
     color: #fff;
-    padding: 0.75rem 2rem;
-    font-size: 0.98rem;
-    margin-top: var(--space-5);
+    padding: 0.65rem 1.75rem;
+    font-size: 0.92rem;
+    margin-top: var(--space-4);
     box-shadow: 0 4px 12px rgba(53, 117, 246, 0.28);
 }
 
@@ -546,15 +546,15 @@ button[type="submit"]:active:not(:disabled) {
     transform: translateY(0);
 }
 
-#add-item-btn {
+.add-item-btn {
     background: var(--bg-surface);
     color: var(--brand);
     border-color: var(--border);
-    padding: 0.55rem 1.25rem;
+    padding: 0.5rem 1.15rem;
     box-shadow: var(--shadow-sm);
 }
 
-#add-item-btn:hover {
+.add-item-btn:hover {
     background: var(--brand-tint);
     border-color: var(--brand);
 }
@@ -759,9 +759,11 @@ button[type="submit"]:active:not(:disabled) {
     background: transparent;
     color: var(--text-primary);
     font-family: var(--font-mono);
-    font-size: 0.85rem;
+    font-size: 0.83rem;
     line-height: 1.55;
-    overflow-x: auto;
+    /* Wide OR tall JSON scrolls inside the response box; the page never scrolls sideways. */
+    max-height: 460px;
+    overflow: auto;
 }
 
 .response-area.loading {
@@ -802,7 +804,7 @@ button[type="submit"]:active:not(:disabled) {
     border-top: 1px solid var(--border);
 }
 
-#items-section > .item-controls {
+.items-section > .item-controls {
     border-top: none;
     padding-top: 0;
     justify-content: flex-start;
@@ -810,7 +812,8 @@ button[type="submit"]:active:not(:disabled) {
 
 /* Empty-state messages --------------------------------------------------- */
 .no-schema-message,
-.no-params-message {
+.no-params-message,
+.empty-state {
     color: var(--text-muted);
     font-style: italic;
     text-align: center;
@@ -819,6 +822,11 @@ button[type="submit"]:active:not(:disabled) {
     border-radius: var(--radius);
     border: 1px dashed var(--border-strong);
     margin-top: var(--space-4);
+}
+
+.empty-state p {
+    color: var(--text-muted);
+    margin: 0;
 }
 
 /* Animations ------------------------------------------------------------- */

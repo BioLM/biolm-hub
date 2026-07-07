@@ -337,8 +337,12 @@ def group_models_by_base(
             }
         )
 
-    # Sort variants within each group
+    # Sort variants within each group (stable, by slug) so families read sensibly.
     for group in grouped.values():
         group["variants"].sort(key=lambda x: x["slug"])
 
-    return grouped
+    # Order the groups themselves alphabetically by display name. Route-registration
+    # order is arbitrary; a stable alphabetical ordering makes the index scannable.
+    return dict(
+        sorted(grouped.items(), key=lambda kv: kv[1]["display_name"].casefold())
+    )
