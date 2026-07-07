@@ -61,6 +61,7 @@ markdown_extensions:
 exclude_docs: |
   *.py
   __pycache__/
+  media/*.md
 
 # `mkdocs build --strict` (CI) fails on warnings. Embedded knowledge-graph prose
 # carries intra-doc anchors that may not all resolve after section nesting; keep
