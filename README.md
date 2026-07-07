@@ -1,67 +1,63 @@
 <h1 align="center">biolm-hub</h1>
 
 <p align="center">
-  A standardized, <b>agent-first</b> catalog of open biological ML models that deploy on
-  <a href="https://modal.com">Modal</a> in a couple of commands.
+  <b>Pull an open biological ML model off the shelf and have it serving in minutes — human or agent.</b>
 </p>
 
 <p align="center">
+  A standardized, <b>agent-first</b> catalog of open biological ML models that deploy to your own
+  <a href="https://modal.com">Modal</a> account in a couple of commands. Same layout, same verbs,
+  same schemas — learn one model, use all <b>36</b>.
+</p>
+
+<p align="center">
+  <a href="https://github.com/BioLM/biolm-hub/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/BioLM/biolm-hub/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://biolm.github.io/biolm-hub/"><img alt="Docs" src="https://img.shields.io/badge/docs-live-14b8a6.svg"></a>
   <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg"></a>
   <img alt="Python 3.12+" src="https://img.shields.io/badge/python-3.12%2B-blue.svg">
-  <img alt="36 models" src="https://img.shields.io/badge/models-36-14b8a6.svg">
-  <img alt="agent-first" src="https://img.shields.io/badge/design-agent--first-6d28d9.svg">
+  <img alt="36 models" src="https://img.shields.io/badge/models-36-6d28d9.svg">
+  <a href="https://github.com/BioLM/biolm-hub/discussions"><img alt="Discussions" src="https://img.shields.io/badge/discussions-join-ff8a00.svg"></a>
 </p>
 
 <p align="center">
-  <a href="#quickstart--five-minute-success">Quickstart</a> ·
+  <a href="#quickstart">Quickstart</a> ·
+  <a href="https://biolm.github.io/biolm-hub/">Docs</a> ·
   <a href="PHILOSOPHY.md">Philosophy</a> ·
-  <a href="CONTRIBUTING.md">Contributing</a>
+  <a href="CONTRIBUTING.md">Contributing</a> ·
+  <a href="https://github.com/BioLM/biolm-hub/discussions">Discussions</a>
 </p>
 
 ---
 
-Running an open biological ML model shouldn't mean re-solving the same plumbing every time — hunting
-down dependencies, reverse-engineering an undocumented interface, and wiring up a deployment before you
-get a single prediction. That friction repeats for every model, and for every person or agent who
-tries to use one. What's still missing is a **clean, uniform, documented, deploy-anywhere** substrate
-so nobody has to reinvent the wheel.
+Running an open biological ML model usually means re-solving the same plumbing every time: chase
+dependencies, reverse-engineer an undocumented interface, wire up a deployment — all before your first
+prediction. Everyone who touches that model, human or agent, pays the tax again.
 
-`biolm-hub` is that substrate: every model has the same layout, the same action verbs, the same
-schemas, and a machine-readable knowledge graph — so anyone, human or agent, can pull a model off the
-shelf and have it running in minutes instead of days. The catalog ships **36 models** today, each with
-an identical interface, and it's built to grow as the community adds more.
+**biolm-hub is the missing substrate.** Every model has the same layout, the same action verbs, the
+same schemas, and a machine-readable knowledge graph — so anyone can pull a model off the shelf and
+have it running in **minutes, not days**. **36 models today**, one uniform interface, built to grow as
+the community adds more.
 
-## Quickstart — five-minute success
+## Quickstart
+
+*From zero to a live model in about five minutes. The only account you need is [Modal](https://modal.com).*
 
 ```bash
-git clone https://github.com/BioLM/biolm-hub
-cd biolm-hub
-make install                              # venv + all deps via uv, plus pre-commit hooks
-source .venv/bin/activate                 # puts the `bh` CLI on your PATH
+# 1 — Install
+git clone https://github.com/BioLM/biolm-hub && cd biolm-hub
+make install                 # venv + all deps via uv, plus pre-commit hooks
+source .venv/bin/activate    # puts the `bh` CLI on your PATH
 
-bh setup            # verify your Modal auth; it tells you exactly what to fix
-bh deploy esm2      # deploy ESM-2's default variant (the small, CPU-only 8M model)
-bh serve &          # local HTTP endpoint + browser UI for your deployed models, on :8000
+# 2 — Point bh at Modal
+bh setup                     # verifies your Modal auth; tells you exactly what to fix
+
+# 3 — Deploy a model and serve it
+bh deploy esm2               # ESM-2's default variant: the small, CPU-only 8M model
+bh serve &                   # the biolm-hub gateway: HTTP endpoint + browser UI on :8000
 ```
 
-Skipping the `source .venv/bin/activate` step? Run `.venv/bin/bh …` or `uv run bh …` instead — either
-puts you on the same CLI without activating.
-
-The only account you need is [Modal](https://modal.com) — `bh setup` points you at `modal token new`
-if you're not authenticated. `bh deploy esm2` deploys ESM-2's **default variant** — the smallest,
-CPU-only 8M size — so the first deploy is fast and cheap; pass `--all-variants` for the whole family
-(all five sizes, up to a 3B model on an L40S GPU) or `--variant MODEL_SIZE=650m` for a specific one.
-A fresh workspace with no Cloudflare R2 / Hugging Face secrets deploys **credential-less
-automatically**: public model weights are read anonymously over HTTPS from a read-only bucket. Once
-you configure your own R2 credentials (via `bh setup`), deploys self-populate your bucket instead. (Set
-`BIOLM_SKIP_MODAL_SECRETS` explicitly to force either mode.)
-
-`bh deploy` makes the model callable on Modal; `bh serve` is what gives you an HTTP endpoint to call
-it with — it exposes every deployed model at `POST /api/v1/<slug>/<action>` locally (`<slug>` is the
-deployed model's public slug; plus a browser
-UI to fill in a form and run inference by hand, at `http://127.0.0.1:8000/catalog`). Every model
-speaks the same verbs — `predict`, `fold`, `encode`, `generate`, `score`, `log_prob` — over HTTP, so
-once you know one you know them all:
+Then call it — every model speaks the same verbs (`predict`, `fold`, `encode`, `generate`, `score`,
+`log_prob`), so once you know one you know them all:
 
 ```bash
 curl -s http://127.0.0.1:8000/api/v1/esm2-8m/encode \
@@ -69,19 +65,48 @@ curl -s http://127.0.0.1:8000/api/v1/esm2-8m/encode \
   -d '{"items": [{"sequence": "MKTVRQERLKSIVRILERSKEPVSGAQLAEELSVSRQVIVQDIAYLRSLGYNIVATPRGYVLAGG"}]}'
 ```
 
-The endpoint slug is the deployed **variant's** public slug, not the family name: `bh deploy esm2`
-deploys the `esm2-8m` variant, so it answers at `/api/v1/esm2-8m/encode` — browse `bh serve`'s
-`/catalog` or read the deploy output for the exact slugs.
-
-The response is `{"results": [{"sequence_index": 0, "embeddings": [{"layer": <n>, "embedding": [...]}]}]}`
-— one entry per input sequence, and `results[].embeddings` is a list of `{layer, embedding}` objects
-(by default the final layer's mean-pooled vector). Pass `params.include` for per-residue embeddings,
-contacts, logits, or attentions instead. See the [ESM-2 model page](models/esm2/) for the exact
-request/response schema — every model's page documents its own.
-
+> [!WARNING]
 > **Deployed endpoints are unauthenticated.** A deployed model, a deployed gateway, or
 > `bh serve --host 0.0.0.0` exposes inference **without authentication**, and every call bills *your*
-> Modal account. Don't put one on a public network without your own access control in front.
+> Modal account. Never put one on a public network without your own access control in front.
+
+**Good to know:**
+
+- **Routes are per *variant slug*, not family name.** `bh deploy esm2` deploys the `esm2-8m` variant,
+  so it answers at `POST /api/v1/esm2-8m/encode`. Browse the exact slugs at
+  `http://127.0.0.1:8000/catalog` (a browser form to run inference by hand) or in the deploy output.
+- **The response** is `{"results": [{"sequence_index": 0, "embeddings": [{"layer": <n>, "embedding": [...]}]}]}`
+  — one entry per input sequence; by default the final layer's mean-pooled vector. Pass `params.include`
+  for per-residue embeddings, contacts, logits, or attentions. Each [model's page](models/esm2/)
+  documents its own schema.
+- **No secrets? It just works.** A fresh workspace with no Cloudflare R2 / Hugging Face secrets deploys
+  credential-less: public weights are read anonymously over HTTPS from a read-only bucket. Add your own
+  R2 via `bh setup` and deploys self-populate your bucket instead. (`BIOLM_SKIP_MODAL_SECRETS` forces
+  either mode.)
+- **Prefer not to activate the venv?** Use `uv run bh …` or `.venv/bin/bh …`.
+
+### Deploy more than the default
+
+| Command | Deploys |
+|---------|---------|
+| `bh deploy esm2` | The **default variant** — `esm2-8m`, CPU-only, small and cheap. |
+| `bh deploy esm2 --variant MODEL_SIZE=650m` | One specific size. |
+| `bh deploy esm2 --all-variants` | The whole family — all five sizes, up to a 3B model on an L40S GPU. |
+
+## Why "agent-first"
+
+Every design choice optimizes for an LLM/agent consumer — and humans get the same clean, predictable
+surface for free:
+
+- **Uniform action verbs** — `predict`, `fold`, `encode`, `generate`, `score`, `log_prob`. Learn one
+  model, know them all.
+- **Uniform schemas** — consistent field names across families (`sequence`, `heavy_chain`/`light_chain`,
+  `pdb`/`cif`, `embeddings`, …). The biology lives in metadata, not ad-hoc field names.
+- **A machine-readable knowledge graph** per model — so an agent can decide *which* model to use, not
+  just how to call it.
+- **One obvious way to do a thing** — structured logging, a typed error taxonomy, pinned dependencies.
+
+See [`PHILOSOPHY.md`](PHILOSOPHY.md) for the full design center.
 
 ## What's inside
 
@@ -91,45 +116,31 @@ request/response schema — every model's page documents its own.
 | `models/commons/` | The shared framework: config, decorators, Modal image helpers, R2 storage/download, the error taxonomy, structured logging, and the testing harness. |
 | `models/dummy/` | The template — copy it to start a new model. |
 | `cli/` | The `bh` tool — `setup`, `deploy`, `serve`, `cache`, `r2`, `kb`. |
-| `gateway/` | A unified inference endpoint and a catalog web app (run inference from the browser). |
-| `docs/` | The mkdocs site; per-model pages are generated from each model's config + knowledge graph. Build it with `make docs`. |
+| `gateway/` | The **biolm-hub gateway**: a unified inference endpoint and a catalog web app (run inference from the browser). |
+| `docs/` | The [docs site](https://biolm.github.io/biolm-hub/); per-model pages are generated from each model's config + knowledge graph. Build locally with `make docs`. |
 
-## Why it's "agent-first"
+CI runs `make check` on every PR (style + mypy + schema-doc check + tests) — keep it green locally
+before pushing.
 
-Every design choice optimizes for an LLM/agent consumer — and humans get the same clean, predictable
-surface for free:
-
-- **Uniform action verbs** — `predict`, `fold`, `encode`, `generate`, `score`, `log_prob`. Learn one
-  model and you know them all.
-- **Uniform schemas** — consistent field names across families (`heavy_chain`/`light_chain`,
-  `sequence`, `pdb`/`cif`, `embeddings`, …); the biology lives in metadata, not ad-hoc field names.
-- **A machine-readable knowledge graph** per model — so an agent can decide *which* model to use, not
-  just how to call it.
-- **One obvious way to do a thing** — structured logging, a consistent typed error taxonomy, pinned
-  dependencies.
-
-See [`PHILOSOPHY.md`](PHILOSOPHY.md) for the full design center.
-
-## Adding a model
+## Add a model
 
 The catalog grows with its community, and adding a model is meant to be approachable for you and your
-agent alike — because the layout is uniform, a new model follows a well-worn path instead of being a
-research project. Have one you'd like to see? Open a
-[discussion](https://github.com/BioLM/biolm-hub/discussions) or an issue to propose it, then start from
-`models/dummy/` (the template) and follow [`CONTRIBUTING.md`](CONTRIBUTING.md). Each model's license is
-declared in its `sources.yaml`; only permissively-licensed (MIT / Apache-2.0 / BSD and compatible)
-models are included.
+agent alike — the uniform layout means a new model follows a well-worn path, not a research project.
+
+1. Have one in mind? Propose it in a
+   [discussion](https://github.com/BioLM/biolm-hub/discussions) or an issue.
+2. Copy `models/dummy/` and follow [`CONTRIBUTING.md`](CONTRIBUTING.md).
+3. `make check` and `make docs` go green; your model's docs page is generated automatically.
+
+Each model declares its license in `sources.yaml`; only permissively-licensed models (MIT / Apache-2.0
+/ BSD and compatible) are included.
 
 ## Security
 
-Report vulnerabilities privately to **support+security@biolm.ai** — please don't open a public issue.
-We'll acknowledge, keep you posted, and credit you if you'd like.
-
-Deployed endpoints run in **your own** Modal workspace and read/write **your own** object storage; the
-default public model bucket is read-only and credentials are yours (never commit them). Dependencies are
-pinned — flag any dependency or weight source you believe is compromised. License problems (a model
-included under an incompatible or misattributed license — see each model's `sources.yaml`/`LICENSE`) are
-treated as security-adjacent; report them the same way.
+Found a vulnerability? Report it privately to **support+security@biolm.ai** — please don't open a
+public issue. We'll acknowledge, keep you posted, and credit you if you'd like. (Note the
+unauthenticated-endpoint warning under [Quickstart](#quickstart) — guarding a deployed endpoint is on
+you.)
 
 ## License
 
