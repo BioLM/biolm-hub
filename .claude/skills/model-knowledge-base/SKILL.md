@@ -75,5 +75,14 @@ For a model that has `config.py` and `app.py` but no knowledge-graph files:
   `score`, `log_prob`. Do not use deprecated names (`predict_log_prob`, `extract_features`, `vhh`).
 - **Missing cross-references** -- README.md, MODEL.md, and BIOLOGY.md must link to each other at
   the bottom of each file.
+- **Linking *other* models (or the YAML files) by relative path in prose** -- in body prose such as
+  BIOLOGY.md's *Related Models* section, name other models in **bold** + backtick slug (e.g.
+  **DNABERT-2** `dnabert2`); never write a relative link like `../dnabert2/README.md`. The docs
+  generator (`docs/gen_pages.py`) keys link-rewriting on the *filename*, ignoring the directory, so a
+  cross-model `README.md`/`MODEL.md`/`BIOLOGY.md` link is silently rewritten to *this* page's own
+  section anchor (`#usage`/`#architecture-training`/`#biology`) — pointing at the wrong section, not the
+  other model. Don't link `sources.yaml`/`comparison.yaml` in prose either -- they aren't page-rewritten
+  and render as off-site GitHub URLs. (The self-cross-link *footer* from the pitfall above is fine: it's
+  stripped from the built docs site and only aids GitHub browsers.)
 - **Non-permissive license** -- if you find a CC-BY-NC or custom non-commercial license, do not
   proceed. Flag it in the PR; the model may not be eligible for the catalog.

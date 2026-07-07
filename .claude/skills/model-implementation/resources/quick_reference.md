@@ -23,6 +23,7 @@ via the `model-knowledge-base` skill.
 ```bash
 make check                                  # style + mypy + schema-doc check + CI-script tests + unit — MANDATORY before push (CI's `checks` job)
 make docs                                   # mkdocs build --strict — separate CI job; the generated model page must build
+python -m tooling.gen_model_catalog         # regenerate models/README.md catalog after adding/renaming a model — else test_readme_catalog_is_fresh fails make check
 make test-unit                              # fast unit tests only (no Modal/R2)
 
 # Optional local deploy + tests (need a Modal account):

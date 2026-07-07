@@ -97,6 +97,7 @@ Phase 3: Validation
   → Read: validation/GUIDE.md
   → make check (MANDATORY)
   → make docs (mkdocs --strict — the generated page must build)
+  → python -m tooling.gen_model_catalog (regenerate models/README.md — else test_readme_catalog_is_fresh fails)
   → python models/MODEL/fixture.py (before tests; template: models/dummy/fixture.py)
   → python -m pytest models/MODEL/test.py
   → GATE: coverage ≥85%
@@ -115,7 +116,7 @@ Phase 4: Documentation
 ### Actions — closed set
 | Verb | Means |
 |------|-------|
-| `predict` | scalar/label property of a sequence or structure |
+| `predict` | scalar/label property of a sequence or structure, **or** masked-token / fill-mask prediction (see note) |
 | `fold` | 3D structure prediction (returns `pdb`/`cif` + confidence) |
 | `encode` | learned representations / embeddings |
 | `generate` | new sequences or structures (sampling, design, inverse folding) |
@@ -123,6 +124,18 @@ Phase 4: Documentation
 | `log_prob` | per-sequence (pseudo) log-likelihood scalar |
 
 Do not invent new verbs.
+
+> **`predict` legitimately covers masked-token / fill-mask prediction — but mind the payload for
+> large-vocab LMs.** The shipped `esm2` model exposes masked-LM fill-mask as `predict`:
+> `ESM2PredictRequest` takes sequences containing `<mask>` tokens and `ESM2PredictResponse` returns
+> per-position `logits` + `sequence_tokens` + `vocab_tokens` (`models/esm2/schema.py`, mapped to
+> `ModelActions.PREDICT` in `models/esm2/config.py`) — not a scalar. That is correct house style.
+> **However**, returning full per-position logits is only cheap for a **small-vocabulary** model
+> (esm2's protein alphabet is ~20 tokens → an `[L, 20]` matrix). For a **large-vocabulary** LM the
+> `[L, |vocab|]` payload bloats fast — e.g. a chemical/BPE LM like ChemBERTa has a 7,924-token vocab,
+> so a fill-mask `predict` would ship an `[L, 7924]` matrix per sequence. For large-vocab models
+> prefer `log_prob` (one pseudo-log-likelihood scalar per sequence) and/or `encode` (embeddings)
+> over a logits-returning `predict`.
 
 ### Schema field names — uniform across families
 - **Inputs:** `sequence` / `sequences` / `msa`; `pdb` / `cif`; `smiles`; batch items under `items`, parameters under `params`

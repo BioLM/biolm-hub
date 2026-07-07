@@ -563,6 +563,27 @@ class MyModelImplementation(ModelMixinSnap):
 - In `config.py`, set the resource spec's `gpu=None` (the CPU tier — see the tier table in
   `resources/quick_reference.md`).
 
+> **CPU model *with* weights (e.g. a small HF transformer that runs on CPU).** The template above is
+> the *weightless* case. A CPU model that still loads weights keeps a `setup_download_layer` and a
+> torch install, but pulls the **CPU torch wheel** instead of a CUDA base image:
+> `modal.Image.debian_slim(python_version="3.12")` +
+> `.uv_pip_install("torch==X.Y.Z", index_url="https://download.pytorch.org/whl/cpu")`. Reference:
+> **`models/antifold`** — a CPU model (`gpu=None`) with weights, built on `debian_slim` + the CPU torch
+> wheel + a download layer. When the weights come from **HuggingFace** (`r2_then_hf`), also add
+> `huggingface_hub` to the download layer's `extra_pip_packages` so the fallback can import it at build
+> time (§2.3's build-time gotcha) — note `antifold` itself sources weights from a direct URL
+> (`r2_then_urls`), so mirror its *image layering* but take the HF-fallback plumbing from §2.3.
+
+> **Definitive rule — `experimental_options={"enable_gpu_snapshot": True}` is GPU-only; omit it on any
+> CPU (`gpu=None`) container, with or without weights.** It tells Modal to capture *GPU* memory in the
+> snapshot; a CPU container has no GPU state to capture, so it is a no-op there. `enable_memory_snapshot=True`
+> still applies on CPU (it snapshots the CPU/RAM state) — only the `enable_gpu_snapshot` experimental
+> option is dropped. Nothing in `models/commons/` reads this flag (`ModelMixinSnap` in
+> `models/commons/model/base.py` only defines no-op snapshot-enter hooks); it is passed straight through
+> to Modal's `@app.cls`. The shipped repo is inconsistent — `models/antifold` keeps it despite `gpu=None`
+> (a harmless copy-paste artifact) while `models/dna_chisel` correctly omits it — **follow `dna_chisel`
+> and omit it on CPU.**
+
 ---
 
 ## 2.5 `test.py`

@@ -47,7 +47,10 @@ Related Models, Biological Background.
 3. **Author `MODEL.md`** — architecture and training from the paper; benchmarks only with explicit
    citations (e.g. "Table 2 of Lin et al., 2023"). Never estimate a number.
 4. **Author `BIOLOGY.md`** — molecule coverage, the biological problem, and concrete applied use cases.
-5. **Cross-link** all three (and `sources.yaml`/`comparison.yaml`) at the bottom of each file.
+5. **Cross-link** the model's own three files in a trailing `See also:` footer at the bottom of each
+   (this footer is stripped from the built docs site but aids GitHub browsers). Refer to **other**
+   models by bold name + backtick slug in prose — never a relative `../<model>/README.md` link, and
+   don't link `sources.yaml`/`comparison.yaml` in prose (see the cross-link pitfall in `SKILL.md`).
 
 ---
 

@@ -16,6 +16,11 @@ make check
 
 Fix every failure before proceeding. Never push with `make check` red.
 
+> **Expected `make check` failure right after adding a model: a stale catalog.** `test-unit` includes
+> `tooling/test_model_catalog.py::test_readme_catalog_is_fresh`, which fails because the committed
+> catalog table in `models/README.md` doesn't yet list your new model (e.g. "36 models" → "37 models").
+> This is a normal step, not a bug in your model — regenerate the catalog (see §3.1b) and re-run.
+
 > **A red `make check` may be pre-existing and unrelated to your model.** Some unit tests exercise the
 > whole catalog (the gateway catalog/discovery tests load *every* model family), so a failure can
 > originate in another model or a stale baseline, not yours — and your own
@@ -54,6 +59,22 @@ docs build even when `make check` is green.
 ```bash
 make docs   # mkdocs build --strict — must be clean before you push
 ```
+
+---
+
+## 3.1b Regenerate the model catalog — `models/README.md`
+
+Adding (or renaming/removing) a model makes the committed catalog table in `models/README.md` stale,
+which fails the unit test `tooling/test_model_catalog.py::test_readme_catalog_is_fresh` — so `make
+check` (via `test-unit`) stays **red** until you regenerate it:
+
+```bash
+python -m tooling.gen_model_catalog   # rewrites the generated table in models/README.md (idempotent)
+```
+
+Commit the regenerated `models/README.md`. Like `docs/gen_pages.py`, the generator is Modal-free (it
+only imports model configs), so it needs no credentials; `python -m tooling.gen_model_catalog --check`
+fails without writing if the catalog is stale.
 
 ---
 
@@ -147,6 +168,7 @@ The full deploy + integration + deployment test matrix runs in CI under the `dep
 
 - [ ] `make check` passes (style + mypy + schema-doc check + CI-script tests + unit tests)
 - [ ] `make docs` passes (mkdocs --strict — the generated model page builds)
+- [ ] `models/README.md` catalog regenerated (`python -m tooling.gen_model_catalog`) and committed
 - [ ] All dependencies pinned to exact versions
 - [ ] Seeds set (torch, numpy, random, CUDA) — deterministic outputs (**stochastic/torch models only**; deterministic CPU/algorithmic tools need none)
 - [ ] `UserError` used for bad-input paths
