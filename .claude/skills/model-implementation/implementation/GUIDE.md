@@ -11,7 +11,7 @@ Write all model files in dependency order, following the patterns from `models/d
 4. `app.py` — Modal application
 5. `test.py` — test suite
 6. `fixture.py` — golden-fixture generator (only if `test.py` uses golden output files)
-7. `LICENSE` — the upstream license text, copied verbatim from the source repo (required in every model dir; the license must match `sources.yaml` and the README)
+7. `LICENSE` — the upstream license text, copied verbatim from the source repo (required in every model dir; the license must match `sources.yaml` and the README). **If upstream ships no LICENSE file** (the license exists only as a HuggingFace card metadata tag — very common): record the SPDX id + the canonical license text/URL (SPDX / Creative Commons / OSI page) and a note that upstream declares it only via metadata; don't block on the missing file. The permissive-only gate still applies to the tagged license.
 8. `__init__.py` — empty package marker
 
 ---
@@ -78,6 +78,66 @@ class MyModelResponse(ResponseModel):
 > inside your own validator, e.g. `all(r in rna_unambiguous for r in seq.upper())` — see
 > `models/chai1/schema.py`. (Adding a `validate_rna_unambiguous` helper to commons would be a
 > separate commons change — out of scope during model implementation.)
+
+> **Field names follow the uniform rules, NOT the reference model.** Copy the reference's *plumbing*
+> (imports, decorators, class shape), but pick field names from `CONTRIBUTING.md` / the SKILL Global
+> Rules — never inherit the reference's choice. e.g. `igbert` names its unpaired chain `sequence`, but
+> a **nanobody/VHH is a lone `heavy_chain`** (never `vhh`, never `sequence`). See the reference caveat
+> in `investigation/GUIDE.md §1.3`.
+
+### Field descriptions, the glossary, and the schema-doc gate
+
+Every request/response field **must** carry a `Field(..., description="...")` that *renders* in
+`model_json_schema()` — plain `#` comments do not count. Before running `make check`, pre-check
+shared field names against **`tooling/field_glossary.yaml`**: fields under its `verbatim:` block must
+use one of the exact strings given (e.g. `logits`, `log_prob`, `residue_embeddings`, `seed`,
+`temperature`). The CI gate is **`tooling/check_schema_docs.py`** — run it directly while authoring
+(`python tooling/check_schema_docs.py --model <name>`); it's wired into CI via
+`tooling/test_schema_docs.py` / `make check-schema-docs` and fails on any undocumented field or a
+shared field that drifts from the glossary.
+
+> **Footgun — `Optional[Annotated[...]]` silently drops the description.** A `Field(description=...)`
+> nested *inside* `Optional[Annotated[str, ..., Field(description=...)]]` lands in a Union arm and is
+> dropped from the rendered schema (this is exactly why `check_schema_docs.py` inspects
+> `model_json_schema()`). Keep validators inside `Annotated`, but put the `Field` at **field level**
+> as the default assignment:
+>
+> ```python
+> # WRONG — description dropped from the rendered schema; check_schema_docs.py fails
+> sequence: Optional[Annotated[str, BeforeValidator(validate_aa_extended),
+>                              Field(description="...")]] = None
+>
+> # RIGHT — Field at field level, validators stay inside Annotated (renders; see models/igbert/schema.py)
+> sequence: Optional[Annotated[str, BeforeValidator(validate_aa_extended)]] = Field(
+>     default=None, description="An antibody chain in single-letter amino-acid codes."
+> )
+> ```
+
+### Renaming a field — keep the old name via `AliasChoices` (input only)
+
+To preserve backward-compatibility when renaming, accept both names on **input** while serializing
+under the new canonical name. Use `validation_alias=AliasChoices(...)` — **not** a plain `alias=`:
+
+```python
+from pydantic import AliasChoices, Field
+
+residue_embeddings: list[list[float]] = Field(
+    validation_alias=AliasChoices("residue_embeddings", "per_token_embeddings"),  # new name first, then old
+    description="Per-residue embedding vectors.",
+)
+```
+
+`validation_alias` changes only what's *accepted* on input; the field still serializes under its
+Python name. A plain `alias="old_name"` sets **both** the validation and serialization alias, so it
+would also rename the field in the **output** — wrong for input back-compat. Real examples:
+`models/igbert/schema.py` (`AliasChoices("heavy_chain", "heavy")`) and `models/esm2/schema.py`.
+
+> **`max_sequence_len` must budget for special tokens (and the RoBERTa position offset).** The model's
+> `max_position_embeddings` is **not** the max input length. Subtract the special tokens the tokenizer
+> adds (`[CLS]`/`[SEP]` or `<s>`/`</s>`), and for **RoBERTa**-family models subtract the position-id
+> offset of 2 as well (RoBERTa sets `padding_idx=1`, so position ids start at 2 — usable positions ≈
+> `max_position_embeddings - 2 - special_tokens`). A naive `max_sequence_len = max_position_embeddings`
+> overflows the position embeddings at runtime.
 
 ---
 
@@ -378,12 +438,37 @@ if __name__ == "__main__":
 
 **Image layer order:** download layer → pip install → `common_requirements` → source layer.
 
+> **One `@modal.enter` or two? Depends on GPU snapshotting.** The template above splits load into
+> `snap=True` (CPU) + `snap=False` (GPU move + seeds) — that's the pattern for a **CPU-only** memory
+> snapshot: GPU state isn't captured, so you move to GPU and seed on restore. When you enable a **GPU
+> snapshot** (`experimental_options={"enable_gpu_snapshot": True}`), you can instead load **straight to
+> GPU and seed inside a single `@modal.enter(snap=True)`** — the GPU state is captured in the snapshot.
+> That single-phase form is what `models/dummy/app.py` and `models/igbert/app.py` use, and most models
+> here. Either is correct; just don't mix a `snap=False` GPU move with a `snap=True` that already loaded
+> to GPU.
+
+> **Verify the tokenizer family from the UPSTREAM model, not the reference.** A BERT/WordPiece model
+> (e.g. `igbert`) space-joins residues (`" ".join(seq)`); a RoBERTa char-level byte-BPE model passes
+> the **raw** sequence (no spaces). Read the upstream `config.json` (`model_type`) /
+> `tokenizer_config.json` — mirroring the reference's tokenization when the family differs silently
+> produces wrong inference and is hard to catch without running the model. (See `investigation/GUIDE.md §1.3`.)
+
 **Anti-patterns:**
 ```python
 from other_repo.mixins import CachingMixin              # WRONG — no billing/caching mixin here; use ModelMixin/ModelMixinSnap from models.commons.model.base
 print("loading model")                                  # WRONG — use logger
-raise ValueError("bad sequence")                        # WRONG — use UserError
+raise ValueError("bad sequence")                        # WRONG (in app.py action code) — raise a typed error subclass
 ```
+
+> **Errors: use the specific subclass; `ValueError` in validators is fine.** `models/commons/core/error.py`
+> defines the taxonomy — raise the most specific one for a bad-input branch in this action code:
+> `ValidationError400` (values pass type checks but fail a business rule), `UnsupportedOptionError`
+> (unsupported option/variant/param), `ResourceNotFoundError` (a referenced asset is missing), or plain
+> `UserError` when none fits. System failures (`ServerError`/`ModelExecutionError`) should just
+> propagate — the gateway sanitizes them to 5xx. **The "no bare `ValueError`" rule is about imperative
+> checks here in `app.py`, NOT Pydantic validators:** a `BeforeValidator` / `@field_validator` /
+> `@model_validator` raising a plain `ValueError` is correct house style — Pydantic collects it into a
+> 422 (see `models/igbert/schema.py` validators raising `ValueError`, while `app.py` raises `ValidationError400`).
 
 ### CPU / no-weights variant
 

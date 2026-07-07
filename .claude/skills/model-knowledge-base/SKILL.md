@@ -60,9 +60,15 @@ For a model that has `config.py` and `app.py` but no knowledge-graph files:
 
 - **Forgetting the license** -- check the GitHub/HuggingFace LICENSE file, not just the API
   metadata field. Code and weights often have different licenses; document both and record the more
-  restrictive one in `sources.yaml`.
+  restrictive one in `sources.yaml`. **If upstream ships no LICENSE file** (license declared only as a
+  HuggingFace card metadata tag — common), record the SPDX id + a link to the card/canonical license
+  text in `sources.yaml`/`LICENSE` and note it; don't get blocked on the missing file.
 - **Fabricated benchmark numbers** -- only use values directly from papers with explicit citations
   (e.g., "Table 2 of Lin et al., 2023"). Never estimate.
+- **Fabricated citations to hit the ≥3 applied-papers target** -- for a niche or new model, if an
+  honest, exhaustive search finds fewer than 3 applied papers, **document the gap** (short
+  `applied_literature` + a one-line note) — never invent a DOI, title, author, or number to reach the
+  count. The "≥3 papers" target never overrides the anti-fabrication rule.
 - **Content duplication across MODEL.md and README.md** -- README.md has concise summaries;
   MODEL.md has full technical depth. Do not copy paragraphs between them.
 - **Old action names** -- the canonical actions are `predict`, `fold`, `encode`, `generate`,

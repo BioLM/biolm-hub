@@ -12,7 +12,7 @@ Create files in dependency order (later files import earlier ones):
 3. `download.py` — weight acquisition (only if the model has weights)
 4. `app.py` — the Modal app + the action methods
 5. `test.py` — the `TestSuite` (integration + deployment cases); `fixture.py` if generating fixtures
-6. `LICENSE` — the upstream license text, copied verbatim from the source repo (every model dir ships one; it must match `sources.yaml`)
+6. `LICENSE` — the upstream license text, copied verbatim from the source repo (every model dir ships one; it must match `sources.yaml`). No upstream LICENSE file (license only a HF card metadata tag)? Record the SPDX id + canonical text/URL + a note — don't block. See `investigation/GUIDE.md §1.1`.
 7. `__init__.py` — empty marker
 
 Then the knowledge graph (`sources.yaml`, `comparison.yaml`, `README.md`, `MODEL.md`, `BIOLOGY.md`)
@@ -64,13 +64,26 @@ logger = get_logger(__name__)
 
 Pick the smallest tier that fits the model's weights + activations in memory.
 
-| Tier | VRAM | Use for |
+| Tier (`ModalGPU`) | VRAM | Use for |
 |------|------|---------|
-| CPU | — | tokenizers, small classical/ML models, utilities |
-| `T4` | 16 GB | small models (≤650M params) |
+| `None` (CPU) | — | tokenizers, small classical/algorithmic tools, utilities, and **tiny neural LMs** (see note) |
+| `T4` | 16 GB | small models (≲ 650M params); the smallest GPU tier |
+| `L4` | 24 GB | small–mid models; newer/cheaper than T4 with more VRAM (**heavily used**) |
 | `A10G` | 24 GB | mid-size models (~1–3B) |
-| `A100-40GB` | 40 GB | large models / longer sequences |
-| `A100-80GB` | 80 GB | the largest models (≥7B) or big batches |
+| `L40S` | 48 GB | mid–large models / longer sequences |
+| `A100-40GB` (`a100`) | 40 GB | large models |
+| `A100-80GB` (`a100-80gb`) | 80 GB | large models (≥7B) or big batches |
+| `H100` | 80 GB | largest/fastest — when you need more throughput than an A100 |
+| `H200` | 141 GB | very large models / very long context |
+| `B200` | 180 GB | the largest models |
+
+Full enum: `models/commons/model/schema.py::ModalGPU` (`T4`, `L4`, `A10G`, `L40S`, `A100_40GB`,
+`A100_80GB`, `H100`, `H200`, `B200`). Set `gpu=None` in the resource spec for CPU.
+
+> **Tiny neural LMs (~tens of M params, e.g. a 14M-param BERT/RoBERTa):** a GPU is often not worth it.
+> CPU (`gpu=None`) or `T4` both work — prefer CPU for genuinely tiny, latency-tolerant models; use
+> `T4` if you want the shared GPU snapshot + seed pattern of a torch model. Either is defensible; start
+> at the cheaper tier and bump on need.
 
 Rough VRAM rule of thumb: `params × bytes_per_param (2 for fp16) × ~1.3 overhead`. Set the tier in
 `config.py`'s resource spec; start small and bump only if you hit OOM.

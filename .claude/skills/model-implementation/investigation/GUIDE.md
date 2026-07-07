@@ -13,6 +13,12 @@ Gather information about the model, confirm the license is permissive, find anal
 2. Record the SPDX identifier (e.g., `Apache-2.0`).
 3. If unclear or non-permissive, **stop and ask the user** before proceeding.
 
+> **When upstream ships no LICENSE file** (the license exists only as a HuggingFace card `license:`
+> metadata tag — very common): don't get blocked. Record the SPDX id from the tag, and when you write
+> `models/<name>/LICENSE`, put that SPDX id + the canonical license text/URL (SPDX / Creative Commons /
+> OSI page) + a note that upstream declares it only via metadata (link the card). The permissive-only
+> gate still applies to whatever the tag says.
+
 ---
 
 ## 1.2 Gather Model Information
@@ -29,6 +35,16 @@ Review the available sources — paper, GitHub repo, HuggingFace model card, pro
 - Exact commit hash for reproducibility
 - Model variants and sizes
 - Authentication requirements
+
+> **Finding the pinned revision SHA + config when the card doesn't render them.** The card page often
+> hides both the commit hash and the architecture dims. Get them from the HF API/hub:
+> - **Latest commit SHA:** `https://huggingface.co/api/models/<org>/<model>` → the `sha` field (or
+>   `huggingface_hub.model_info("<org>/<model>").sha`; `list_repo_refs(...)` lists branches/tags).
+> - **A specific file's raw contents** (architecture dims, `model_type`, tokenizer class):
+>   `https://huggingface.co/<org>/<model>/raw/<sha>/config.json` (also `tokenizer_config.json` /
+>   `vocab.json`).
+>
+> Pin that 40-char `sha` as `hf_pin_revision` (never `"main"` — see `resources/common_issues.md #2`).
 
 **Research paper:**
 - Input/output specifications
@@ -57,6 +73,20 @@ Browse `models/` to find the closest analogous implementation. Read its `app.py`
 | Multi-variant, multi-action | `esm2/` |
 
 > **Rule:** Never invent import organization, decorator usage, or class structure. Copy from the reference model.
+
+> **Caveat — copy the plumbing, NOT the science.** The reference gives you import organization,
+> decorators, class structure, and the `download.py`/`config.py`/`test.py` shape. It does **not**
+> license copying its *field names* or its *tokenization*:
+> - **Field names follow the uniform rules, not the reference.** e.g. `igbert` uses `sequence` for an
+>   unpaired chain, but a **nanobody/VHH is a lone `heavy_chain`** (never `vhh`, never `sequence`).
+>   Apply the schema-field rules in `CONTRIBUTING.md` / the SKILL Global Rules; don't inherit the
+>   reference's choice just because you copied the file.
+> - **Verify the tokenizer family from the UPSTREAM model, not the reference (MUST-VERIFY).** A
+>   BERT/WordPiece model (`igbert`) space-joins residues (`" ".join(seq)`); a RoBERTa char-level
+>   byte-BPE model passes the **raw** sequence (no spaces). Read the upstream `config.json`
+>   (`model_type`) and `tokenizer_config.json` — assuming the reference's scheme when the family
+>   differs silently produces wrong tokenization and wrong inference, and it's hard to catch without
+>   running the model.
 
 ---
 

@@ -69,6 +69,13 @@ Check in this order -- stop when found:
 restrictive one as `license.type` and document both in `license.notes`. The `sources.yaml`
 `license` field is the source of truth; the `README.md` License section must match it.
 
+**License declared only in metadata (no LICENSE file)**: common on HuggingFace — the repo has no
+`LICENSE`/`COPYING` file, only a `license:` tag in the card frontmatter. Record the SPDX id from the
+tag as `license.type`, set `license.url` to the model card and/or the canonical license text
+(SPDX / Creative Commons / OSI page), and note in `license.notes` that upstream declares the license
+only via metadata. Don't block on the missing file — but the permissive-only gate still applies to
+whatever the tag says.
+
 Common types:
 - `MIT`, `Apache-2.0`, `BSD-3-Clause` -- permissive, accepted
 - `CC-BY-4.0` -- permissive with attribution, accepted
@@ -118,6 +125,12 @@ Google Scholar's "Cited by" link on the primary paper is the single most product
 **When fewer than 3 papers are found:** Try all capitalization variants of the model name, the
 parent model family, and the closest competitor's benchmark papers. For models published less than
 6 months ago, focus on bioRxiv preprints.
+
+**If an honest, exhaustive search still yields fewer than 3, document the gap — never fabricate.** A
+short or empty `applied_literature` with a one-line note (niche/new model; N papers found; search
+performed) is correct and passes the gate below. Inventing a DOI, title, author, or number to reach
+"3" is a hard failure. When in doubt, document the gap — the "≥3 papers" target never overrides the
+anti-fabrication rule.
 
 For each qualifying paper, add an entry to `applied_literature` in `sources.yaml` with `title`,
 `doi`/`arxiv`, `year`, `relevance` (1-2 sentences), `molecule_focus`, and `task_focus`. Leave

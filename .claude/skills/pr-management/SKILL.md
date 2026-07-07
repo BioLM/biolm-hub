@@ -44,18 +44,22 @@ The repo has two separate workflows with different triggers:
 
 | Workflow | File | Trigger | Secrets | What it does |
 |----------|------|---------|---------|--------------|
-| **CI** | `ci.yml` | Every push / PR open | None | Style, mypy, unit tests, docs build |
-| **Gated Deploy & Test** | `deploy.yml` | Maintainer applies `deploy-approved` label | Modal + R2 | Detects changed models, deploys to `biolm-hub-dev`, runs integration + deployment tests |
+| **CI** | `ci.yml` | Every push / PR (incl. forks) | None | Three jobs: `checks` (ruff/black, mypy `--strict`, `check_schema_docs.py`, CI-script tests, unit tests), `docs` (`mkdocs build --strict`), `secrets` (gitleaks CLI, tuned by `.gitleaks.toml`) |
+| **Gated Deploy & Test** | `deploy.yml` | Maintainer applies `deploy-approved` label, **or** `workflow_dispatch` (manual, pass model slugs) | Modal + R2 (**`biolm-hub-dev` Environment** secrets) | Detects changed models, deploys to `biolm-hub-dev`, runs integration + deployment tests |
 
-**Key implication:** Opening or pushing to a PR NEVER triggers model deploys automatically. The deploy+test matrix only runs after a maintainer explicitly applies `deploy-approved`. Any new push to the PR auto-removes the label, forcing re-review of the new code before it can be re-approved.
+**Key implication:** Opening or pushing to a PR NEVER triggers model deploys automatically. The deploy+test matrix only runs after a maintainer explicitly applies `deploy-approved` (or dispatches manually). The label **pins the run to the commit it was added on** — a later push does **not** re-trigger a deploy (there is no `synchronize` trigger) and does **not** auto-remove the label. To deploy a newer commit a maintainer must **manually remove and re-add** the label (re-review first) — see CONTRIBUTING.md.
+
+**Fork-PR secret safety:** the Modal/R2 secrets live only on the `biolm-hub-dev` GitHub *Environment* (with required reviewers), never repo-wide — so they are never exposed to a fork PR's CI, and `ci.yml` carries no secrets at all. That's why untrusted PRs can safely run CI but cannot deploy.
 
 ## Predicting CI Impact Before Pushing / Requesting the Label
 
 The "Gated Deploy & Test" pipeline is SELECTIVE — it uses smart detection scripts to determine which models to deploy+test based on the git diff. **Before requesting `deploy-approved`, predict the blast radius:**
 
 ```bash
-# Predict which models would be deployed+tested when the label is applied
-cd .github/scripts && python detect_models.py origin/main --smart 2>&1
+# Predict which models would be deployed+tested when the label is applied.
+# Run from the REPO ROOT — the script lists `models/` relative to the cwd, so a
+# `cd .github/scripts` first finds zero models. (CI runs it from the root too.)
+python .github/scripts/detect_models.py origin/main --smart 2>&1
 
 # Check if "CI" is already running (pushing cancels it)
 gh run list --branch $(git branch --show-current) --status in_progress --json databaseId --jq length
@@ -105,7 +109,7 @@ Test the models in `models_with_code_changes` (those with direct file changes). 
 
 ## Reading CI Logs
 
-GitHub Actions job names contain emojis which break `gh run view --job`. Use the API directly:
+Job names contain separators and matrix suffixes (e.g. `lint · types · unit`, `Integration tests — esm2`) that are awkward to match with `gh run view --job`. Query the API directly instead:
 
 ```bash
 # Get run ID for "Gated Deploy & Test" (integration/deployment failures)
@@ -182,8 +186,9 @@ The most effective debugging approach requires PARALLEL monitoring of two output
    MODAL_ENVIRONMENT=biolm-hub-dev bh deploy MODEL
 
 2. RUN the test IN THE BACKGROUND so you can simultaneously monitor logs:
-   # Run test in background, capture output
-   python -m pytest models/MODEL/test.py -k integration -v --no-cov -s > /tmp/test_output.log 2>&1 &
+   # Run test in background, capture output. `-m integration` is a pytest MARKER
+   # (not `-k`) — matches every model's test.py and the Makefile / deploy.yml.
+   python -m pytest models/MODEL/test.py -m integration -v --no-cov -s > /tmp/test_output.log 2>&1 &
    TEST_PID=$!
 
 3. IMMEDIATELY find the ephemeral app (it only exists while the test is running):
@@ -229,14 +234,21 @@ nohup bash -c "MODAL_ENVIRONMENT=biolm-hub-dev bh deploy MODEL" > /tmp/deploy.lo
 
 ## Pre-Push Checklist
 
-1. `make style` passes
-2. Run blast-radius prediction: `cd .github/scripts && python detect_models.py origin/main --smart`
-3. All `models_with_code_changes` models deploy locally without errors
-4. Integration tests pass locally for modified models
-5. No inline comments inside `from_registry()` strings
-6. Python 3.12 models: numpy >= 1.26, scipy >= 1.11
-7. `models/commons/model/pydantic.py` uses `try/except ImportError` (sadie compat)
-8. CI is not currently running (or you accept cancelling it)
+The gate CI enforces on every PR (`ci.yml`) is **`make check`** (style + mypy `--strict` + schema-doc
+check + CI-script tests + unit tests — the `checks` job) and **`make docs`** (`mkdocs build --strict`
+— the separate `docs` job), plus a **`secrets` job** (gitleaks CLI). The `PULL_REQUEST_TEMPLATE.md`
+checklist requires the first two green locally. Run them before pushing:
+
+1. `make check` passes — NOT just `make style` (it's CI's `checks` job)
+2. `make docs` passes (`mkdocs build --strict`) — required if you touched any schema / `Field(description=...)` / root doc
+3. Run blast-radius prediction **from the repo root**: `python .github/scripts/detect_models.py origin/main --smart`
+4. All `models_with_code_changes` models deploy locally without errors
+5. Integration tests pass locally for modified models
+6. No inline comments inside `from_registry()` strings
+7. Python 3.12 models: numpy >= 1.26, scipy >= 1.11
+8. `models/commons/model/pydantic.py` uses `try/except ImportError` (sadie compat)
+9. No secrets in the diff (the `secrets`/gitleaks job scans full history)
+10. CI is not currently running (or you accept cancelling it)
 
 ## Model Upgrade Tiers
 

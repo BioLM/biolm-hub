@@ -26,6 +26,13 @@ make test-github-scripts  # unit tests for the CI change-detection scripts
 make test-unit          # fast unit tests (no Modal, no R2)
 ```
 
+> **Schema-doc gate.** `make check-schema-docs` runs **`tooling/check_schema_docs.py`** (CI-wired via
+> `tooling/test_schema_docs.py`). It fails on any field lacking a *rendered* `Field(description=...)`,
+> or a shared field whose wording drifts from **`tooling/field_glossary.yaml`** — so pre-check
+> shared-field wording against the glossary before running it. The most common "no rendered
+> description" cause is a `Field(description=...)` nested inside `Optional[Annotated[...]]`; move the
+> `Field` to field level (see `implementation/GUIDE.md §2.1`).
+
 ---
 
 ## 3.1a `make docs` — the generated page must build
@@ -120,7 +127,10 @@ MODAL_ENVIRONMENT=biolm-hub-dev bh deploy <name> --force
 
 The full deploy + integration + deployment test matrix runs in CI under the `deploy-approved` label — you do not need to run this before submitting a PR. Once a maintainer approves and applies the label, CI deploys to `biolm-hub-dev` and runs the full test suite.
 
-> **Note:** Pushing new commits to an approved PR automatically removes the `deploy-approved` label. Ping a maintainer to re-approve after your last push.
+> **Note:** The `deploy-approved` label pins the run to the commit it was added on. Pushing new
+> commits does **not** re-trigger a deploy (there is no `synchronize` trigger) and does **not**
+> auto-remove the label; to deploy your latest push a maintainer must **manually remove and re-add** it
+> (after re-review). Ping a maintainer after your last push.
 
 ---
 

@@ -141,6 +141,22 @@ from models.commons.core.error import UserError  # caller's mistake — surfaced
 # ServerError — system failure — let it propagate; never catch-and-print
 ```
 
+The full taxonomy lives in `models/commons/core/error.py`. Raise the **most specific** subclass:
+
+| Class | `code` | Raise when |
+|-------|--------|-----------|
+| `UserError` | `user.error` | generic caller mistake (user-facing base) |
+| `ValidationError400` | `user.validation` | payload passes type checks but fails a business rule |
+| `UnsupportedOptionError` | `user.unsupported_option` | caller asked for an option/variant/param the model doesn't support |
+| `ResourceNotFoundError` | `user.resource_not_found` | a user-referenced resource/asset doesn't exist |
+| `ServerError` / `ModelExecutionError` | `system.*` | internal failure — usually just let it propagate (sanitized to 5xx) |
+
+**"No bare `ValueError`" applies to imperative checks in `app.py`, NOT to Pydantic validators.** A
+field/model validator (`BeforeValidator`, `@field_validator`, `@model_validator`) raising a plain
+`ValueError` is correct house style — Pydantic turns it into a 422. In the *action code*, raise a
+typed subclass instead. (See `models/igbert/schema.py` validators raising `ValueError`, while its
+`app.py` raises `ValidationError400`.)
+
 ---
 
 ## Common Pitfalls (top 8)
