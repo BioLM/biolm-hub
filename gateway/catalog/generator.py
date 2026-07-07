@@ -1,4 +1,6 @@
-from typing import Any
+import types
+import typing
+from typing import Any, get_args, get_origin
 
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
@@ -9,6 +11,27 @@ from gateway.model_discovery import ModelMapper
 from models.commons.core.logging import get_logger
 
 logger = get_logger(__name__)
+
+
+def _unwrap_optional(annotation: Any) -> Any:
+    """Return the inner type of an ``Optional[T]`` / ``T | None`` annotation.
+
+    A field declared ``params: Optional[SomeParams]`` (or ``SomeParams | None``)
+    has an annotation of ``Union[SomeParams, None]`` — which is NOT a Pydantic
+    model itself, so ``hasattr(annotation, "model_fields")`` is False and a naive
+    introspection would treat it as a plain scalar and drop the whole params
+    object. Unwrapping to the single non-``None`` member (only when there is
+    exactly one) lets the list/enum/nested-model detectors see the real type, so
+    ``Optional[Params]`` renders identically to a required ``Params``. Genuine
+    multi-member unions (e.g. ``int | str``) are left untouched.
+    """
+    if get_origin(annotation) is typing.Union or isinstance(
+        annotation, types.UnionType
+    ):
+        non_none = [a for a in get_args(annotation) if a is not type(None)]
+        if len(non_none) == 1:
+            return non_none[0]
+    return annotation
 
 
 def get_field_details(field: FieldInfo) -> dict[str, Any]:
@@ -63,7 +86,7 @@ def _sanitize_value(value: Any) -> Any:
 
 def _detect_list_type(field: FieldInfo, details: dict[str, Any]) -> None:
     """Detect if field is a list type."""
-    annotation = getattr(field, "annotation", None)
+    annotation = _unwrap_optional(getattr(field, "annotation", None))
     if annotation is None:
         return
 
@@ -112,7 +135,7 @@ def _detect_multi_select_enum(type_str: str, details: dict[str, Any]) -> None:
 
 def _detect_enum_type(field: FieldInfo, details: dict[str, Any]) -> None:
     """Detect enum types."""
-    annotation = getattr(field, "annotation", None)
+    annotation = _unwrap_optional(getattr(field, "annotation", None))
     if annotation is None:
         return
 
@@ -134,7 +157,7 @@ def _detect_enum_type(field: FieldInfo, details: dict[str, Any]) -> None:
 
 def _detect_nested_model(field: FieldInfo, details: dict[str, Any]) -> None:
     """Detect nested BaseModel fields."""
-    annotation = getattr(field, "annotation", None)
+    annotation = _unwrap_optional(getattr(field, "annotation", None))
     if annotation is None:
         return
 

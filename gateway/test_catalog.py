@@ -4,13 +4,18 @@ Covers catalog data generation (route scanning) and the deployment-status
 mapping. The Modal query is monkeypatched, so these run with no Modal/R2.
 """
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import pytest
+from pydantic import BaseModel
 
 from gateway.catalog import deployment_status as ds
 from gateway.catalog.deployment_status import get_deployment_status
-from gateway.catalog.generator import generate_catalog_data, group_models_by_base
+from gateway.catalog.generator import (
+    analyze_schema,
+    generate_catalog_data,
+    group_models_by_base,
+)
 from gateway.model_discovery import get_model_mapper
 from gateway.routing import build_gateway_app
 
@@ -130,3 +135,54 @@ def test_model_page_deployed_vs_undeployed(monkeypatch: pytest.MonkeyPatch) -> N
     assert "disabled title" in r2.text
 
     assert undeployed.get("/catalog/does-not-exist").status_code == 404
+
+
+# --- Request-schema introspection (drives the per-action form spec in script.js) ---
+
+
+def test_optional_params_are_introspected_as_a_nested_model() -> None:
+    """A ``params: Optional[SomeParams]`` field must render its fields, not be
+    dropped. The annotation is ``Union[SomeParams, None]`` (not a model itself);
+    without unwrapping it, ``analyze_schema`` would emit ``is_nested_model=False``
+    with no fields, and the form would wrongly show "No parameters required".
+    """
+
+    class _Params(BaseModel):
+        flag: bool = False
+        count: int = 3
+
+    class _Req(BaseModel):
+        params: Optional[_Params] = None
+        items: list[str] = []
+
+    analyzed = analyze_schema(_Req)
+    params = analyzed["params"]
+    assert params["is_nested_model"] is True
+    assert set((params["nested_fields"] or {}).keys()) == {"flag", "count"}
+
+
+def test_real_optional_params_models_render_their_param_fields() -> None:
+    """Regression guard for the three families that declare Optional params
+    (deepviscosity, immunebuilder, immunefold): their param fields must survive
+    introspection so the catalog form renders them."""
+    from models.deepviscosity.schema import DeepViscosityPredictRequest
+    from models.immunebuilder.schema import ImmuneBuilderFoldRequest
+    from models.immunefold.schema import ImmuneFoldPredictRequest
+
+    cases = [
+        (DeepViscosityPredictRequest, "include_deepsp_features"),
+        (ImmuneBuilderFoldRequest, "seed"),
+        (ImmuneFoldPredictRequest, "contact_idx"),
+    ]
+    for req_model, expected_field in cases:
+        params = analyze_schema(req_model)["params"]
+        assert params["is_nested_model"] is True, req_model.__name__
+        assert expected_field in (params["nested_fields"] or {}), req_model.__name__
+
+
+def test_items_only_action_has_no_params() -> None:
+    """Baseline: a request model with only ``items`` (no ``params``) must NOT
+    surface a params object — "No parameters required" is correct for it."""
+    from models.esm2.schema import ESM2PredictRequest
+
+    assert "params" not in analyze_schema(ESM2PredictRequest)
