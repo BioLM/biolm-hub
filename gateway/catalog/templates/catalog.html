@@ -4,17 +4,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BioLM API Catalog</title>
+    <title>biolm-hub &middot; Model Catalog</title>
     <link rel="stylesheet" href="/static/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <header class="site-header">
+        <nav class="site-nav">
+            <a href="/catalog" class="brand">
+                <span class="brand-mark">◆</span>
+                biolm-hub
+            </a>
+            <div class="nav-links">
+                <a href="https://biolm.ai/" class="nav-link" target="_blank" rel="noopener">biolm.ai ↗</a>
+            </div>
+        </nav>
+    </header>
     <div class="container">
         <header>
-            <h1>BioLM API Catalog</h1>
-            <p class="catalog-subtitle">Explore our collection of biological language models</p>
+            <h1>Model Catalog</h1>
+            <p class="catalog-subtitle">A uniform, agent-first catalog of open biological ML models. Pick a model to explore its schema and run inference.</p>
         </header>
         <main>
             <div class="model-groups">
@@ -30,7 +41,7 @@
                                     <div class="button-content">
                                         <span class="model-name">{{ variant.display_name }}</span>
                                         <span class="endpoint-count">{{ variant.endpoints|length }} endpoint{{ 's' if variant.endpoints|length != 1 else '' }}</span>
-                                        {% if dep == false %}<span class="status-badge undeployed">● not deployed</span>{% elif dep %}<span class="status-badge deployed">● deployed</span>{% endif %}
+                                        {% if dep == false %}<span class="status-badge undeployed">● not deployed</span>{% elif dep %}<span class="status-badge deployed">● deployed</span>{% elif status %}<span class="status-badge unknown">● unknown</span>{% endif %}
                                     </div>
                                     <div class="button-arrow">→</div>
                                 </a>
@@ -42,7 +53,7 @@
                                         <div class="button-content">
                                             <span class="model-name">{{ variant.display_name }}</span>
                                             <span class="variant-info">{{ variant.slug.split('-')[-1] }}</span>
-                                            {% if dep == false %}<span class="status-badge undeployed">● not deployed</span>{% elif dep %}<span class="status-badge deployed">● deployed</span>{% endif %}
+                                            {% if dep == false %}<span class="status-badge undeployed">● not deployed</span>{% elif dep %}<span class="status-badge deployed">● deployed</span>{% elif status %}<span class="status-badge unknown">● unknown</span>{% endif %}
                                         </div>
                                         <div class="button-arrow">→</div>
                                     </a>
