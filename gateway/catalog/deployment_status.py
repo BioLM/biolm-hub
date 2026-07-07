@@ -16,7 +16,6 @@ import json
 import subprocess
 import sys
 import time
-from pathlib import Path
 from typing import Optional
 
 from gateway.model_discovery import ModelMapper
@@ -29,15 +28,16 @@ _CACHE_TTL_SECONDS = 8.0
 _cache: dict[Optional[str], tuple[float, Optional[set[str]]]] = {}
 
 
-def _modal_executable() -> str:
-    """Path to the ``modal`` CLI — prefer the one next to the running interpreter.
+def _modal_command() -> list[str]:
+    """Base command to invoke the Modal CLI: ``python -m modal``.
 
-    When invoked via ``.venv/bin/bh`` the venv isn't on PATH, so a bare ``modal``
-    would not resolve; ``modal`` lives alongside ``python`` in the same bin dir.
-    Falls back to ``"modal"`` on PATH otherwise.
+    Invoking the CLI as a module through the *running interpreter* is robust: the
+    ``modal`` **module** is always importable (it's a core dependency), whereas the
+    ``modal`` **console script** isn't always present next to ``python`` (editable/
+    dev venvs, some packagers), and the venv's ``bin/`` isn't necessarily on PATH
+    when launched via ``.venv/bin/bh``. This sidesteps both problems.
     """
-    candidate = Path(sys.executable).parent / "modal"
-    return str(candidate) if candidate.exists() else "modal"
+    return [sys.executable, "-m", "modal"]
 
 
 def get_deployed_app_names(environment: Optional[str] = None) -> Optional[set[str]]:
@@ -62,7 +62,7 @@ def get_deployed_app_names(environment: Optional[str] = None) -> Optional[set[st
 
 
 def _query_deployed_app_names(environment: Optional[str]) -> Optional[set[str]]:
-    cmd = [_modal_executable(), "app", "list", "--json"]
+    cmd = _modal_command() + ["app", "list", "--json"]
     if environment:
         cmd += ["-e", environment]
     try:
@@ -73,7 +73,10 @@ def _query_deployed_app_names(environment: Optional[str]) -> Optional[set[str]]:
     except (OSError, subprocess.SubprocessError, json.JSONDecodeError) as e:
         stderr = getattr(e, "stderr", "") or ""
         logger.warning(
-            "Could not query deployed Modal apps (%s): %s %s", cmd[0], e, stderr
+            "Could not query deployed Modal apps (`%s`): %s %s",
+            " ".join(cmd),
+            e,
+            stderr,
         )
         return None
 
