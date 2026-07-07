@@ -89,7 +89,7 @@ def test_catalog_page_renders_status_badges(monkeypatch: pytest.MonkeyPatch) -> 
 
     resp = client.get("/catalog")
     assert resp.status_code == 200
-    assert "BioLM API Catalog" in resp.text
+    assert "Model Catalog" in resp.text
     assert "● deployed" in resp.text  # dna-chisel
     assert "● not deployed" in resp.text  # the rest
 
