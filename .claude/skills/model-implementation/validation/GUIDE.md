@@ -16,6 +16,15 @@ make check
 
 Fix every failure before proceeding. Never push with `make check` red.
 
+> **A red `make check` may be pre-existing and unrelated to your model.** Some unit tests exercise the
+> whole catalog (the gateway catalog/discovery tests load *every* model family), so a failure can
+> originate in another model or a stale baseline, not yours — and your own
+> `python -m pytest models/<name>/test.py` won't surface it. Before assuming your model broke CI, diff
+> against a clean baseline: stash or remove `models/<name>/` (or compare to `origin/main`) and re-run
+> `make check` — if the same failure persists with your model absent, it's pre-existing. Fix your
+> model's own failures; flag a pre-existing one separately rather than treating it as a blocker you
+> introduced.
+
 If you want to run the sub-checks individually:
 
 ```bash

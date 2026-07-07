@@ -139,6 +139,24 @@ would also rename the field in the **output** — wrong for input back-compat. R
 > `max_position_embeddings - 2 - special_tokens`). A naive `max_sequence_len = max_position_embeddings`
 > overflows the position embeddings at runtime.
 
+> **Char-cap vs token-cap for compressing tokenizers (k-mer/BPE).** The note above assumes char ≈ token
+> (protein PLMs). But with a **k-mer or BPE tokenizer a character sequence compresses to far fewer
+> tokens**, so the character cap (validated on the request `Field`) and the token cap (passed to the
+> tokenizer) are **different limits** — carry both. Mirror `models/dnabert2/schema.py`, which defines
+> two distinct `ModelParams` fields: `max_sequence_len` (the *nucleotide/character* cap enforced by the
+> schema `Field(max_length=...)`) and `max_token_len` (the tokenizer's `max_length=` truncation limit,
+> passed in `app.py`'s `self.tokenizer(..., max_length=...)`). Cap *characters* so the resulting token
+> count stays within the model's trained context. (Rotary-position models such as `nt` have no RoBERTa
+> learned-position offset — the offset subtraction above doesn't apply — but the char-vs-token
+> distinction still does.)
+
+> **Document the UNIT/semantics of numeric outputs — especially under non-standard tokenization.** When
+> the tokenizer differs from your reference, an output's *meaning* can shift even though the plumbing is
+> copied verbatim: a masked-LM pseudo-log-likelihood summed over **k-mer/BPE tokens** is per-*token*,
+> not per-*nucleotide* (`dnabert2`'s `log_prob` sums `log_softmax` over its BPE token positions), so the
+> scores aren't comparable across sequences the way a per-residue score would be. Say what the number
+> means in the schema `Field(description=...)` and in the knowledge-graph docs.
+
 ---
 
 ## 2.2 `config.py`
@@ -438,6 +456,18 @@ if __name__ == "__main__":
 
 **Image layer order:** download layer → pip install → `common_requirements` → source layer.
 
+> **`trust_remote_code=True` models need a `transformers` pinned to the model's release era.** A model
+> loaded with `trust_remote_code=True` ships custom modeling/tokenizer files (e.g. the Nucleotide
+> Transformer's bundled `modeling_esm.py`, or DNABERT-2's custom BPE tokenizer) that import
+> `transformers` internals which newer releases have **removed** (e.g. `transformers.file_utils`) — a
+> modern pin then crashes at load time. Pin `transformers` to a version from the model's release era:
+> inspect the imports of the modules named in the upstream `config.json` `auto_map`, and the
+> `transformers` version the model card/repo states. `models/dnabert2/app.py` pins
+> `transformers==4.29.2` for exactly this reason (and installs it in *both* the download layer's
+> `extra_pip_packages` and the main `pip_install`, because the download layer validates by loading the
+> model at build time). This is a real footgun that's **hard to verify without a container build** — if
+> you can't build locally, flag the pin as build-verified-only in the PR.
+
 > **One `@modal.enter` or two? Depends on GPU snapshotting.** The template above splits load into
 > `snap=True` (CPU) + `snap=False` (GPU move + seeds) — that's the pattern for a **CPU-only** memory
 > snapshot: GPU state isn't captured, so you move to GPU and seed on restore. When you enable a **GPU
@@ -449,9 +479,12 @@ if __name__ == "__main__":
 
 > **Verify the tokenizer family from the UPSTREAM model, not the reference.** A BERT/WordPiece model
 > (e.g. `igbert`) space-joins residues (`" ".join(seq)`); a RoBERTa char-level byte-BPE model passes
-> the **raw** sequence (no spaces). Read the upstream `config.json` (`model_type`) /
-> `tokenizer_config.json` — mirroring the reference's tokenization when the family differs silently
-> produces wrong inference and is hard to catch without running the model. (See `investigation/GUIDE.md §1.3`.)
+> the **raw** sequence (no spaces); a **subword / k-mer / custom-vocabulary tokenizer** (BPE, k-mer —
+> as in DNA models like `dnabert2` (BPE) and the Nucleotide Transformer `nt` (k-mer)) also takes the
+> **raw** string and segments it itself — no space-join, and **character length ≠ token count**. Check
+> the `tokenizer_class` in `tokenizer_config.json` and `model_type` in `config.json` — mirroring the
+> reference's tokenization when the family differs silently produces wrong inference and is hard to
+> catch without running the model. (See `investigation/GUIDE.md §1.3`.)
 
 **Anti-patterns:**
 ```python

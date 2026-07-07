@@ -81,12 +81,20 @@ Browse `models/` to find the closest analogous implementation. Read its `app.py`
 >   unpaired chain, but a **nanobody/VHH is a lone `heavy_chain`** (never `vhh`, never `sequence`).
 >   Apply the schema-field rules in `CONTRIBUTING.md` / the SKILL Global Rules; don't inherit the
 >   reference's choice just because you copied the file.
-> - **Verify the tokenizer family from the UPSTREAM model, not the reference (MUST-VERIFY).** A
->   BERT/WordPiece model (`igbert`) space-joins residues (`" ".join(seq)`); a RoBERTa char-level
->   byte-BPE model passes the **raw** sequence (no spaces). Read the upstream `config.json`
->   (`model_type`) and `tokenizer_config.json` — assuming the reference's scheme when the family
->   differs silently produces wrong tokenization and wrong inference, and it's hard to catch without
->   running the model.
+> - **Verify the tokenizer family from the UPSTREAM model, not the reference (MUST-VERIFY).** Read the
+>   `tokenizer_class` in the upstream `tokenizer_config.json` and the `model_type` in `config.json`,
+>   then match it to how you feed input — there are (at least) three buckets, not two:
+>   - **BERT/WordPiece** (e.g. `igbert`): space-join residues (`" ".join(seq)`).
+>   - **RoBERTa char-level byte-BPE**: pass the **raw** sequence (no spaces).
+>   - **Subword / k-mer / custom-vocabulary tokenizers** (BPE, k-mer, and the custom tokenizers common
+>     in DNA/genomics models — `dnabert2` uses a BPE tokenizer, the Nucleotide Transformer `nt` a fixed
+>     k-mer vocabulary): pass the **raw** string and let the HF tokenizer segment it — do **not**
+>     space-join. Here **character length ≠ token count** (a k-mer/BPE tokenizer packs many characters
+>     into one token), which changes how you set the length cap — see the `max_sequence_len` note in
+>     `implementation/GUIDE.md §2.1`. These custom tokenizers usually load via `trust_remote_code=True`
+>     (as `dnabert2` does), which has its own dependency footgun — see `implementation/GUIDE.md §2.4`.
+>   Assuming the reference's scheme when the family differs silently produces wrong tokenization and
+>   wrong inference, and it's hard to catch without running the model.
 
 ---
 
