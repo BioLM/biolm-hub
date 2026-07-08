@@ -23,7 +23,7 @@
 - [ ] Actions use only the closed verb set (`predict`, `fold`, `encode`, `generate`, `score`, `log_prob`) — the verb matches intent.
 - [ ] Schema field names follow the uniform conventions in [`CONTRIBUTING.md`](../CONTRIBUTING.md) (`sequence`/`items`/`params`, `heavy_chain`/`light_chain`, `embeddings`, `pdb`/`cif`, …); renamed fields keep a back-compat alias.
 - [ ] Every schema field has `Field(..., description="...")`; shared field names match the wording in `tooling/field_glossary.yaml`.
-- [ ] The five knowledge-graph files are authored: `sources.yaml`, `comparison.yaml`, `README.md`, `MODEL.md`, `BIOLOGY.md` — license declared in `sources.yaml`, permissively-licensed only (MIT / Apache-2.0 / BSD and compatible).
+- [ ] The five knowledge-graph files are authored: `sources.yaml`, `comparison.yaml`, `README.md`, `MODEL.md`, `BIOLOGY.md` — license declared in `sources.yaml` and permitted by [`CONTRIBUTING.md`](../CONTRIBUTING.md) → "License first" (permissive + CC-BY-4.0; GPL only after maintainer review).
 - [ ] Goldens generated and the model's test file passes: `python -m pytest models/<name>/test.py`. If goldens changed, it's because the output change is *intended* — say so below.
 - [ ] Structured logging only (`models.commons.core.logging.get_logger`), typed errors (no bare `ValueError`/`Exception` for caller mistakes).
 

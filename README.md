@@ -150,11 +150,13 @@ agent alike — the uniform layout means a new model follows a well-worn path, n
 
 1. Have one in mind? Propose it in a
    [discussion](https://github.com/BioLM/biolm-hub/discussions) or an issue.
-2. Copy `models/dummy/` and follow [`CONTRIBUTING.md`](CONTRIBUTING.md).
+2. Copy `models/dummy/` and follow [`CONTRIBUTING.md`](CONTRIBUTING.md) — or, if you're building with
+   an agent, point it at the `model-implementation` and `model-knowledge-base` skills in `.claude/skills/`.
 3. `make check` and `make docs` go green; your model's docs page is generated automatically.
 
-Each model declares its license in `sources.yaml`; only permissively-licensed models (MIT / Apache-2.0
-/ BSD and compatible) are included.
+Each model declares its license in `sources.yaml`; only permissively-licensed models are included —
+see [`CONTRIBUTING.md`](CONTRIBUTING.md) for the accepted-license policy (permissive + CC-BY-4.0; GPL
+by maintainer review).
 
 ## Security
 

@@ -8,7 +8,9 @@ description: Author the five knowledge-graph files (sources.yaml, comparison.yam
 ## Purpose
 
 Author the five knowledge-graph files required for every model in `biolm-hub`. These files are
-not optional -- see `CONTRIBUTING.md`. The standard layout is:
+not optional -- see `CONTRIBUTING.md`, which is also the canonical source for house rules and the
+accepted-license policy (this skill authors the knowledge graph; it doesn't restate policy). The
+standard layout is:
 
 ```
 models/<slug>/

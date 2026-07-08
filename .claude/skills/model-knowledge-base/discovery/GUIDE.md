@@ -51,7 +51,9 @@ Extract every reference already present before searching externally.
 ## Step 3: Determine License (CRITICAL)
 
 **Do not accept "Unknown" without exhausting all sources below.** Only permissive licenses
-(MIT / Apache-2.0 / BSD / CC-BY-4.0 and compatible) are accepted.
+(MIT / Apache-2.0 / BSD / CC-BY-4.0 and compatible) are accepted. The accepted-license policy is
+canonical in `CONTRIBUTING.md` → "License first"; this step implements it (GPL/copyleft →
+maintainer review, not an automatic reject).
 
 Check in this order -- stop when found:
 

@@ -48,6 +48,7 @@ CLAUDE.local.md
 # Local working directories
 .planning/
 scratchpad/
+.claude/worktrees/
 
 # mkdocs build output
 site/

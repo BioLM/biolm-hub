@@ -36,6 +36,12 @@ only in the gitignored `.env`; **never commit `.env`**. Without direnv, `source 
 
 ## Adding a model
 
+> **Using an AI coding agent?** This guide is the **policy & house-rules reference**; the step-by-step
+> build recipe lives in the Claude Code skills under `.claude/skills/`. Point the agent at
+> **`model-implementation`** (implement → validate → deploy → document → review) and
+> **`model-knowledge-base`** (the five knowledge-graph files) — both defer to *this* document for
+> policy. Humans: read on. Either way, start from `models/dummy/`.
+
 Start from **`models/dummy/`** (the template) and keep the standard layout:
 
 ```
@@ -52,9 +58,14 @@ models/<name>/
   BIOLOGY.md      # the biology, applied use-cases           ┘
 ```
 
-**License first.** Only permissively-licensed models (MIT / Apache-2.0 / BSD and compatible) are
-accepted. Declare the license in `sources.yaml`, include a per-model `LICENSE`/attribution file, and
-do not vendor weights or code you can't redistribute.
+**License first — this section is canonical** (the skills defer to it). **Accepted:** MIT, Apache-2.0,
+BSD-3-Clause (and compatible permissive licenses), plus **CC-BY-4.0** (common for model *weights*).
+**GPL / copyleft** is accepted **only after a maintainer reviews the copyleft reach** for
+redistribution and serving — flag it in the PR and ask; don't assume. **Not accepted:** CC-BY-NC and
+other non-commercial or "academic only" terms, and proprietary licenses. Code and weights can carry
+*different* licenses (e.g. MIT code, CC-BY-NC weights) — the more restrictive one governs. Declare the
+license in `sources.yaml`, include a per-model `LICENSE`/attribution file, and never vendor weights or
+code you can't redistribute.
 
 ## House rules (the "Global Rules")
 
@@ -65,7 +76,7 @@ The canonical action set is closed:
 
 | Verb | Means |
 |------|-------|
-| `predict` | a scalar/label property of a sequence or structure |
+| `predict` | a scalar/label property of a sequence or structure — **or** masked-token / fill-mask prediction (mind the payload for large-vocab LMs; the `model-implementation` skill has the detail) |
 | `fold` | 3D structure prediction (returns `pdb`/`cif` + confidence) |
 | `encode` | learned representations / embeddings |
 | `generate` | produce new sequences or structures (sampling, infilling, inverse folding, design) |
@@ -88,6 +99,12 @@ field names:
   `plddt`/`ptm`/`pae`; batch results under `results`.
 
 When renaming for compatibility, keep the old name working via a Pydantic field alias.
+
+Every field must carry `Field(..., description="...")` — that description is the *only* thing that
+renders in the OpenAPI/JSON schema and on the docs site (plain `#` comments do not). For shared field
+names, reuse the canonical wording in `tooling/field_glossary.yaml` so descriptions don't drift across
+models; `tooling/check_schema_docs.py` (a unit test) fails CI on an undocumented field or one that
+diverges from the glossary.
 
 ### Logging
 Use the shared logger; never `print` in runtime code:
@@ -122,7 +139,10 @@ Tests are the coherence mechanism. There are four tiers:
 | Integration | deploy to a Modal env + golden fixtures | Modal env + R2 |
 | Deployment | run against a live endpoint | Modal env + R2 |
 
-- **Generate fixtures, then run the file:** `python -m pytest models/<name>/test.py`.
+- **Generate fixtures, then run the file:** run `python models/<name>/fixture.py` to produce the golden
+  fixtures, then `python -m pytest models/<name>/test.py`. Writing *public* goldens needs your own R2
+  bucket + credentials; the public catalog's goldens are maintainer-populated (the `model-implementation`
+  skill's `validation/GUIDE.md` has the mechanics).
 - The **golden output is the oracle** — don't regenerate goldens to force a test green. Regenerate
   only when an output change is *intended*, and say so in the PR.
 - **Reuse shared test assets** rather than hardcoding a standard sequence in your fixture. Standard
@@ -140,6 +160,8 @@ Before opening a PR for a new or changed model, confirm it lands in house style 
 
 - **`make check`** must be green — this is the every-PR safe gate (style, mypy, the schema-doc check,
   CI-script tests, and unit tests). It runs Modal-free, so anyone can run it locally.
+- **Added or renamed a model? Regenerate the catalog index** — `python -m tooling.gen_model_catalog`,
+  then commit `models/README.md`. Skipping this leaves `make check` red on the stale index.
 - **`make docs`** must build (`mkdocs build --strict`) — your model's page is generated from its
   config + knowledge graph, so schema or KB mistakes surface here.
 - **Generate goldens and run the model's test file** against a Modal deployment:
@@ -147,15 +169,18 @@ Before opening a PR for a new or changed model, confirm it lands in house style 
   when an output change is *intended*, and say so in the PR. Integration and deployment tests
   (which need a Modal env + R2) run in the maintainer-gated `deploy.yml` workflow once a maintainer
   applies the `deploy-approved` label and approves the `biolm-hub-dev` deploy (see
-  [Continuous integration & deploys](#continuous-integration--deploys)).
+  [Continuous integration and deploys](#continuous-integration-and-deploys)).
 
 ## Pull requests
 
 - One coherent change per PR; keep `make check` green.
+- Fill out the PR template (`.github/PULL_REQUEST_TEMPLATE.md`) — it's the house-rules checklist.
+- For a new or significantly changed model, have a **fresh-context reviewer** (a different person, or a
+  fresh agent session) read the full diff — same-context self-review misses things.
 - Fix failures locally before pushing — don't push just to re-trigger CI.
 - Be kind and assume good faith.
 
-## Continuous integration & deploys
+## Continuous integration and deploys
 
 CI is **two-tier, split by trust** — cheap, safe checks run automatically, while anything that spends
 Modal/R2 or touches secrets is maintainer-gated.
