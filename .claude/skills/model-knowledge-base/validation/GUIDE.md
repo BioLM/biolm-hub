@@ -46,6 +46,7 @@ paper before opening the PR. Catch drift, fabricated numbers, and broken referen
 
 - [ ] Actions + schema fields in the docs match `schema.py`/`config.py`
 - [ ] Every benchmark number is cited; no fabricated values
+- [ ] Every author attribution written in prose (e.g. "Rollins et al., 2024" in `README.md`/`MODEL.md`) is backed by an `authors` list on that paper's `sources.yaml` entry, and the surname is verified against the actual paper (search the DOI/arXiv) — record authors in structured form so the prose stays auditable, never assert "et al." from memory
 - [ ] License agrees across `sources.yaml`, README, and `LICENSE`
 - [ ] All referenced model slugs exist in `models/`
 - [ ] `sources.yaml` and `comparison.yaml` are valid YAML

@@ -3,15 +3,19 @@
 ## Purpose
 Document the model for users and the public catalog.
 
-There are two documentation artifacts:
-1. **`README.md`** — API reference and scientific context (authored here)
-2. **Knowledge graph** (`sources.yaml`, `comparison.yaml`, `MODEL.md`, `BIOLOGY.md`) — delegate to the `model-knowledge-base` skill
+All five knowledge-graph files — `README.md`, `MODEL.md`, `BIOLOGY.md`, `sources.yaml`,
+`comparison.yaml` — are **owned by the `model-knowledge-base` skill**. This phase does **not**
+hand-author them; it **invokes** that skill (`config.py`/`schema.py`/`app.py` from Phase 2 must
+already exist, since the KG skill reads them), verifies its output, and then opens the PR.
 
 ---
 
-## 4.1 `README.md`
+## 4.1 The `README.md` the KG skill produces
 
-Follow `models/dummy/README.md` as the template — all its sections are required. Include `[OPTIONAL]` sections only when applicable.
+`README.md` is one of the five files **owned by `model-knowledge-base`** — you invoke that skill
+(§4.2) rather than hand-authoring it here. The reference below is what the skill's README must
+contain, so you can verify its output: follow `models/dummy/README.md` as the template — all its
+sections are required; include `[OPTIONAL]` sections only when applicable.
 
 The README is the public-facing API reference. It must be:
 - **Specific** — use numbers, not vague descriptions
@@ -43,16 +47,20 @@ The README is the public-facing API reference. It must be:
 
 ---
 
-## 4.2 Knowledge Graph — Delegate to `model-knowledge-base`
+## 4.2 Knowledge Graph — Invoke `model-knowledge-base` (owns all five files)
 
-The following files are authored by the `model-knowledge-base` skill, not here:
+`model-knowledge-base` authors **all five** knowledge-graph files — not just these four — to its own
+standard; this phase only invokes it:
 
+- `README.md` — public-facing API reference (see §4.1 for the sections it must contain)
 - `sources.yaml` — complete source manifest (you created a skeleton in Phase 1; the skill fills it out)
 - `comparison.yaml` — strengths/weaknesses, when-to-use, alternatives
 - `MODEL.md` — architecture deep-dive, training details, benchmarks
 - `BIOLOGY.md` — the biology, applied use cases, biological context
 
-Invoke the skill after your PR is merged, or coordinate with a maintainer.
+Invoke `model-knowledge-base` **now, before the PR** — all five KG files must be authored to the KG
+skill's standard as part of this phase. It needs `config.py`/`schema.py`/`app.py` (Phase 2) to exist
+first.
 
 ---
 
@@ -79,12 +87,14 @@ PR body should include:
 - What the model does and why it was added
 - License confirmation (SPDX identifier from `sources.yaml`)
 - What was tested locally (at minimum: `make check` + `make docs` + unit tests)
+- Deploy status: a `biolm-hub-dev` deploy + live inference call succeeded, **or** (credential-less) an explicit note that deploy is unverified for a maintainer to complete (see `validation/GUIDE.md §3.5`)
 - Any notes on resource allocation choices
 
 ---
 
 ## Documentation Checklist
 
+- [ ] All five knowledge-graph files authored via `model-knowledge-base` and passing its validation
 - [ ] `README.md` follows `models/dummy/README.md` structure
 - [ ] All required sections present
 - [ ] BibTeX citation valid and links working
@@ -93,8 +103,10 @@ PR body should include:
 - [ ] `sources.yaml` has license and primary papers filled in
 - [ ] `models/<name>/LICENSE` present with the upstream license text; agrees with `sources.yaml`/README
 - [ ] `make check` passes
-- [ ] PR description explains what was added and what was tested
+- [ ] PR description explains what was added, what was tested, and deploy status (§3.5 carve-out)
 
 ## Gate
 
-PR created; `make check` green; all required files present.
+All five knowledge-graph files present and passing the `model-knowledge-base` validation;
+`make check` green; PR created. (The mandatory Phase 5 review — a fresh-context reviewer sign-off on
+all four dimensions — follows; see `SKILL.md`.)

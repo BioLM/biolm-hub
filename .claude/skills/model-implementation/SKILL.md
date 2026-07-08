@@ -36,7 +36,7 @@ Complete phases in order. Each has a gate. Do NOT jump ahead.
 
 ---
 
-## Workflow Overview (4 Phases)
+## Workflow Overview (5 Phases)
 
 ### Phase 1: Investigation
 Read: `investigation/GUIDE.md`
@@ -59,9 +59,9 @@ Write files in dependency order: `schema.py` → `config.py` → `download.py` (
 ### Phase 3: Validation
 Read: `validation/GUIDE.md`
 
-`make check` (MANDATORY) + `make docs` (mkdocs --strict — the model's generated page must build) + fixture generation + local deploy + integration tests. Deployment tests are optional locally; they run in CI once a maintainer applies `deploy-approved`.
+`make check` (MANDATORY) + `make docs` (mkdocs --strict — the model's generated page must build) + golden fixture generation (input + output) + a `biolm-hub-dev` deploy with at least one live inference smoke call (REQUIRED if you have Modal credentials; credential-less contributors flag it unverified in the PR — see `validation/GUIDE.md §3.5`) + integration tests. The full integration/deployment matrix also re-runs in CI once a maintainer applies `deploy-approved`.
 
-**Gate:** `make check` green; `make docs` green; unit tests pass; coverage ≥85%.
+**Gate:** `make check` green; `make docs` green; unit tests pass; coverage ≥85%; golden input + golden output recorded in R2 and loaded by an integration test (custom-validator-only permitted solely for non-deterministic models, with justification); with Modal credentials, a `biolm-hub-dev` deploy + one live inference call succeeded (credential-less: stated unverified in the PR — see `validation/GUIDE.md §3.5`).
 
 > **Docs build ordering:** the per-model page is generated from `config.py` **and** the
 > knowledge-graph files authored in Phase 4 (`README.md`/`MODEL.md`/`BIOLOGY.md`, cross-links,
@@ -74,9 +74,31 @@ Read: `validation/GUIDE.md`
 ### Phase 4: Documentation
 Read: `documentation/GUIDE.md`
 
-Write `README.md` following `models/dummy/README.md`. Delegate the full knowledge graph (`sources.yaml`, `comparison.yaml`, `MODEL.md`, `BIOLOGY.md`) to the `model-knowledge-base` skill.
+Invoke the `model-knowledge-base` skill **before the PR** to author all five knowledge-graph files (`README.md`, `MODEL.md`, `BIOLOGY.md`, `sources.yaml`, `comparison.yaml`). That skill **owns** all five — this phase only invokes it (`config.py`/`schema.py`/`app.py` from Phase 2 must already exist).
 
-**Gate:** `README.md` complete; all knowledge-graph files present or delegated.
+**Gate:** all five knowledge-graph files present and passing the `model-knowledge-base` validation.
+
+---
+
+### Phase 5: Review
+
+A **separate reviewer with fresh context** — spawn a subagent; same-context self-review is biased
+(`CLAUDE.md`) — reviews the full diff against the four dimensions below. The Phase 2 self-review
+checklist (`implementation/GUIDE.md`) and the Phase 3/4 gates *feed* this review; they do not replace it.
+
+1. **Schema uniformity** — field names match the uniform house rules (`sequence`/`sequences`/`msa`,
+   `smiles`, batch `items`, `params`, `heavy_chain`/`light_chain`,
+   `embeddings`/`logits`/`log_prob`/`score`/`plddt`/`ptm`/`pae`, batch `results`) and are **not**
+   copied from the reference model; any rename preserves the old name via `AliasChoices` (input only).
+2. **Action verbs** — every action is in the closed set (`predict`/`fold`/`encode`/`generate`/`score`/`log_prob`)
+   and matches intent (a folding model `fold`s; it does not overload `predict`).
+3. **Typed errors + logging** — caller mistakes raise the most specific `UserError` subclass (no bare
+   `ValueError` in `app.py` action code); `get_logger` only, never `print`; no full sequences or
+   secrets logged.
+4. **Field descriptions + docs** — every schema field has a *rendered* `Field(description=...)`
+   consistent with `tooling/field_glossary.yaml`; `make check` and `make docs` are green.
+
+**Gate:** Phase 5 complete when a fresh-context reviewer signs off on all four dimensions.
 
 ---
 
@@ -98,15 +120,20 @@ Phase 3: Validation
   → make check (MANDATORY)
   → make docs (mkdocs --strict — the generated page must build)
   → python -m tooling.gen_model_catalog (regenerate models/README.md — else test_readme_catalog_is_fresh fails)
-  → python models/MODEL/fixture.py (before tests; template: models/dummy/fixture.py)
+  → python models/MODEL/fixture.py (record golden input + output; before tests; template: models/dummy/fixture.py)
   → python -m pytest models/MODEL/test.py
-  → GATE: coverage ≥85%
+  → MODAL_ENVIRONMENT=biolm-hub-dev bh deploy MODEL + one live call (REQUIRED with Modal creds; else flag unverified in PR)
+  → GATE: coverage ≥85%; goldens recorded + loaded; dev deploy + live call (or unverified-flagged)
 
 Phase 4: Documentation
   → Read: documentation/GUIDE.md
-  → Write README.md
+  → Invoke model-knowledge-base for all five KG files (before the PR)
   → make check && make docs && git add && git commit
   → Create PR
+
+Phase 5: Review
+  → Fresh-context reviewer (subagent) reviews the full diff
+  → GATE: sign-off on all 4 dimensions (schema uniformity · action verbs · typed errors+logging · field descriptions+docs)
 ```
 
 ---

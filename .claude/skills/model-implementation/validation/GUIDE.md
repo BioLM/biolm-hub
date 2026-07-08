@@ -80,10 +80,11 @@ fails without writing if the catalog is stale.
 
 ## 3.2 Generate Fixtures — Before Running Integration Tests
 
-If `test.py` uses golden output files (not just custom validators), generate them first. **Writing
-goldens requires R2 write credentials** — fixture *reads* work credential-less over the public bucket
-URL, but *writes* go through the signed S3 API. Point the tooling at a bucket you control and export
-credentials first:
+For a deterministic model — the required validation path (`implementation/GUIDE.md §2.5`) — generate
+its golden input + output first; only a genuinely non-deterministic model using a custom `validator=`
+skips this. **Writing goldens requires R2 write credentials** — fixture *reads* work credential-less
+over the public bucket URL, but *writes* go through the signed S3 API. Point the tooling at a bucket
+you control and export credentials first:
 
 ```bash
 export BIOLM_R2_BUCKET=<your-bucket>       # defaults to the read-only public bucket otherwise
@@ -106,7 +107,7 @@ yet, see **Phase 2 → `fixture.py`** in `implementation/GUIDE.md` and copy the 
 
 ## 3.3 Integration Tests — Optional Locally, Mandatory in CI
 
-Integration tests require a Modal account and R2 access. They are OPTIONAL for local development. CI runs them automatically once a maintainer applies the `deploy-approved` label.
+Integration tests require a Modal account and R2 access. Running the full local integration *suite* (coverage ≥85%) is OPTIONAL for local development — CI runs it automatically once a maintainer applies the `deploy-approved` label. This is separate from the §3.5 dev deploy + one live inference call, which **is** required before the PR if you have Modal credentials.
 
 If you have a Modal account, run locally with:
 
@@ -135,7 +136,7 @@ pytest models/<name>/test.py --cov=models/<name> --cov-report=term -m integratio
 
 ---
 
-## 3.4 Local Deployment — Optional But Recommended
+## 3.4 Local Image Build — Recommended (a fast pre-check before the §3.5 dev deploy)
 
 Building the image locally catches dependency and path errors before CI:
 
@@ -147,15 +148,25 @@ This builds the Modal container locally, loads the model, and validates basic in
 
 ---
 
-## 3.5 Deploy to Dev Environment — Optional
+## 3.5 Deploy to Dev Environment — Required (credential-less carve-out below)
 
-If you want to verify a live endpoint before PR:
+If you have a Modal account, a dev deploy plus **at least one live inference smoke call** is
+**REQUIRED** before the PR — build errors and load/inference failures that never surface in the
+Modal-free checks show up only here:
 
 ```bash
 MODAL_ENVIRONMENT=biolm-hub-dev bh deploy <name> --force
+# then call the live endpoint at least once with a real payload and confirm a sane response
 ```
 
-The full deploy + integration + deployment test matrix runs in CI under the `deploy-approved` label — you do not need to run this before submitting a PR. Once a maintainer approves and applies the label, CI deploys to `biolm-hub-dev` and runs the full test suite.
+**Credential-less carve-out.** The repo supports contributors with no Modal account (deploys run
+under `BIOLM_SKIP_MODAL_SECRETS=1`, reading public weights anonymously). If you have a Modal account,
+a dev deploy + one live call is REQUIRED before the PR. Credential-less contributors must **state in
+the PR that deploy is unverified**; a maintainer then completes it via the `deploy-approved` CI gate.
+
+Either way, the full deploy + integration + deployment test matrix re-runs in CI once a maintainer
+approves and applies the `deploy-approved` label — CI deploys to `biolm-hub-dev` and runs the full
+test suite against the reviewed commit.
 
 > **Note:** The `deploy-approved` label pins the run to the commit it was added on. Pushing new
 > commits does **not** re-trigger a deploy (there is no `synchronize` trigger) and does **not**
@@ -172,9 +183,10 @@ The full deploy + integration + deployment test matrix runs in CI under the `dep
 - [ ] All dependencies pinned to exact versions
 - [ ] Seeds set (torch, numpy, random, CUDA) — deterministic outputs (**stochastic/torch models only**; deterministic CPU/algorithmic tools need none)
 - [ ] `UserError` used for bad-input paths
-- [ ] Fixtures generated before integration tests (if using golden outputs)
+- [ ] Golden input + output generated (`python models/<name>/fixture.py`) and loaded by an integration test — required for deterministic models; custom-validator-only permitted solely for non-deterministic models, with justification
 - [ ] Coverage ≥85%
 - [ ] Both integration and deployment test types configured
+- [ ] With Modal credentials: `biolm-hub-dev` deploy + at least one live inference call succeeded (credential-less contributors: PR states deploy unverified — see §3.5)
 - [ ] No modifications to `models/commons/`
 
 ---
@@ -209,4 +221,7 @@ installed locally, e.g. `dnachisel`/`primer3`) don't trip this — `ignore_missi
 
 ## Gate
 
-Before Phase 4: `make check` green; `make docs` green; unit tests pass; coverage ≥85%.
+Before Phase 4:
+- `make check` green; `make docs` green; unit tests pass; coverage ≥85%.
+- Golden input + golden output recorded in R2 and loaded by an integration test (custom-validator-only permitted solely for non-deterministic models, with justification).
+- With Modal credentials, a `biolm-hub-dev` deploy plus at least one live inference call succeeded (credential-less contributors state in the PR that deploy is unverified — see §3.5).

@@ -26,13 +26,14 @@ make docs                                   # mkdocs build --strict — separate
 python -m tooling.gen_model_catalog         # regenerate models/README.md catalog after adding/renaming a model — else test_readme_catalog_is_fresh fails make check
 make test-unit                              # fast unit tests only (no Modal/R2)
 
-# Optional local deploy + tests (need a Modal account):
-MODAL_ENVIRONMENT=biolm-hub-dev python models/<model>/fixture.py   # generate fixtures FIRST
+# Local deploy + tests (need a Modal account) — REQUIRED before the PR if you have creds:
+MODAL_ENVIRONMENT=biolm-hub-dev python models/<model>/fixture.py   # record golden input + output FIRST
 MODAL_ENVIRONMENT=biolm-hub-dev python -m pytest models/<model>/test.py -m integration
-MODAL_ENVIRONMENT=biolm-hub-dev bh deploy <model> --force          # deploy a variant
+MODAL_ENVIRONMENT=biolm-hub-dev bh deploy <model> --force          # dev deploy + at least one live call
 
-# The full deploy + integration/deployment matrix is maintainer-gated in CI
-# (a maintainer applies the `deploy-approved` label) — you do not need to run it.
+# Credential-less contributors: skip the above and state in the PR that deploy is unverified.
+# Either way the full integration/deployment matrix re-runs in CI once a maintainer applies
+# `deploy-approved` (see validation/GUIDE.md §3.5).
 ```
 
 ## Standard imports (from `models/dummy/app.py`)

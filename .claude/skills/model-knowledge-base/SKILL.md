@@ -25,6 +25,12 @@ All templates live in `models/dummy/`. Point at those -- do not duplicate them h
 > maintainer operation and is out of scope for external contributors. Leave `pdf_r2`, `md_r2`,
 > `snapshot_r2`, and `page_md_r2` fields in `sources.yaml` as `""` and move on.
 
+> **Invoked from `model-implementation`.** This skill is called from the documentation phase (Phase 4)
+> of the `model-implementation` workflow — and its output is checked in that workflow's Phase 5 review.
+> It **owns all five** KG files, including `README.md`. It can also run standalone. Either way, the
+> model's `config.py`, `schema.py`, and `app.py` must already exist (Phase 2 of `model-implementation`):
+> author the code first, then the knowledge graph.
+
 ## Critical Rules
 
 1. **`models/commons/` is read-only.** Never edit it as part of KB work.
