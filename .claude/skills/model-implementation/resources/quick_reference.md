@@ -60,7 +60,7 @@ logger = get_logger(__name__)
   deploy can still start — never hard-code `secrets=[cloudflare_r2_secret]`.
 - GPU / snapshot models also pass `experimental_options={"enable_gpu_snapshot": True}` on `@app.cls`
   (see `models/dummy/app.py`); CPU / no-weights models omit it.
-- There is **no** billing or redis layer in this repo — never import a billing mixin or a redis/cache secret carried over from another codebase.
+- Don't carry over a **foreign** billing/redis/cache layer from another codebase — no billing mixin, no external redis, no imported cache secret. (The repo *does* ship its own response cache — a decorator-driven R2 cache in `models/commons/core/caching.py`, off by default and never for `generate` — but you don't wire caching in per-model.)
 
 ## GPU / resource tiers (Modal)
 

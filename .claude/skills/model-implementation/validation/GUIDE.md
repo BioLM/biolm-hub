@@ -18,7 +18,7 @@ Fix every failure before proceeding. Never push with `make check` red.
 
 > **Expected `make check` failure right after adding a model: a stale catalog.** `test-unit` includes
 > `tooling/test_model_catalog.py::test_readme_catalog_is_fresh`, which fails because the committed
-> catalog table in `models/README.md` doesn't yet list your new model (e.g. "36 models" → "37 models").
+> catalog table in `models/README.md` doesn't yet list your new model (the count goes "N models" → "N+1 models").
 > This is a normal step, not a bug in your model — regenerate the catalog (see §3.1b) and re-run.
 
 > **A red `make check` may be pre-existing and unrelated to your model.** Some unit tests exercise the
@@ -80,9 +80,11 @@ fails without writing if the catalog is stale.
 
 ## 3.2 Generate Fixtures — Before Running Integration Tests
 
-For a deterministic model — the required validation path (`implementation/GUIDE.md §2.5`) — generate
-its golden input + output first; only a genuinely non-deterministic model using a custom `validator=`
-skips this. **Writing goldens requires R2 write credentials** — fixture *reads* work credential-less
+For almost every model — stochastic ones included — a golden input + recorded output is the default
+validation path (`implementation/GUIDE.md §2.5`), compared with the tolerance mode that matches the
+output type; generate the goldens first. Only a model whose contract genuinely can't be expressed as a
+tolerance (validated entirely with a custom `validator=`) skips this. **Writing goldens requires R2
+write credentials** — fixture *reads* work credential-less
 over the public bucket URL, but *writes* go through the signed S3 API. Point the tooling at a bucket
 you control and export credentials first:
 
@@ -183,7 +185,7 @@ test suite against the reviewed commit.
 - [ ] All dependencies pinned to exact versions
 - [ ] Seeds set (torch, numpy, random, CUDA) — deterministic outputs (**stochastic/torch models only**; deterministic CPU/algorithmic tools need none)
 - [ ] `UserError` used for bad-input paths
-- [ ] Golden input + output generated (`python models/<name>/fixture.py`) and loaded by an integration test — required for deterministic models; custom-validator-only permitted solely for non-deterministic models, with justification
+- [ ] Golden input + output generated (`python models/<name>/fixture.py`) and loaded by an integration test, compared with the tolerance mode matching the output type — the default even for stochastic models; a custom `validator=` only where the contract can't be a tolerance, with justification
 - [ ] Coverage ≥85%
 - [ ] Both integration and deployment test types configured
 - [ ] With Modal credentials: `biolm-hub-dev` deploy + at least one live inference call succeeded (credential-less contributors: PR states deploy unverified — see §3.5)
@@ -223,5 +225,5 @@ installed locally, e.g. `dnachisel`/`primer3`) don't trip this — `ignore_missi
 
 Before Phase 4:
 - `make check` green; `make docs` green; unit tests pass; coverage ≥85%.
-- Golden input + golden output recorded in R2 and loaded by an integration test (custom-validator-only permitted solely for non-deterministic models, with justification).
+- Golden input + golden output recorded in R2 and loaded by an integration test, compared with the tolerance mode that matches the output type (the default even for stochastic models; a custom `validator=` only where the contract can't be a tolerance, with justification).
 - With Modal credentials, a `biolm-hub-dev` deploy plus at least one live inference call succeeded (credential-less contributors state in the PR that deploy is unverified — see §3.5).

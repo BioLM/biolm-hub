@@ -64,7 +64,8 @@ Browse `models/` to find the closest analogous implementation. Read its `app.py`
 |-----------|---------|
 | Protein sequence input | `esm2/`, `esmc/`, `e1/` |
 | DNA/RNA input | `evo/`, `dnabert2/`, `omni_dna/` |
-| Structure (PDB) input | `mpnn/`, `esmfold/`, `chai1/` |
+| Structure (PDB/mmCIF) input | `mpnn/`, `esm_if1/`, `antifold/` |
+| Structure output / folding (sequence→structure) | `esmfold/`, `chai1/`, `rf3/` |
 | HuggingFace weights | `esmc/`, `prostt5/`, `dnabert2/` |
 | Custom URL weights | `mpnn/`, `antifold/` |
 | No external weights | `biotite/`, `dna_chisel/` |

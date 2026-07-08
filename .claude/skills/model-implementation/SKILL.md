@@ -61,7 +61,7 @@ Read: `validation/GUIDE.md`
 
 `make check` (MANDATORY) + `make docs` (mkdocs --strict — the model's generated page must build) + golden fixture generation (input + output) + a `biolm-hub-dev` deploy with at least one live inference smoke call (REQUIRED if you have Modal credentials; credential-less contributors flag it unverified in the PR — see `validation/GUIDE.md §3.5`) + integration tests. The full integration/deployment matrix also re-runs in CI once a maintainer applies `deploy-approved`.
 
-**Gate:** `make check` green; `make docs` green; unit tests pass; coverage ≥85%; golden input + golden output recorded in R2 and loaded by an integration test (custom-validator-only permitted solely for non-deterministic models, with justification); with Modal credentials, a `biolm-hub-dev` deploy + one live inference call succeeded (credential-less: stated unverified in the PR — see `validation/GUIDE.md §3.5`).
+**Gate:** `make check` green; `make docs` green; unit tests pass; coverage ≥85%; golden input + golden output recorded in R2 and loaded by an integration test, compared with the tolerance mode that matches the output type (goldens are the default even for stochastic models — see `implementation/GUIDE.md §2.5`; a custom `validator=` only where the contract can't be expressed as a tolerance, justified in the PR); with Modal credentials, a `biolm-hub-dev` deploy + one live inference call succeeded (credential-less: stated unverified in the PR — see `validation/GUIDE.md §3.5`).
 
 > **Docs build ordering:** the per-model page is generated from `config.py` **and** the
 > knowledge-graph files authored in Phase 4 (`README.md`/`MODEL.md`/`BIOLOGY.md`, cross-links,

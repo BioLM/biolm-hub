@@ -72,11 +72,22 @@ Note: the "CI" workflow always runs all unit tests regardless of what changed.
 | Change | Models Deployed | Unit Tests (CI) |
 |--------|----------------|-----------------|
 | Single model file (`models/esm2/app.py`) | Only that model | All |
-| Non-critical commons file | Smart: only importers of changed symbols | All |
-| **Critical commons** (`pydantic.py`, `decorator.py`, `caching.py`) | **All models** | All |
+| Any commons **code** change (non-docs) | Depends on the mode (see below). **Smart** (`--smart`, what `deploy.yml` runs): only the models whose imports reach the changed commons module, via the dependency import-map — but it **falls back to all models** if the analysis errors. **Default** (no `--smart`): **all models**, unconditionally. | All |
+| Commons **docs-only** change (`README.md`, `*.yaml`, ...) | 0 models (skipped by both modes) | All |
 | `pyproject.toml`, `uv.lock`, `Makefile` | 0 models | All |
 | `.github/workflows/*.yml` | 0 models | All |
 | Only docs (`.md`, `.txt`) | 0 models | 0 |
+
+There is **no hardcoded list of "critical" commons files.** The blast radius of a commons change is
+decided entirely by `detect_models.py`'s two modes (`.github/scripts/detect_models.py`):
+- **Default mode** — any non-docs change under `models/commons/` triggers **all** valid models. Simple
+  and battle-tested.
+- **Smart mode** (`--smart`, used by `deploy.yml`) — builds an import map
+  (`analyze_commons_dependencies.py`'s `DependencyAnalyzer`) and triggers only the models that import
+  the changed commons module; on any error it **falls back to default (all models)**. A
+  widely-imported module (e.g. the base pydantic models) still fans out to nearly everything.
+
+In both modes a docs/data-only commons change (`*.md`, `*.yaml`) triggers **zero** models.
 
 ### Push / Label-Request Decision Rules
 
@@ -97,10 +108,11 @@ ELIF model_count <= 15:
     Batch preferred — accumulate fixes, test locally, then request label
     Warn: "This label triggers {N} model deploys"
 
-ELIF model_count > 15 OR critical_commons_changed:
+ELIF model_count > 15 OR commons_changed:
     MUST batch everything. Test models_with_code_changes locally.
     Never request label with known failures.
-    Warn: "This label triggers all models"
+    Warn: "A commons code change can fan out to many/all models (all in default mode;
+           the smart-mode import subset, or all on fallback, in deploy.yml)"
 ```
 
 ### Which Models to Test Locally

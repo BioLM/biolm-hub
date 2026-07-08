@@ -10,7 +10,7 @@ Write all model files in dependency order, following the patterns from `models/d
 3. `download.py` — weight acquisition (if the model has external weights)
 4. `app.py` — Modal application
 5. `test.py` — test suite
-6. `fixture.py` — golden-fixture generator (required for a deterministic model — golden input + recorded output is the default validation path; see §2.5 / §2.6)
+6. `fixture.py` — golden-fixture generator (required for almost every model, stochastic ones included — golden input + recorded output is the default validation path, compared with the tolerance mode that matches the output type; see §2.5 / §2.6)
 7. `LICENSE` — the upstream license text, copied verbatim from the source repo (required in every model dir; the license must match `sources.yaml` and the README). **If upstream ships no LICENSE file** (the license exists only as a HuggingFace card metadata tag — very common): record the SPDX id + the canonical license text/URL (SPDX / Creative Commons / OSI page) and a note that upstream declares it only via metadata; don't block on the missing file. The permissive-only gate still applies to the tagged license.
 8. `__init__.py` — empty package marker
 
@@ -63,6 +63,19 @@ class MyModelResponse(ResponseModel):
 - All `Field` constraints must match `ModelParams` limits
 - Include `description=` on all fields
 
+> **The schema above is an `encode` example — copy the shape that matches YOUR action's output.** Field
+> names stay uniform (SKILL Global Rules); only the shape changes with the action:
+> - **`fold`** (sequence → structure): input `items[].sequence`, output `results[]` carrying `pdb`/`cif`
+>   plus confidence scalars. Template: **`models/esmfold/schema.py`** (one `sequence` → `pdb` +
+>   `mean_plddt` + `ptm`); `models/chai1/schema.py` / `models/rf3/schema.py` for multi-entity complexes.
+> - **`generate`** (sampling): a `params` block of sampling controls — `temperature`, `top_p`/`top_k`,
+>   `num_samples`, `max_length`, `seed` — plus a `results` list with one entry per input, each itself a
+>   list of the `num_samples` generated items. Template: **`models/progen2/schema.py`** (`context` →
+>   sequences + log-likelihood) or **`models/zymctrl/schema.py`** (`ec_number` → sequences + perplexity).
+> - **Structure input / inverse folding** (`pdb`/`cif` in): validate the structure field with
+>   `validate_pdb`/`validate_cif` and cap it with `max_pdb_str_len` (see the validator table and length
+>   notes below). Template: **`models/mpnn/schema.py`** (`pdb` → designed `sequence` + `pdb`).
+
 **Validator selection:**
 
 | Input | Validator |
@@ -72,6 +85,14 @@ class MyModelResponse(ResponseModel):
 | DNA | `validate_dna_unambiguous` |
 | SMILES | `validate_smiles` |
 | RNA | *no ready-made `validate_*` function* — see the RNA note below |
+| PDB structure | `validate_pdb` (from `models.commons.data.structure_validator`) |
+| mmCIF structure | `validate_cif` (from `models.commons.data.structure_validator`) |
+
+> **Structure-input validators live in a different module.** `validate_pdb` / `validate_cif` come from
+> **`models.commons.data.structure_validator`** (not `models.commons.data.validator` like the sequence
+> validators above). Apply them as a `BeforeValidator` on the `pdb`/`cif` field and cap length with
+> `max_length=max_pdb_str_len`. Used across ~10 structure-input models (e.g. `mpnn`, `esm_if1`,
+> `antifold`) — mirror `models/mpnn/schema.py`.
 
 > **RNA note:** there is no `validate_rna_unambiguous`. `models.commons.data.validator` exports an
 > `rna_unambiguous` charset constant (`"ACUG"`); validate RNA by checking membership against it
@@ -149,6 +170,11 @@ would also rename the field in the **output** — wrong for input back-compat. R
 > count stays within the model's trained context. (Rotary-position models such as `nt` have no RoBERTa
 > learned-position offset — the offset subtraction above doesn't apply — but the char-vs-token
 > distinction still does.)
+
+> **Structure inputs cap on serialized length, not tokens.** A `pdb`/`cif` model has no
+> `max_position_embeddings` / token budget to reason about — cap the incoming structure string by
+> **serialized character length** with `max_length=max_pdb_str_len` (`from models.commons.util.config`,
+> ≈2.5 MB) on the `pdb`/`cif` `Field`, exactly as `models/mpnn/schema.py` does.
 
 > **Document the UNIT/semantics of numeric outputs — especially under non-standard tokenization.** When
 > the tokenizer differs from your reference, an output's *meaning* can shift even though the plumbing is
@@ -435,7 +461,9 @@ class MyModelImplementation(ModelMixinSnap):
             return MyModelResponse(embedding=output.tolist())
         except torch.cuda.OutOfMemoryError:
             torch.cuda.empty_cache()
-            raise UserError("GPU out of memory. Try a shorter sequence.")
+            # Phrase the hint for THIS action's input — a shorter sequence, a smaller
+            # batch, or fewer/smaller structures — not just "sequence".
+            raise UserError("GPU out of memory. Try a smaller batch or input.")
 
 
 # --- Without memory snapshots ---
@@ -455,6 +483,13 @@ if __name__ == "__main__":
 ```
 
 **Image layer order:** download layer → pip install → `common_requirements` → source layer.
+
+> **`encode` is just the example action — the method body follows YOUR action.** Copy the
+> `@modal.method()` + `@modal_endpoint()` plumbing and swap the body: a **`fold`** builds `pdb`/`cif` +
+> confidence scalars (`models/esmfold/app.py`); a **`generate`** seeds every RNG source *before*
+> sampling and returns a `results` list-of-lists (`models/progen2/app.py` seeds `random`/`numpy`/`torch`
+> then samples, then computes per-sequence likelihoods); a **structure-input** model parses the incoming
+> `pdb` (`models/mpnn/app.py`).
 
 > **`trust_remote_code=True` models need a `transformers` pinned to the model's release era.** A model
 > loaded with `trust_remote_code=True` ships custom modeling/tokenizer files (e.g. the Nucleotide
@@ -488,7 +523,7 @@ if __name__ == "__main__":
 
 **Anti-patterns:**
 ```python
-from other_repo.mixins import CachingMixin              # WRONG — no billing/caching mixin here; use ModelMixin/ModelMixinSnap from models.commons.model.base
+from other_repo.mixins import CachingMixin              # WRONG — don't inherit a foreign billing/caching mixin; use ModelMixin/ModelMixinSnap from models.commons.model.base (the repo's own response cache is decorator-driven, not a base mixin)
 print("loading model")                                  # WRONG — use logger
 raise ValueError("bad sequence")                        # WRONG (in app.py action code) — raise a typed error subclass
 ```
@@ -597,7 +632,9 @@ from models.my_model.schema import MyModelRequest
 
 
 def _validate_encode(actual_output: dict, _expected_output: dict = None) -> None:
-    """Custom validator — FALLBACK for non-deterministic models only (see §2.6)."""
+    """Custom validator — asserts a structural contract when the output can't be
+    expressed as a tolerance (see the mode table below and §2.6). NOT a fallback
+    for 'non-deterministic': stochastic models still use goldens + a tolerance."""
     assert "embedding" in actual_output
     assert len(actual_output["embedding"]) == 1280
 
@@ -611,18 +648,19 @@ test_suite = TestSuite(
             test_cases=[
                 ActionTestCase(
                     action_name=ModelActions.ENCODE,
-                    # DEFAULT (required for a deterministic model): golden input + recorded golden
-                    # output, both in R2 test-data/, generated by fixture.py (§2.6). tolerances=
-                    # absorbs small numeric noise while still pinning the output.
+                    # DEFAULT for almost every model — stochastic ones included: golden input +
+                    # recorded golden output (both in R2 test-data/, generated by fixture.py, §2.6),
+                    # compared with the tolerance mode that matches the OUTPUT TYPE (table below).
+                    # The tolerance mode — not a custom validator — is what absorbs run-to-run noise.
                     input_fixture="encode_input.json",
                     expected_output_fixture="encode_expected_output.json",
                     # Pooled / mean-pooled embeddings (float32, especially on CPU) drift too much
                     # for an element-wise rel_tol alone — pair it with a cosine_distance_threshold
-                    # direction check (the esm2 / esmc / chemberta encode convention). A bare
-                    # rel_tol is fine only for scalar outputs (score / log_prob).
+                    # direction check (the esm2 / esmc / chemberta encode convention).
                     tolerances={"rel_tol": 1e-4, "cosine_distance_threshold": 0.02},
-                    # FALLBACK (non-deterministic models only — justify in the PR): programmatic
-                    # input + custom validator, when the output can't be pinned even with tolerances=.
+                    # A custom validator= is the right choice ONLY when the contract can't be a
+                    # tolerance (well-formed CIF, exact sample count, prefix match) — NOT a fallback
+                    # for "non-deterministic". Justify it in the PR. See §2.6.
                     # input_fixture=MyModelRequest(sequence="MKTLLLTLVVVTIVCLDLGAVS"),
                     # validator=_validate_encode,
                 ),
@@ -636,19 +674,44 @@ test_encode_integration = generate_tests_from_suite(test_suite, test_type="integ
 test_encode_deployment = generate_tests_from_suite(test_suite, test_type="deployment")
 ```
 
+### Choose the comparison mode by OUTPUT TYPE — goldens are the default, even for stochastic models
+
+A golden input + recorded golden output is the default validation path for **almost every model**. What
+changes per model is not *whether* you use a golden but *how* the golden is compared: pick the
+`tolerances=` mode that matches your output type. `tolerances=` maps directly onto `DictComparator`'s
+kwargs in **`models/commons/testing/comparator.py`** — that file is the authoritative list of modes:
+
+| Output type | `tolerances=` mode(s) | Worked example |
+|-------------|-----------------------|----------------|
+| Scalar (`score`, `log_prob`, `plddt`, `perplexity`) | `rel_tol` (+ `abs_tol` for near-zero / sign flips) | `models/evo/test.py` `LOG_PROB` (`rel_tol: 1e-4`) |
+| Pooled embedding vector/matrix | `cosine_distance_threshold` (direction) + `rel_tol` (magnitude gate) | esm2 / esmc / chemberta `encode` |
+| Structure `pdb`/`cif` | `pdb_rmsd_threshold`; `multientity_mmcif_comparison=True` for multi-entity CIF; `pdb_seq_match=True` to compare the sequence instead of RMSD | `models/chai1/test.py`; `models/rf3/test.py` (multi-entity CIF) |
+| Generated sequence | `is_generated_seq=True` (compares length, not residues) | `models/evo/test.py` `GENERATE` |
+| MSA / FASTA content | `msa_content_len_threshold` (lengths within a % slack) | — |
+
+> **Non-determinism is handled by the tolerance mode, NOT by abandoning goldens.** `chai1` folds by
+> **stochastic diffusion** yet pins a golden with a loose `pdb_rmsd_threshold`; `evo` **samples**
+> sequences yet pins a golden with `is_generated_seq`. A custom `validator=` is the right call only when
+> the contract genuinely can't be expressed as a tolerance — e.g. "the output parses as valid CIF",
+> "exactly N samples were returned", "the completion starts with the prompt". That is a deliberate
+> assertion of a structural contract (the choice `progen2` / `zymctrl` / `dsm` / `boltzgen` make), not a
+> reluctant fallback for "the output isn't deterministic".
+
 **Shared test assets:** Prefer importing standard sequences from `models.commons.testing.shared_assets` (e.g., `STANDARD_PROTEIN`) rather than hardcoding sequences. Large shared inputs live in R2 under `test-data/shared/<category>/` and can be referenced with a `"shared/..."` path prefix.
 
-**Golden outputs (the default):** For a deterministic model, generate the golden input + output with `python models/MODEL/fixture.py` before running tests, and confirm an integration test loads them. Never regenerate goldens just to make a test green — only regenerate when an output change is intentional.
+**Golden outputs (the default):** For almost any model — stochastic ones included — generate the golden input + output with `python models/MODEL/fixture.py` before running tests, and confirm an integration test loads them (comparing with the tolerance mode above). Never regenerate goldens just to make a test green — only regenerate when an output change is intentional.
 
 ---
 
 ## 2.6 `fixture.py` (golden generation)
 
-Write `fixture.py` for **every deterministic model** — golden input + recorded golden output is the
-required validation path (§2.5), using `input_filename_template` + `expected_output_fixture`. Only a
-genuinely **non-deterministic** model (output not pinnable even with a numeric `tolerances=`, e.g.
-stochastic sampling/generation) may skip it and validate entirely with a custom `validator=` — justify
-that in the PR. **Copy the template at `models/dummy/fixture.py`** and adapt it —
+Write `fixture.py` for **almost every model** — golden input + recorded golden output is the default
+validation path (§2.5), using `input_filename_template` + `expected_output_fixture`. This applies to
+**stochastic models too**: pick the `tolerances=` mode that matches the output type (a folding model
+pins structure with `pdb_rmsd_threshold`; a generator pins length with `is_generated_seq`), so the
+golden still holds. Skip golden generation and validate entirely with a custom `validator=` only when
+the contract genuinely can't be expressed as a tolerance (e.g. "parses as valid CIF", "returns exactly
+N samples") — justify that in the PR. **Copy the template at `models/dummy/fixture.py`** and adapt it —
 `models/esm2/fixture.py` is a fuller multi-fixture example. Before opening the PR, run `python
 models/<name>/fixture.py` so the goldens are recorded, and verify an integration test loads them (a
 maintainer populates the public `biolm-public` bucket — see the R2-credentials note below and
@@ -744,7 +807,7 @@ Phase 5 (a separate reviewer with fresh context; see `SKILL.md`) — it is not a
 
 - [ ] All imports organized (Core, Data, Modal, Model, Storage, Testing, Util — these are the only import groups)
 - [ ] All dependency versions pinned exactly (`==X.Y.Z`)
-- [ ] `ModelMixinSnap` or `ModelMixin` used (these are the only base mixins — don't import a billing/caching mixin carried over from another codebase)
+- [ ] `ModelMixinSnap` or `ModelMixin` used (these are the only base mixins — don't inherit a foreign billing/caching mixin from another codebase; the repo's own response cache is decorator-driven, not a base mixin)
 - [ ] Seeds set for all sources (torch, numpy, random, CUDA) in `snap=False` enter — **stochastic/torch models only**; deterministic CPU/algorithmic tools skip seeding entirely
 - [ ] `@modal.method()` + `@modal_endpoint()` on every action method
 - [ ] `modal_class_name` in `config.py` matches the class name in `app.py`
