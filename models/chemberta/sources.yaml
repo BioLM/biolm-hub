@@ -74,6 +74,10 @@ applied_literature:
     fusion'
   doi: 10.1186/s13321-024-00846-9
   year: 2024
+  authors:
+  - Zachary A. Rollins
+  - Alan C. Cheng
+  - Essam Metwally
   relevance: >-
     Fuses ChemBERTa-2 SMILES embeddings with a graph neural network for molecular
     property prediction, evaluated on seven MoleculeNet datasets (FreeSolv, ESOL,
@@ -88,6 +92,10 @@ applied_literature:
     Learning
   arxiv: '2508.06199'
   year: 2025
+  authors:
+  - Mateusz Praski
+  - Jakub Adamczyk
+  - Wojciech Czech
   relevance: >-
     Benchmarks pretrained molecular embedding models (the model class ChemBERTa
     belongs to) across 25 datasets, finding that most neural embeddings give

@@ -22,7 +22,10 @@ test_suite = TestSuite(
                     action_name=ModelActions.ENCODE,
                     input_fixture=ENCODE_INPUT,
                     expected_output_fixture=ENCODE_OUTPUT,
-                    tolerances={"rel_tol": 1e-4},
+                    # Pooled float32 CPU embeddings can't hold an element-wise
+                    # rel_tol alone; pair it with a direction check, mirroring
+                    # the esm2/esmc encode convention.
+                    tolerances={"rel_tol": 1e-4, "cosine_distance_threshold": 0.02},
                 ),
                 ActionTestCase(
                     action_name=ModelActions.LOG_PROB,
