@@ -39,7 +39,7 @@ _pycache_ignore = modal.FilePatternMatcher("**/__pycache__", "**/*.pyc")
 image = (
     modal.Image.debian_slim(python_version="3.12")
     .uv_pip_install(common_requirements)
-    .uv_pip_install("fastapi[standard]==0.112.0")
+    .uv_pip_install("fastapi[standard]==0.139.0")
     .add_local_dir(
         _local_models_dir, remote_models_path, ignore=_pycache_ignore, copy=True
     )
