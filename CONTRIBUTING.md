@@ -18,6 +18,22 @@ tests** (no Modal, no R2). Keep it green locally before you push. The docs build
 `mkdocs build --strict`) is a separate check — run it after touching any schema, `Field(description=)`,
 or root doc.
 
+### Auto-activate with direnv (optional)
+
+The repo ships a committed `.envrc` so [direnv](https://direnv.net) gives you "`cd` in and everything
+just works": the uv `.venv` is on your PATH (so `bh`, `pytest`, `pre-commit` resolve directly) and a
+local `.env` is loaded — no `source .venv/bin/activate` needed.
+
+```bash
+brew install direnv          # then add the shell hook: https://direnv.net/docs/hook.html
+direnv allow                 # once per clone/worktree, and after editing .envrc
+cp .env.example .env         # optional: your local Modal/R2 config (gitignored)
+```
+
+`.env.example` documents every environment variable the repo reads — all optional. Real secrets live
+only in the gitignored `.env`; **never commit `.env`**. Without direnv, `source .venv/bin/activate` (or
+`uv run …`) works exactly as before.
+
 ## Adding a model
 
 Start from **`models/dummy/`** (the template) and keep the standard layout:

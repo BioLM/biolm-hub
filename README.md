@@ -47,6 +47,7 @@ the community adds more.
 git clone https://github.com/BioLM/biolm-hub && cd biolm-hub
 make install                 # venv + all deps via uv, plus pre-commit hooks
 source .venv/bin/activate    # puts the `bh` CLI on your PATH
+                             # (or install direnv — see below — to skip this step)
 
 # 2 — Point bh at Modal
 bh setup                     # verifies your Modal auth; tells you exactly what to fix
@@ -84,6 +85,10 @@ curl -s http://127.0.0.1:8000/api/v1/esm2-8m/encode \
   R2 via `bh setup` and deploys self-populate your bucket instead. (`BIOLM_SKIP_MODAL_SECRETS` forces
   either mode.)
 - **Prefer not to activate the venv?** Use `uv run bh …` or `.venv/bin/bh …`.
+- **Want it fully automatic?** Install [direnv](https://direnv.net) (`brew install direnv`, then add its
+  shell hook) and run `direnv allow` once. The committed `.envrc` then activates the venv — so `bh` is
+  on your PATH — the moment you `cd` in, and loads a local `.env` if you have one
+  (`cp .env.example .env`). Nothing here is required; the repo works without direnv or a `.env`.
 
 ### Deploy more than the default
 
