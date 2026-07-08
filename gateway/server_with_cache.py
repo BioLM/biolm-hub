@@ -47,7 +47,7 @@ image = (
     # `requests` is needed because the cache path lazily imports the storage/
     # acquisition stack (commons.storage.acquisition imports requests); the bare
     # gateway never imports it, so it doesn't carry this dependency.
-    .uv_pip_install("fastapi[standard]==0.112.0", "requests==2.32.3")
+    .uv_pip_install("fastapi[standard]==0.139.0", "requests==2.32.3")
     .add_local_dir(
         _local_models_dir, remote_models_path, ignore=_pycache_ignore, copy=True
     )

@@ -22,10 +22,12 @@ dependencies = [
 [project.optional-dependencies]
 # Local web app for `bh serve` (catalog UI + in-process routing). Opt-in so the
 # core CLI stays light: `pip install "biolm-hub[serve]"`. fastapi is pinned to
-# match the gateway's Modal image — the catalog generator scans version-sensitive
-# FastAPI route internals (route.body_field.type_, removed in newer FastAPI).
+# match the gateway's Modal image (gateway/server.py + gateway/server_with_cache.py) —
+# keep the two version pins in lockstep. The catalog generator introspects FastAPI
+# route internals (gateway/catalog/generator.py) via route.body_field.field_info
+# .annotation (the modern replacement for the removed route.body_field.type_).
 serve = [
-    "fastapi==0.112.0",
+    "fastapi==0.139.0",
     "uvicorn>=0.30.0,<1.0.0",
     "jinja2>=3.1.0,<4.0.0",
 ]

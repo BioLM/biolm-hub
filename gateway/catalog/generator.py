@@ -331,12 +331,23 @@ def generate_catalog_data(
                 }
 
             body_schema = None
-            if route.body_field:
-                body_schema = route.body_field.type_
+            if route.body_field is not None:
+                # FastAPI's ModelField no longer exposes ``.type_`` (removed in the
+                # pydantic-v2 compat layer). ``field_info`` is a real pydantic
+                # ``FieldInfo``; its ``.annotation`` is the request body's model
+                # class — the direct, stable replacement for the old ``.type_``.
+                # Each gateway route has exactly one body param (``payload``,
+                # ``embed=False``), so this annotation is the request model itself.
+                body_schema = route.body_field.field_info.annotation
+
+            # Starlette 1.x types ``APIRoute.methods`` as ``set[str] | None``; a
+            # registered API route always has methods, so fall back to an empty
+            # set only to satisfy the type checker.
+            method = next(iter(route.methods or set()), "")
 
             endpoint_info = {
                 "path": route.path,
-                "method": list(route.methods)[0],
+                "method": method,
                 "name": route.summary,
                 "description": route.description,
                 "request_schema": analyze_schema(body_schema) if body_schema else {},
