@@ -1,0 +1,81 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>biolm-hub &middot; Model Catalog</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="site-header">
+        <nav class="site-nav">
+            <a href="/catalog" class="brand">
+                <span class="brand-mark">◆</span>
+                biolm-hub
+            </a>
+            <div class="nav-links">
+                <a href="https://biolm.github.io/biolm-hub/" class="nav-link" target="_blank" rel="noopener">Docs ↗</a>
+                <a href="/docs" class="nav-link" target="_blank" rel="noopener">API docs ↗</a>
+                <a href="https://biolm.ai/" class="nav-link" target="_blank" rel="noopener">biolm.ai ↗</a>
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+        <header>
+            <h1>Model Catalog</h1>
+            <p class="catalog-subtitle">A uniform, agent-first catalog of open biological ML models. Pick a model to explore its schema and run inference.</p>
+        </header>
+        <main>
+            {% if not grouped_catalog %}
+                <div class="empty-state">
+                    <p>No models are registered in this gateway yet.</p>
+                </div>
+            {% endif %}
+            <div class="model-groups">
+                {% for base_slug, group in grouped_catalog.items() %}
+                    <div class="model-group">
+                        <h2 class="group-title">{{ group.display_name }}</h2>
+                        <div class="model-variants">
+                            {% if group.variants|length == 1 %}
+                                <!-- Single model - show as primary button -->
+                                {% set variant = group.variants[0] %}
+                                {% set dep = status.get(variant.slug) %}
+                                <a href="/catalog/{{ variant.slug }}" class="model-button primary{{ ' not-deployed' if dep == false else '' }}">
+                                    <div class="button-content">
+                                        <span class="model-name">{{ variant.display_name }}</span>
+                                        <span class="endpoint-count">{{ variant.endpoints|length }} endpoint{{ 's' if variant.endpoints|length != 1 else '' }}</span>
+                                        {% if dep == false %}<span class="status-badge undeployed">● not deployed</span>{% elif dep %}<span class="status-badge deployed">● deployed</span>{% elif status %}<span class="status-badge unknown">● unknown</span>{% endif %}
+                                    </div>
+                                    <div class="button-arrow">→</div>
+                                </a>
+                            {% else %}
+                                <!-- Multiple variants - show as button group -->
+                                {% for variant in group.variants %}
+                                    {% set dep = status.get(variant.slug) %}
+                                    <a href="/catalog/{{ variant.slug }}" class="model-button variant{{ ' not-deployed' if dep == false else '' }}">
+                                        <div class="button-content">
+                                            <span class="model-name">{{ variant.display_name }}</span>
+                                            <span class="variant-info">{{ variant.slug.split('-')[-1] }}</span>
+                                            {% if dep == false %}<span class="status-badge undeployed">● not deployed</span>{% elif dep %}<span class="status-badge deployed">● deployed</span>{% elif status %}<span class="status-badge unknown">● unknown</span>{% endif %}
+                                        </div>
+                                        <div class="button-arrow">→</div>
+                                    </a>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </main>
+    </div>
+    <footer class="site-footer">
+        Runs through this local gateway (<code>bh serve</code>), which calls your deployed Modal
+        models&nbsp;— never the model containers directly. Machine-readable API:
+        <a href="/docs">Swagger&nbsp;UI</a> · <a href="/redoc">ReDoc</a> · <a href="/openapi.json">OpenAPI&nbsp;JSON</a>.
+    </footer>
+</body>
+</html>

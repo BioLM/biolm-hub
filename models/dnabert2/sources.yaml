@@ -1,0 +1,91 @@
+model_slug: dnabert2
+display_name: DNABERT-2
+license:
+  type: Apache-2.0
+  url: https://huggingface.co/zhihan1996/DNABERT-2-117M
+  notes: ''
+molecule_types:
+- dna
+applicable_to:
+- dna
+- genomics
+tasks:
+- embedding
+- property_prediction
+primary_papers:
+- title: 'DNABERT-2: Efficient Foundation Model and Benchmark For Multi-Species Genome'
+  arxiv: '2306.15006'
+  venue: arXiv preprint, 2023
+  year: 2023
+  authors:
+  - Zhihan Zhou
+  - Yanrong Ji
+  - Weijian Li
+  - Pratik Dutta
+  - Ramana Davuluri
+  - Han Liu
+  pdf_r2: knowledge-base/models/dnabert2/primary/papers/zhou2023.pdf
+  md_r2: knowledge-base/models/dnabert2/primary/papers-md/zhou2023.md
+  figures_of_note: []
+source_repos:
+- type: github
+  url: https://github.com/MAGICS-LAB/DNABERT_2
+  commit: ''
+  snapshot_r2: pending
+  readme_md_r2: knowledge-base/models/dnabert2/primary/pages/gh-dnabert_2-readme.md
+- type: huggingface
+  url: https://huggingface.co/zhihan1996/DNABERT-2-117M
+  commit: d064dece8a8b41d9fb8729fbe3435278786931f1
+  snapshot_r2: pending
+  page_md_r2: knowledge-base/models/dnabert2/primary/pages/hf-dnabert-2-117m.md
+applied_literature:
+- title: Benchmarking DNA foundation models for genomic and genetic tasks
+  doi: 10.1038/s41467-025-65823-8
+  year: 2025
+  relevance: Benchmarks DNABERT-2 against NT v2, HyenaDNA, Caduceus, and GROVER on classification, variant effect, and gene
+    expression tasks.
+  molecule_focus: dna
+  task_focus: benchmark
+  pdf_r2: pending
+  md_r2: pending
+- title: 'DNABERT-2: Fine-Tuning a Genomic Language Model for Colorectal Gene Enhancer Classification'
+  arxiv: '2509.25274'
+  year: 2025
+  relevance: First application of DNABERT-2 with BPE tokenization to enhancer classification in colorectal cancer, achieving
+    ROC-AUC 0.743 on 2.34M sequences.
+  molecule_focus: dna
+  task_focus: enhancer_classification
+  pdf_r2: knowledge-base/models/dnabert2/applied/papers/unknown2025b.pdf
+  md_r2: pending
+- title: 'Gene-LLMs: a comprehensive survey of transformer-based genomic language models for regulatory and clinical genomics'
+  doi: 10.3389/fgene.2025.1634882
+  year: 2025
+  relevance: Survey covering DNABERT-2 and other genomic LLMs, analyzing tokenization strategies and downstream regulatory
+    genomics applications.
+  molecule_focus: dna
+  task_focus: review
+  pdf_r2: pending
+  md_r2: pending
+- title: 'DeepVRegulome: DNABERT-based deep-learning framework for predicting the functional impact of short genomic variants
+    on the human regulome'
+  arxiv: '2511.09026'
+  year: 2025
+  relevance: Combines 700 DNABERT fine-tuned models trained on ENCODE gene regulatory regions (TFs, histones, RBPs, splice
+    junctions) with variant scoring and motif analysis. Per-model ROC-AUCs >= 0.94. Applied to TCGA glioblastoma WGS dataset,
+    identifying 572 splice-disrupting and 9,837 TFBS-altering mutations in >10% of glioblastoma samples.
+  molecule_focus: dna
+  task_focus: variant_effect_prediction
+  pdf_r2: knowledge-base/models/dnabert2/applied/papers/unknown2025d.pdf
+  md_r2: pending
+- title: 'TFBS-Finder: Deep Learning-based Model with DNABERT and Convolutional Networks to Predict Transcription Factor Binding
+    Sites'
+  arxiv: '2502.01311'
+  year: 2025
+  relevance: Uses pre-trained DNABERT for sequence embedding combined with CNN, Modified Convolutional Block Attention Module
+    (MCBAM), and Multi-Scale Convolutions with Attention (MSCA) for TFBS prediction. Trained and tested on 165 ENCODE ChIP-seq
+    datasets, demonstrating DNABERT embeddings capture long-range dependencies critical for transcription factor binding site
+    identification.
+  molecule_focus: dna
+  task_focus: transcription_factor_binding
+  pdf_r2: knowledge-base/models/dnabert2/applied/papers/unknown2025e.pdf
+  md_r2: pending

@@ -1,0 +1,56 @@
+model_slug: thermompnn
+display_name: ThermoMPNN
+last_updated: "2026-07-09"
+
+strengths:
+  - "Structure-based stability prediction using ProteinMPNN message-passing neural network backbone, directly modeling the 3D context of each mutation rather than relying on sequence statistics alone"
+  - "Transfer learning from ProteinMPNN's structural representations achieves state-of-the-art single-mutation ddG prediction (PCC ~0.75, RMSE ~0.71 kcal/mol on Megascale dataset)"
+  - "Full site-saturation mutagenesis (SSM) scanning mode predicts ddG for all 20 amino acid substitutions at every position in a single call, producing a comprehensive stability landscape"
+  - "Lightweight T4 GPU requirement (8 GB RAM) makes it one of the least resource-intensive structure-based stability predictors in this catalog"
+  - "MIT license with no usage restrictions -- suitable for commercial therapeutic protein engineering and academic research"
+  - "Fast inference for single mutations and moderate-length proteins (up to 1024 residues), enabling integration into iterative protein design pipelines"
+  - "Well-validated in peer-reviewed literature (PNAS 2024), with clear benchmarks against competing methods on standardized datasets"
+
+weaknesses:
+  - "Requires a 3D structure (PDB format with backbone atoms N, CA, C, O) as input -- cannot score mutations from sequence alone; use TemBERTure or ESM2 log-likelihoods when no structure is available"
+  - "Single-point mutations only -- cannot predict combined effects of two or more simultaneous mutations; use ThermoMPNN-D for double mutations with epistasis modeling"
+  - "Limited to single-chain proteins up to 1024 residues -- multi-chain complexes and very large proteins are not supported"
+  - "Membrane proteins are under-represented in training data; stability predictions in a membrane context are unreliable"
+  - "Intrinsically disordered proteins cannot be analyzed because a stable folded structure is required as the reference state"
+  - "No uncertainty estimates on predictions -- single point estimate per mutation without confidence intervals"
+  - "Training data biased toward globular soluble proteins from structural genomics databases; performance may degrade on protein families outside this distribution"
+
+use_when:
+  - "You have an experimental or high-confidence predicted 3D structure and want to identify stabilizing single-point mutations for a protein engineering campaign"
+  - "You need a complete site-saturation mutagenesis landscape to find all positions and substitutions that could improve thermostability"
+  - "You are engineering thermostable industrial enzymes and want to computationally screen all possible single mutations before experimental validation"
+  - "You want to understand which positions in a protein are structurally critical (most mutations destabilizing) versus tolerant of substitution"
+  - "You need a structure-aware stability predictor that runs quickly on a T4 GPU for integration into automated protein design workflows"
+  - "You are interpreting disease-causing missense mutations and want to assess whether they destabilize protein structure"
+
+dont_use_when:
+  - "You do not have a 3D structure and cannot generate one -- use TemBERTure for sequence-only thermostability prediction"
+  - "You need to evaluate double or multiple simultaneous mutations -- use ThermoMPNN-D (epistatic mode) for paired mutations or SPURS for multi-mutation ddG prediction"
+  - "You need whole-protein melting temperature (Tm) rather than per-mutation ddG values -- use TemBERTure for global Tm prediction"
+  - "You are working with membrane proteins where stability depends on the lipid bilayer environment -- structure-based ddG models do not capture this context"
+  - "You need variant effect prediction driven by evolutionary conservation rather than structural features -- use an MSA-based evolutionary conservation method for evolution-informed scoring"
+  - "You want a sequence-only tool for rapid screening of millions of sequences without requiring structure prediction as a preprocessing step"
+
+alternatives:
+  - model: "thermompnn_d"
+    when_better: "Handles both single and double mutations with an epistatic interaction mode, capturing combinatorial mutation effects ThermoMPNN cannot assess."
+    when_worse: "Higher resource use (12 GB vs 8 GB) and loads two checkpoints; for pure single-mutation SSM scanning ThermoMPNN is lighter and sufficient."
+  - model: "spurs"
+    when_better: "Supports multi-mutation ddG with pairwise epistasis, emits full DMS matrices, and combines ESM2 + GNN priors for potentially broader coverage."
+    when_worse: "Heavier (16 GB RAM) and additionally requires the sequence alongside the structure; ThermoMPNN is lighter with a longer single-mutation track record."
+
+complements:
+  - model: chai1
+    workflow: "When no experimental structure is available, predict the 3D structure with Chai-1, then use ThermoMPNN to scan for stabilizing mutations on the predicted structure -- enables structure-based stability engineering even for proteins without crystallographic data"
+    example_protocol: null
+  - model: thermompnn_d
+    workflow: "Use ThermoMPNN for initial single-mutation SSM scanning to identify candidate stabilizing positions, then use ThermoMPNN-D to evaluate promising pairs of mutations for synergistic (epistatic) stability improvements"
+    example_protocol: null
+  - model: esm2
+    workflow: "Use ESM2 log_prob for fast sequence-based variant scoring to identify evolutionarily plausible mutations, then validate the top candidates with ThermoMPNN's structure-based ddG prediction for a two-layer screening approach"
+    example_protocol: null

@@ -1,0 +1,66 @@
+# comparison.yaml — Model Comparison Metadata
+# Machine-readable guidance for model selection.
+# Generated as part of Phase 3.5 of the model-knowledge-base workflow.
+#
+# Requirements:
+#   - strengths, weaknesses, use_when, dont_use_when: 5+ entries each (min 3)
+#   - alternatives, complements: 1+ entries where applicable
+#   - All referenced model slugs must exist in models/
+
+model_slug: "dna-chisel"
+display_name: "DNA-Chisel"
+last_updated: "2026-03-17"
+
+strengths:
+  - "Fully deterministic and interpretable — every output feature (CAI, GC content, restriction sites, homopolymers) has a clear biological definition and is computed from established algorithms, not learned weights"
+  - "CPU-only, zero-GPU inference with minimal memory (0.25 CPU, 1 GB RAM) makes it the cheapest model in this catalog to deploy and the fastest for high-throughput feature extraction"
+  - "Species-specific codon adaptation index (CAI) using organism-specific codon tables for E. coli, H. sapiens, S. cerevisiae, and other common expression hosts"
+  - "Comprehensive 20-feature output in a single API call covers codon usage, sequence composition, structural hazards, cloning compatibility, and complexity metrics"
+  - "MIT license — the most permissive license in this catalog, suitable for any commercial, academic, or clinical application without restrictions"
+  - "Validated in published synthetic biology workflows for codon optimization quality assessment, pre-synthesis QC, and multi-criteria gene design evaluation"
+  - "Complements every ML-based DNA model by providing interpretable features that can be combined with learned embeddings in downstream pipelines"
+
+weaknesses:
+  - "No learned representations — cannot capture complex, non-linear sequence patterns that DNA language models (DNABERT-2, NT, Evo) learn from genomic data"
+  - "Not a machine learning model — cannot improve with additional data or be fine-tuned for specific tasks; fixed algorithmic feature computation only"
+  - "No generative capability — cannot design or optimize sequences; only evaluates existing sequences against predefined feature criteria"
+  - "Codon-level features (CAI, rare codon frequency) are meaningful only for coding sequences; non-coding DNA analysis is limited to compositional features"
+  - "Restriction site checking uses a configurable but limited enzyme list (default: EcoRI, BsaI); comprehensive restriction site analysis requires specifying all relevant enzymes"
+  - "No variant effect prediction capability — cannot score the functional impact of mutations like language model-based approaches"
+  - "Kozak sequence strength uses a simplified consensus check rather than a quantitative model of translation initiation efficiency"
+
+use_when:
+  - "You need deterministic, interpretable DNA sequence features for synthetic biology QC — codon adaptation, GC content, restriction sites, homopolymers, and hairpins"
+  - "You are performing pre-synthesis quality control on optimized gene constructs and need to verify they meet synthesis provider specifications"
+  - "You need hand-engineered features to complement learned embeddings from DNA foundation models (Evo, NT, DNABERT-2, Omni-DNA) in downstream ML pipelines"
+  - "You need the fastest, cheapest DNA analysis available — CPU-only inference with sub-second response times for high-throughput screening"
+  - "You are building an expression prediction model and want interpretable codon usage features (CAI, rare codon frequency) alongside GC content and sequence complexity metrics"
+  - "You are evaluating codon optimization results and need quantitative metrics to compare alternative optimized sequences for the same protein"
+
+dont_use_when:
+  - "You need DNA sequence embeddings that capture complex, non-linear genomic patterns for classification or clustering (use dnabert2, nt, omni_dna, or evo2)"
+  - "You need to generate or design novel DNA sequences (use evo or evo2 for DNA generation)"
+  - "You need variant effect prediction for non-coding or coding DNA variants (use nt, dnabert2, or evo2 for log-probability-based variant scoring)"
+  - "You need regulatory element classification (promoter, enhancer, splice site detection) that requires learned contextual representations (use dnabert2 or nt)"
+  - "You need cross-species genomic analysis leveraging patterns learned from multi-species training data (use nt or dnabert2)"
+  - "You need to analyze non-coding DNA regions where codon-level features are not meaningful and compositional features alone are insufficient"
+  - "You need a model that can adapt or improve with domain-specific training data"
+
+alternatives:
+  - model: "dnabert2"
+    when_better: "Provides learned DNA embeddings that capture complex regulatory patterns, supports variant effect scoring via pseudo-log-likelihood, and generalizes across species"
+    when_worse: "Black-box neural network — features are not directly interpretable; requires GPU; cannot compute species-specific CAI or check restriction sites; DNA-Chisel's features have clear biological definitions"
+  - model: "omni_dna"
+    when_better: "Learned embeddings from multi-species training capture complex genomic patterns; supports variant effect prediction and regulatory element classification"
+    when_worse: "Requires GPU and features are not interpretable; DNA-Chisel provides deterministic, explainable features with zero compute overhead"
+
+complements:
+  - model: "evo"
+    workflow: "Generate DNA coding sequences with Evo, then use DNA-Chisel to assess synthesis feasibility — checking CAI for the target host, verifying GC content is within synthesis range (25-65%), and identifying unwanted restriction sites or homopolymer runs"
+    example_protocol: null
+  - model: "evo2"
+    workflow: "Generate DNA sequences with Evo2, then use DNA-Chisel for comprehensive synthesis QC — codon optimization assessment, restriction site checking, and sequence complexity analysis before ordering synthetic DNA"
+    example_protocol: null
+  - model: "dnabert2"
+    workflow: "Use DNABERT-2 embeddings for complex pattern capture alongside DNA-Chisel's interpretable features in multi-feature ML pipelines, providing both learned and engineered representations for genomic analysis"
+    example_protocol: null

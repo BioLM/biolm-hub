@@ -1,0 +1,42 @@
+model_slug: deepviscosity
+display_name: DeepViscosity
+last_updated: "2026-07-09"
+
+strengths:
+  - "Only open-source, sequence-only viscosity classifier specifically designed for monoclonal antibody high-concentration formulations (150 mg/mL threshold at 20 cP)"
+  - "Ensemble of 102 ANN models provides uncertainty estimates (probability_std) that flag borderline predictions for experimental follow-up, enabling confidence-based triage"
+  - "87.5% accuracy on the independent Lai_mAb_16 test set (14/16 correctly classified), demonstrating reliable binary viscosity classification"
+  - "CPU-only inference with minimal resources (1 CPU, 2 GB RAM) -- one of the lightest models in this catalog, enabling rapid screening of large antibody panels"
+  - "Optional DeepSP spatial property output (30 features across 10 antibody domains) reveals which CDR or framework regions drive high viscosity, guiding targeted engineering"
+  - "Requires only VH and VL amino acid sequences -- no 3D structure, no experimental data, no expression needed for initial screening"
+  - "MIT license enables unrestricted commercial use in pharmaceutical antibody development pipelines"
+
+weaknesses:
+  - "Antibody-only model -- ANARCI alignment requires antibody variable domains; non-antibody proteins (enzymes, receptors) cannot be processed and will fail"
+  - "Single Fv pair input only -- cannot model bispecific antibodies, nanobodies (VHH), or IgG formats beyond the Fv region; Fc effects on viscosity are not captured"
+  - "Training data from AstraZeneca humanized/human IgGs -- performance may degrade on antibodies from non-human sources or unusual germlines"
+  - "Binary classification (low vs high viscosity at 20 cP threshold) -- does not predict continuous viscosity values for more nuanced formulation decisions"
+  - "Cannot suggest specific mutations to reduce viscosity -- serves as a scoring function only, not a design tool"
+  - "Formulation effects (excipients, buffer composition, ionic strength) are not modeled; predictions reflect sequence-intrinsic viscosity risk only"
+
+use_when:
+  - "You are screening a panel of therapeutic antibody candidates and need to identify which ones are likely to have high viscosity at subcutaneous injection concentrations (100-200 mg/mL)"
+  - "You are in early-stage antibody discovery and want to de-risk viscosity liability before any protein expression or experimental viscosity measurement"
+  - "You want to understand which antibody regions (CDR-H3, framework) are driving predicted viscosity through DeepSP spatial property analysis"
+  - "You need rapid, inexpensive viscosity pre-screening to prioritize which candidates warrant experimental cone-and-plate rheometry"
+  - "You are developing subcutaneous antibody formulations and need to flag candidates likely to exceed the 20 cP injectability threshold"
+
+dont_use_when:
+  - "Your molecule is not a monoclonal antibody with paired VH and VL chains -- DeepViscosity requires IMGT-numberable antibody variable domains"
+  - "You are working with nanobodies, single-domain antibodies, or bispecific formats -- these are not supported by the paired VH/VL input requirement"
+  - "You need to predict general protein solubility rather than antibody-specific viscosity -- DeepViscosity is antibody-specific; use a general solubility predictor such as SoluProt instead"
+  - "You need continuous viscosity values rather than binary low/high classification -- DeepViscosity does not output viscosity in centipoise"
+  - "You need to account for formulation conditions (pH, excipients, concentration) in your viscosity prediction -- the model predicts sequence-intrinsic risk only"
+  - "You need predictions for non-human antibody formats that may not align well with IMGT numbering"
+
+alternatives: []  # no same-input-modality substitute in the catalog
+
+complements:
+  - model: abodybuilder3
+    workflow: "For antibodies predicted as high-viscosity by DeepViscosity, use ABodyBuilder3 to predict the Fv 3D structure from the same paired heavy/light chains, then inspect the self-association interfaces (surface charge and hydrophobic patches) to understand the structural basis of high viscosity"
+    example_protocol: null

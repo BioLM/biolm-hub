@@ -1,0 +1,39 @@
+MIT License
+
+Copyright (c) 2024 Exscientia (Henry Kenlay, Frederic A. Dreyer, Bruno Sherborne, Charlotte M. Deane)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+NOTICE
+
+This model wraps IgT5, a paired/unpaired antibody language model (T5
+architecture) developed by Henry Kenlay, Frederic A. Dreyer, Bruno Sherborne,
+and Charlotte M. Deane at Exscientia.
+
+Model weights: https://huggingface.co/Exscientia/IgT5
+Paper: "Large scale paired antibody language models" (arXiv:2403.17889, 2024)
+
+The IgT5 weights are asserted under the MIT License per the HuggingFace model
+card (`Exscientia/IgT5`, which declares `license: mit`). A separate Zenodo
+deposit of the same weights (DOI 10.5281/zenodo.10876909) lists CC-BY-4.0.
+Since Exscientia is the rights-holder for both releases, we rely on the more
+permissive MIT license and provide attribution to the paper and both releases
+to satisfy either license.

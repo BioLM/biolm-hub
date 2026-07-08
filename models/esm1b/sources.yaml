@@ -1,0 +1,91 @@
+model_slug: esm1b
+display_name: ESM-1b
+license:
+  type: MIT
+  url: https://github.com/facebookresearch/esm/blob/main/LICENSE
+  notes: ''
+molecule_types:
+- protein
+applicable_to:
+- protein
+- antibody
+- enzyme
+- peptide
+tasks:
+- embedding
+- sequence_completion
+- property_prediction
+primary_papers:
+- title: Biological structure and function emerge from scaling unsupervised learning to 250 million protein sequences
+  doi: 10.1073/pnas.2016239118
+  venue: Proceedings of the National Academy of Sciences, 2021
+  year: 2021
+  authors:
+  - Alexander Rives
+  - Joshua Meier
+  - Tom Sercu
+  - Siddharth Goyal
+  - Zeming Lin
+  - Jason Liu
+  - Demi Guo
+  - Myle Ott
+  - C. Lawrence Zitnick
+  - Jerry Ma
+  - Rob Fergus
+  pdf_r2: knowledge-base/models/esm1b/primary/papers/rives2021.pdf
+  md_r2: pending
+  figures_of_note: []
+source_repos:
+- type: github
+  url: https://github.com/facebookresearch/esm
+  commit: ''
+  snapshot_r2: pending
+  readme_md_r2: knowledge-base/models/esm1b/primary/pages/gh-esm-readme.md
+- type: huggingface
+  url: https://huggingface.co/facebook/esm1b_t33_650M_UR50S
+  notes: 'Single variant: 650M parameters. HF revision pinned to 7b37824baec4d3658e1df7479222a7c79b465b76.'
+  page_md_r2: knowledge-base/models/esm1b/primary/pages/hf-esm1b_t33_650m_ur50s.md
+applied_literature:
+- title: Pre-trained protein language model sheds new light on the prediction of Arabidopsis protein-protein interactions
+  doi: 10.1186/s13007-023-01119-6
+  year: 2023
+  relevance: Uses ESM-1b embeddings with MLP for Arabidopsis PPI prediction, achieving AUPR 0.810 on unseen protein pairs
+  molecule_focus: protein
+  task_focus: protein-protein interaction prediction
+  pdf_r2: pending
+  md_r2: pending
+- title: Improving prediction performance of general protein language model by domain-adaptive pretraining on DNA-binding
+    protein
+  doi: 10.1038/s41467-024-52293-7
+  year: 2024
+  relevance: Domain-adapts ESM-1b for DNA-binding protein prediction, outperforming the base model on DBP classification
+  molecule_focus: protein
+  task_focus: DNA-binding protein prediction
+  pdf_r2: pending
+  md_r2: pending
+- title: Enhancing efficiency of protein language models with minimal wet-lab data through few-shot learning
+  doi: 10.1038/s41467-024-49798-6
+  year: 2024
+  relevance: Benchmarks ESM-1b/ESM-1v with few-shot fine-tuning across 87 DMS datasets for protein fitness prediction
+  molecule_focus: protein
+  task_focus: fitness prediction
+  pdf_r2: pending
+  md_r2: pending
+- title: 'TemStaPro: protein thermostability prediction using sequence representations from protein language models'
+  doi: 10.1093/bioinformatics/btae157
+  year: 2024
+  relevance: Uses ESM-1b embeddings to train classifiers on 2M+ sequences for protein thermostability prediction, outperforming
+    prior pLM-based methods at all temperature thresholds
+  molecule_focus: protein
+  task_focus: thermostability prediction
+  pdf_r2: pending
+  md_r2: pending
+- title: Comparative Assessment of Protein Large Language Models for Enzyme Commission Number Prediction
+  doi: 10.1186/s12859-025-06081-9
+  year: 2025
+  relevance: Benchmarks ESM-1b against ESM2 and ProtBERT for EC number prediction, showing LLM-based models outperform BLASTp
+    below 25% sequence identity
+  molecule_focus: enzyme
+  task_focus: enzyme function classification
+  pdf_r2: pending
+  md_r2: pending

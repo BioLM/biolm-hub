@@ -1,0 +1,116 @@
+model_slug: abodybuilder3
+display_name: ABodyBuilder3
+license:
+  type: Apache-2.0
+  url: https://github.com/Exscientia/abodybuilder3/blob/main/LICENSE
+  notes: ''
+molecule_types:
+- antibody
+applicable_to:
+- immunotherapy
+- drug development
+- antibody engineering
+- structure-based drug design
+- antibody-antigen interaction
+tasks:
+- structure_prediction
+primary_papers:
+- title: 'ABodyBuilder3: Improved and scalable antibody structure predictions'
+  arxiv: '2405.20863'
+  doi: 10.1093/bioinformatics/btae576
+  venue: Bioinformatics, 2024
+  year: 2024
+  authors:
+  - Kenlay H
+  - Dreyer FA
+  - Krawczyk K
+  - Sherborne B
+  - Deane CM
+  pdf_r2: knowledge-base/models/abodybuilder3/primary/papers/h2024.pdf
+  md_r2: knowledge-base/models/abodybuilder3/primary/papers-md/h2024.md
+  figures_of_note: []
+source_repos:
+- type: github
+  url: https://github.com/Exscientia/abodybuilder3
+  commit: 18e4058015a39c5405c08a0d5629cf302627b253
+  snapshot_r2: knowledge-base/models/abodybuilder3/primary/repos/abodybuilder3-18e40580.tar.gz
+  readme_md_r2: knowledge-base/models/abodybuilder3/primary/pages/gh-abodybuilder3-readme.md
+applied_literature:
+- title: Conformation-aware structure prediction of antigen-recognizing immune proteins
+  doi: 10.1080/19420862.2025.2602217
+  venue: mAbs, 2025
+  year: 2025
+  authors:
+  - Dreyer FA
+  - Ludwiczak J
+  - Martinkus K
+  - Abanades B
+  - Alberstein RG
+  - Kessel P
+  - Rao P
+  - Lee JH
+  - Bonneau R
+  - Watkins AM
+  - Seeger F
+  pdf_r2: pending
+  md_r2: pending
+  relevance: 'Ibex, a pan-immunoglobulin structure prediction model from Prescient Design (Genentech), benchmarks ABodyBuilder3
+    head-to-head on the ImmuneBuilder test set across antibodies, nanobodies, and TCRs. Reports per-CDR backbone RMSD for
+    ABodyBuilder3 (CDR H3: 2.86 A, CDR L3: 1.13 A) vs Ibex (CDR H3: 2.72 A, CDR L3: 0.98 A). Also compares out-of-distribution
+    generalization (ABodyBuilder3 mean RMSD 2.78 A vs Boltz-1 2.30 A). ABodyBuilder3 architecture is adopted by the nanobody
+    self-distillation work (Ali et al. 2025) as their base architecture.
+
+    '
+- title: 'GeoFlow-V2: A Unified Atomic Diffusion Model for Protein Structure Prediction and De Novo Design'
+  doi: 10.1101/2025.05.06.652551
+  venue: bioRxiv preprint, 2025
+  year: 2025
+  authors:
+  - BioGeometry Team
+  pdf_r2: knowledge-base/models/abodybuilder3/applied/papers/team2025.pdf
+  md_r2: pending
+  relevance: 'GeoFlow-V2-ab benchmarks ABodyBuilder3 alongside AlphaFold-Multimer V2.3 on 205 antibody test structures. Reports
+    backbone RMSD distributions for framework regions and individual CDRs (H1, H2, H3, L1-L3) after framework alignment. GeoFlow-V2-ab
+    achieves 150-250x faster runtime than AFM2.3 while matching or exceeding accuracy. ABodyBuilder3 serves as the antibody-specific
+    baseline in the comparison.
+
+    '
+- title: Improving nanobody structure prediction with self-distillation
+  doi: 10.64898/2025.12.01.691162
+  venue: bioRxiv preprint, 2025
+  year: 2025
+  authors:
+  - Ali M
+  - Greenig M
+  - Jaskolowski M
+  - Crnogaj M
+  - Smorodina E
+  - Zhao H
+  - Greiff V
+  - Sormanni P
+  pdf_r2: pending
+  md_r2: pending
+  relevance: 'Adopts the ABodyBuilder3 architecture and training objectives as the foundation for nanobody-specific structure
+    predictors. Systematically evaluates self-distillation from unlabelled VHH sequences as a data augmentation strategy.
+    The VH/VHH teacher model is a lightweight, structure-module-only predictor derived from ABodyBuilder3 that retains the
+    AlphaFold2 structure module and pLDDT head. Benchmarks against AlphaFold3 and NanobodyBuilder2 on nanobody CDR3 RMSD.
+
+    '
+- title: Disulphide and sequence-encoded conformational priors guide nanobody structure prediction
+  doi: 10.64898/2026.02.13.705647
+  venue: bioRxiv preprint, 2026
+  year: 2026
+  authors:
+  - Ali M
+  - Jaskolowski M
+  - Greenig M
+  - Sormanni P
+  pdf_r2: pending
+  md_r2: pending
+  relevance: 'Introduces NbForge, a lightweight nanobody folding model that incorporates blueprint- and disulphide-aware inductive
+    biases. NbForge is explicitly described as "a lightweight, structure-module-only predictor derived from ABodyBuilder3/AlphaFold2."
+    On a challenging test set enriched for long HCDR3 loops (mean 17.8 residues) and non-canonical disulphide bonds (31.3%),
+    NbForge matches AlphaFold3 HCDR3 RMSD (2.95 A) while dramatically outperforming NanoBodyBuilder2 in blueprint recovery
+    (91.5% vs 80.9%) and disulphide bond recovery (86.7% vs 26.7%).
+
+    '

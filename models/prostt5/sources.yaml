@@ -1,0 +1,89 @@
+model_slug: prostt5
+display_name: ProstT5
+license:
+  type: MIT
+  url: https://github.com/mheinzinger/ProstT5/blob/main/LICENSE
+  notes: ''
+molecule_types:
+- protein
+applicable_to:
+- protein
+- enzyme
+tasks:
+- embedding
+- sequence_generation
+primary_papers:
+- title: 'ProstT5: Bilingual Language Model for Protein Sequence and Structure'
+  arxiv: '2310.07083'
+  venue: bioRxiv preprint, 2023
+  year: 2023
+  authors:
+  - Michael Heinzinger
+  - Konstantin Weissenow
+  - Joaquin Gomez Sanchez
+  - Adrian Hartmann
+  - Martin Steinegger
+  - Burkhard Rost
+  pdf_r2: knowledge-base/models/prostt5/primary/papers/heinzinger2023.pdf
+  md_r2: knowledge-base/models/prostt5/primary/papers-md/heinzinger2023.md
+  figures_of_note:
+  - "Figure 1: ProstT5 architecture \u2014 structure-sequence translation via T5"
+  - 'Figure 2: 3Di token vocabulary and Foldseek encoding'
+- title: Bilingual language model for protein sequence and structure
+  doi: 10.1093/nargab/lqae150
+  venue: NAR Genomics and Bioinformatics, 2024
+  year: 2024
+  authors:
+  - Michael Heinzinger
+  - Konstantin Weissenow
+  - Joaquin Gomez Sanchez
+  - Adrian Hartmann
+  - Martin Steinegger
+  - Burkhard Rost
+  pdf_r2: pending
+  md_r2: pending
+  notes: Peer-reviewed journal version of the bioRxiv preprint (arXiv:2310.07083)
+source_repos:
+- type: github
+  url: https://github.com/mheinzinger/ProstT5
+  readme_md_r2: knowledge-base/models/prostt5/primary/pages/gh-prostt5-readme.md
+- type: huggingface
+  url: https://huggingface.co/Rostlab/ProstT5
+  page_md_r2: knowledge-base/models/prostt5/primary/pages/hf-prostt5.md
+  notes: ProstT5 model weights hosted by Rostlab
+applied_literature:
+- title: 'CATHe2: Enhanced CATH Superfamily Detection Using ProstT5 and Structural Alphabets'
+  doi: 10.1093/biomethods/bpaf080
+  venue: Biology Methods and Protocols, 2025
+  year: 2025
+  authors:
+  - Orfeu Mouret
+  - Jad Abbass
+  pdf_r2: pending
+  md_r2: pending
+  relevance: Uses ProstT5 3Di embeddings for remote homology detection, achieving 92.2% accuracy and 9.9% F1 improvement over
+    ProtT5-based CATHe on ~1700 CATH superfamilies
+- title: 'GraphPBSP: Protein binding site prediction based on Graph Attention Network and pre-trained model ProstT5'
+  doi: 10.1016/j.ijbiomac.2024.136933
+  venue: International Journal of Biological Macromolecules, 2024
+  year: 2024
+  pdf_r2: pending
+  md_r2: pending
+  relevance: First use of ProstT5 sequence embeddings for protein-protein/peptide binding site prediction, outperforming state-of-the-art
+    methods across multiple test sets
+- title: Protein structure-informed bacteriophage genome annotation with Phold
+  doi: 10.1093/nar/gkaf1448
+  venue: Nucleic Acids Research, 2026
+  year: 2026
+  pdf_r2: pending
+  md_r2: pending
+  relevance: Phold uses ProstT5 to predict 3Di tokens for 1.36M phage proteins, enabling Foldseek-based annotation that annotates
+    49.4% of CDSs versus 34.7% with MMseqs2 sequence homology
+- title: Sensitive remote homology search by local alignment of small positional embeddings from protein language models
+  doi: 10.7554/eLife.91415
+  venue: eLife, 2024
+  year: 2024
+  pdf_r2: pending
+  md_r2: pending
+  relevance: Benchmarks ProstT5-predicted 3Di sequences coupled with Foldseek for remote homology detection, achieving sensitivity
+    comparable to structure-based methods at orders of magnitude faster speed

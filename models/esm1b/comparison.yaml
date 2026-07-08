@@ -1,0 +1,57 @@
+model_slug: esm1b
+display_name: "ESM-1b"
+last_updated: "2026-03-17"
+
+strengths:
+  - "Historical significance — the first protein language model to demonstrate that transformer representations spontaneously encode 3D structural information (contact maps from attention heads), a finding that launched the field of protein foundation models"
+  - "Well-validated in published applied studies: plant PPI prediction (AUPR 0.810), domain-adaptive pretraining for DNA-binding proteins, and few-shot fitness prediction across 87 DMS datasets"
+  - "Permissive MIT license with no commercial restrictions, suitable for any deployment scenario without licensing concerns"
+  - "Full action repertoire — encode, predict, log_prob — provides embeddings, masked token prediction, and sequence fitness scoring from a single model"
+  - "1280-dimensional embeddings are compatible with many published downstream pipelines originally designed for ESM-1b, enabling direct reproduction of literature results"
+  - "Runs efficiently on T4 GPU (16GB VRAM) at 650M parameters, making it accessible on standard cloud GPU instances"
+
+weaknesses:
+  - "Strictly superseded by ESM2-650M on every benchmark — ESM2 provides better representations at the same parameter count with a longer context window (2048 vs 1024 tokens)"
+  - "Maximum sequence length of only 1022 residues (1024 tokens including BOS/EOS) — shorter than ESM2's 2048 residues, causing more frequent truncation of large proteins"
+  - "Single size variant only (650M) — no scaling flexibility; ESM2 offers 8M to 3B parameters for different compute budgets"
+  - "No structure awareness — purely sequence-based, missing structural context that structure-aware models such as ProstT5 provide"
+  - "Training on UniRef50 with older procedures — ESMC and ESM2 benefit from improved training techniques and potentially broader data coverage"
+  - "Representation quality degrades for membrane proteins, fibrous proteins, intrinsically disordered proteins, and very short peptides (<30 residues) due to under-representation in training data"
+  - "No generative capability — cannot design or sample novel protein sequences"
+
+use_when:
+  - "You are reproducing published results from studies that specifically used ESM-1b embeddings and need exact embedding compatibility for comparison"
+  - "You have an existing pipeline built on ESM-1b that would require significant refactoring to switch to ESM2, and the performance difference is not critical for your application"
+  - "You need backward compatibility with legacy protein ML workflows or databases that store ESM-1b-derived features"
+  - "You are conducting a comparative study benchmarking multiple protein language model generations and need ESM-1b as a historical reference point"
+  - "You need domain-adaptive pretraining on a specialized protein class and ESM-1b is the pretrained checkpoint used in the published method you are following"
+
+dont_use_when:
+  - "You are starting a new project with no legacy constraints — use ESM2-650M instead, which is strictly superior on all benchmarks with the same parameter count and longer context"
+  - "You need the highest-quality protein embeddings — use ESM2-3B or ESMC for improved representation quality"
+  - "You need structure-aware representations — use ProstT5 when structural information is available"
+  - "You need to process sequences longer than 1022 residues — use ESM2 (up to 2048 residues) or ESMC (up to 2048 residues)"
+  - "You need variant effect prediction with competitive accuracy — use ESM1v (5-model ensemble optimized for this task), ESM2 log_prob, or PoET (MSA-conditioned scoring)"
+  - "You need multiple size variants for cost-performance optimization — use ESM2, which offers 8M to 3B parameters"
+
+alternatives:
+  - model: esm2
+    when_better: "ESM2-650M is strictly superior on every evaluated benchmark with the same architecture and parameter count, plus longer context (2048 vs 1022 residues) and five size variants for flexible deployment"
+    when_worse: "Never — ESM2 dominates ESM-1b in all respects; the only reason to use ESM-1b is backward compatibility with existing pipelines"
+
+  - model: esmc
+    when_better: "ESMC-600M provides state-of-the-art parameter efficiency with updated training, achieving quality comparable to ESM2-3B — a two-generation improvement over ESM-1b"
+    when_worse: "ESM-1b has MIT license while ESMC requires EvolutionaryScale Cambrian Open License review; ESM-1b has more published downstream applications due to its longer history"
+
+  - model: esm1v
+    when_better: "ESM-1v uses a 5-model ensemble trained on UniRef90 specifically for variant effect prediction, achieving higher accuracy on DMS benchmarks than ESM-1b's single-model scoring"
+    when_worse: "ESM-1v is specialized for variant prediction only with a single predict action; ESM-1b provides general-purpose embeddings (encode) and broader action coverage"
+
+  - model: prostt5
+    when_better: "ProstT5 provides bidirectional sequence-structure translation and structure-aware embeddings that capture fold-level information ESM-1b cannot access from sequence alone"
+    when_worse: "ProstT5's generation and structure-dependent modes add complexity; ESM-1b is simpler for pure sequence embedding tasks where structural context is not needed"
+
+complements:
+  - model: esmfold
+    workflow: "Use ESM-1b log_prob to score variant libraries for evolutionary plausibility, then predict 3D structures of top-ranked candidates with ESMFold to validate structural integrity."
+    example_protocol: null

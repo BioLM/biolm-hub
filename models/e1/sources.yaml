@@ -1,0 +1,35 @@
+model_slug: e1
+display_name: E1
+license:
+  type: Apache-2.0
+  url: https://huggingface.co/Synthyra/Profluent-E1-600M
+  notes: Encoder protein language model by Profluent/Synthyra
+molecule_types:
+- protein
+applicable_to:
+- protein
+- enzyme
+tasks:
+- embedding
+- sequence_completion
+- property_prediction
+primary_papers:
+- title: 'E1: Retrieval-Augmented Protein Encoder Models'
+  doi: 10.1101/2025.11.12.688125
+  venue: bioRxiv preprint, 2025
+  year: 2025
+  authors:
+  - Sarthak Jain
+  - Joel Beazer
+  - Jeffrey A. Ruffolo
+  - Aadyot Bhatnagar
+  - Ali Madani
+  pdf_r2: knowledge-base/models/e1/primary/papers/jain2025.pdf
+  md_r2: knowledge-base/models/e1/primary/papers-md/jain2025.md
+  figures_of_note: []
+source_repos:
+- type: huggingface
+  url: https://huggingface.co/Synthyra/Profluent-E1-150M
+  page_md_r2: knowledge-base/models/e1/primary/pages/hf-profluent-e1-150m.md
+  notes: 'Three variants: Synthyra/Profluent-E1-150M, Synthyra/Profluent-E1-300M, Synthyra/Profluent-E1-600M'
+applied_literature: []

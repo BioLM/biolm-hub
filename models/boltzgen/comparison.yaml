@@ -1,0 +1,62 @@
+model_slug: boltzgen
+display_name: BoltzGen
+last_updated: "2026-07-09"
+
+strengths:
+  - "End-to-end binder design pipeline: integrates diffusion-based backbone generation, inverse folding (BoltzIF), integrated structure validation, and integrated binding affinity prediction in a single unified workflow -- no separate tools needed"
+  - "Experimentally validated with 66% nanomolar binder success rate across 9 novel protein targets, including targets with low similarity to known bound structures -- competitive with the best published binder design results"
+  - "Supports diverse design modalities: de novo protein binders, nanobody CDR redesign, cyclic peptides (with head-to-tail cyclization and disulfide bonds), and small-molecule pocket design in a single model"
+  - "Geometry-based 14-atom amino acid representation generates physically plausible all-atom structures in continuous 3D coordinate space, avoiding discrete tokenization artifacts"
+  - "Integrated affinity ranking: each design is scored for predicted binding affinity, enabling computational filtering before expensive experimental validation"
+  - "Successfully designs binders against traditionally difficult targets: intrinsically disordered protein regions, antimicrobial peptides, and proteins with no known binders in the structural database"
+  - "Diversity-aware filtering selects structurally diverse top candidates, improving the probability that at least one candidate succeeds experimentally"
+  - "MIT license with no usage restrictions -- fully open-source design pipeline suitable for academic research and commercial drug discovery"
+
+weaknesses:
+  - "Requires A100 40GB GPU with 64GB system RAM and up to 24 hours for large design campaigns (up to 500 candidate designs per request; default 100) -- expensive infrastructure for iterative optimization"
+  - "Affinity predictions from the integrated affinity module carry high stochastic variance (80%+ between runs), requiring ensemble averaging for reliable ranking -- not a deterministic affinity oracle"
+  - "Nanobody CDR redesign requires precise CDR residue index specification matching PDB numbering -- incorrect indices silently produce meaningless designs"
+  - "Not a structure prediction model: cannot predict the native fold of an existing protein sequence; use Chai-1, RF3, or AF2 NIM for prediction tasks"
+  - "Membrane protein targets are poorly supported due to training data bias toward soluble complexes and absence of lipid bilayer modeling"
+  - "Full IgG antibody design is not supported -- the model targets nanobody/VHH fragments and small-to-medium protein binders (80-200 residues)"
+  - "Designed sequences are novel and may have unforeseen aggregation, immunogenicity, or manufacturability issues that the model does not predict"
+  - "Very short peptide designs (< 8 residues) lack sufficient structural context for reliable backbone generation within the diffusion framework"
+
+use_when:
+  - "You need an end-to-end protein binder design pipeline that handles backbone generation, sequence design, structure validation, and affinity prediction without switching between separate tools"
+  - "You are designing nanobody (VHH) binders against protein targets and need to redesign CDR loops while preserving the stable immunoglobulin framework"
+  - "You are designing cyclic peptides as therapeutic candidates targeting protein-protein interactions, with support for head-to-tail cyclization and disulfide bond constraints"
+  - "You need to design protein pockets around specific small-molecule ligands (drug substrates, cofactors) for enzyme or biosensor engineering"
+  - "You want diversity-aware candidate selection that maximizes structural coverage across your design library, improving experimental success probability"
+  - "You need to computationally rank designs by predicted binding affinity before committing to experimental synthesis and testing"
+
+dont_use_when:
+  - "You need to predict the native structure of an existing protein or complex -- BoltzGen is for design, not prediction; use RF3, Chai-1, or AF2 NIM"
+  - "You need to design full-length IgG antibodies -- BoltzGen targets nanobodies and smaller protein binders; use antibody-specific design tools for full IgG engineering"
+  - "You need precise catalytic activity design for enzymes -- BoltzGen designs binding pockets but does not model catalytic mechanisms, transition states, or enzyme kinetics"
+  - "Your target is a membrane protein and the binding site is within the lipid bilayer -- BoltzGen is trained on soluble complexes"
+  - "You need deterministic affinity predictions -- BoltzGen's integrated affinity stage has high stochastic variance requiring multiple samples for reliable ranking"
+  - "You need symmetric protein assembly design (cages, rings, nanocages) -- BoltzGen has no explicit symmetric design mode for these repeated architectures"
+  - "You need fast single-pass structure generation for rapid prototyping -- BoltzGen's full pipeline (10,000 candidates + filtering) is computationally intensive"
+
+alternatives:
+  - model: "mpnn"
+    when_better: "Gold-standard inverse folding: designs sequences for any supplied backbone in seconds on modest hardware, independent of how the backbone was produced."
+    when_worse: "Requires an existing backbone and outputs sequences only; cannot generate novel backbones, design against a target, or predict binding affinity."
+  - model: "esm_if1"
+    when_better: "GVP-transformer inverse folding trained on ~12M predicted structures; single-pass sequence design over a supplied backbone, tolerant of partial/multi-chain input."
+    when_worse: "Inverse folding only \u2014 needs a supplied backbone, and cannot do de novo backbone generation, target-conditioned binder design, or affinity scoring."
+  - model: "antifold"
+    when_better: "Purpose-built antibody/nanobody inverse folding; a direct substitute for BoltzGen's nanobody-CDR-redesign use case, redesigning CDR sequences on an existing Fv/nanobody structure while preserving the framework."
+    when_worse: "Restricted to antibody/nanobody structures and sequence redesign only; cannot generate novel backbones or design against arbitrary protein/ligand targets."
+
+complements:
+  - model: esm2
+    workflow: "After BoltzGen generates designed binder sequences, use ESM2 log_prob to score each design for evolutionary plausibility -- low log-probability designs are likely to be difficult to express or may misfold"
+    example_protocol: null
+  - model: rf3
+    workflow: "Use RF3 as an independent structure prediction oracle to cross-validate BoltzGen designs: predict the structure of the designed sequence with RF3 and compare to the BoltzGen-generated structure for consistency"
+    example_protocol: null
+  - model: esmfold
+    workflow: "Use ESMFold for rapid structural screening of BoltzGen-designed sequences (seconds per prediction) to quickly identify designs that are likely to fold correctly before running the full BoltzGen validation pipeline"
+    example_protocol: null

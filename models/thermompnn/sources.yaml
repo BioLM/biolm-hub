@@ -1,0 +1,100 @@
+model_slug: thermompnn
+display_name: ThermoMPNN
+license:
+  type: MIT
+  url: https://github.com/Kuhlman-Lab/ThermoMPNN/blob/main/LICENSE
+  notes: ThermoMPNN bundles the ProteinMPNN backbone (Dauparas et al., 2022; University of Washington)
+    as a frozen inference dependency; ProteinMPNN is independently MIT-licensed
+    (https://github.com/dauparas/ProteinMPNN/blob/main/LICENSE).
+molecule_types:
+- protein
+applicable_to:
+- protein
+- enzyme
+tasks:
+- stability_prediction
+primary_papers:
+- title: Transfer learning to leverage larger datasets for improved prediction of protein stability changes
+  doi: 10.1101/2023.07.27.550881
+  venue: bioRxiv preprint, 2023
+  year: 2023
+  authors:
+  - Henry Dieckhaus
+  - Michael Brocidiacono
+  - Nicholas Randolph
+  - Brian Kuhlman
+  pdf_r2: knowledge-base/models/thermompnn/primary/papers/dieckhaus2023.pdf
+  md_r2: knowledge-base/models/thermompnn/primary/papers-md/dieckhaus2023.md
+  figures_of_note: []
+source_repos:
+- type: github
+  url: https://github.com/Kuhlman-Lab/ThermoMPNN
+  commit: 11a1c5b4624f4c60b42fdba4bcaecd3bcb670615
+  snapshot_r2: knowledge-base/models/thermompnn/primary/repos/thermompnn-11a1c5b4.tar.gz
+  readme_md_r2: knowledge-base/models/thermompnn/primary/pages/gh-thermompnn-readme.md
+applied_literature:
+- title: Protein stability models fail to capture epistatic interactions of double point mutations
+  doi: 10.1002/pro.70003
+  venue: Protein Science, 2025
+  year: 2025
+  authors:
+  - Henry Dieckhaus
+  - Brian Kuhlman
+  pdf_r2: pending
+  md_r2: pending
+  relevance: Extends ThermoMPNN to double mutants (ThermoMPNN-D) and benchmarks stability models on the largest double-mutation
+    dataset, revealing epistatic interaction limitations
+- title: HyperMPNN -- A general strategy to design thermostable proteins learned from hyperthermophiles
+  doi: 10.1101/2024.11.26.625397
+  venue: bioRxiv preprint, 2024
+  year: 2024
+  authors:
+  - Moritz Ertelt
+  - Phillip Schlegel
+  - Max Beining
+  - Leonard Kaysser
+  - Jens Meiler
+  - Clara T. Schoeder
+  pdf_r2: knowledge-base/models/thermompnn/applied/papers/ertelt2024.pdf
+  md_r2: pending
+  relevance: Builds on ProteinMPNN (ThermoMPNN backbone) to design thermostable proteins from hyperthermophilic data, achieving
+    designs stable at 95C from 65C starting point
+- title: Transfer learning to leverage larger datasets for improved prediction of protein stability changes
+  doi: 10.1073/pnas.2314853121
+  venue: PNAS, 2024
+  year: 2024
+  authors:
+  - Henry Dieckhaus
+  - Michael Brocidiacono
+  - Nicholas Randolph
+  - Brian Kuhlman
+  pdf_r2: pending
+  md_r2: pending
+  relevance: Peer-reviewed publication of ThermoMPNN in PNAS, demonstrating state-of-the-art single-mutation ddG prediction
+    (PCC ~0.75, RMSE ~0.71 kcal/mol) on Megascale dataset
+- title: Site-saturation mutagenesis of 500 human protein domains
+  doi: 10.1038/s41586-024-08370-4
+  venue: Nature, 2025
+  year: 2025
+  authors:
+  - Andre Beltran
+  - Xiang Jiang
+  - Yue Shen
+  - Ben Lehner
+  pdf_r2: pending
+  md_r2: pending
+  relevance: Benchmarks ThermoMPNN on 500K+ missense variants across 500 human protein domains (Human Domainome 1); ThermoMPNN
+    is the best stability predictor overall (median rho = 0.50, or 0.57 excluding zinc-fingers), outperforming all other dedicated
+    stability predictors and general variant effect predictors
+- title: Generalizable and scalable protein stability prediction with rewired protein generative models
+  doi: 10.1038/s41467-025-67609-4
+  venue: Nature Communications, 2025
+  year: 2025
+  authors:
+  - Ziang Li
+  - Yunan Luo
+  pdf_r2: pending
+  md_r2: pending
+  relevance: Introduces SPURS, which benchmarks against ThermoMPNN on the Megascale test set (28,312 mutants); SPURS outperforms
+    ThermoMPNN in Spearman correlation (0.83 vs 0.77) across 12 stability benchmark datasets by integrating ESM and ProteinMPNN
+    priors

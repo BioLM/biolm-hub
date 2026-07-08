@@ -1,0 +1,73 @@
+# comparison.yaml — Model Comparison Metadata
+# Machine-readable guidance for model selection.
+# Generated as part of Phase 3.5 of the model-knowledge-base workflow.
+#
+# Requirements:
+#   - strengths, weaknesses, use_when, dont_use_when: 5+ entries each (min 3)
+#   - alternatives, complements: 1+ entries where applicable
+#   - All referenced model slugs must exist in models/
+
+model_slug: "dsm"
+display_name: "DSM"
+last_updated: "2026-07-09"
+
+strengths:
+  - "Three-action API (generate + encode + score) provides sequence generation, embedding extraction, and fitness scoring in a single model deployment — the most versatile protein generation model in this catalog"
+  - "Masked diffusion enables three generation modes — unconditional, masked infilling (fix scaffold regions while designing loops/linkers), and conditional prefix extension — offering design flexibility that autoregressive models cannot match"
+  - "PPI-specialized variant (650M-PPI) trained on STRING protein-protein interaction data enables generation of interacting protein pairs, a unique capability in this catalog"
+  - "Two size variants (150M, 650M) with base and PPI sub-variants provide deployment flexibility for different compute budgets and use cases"
+  - "Diffusion-based generation can produce higher-quality sequences than autoregressive models for certain tasks by considering bidirectional context during the denoising process"
+  - "Configurable remasking strategies (random, low-confidence, low-logit, dual) allow fine-grained control over the generation process, enabling quality-diversity tradeoffs"
+  - "Apache-2.0 license permits unrestricted commercial and academic use"
+  - "Recent model (2025) incorporating the latest advances in discrete diffusion modeling for proteins"
+
+weaknesses:
+  - "Very recent model (2025) with no independent benchmarking or applied literature — real-world validation and reliability are unproven"
+  - "Higher compute requirements than other protein generators — requires A10G GPU even for the 150M variant, compared to CPU-only (MPNN) or T4 (ProGen2, ZymCTRL) alternatives"
+  - "No function conditioning — cannot specify target enzymatic activity (EC number) or other functional properties during generation, unlike ZymCTRL"
+  - "No structure conditioning — generates sequences from sequence context only, without 3D backbone geometry input; cannot guarantee structural compatibility with a target fold"
+  - "Diffusion sampling is iterative and slower than single-pass autoregressive generation for producing individual sequences"
+  - "PPI variant only available at 650M size; the 3B variant and PPI-3B are not yet released on HuggingFace (as of March 2026; check HuggingFace for current availability)"
+  - "Generated sequences require extensive downstream validation — no guarantee of function, folding, or stability"
+  - "Less established community and tooling ecosystem compared to ESM-2 for embeddings or ProGen2 for generation"
+
+use_when:
+  - "You need to design specific protein regions (loops, linkers, binding sites) while keeping the rest of the sequence fixed — DSM's masked infilling is uniquely suited for scaffold-constrained design"
+  - "You need protein generation, embedding extraction, and sequence scoring from a single model deployment without running multiple separate models"
+  - "You need to generate interacting protein pairs for biosensor design, synthetic signaling circuits, or protein-protein interaction engineering (PPI variant)"
+  - "You want bidirectional context during sequence generation, where the model considers both preceding and following residues during design"
+  - "You need unconditional protein sequence generation to explore protein sequence space broadly without seed constraints"
+  - "You are comparing diffusion-based and autoregressive protein generation approaches and need a discrete diffusion baseline"
+  - "You need configurable generation strategies (remasking) to balance quality and diversity for experimental library design"
+
+dont_use_when:
+  - "You need a well-validated model with extensive independent benchmarks and published downstream applications (use esm2 for embeddings or progen2 for generation)"
+  - "You need enzyme generation conditioned on a specific EC number (use zymctrl, which provides direct EC-number conditioning)"
+  - "You need structure-conditioned sequence design from a target backbone (use mpnn for comprehensive inverse folding or esm_if1 for lightweight inverse folding)"
+  - "You need the lowest-cost protein generation (use mpnn on CPU or progen2 on T4, both cheaper than DSM on A10G)"
+  - "You need antibody-specific sequence generation or design (use progen2 OAS variant or antifold)"
+  - "You need the broadest protein embedding ecosystem with downstream tools (use esm2, which has ESMFold and a broad ecosystem of downstream models)"
+  - "You need fast single-sequence generation where autoregressive models (ProGen2) produce results faster than iterative diffusion"
+  - "You need a model with a proven experimental validation track record for generated sequences (use progen2 or zymctrl, both published with experimental evidence)"
+
+alternatives:
+  - model: "progen2"
+    when_better: "Established publication (Cell Systems 2023), four specialized variants including antibody (OAS), bidirectional log-likelihood scoring, and extensive benchmarking."
+    when_worse: "Autoregressive-only \u2014 no masked infilling or bidirectional generation; no embedding endpoint; no PPI variant; less flexible generation modes."
+  - model: "zymctrl"
+    when_better: "EC-number conditioned enzyme generation with experimental validation of catalytic activity; enzyme-specialized training on 37M sequences."
+    when_worse: "Enzyme-only, generation conditioned on EC number rather than free protein-sequence context; no scoring endpoint; no masked infilling; no PPI variant."
+  - model: "esm2"
+    when_better: "Most established protein embeddings with five size variants, widest downstream tool ecosystem, and extensive benchmarking; overlaps dsm's encode + score on identical protein-sequence input."
+    when_worse: "Cannot generate protein sequences; encoder-only architecture limited to embedding and scoring; no PPI-specific training."
+
+complements:
+  - model: "esm2"
+    workflow: "Generate protein sequences with DSM (unconditional, masked infilling, or conditional), then score with ESM-2 pseudo-log-likelihood for orthogonal fitness validation — sequences scoring well under both models are more likely to be functional"
+    example_protocol: null
+  - model: "zymctrl"
+    workflow: "Use ZymCTRL for EC-conditioned enzyme generation when the target catalytic function is known, then use DSM's masked infilling to optimize specific regions (e.g., loops around the active site) while preserving the ZymCTRL-designed core"
+    example_protocol: null
+  - model: "mpnn"
+    workflow: "Use DSM for sequence-based protein generation, predict structures with ESMFold, then refine sequences with MPNN for structure-conditioned optimization — combining sequence-space exploration with structure-aware design"
+    example_protocol: null

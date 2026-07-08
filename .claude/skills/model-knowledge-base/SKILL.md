@@ -1,0 +1,94 @@
+---
+name: model-knowledge-base
+description: Author the five knowledge-graph files (sources.yaml, comparison.yaml, README.md, MODEL.md, BIOLOGY.md) for a model in biolm-hub. Use when adding a new model or improving existing documentation for a model whose sources are publicly available on arXiv/bioRxiv/GitHub/HuggingFace.
+---
+
+# Model Knowledge Base
+
+## Purpose
+
+Author the five knowledge-graph files required for every model in `biolm-hub`. These files are
+not optional -- see `CONTRIBUTING.md`. The standard layout is:
+
+```
+models/<slug>/
+  sources.yaml    # license, papers, source repos
+  comparison.yaml # strengths/weaknesses, when-to-use, alts
+  README.md       # API reference
+  MODEL.md        # architecture, training, benchmarks
+  BIOLOGY.md      # the biology, applied use-cases
+```
+
+All templates live in `models/dummy/`. Point at those -- do not duplicate them here.
+
+> **R2 population note**: Uploading PDFs, markdown conversions, and repo snapshots to R2 is a
+> maintainer operation and is out of scope for external contributors. Leave `pdf_r2`, `md_r2`,
+> `snapshot_r2`, and `page_md_r2` fields in `sources.yaml` as `""` and move on.
+
+> **Invoked from `model-implementation`.** This skill is called from the documentation phase (Phase 4)
+> of the `model-implementation` workflow — and its output is checked in that workflow's Phase 5 review.
+> It **owns all five** KG files, including `README.md`. It can also run standalone. Either way, the
+> model's `config.py`, `schema.py`, and `app.py` must already exist (Phase 2 of `model-implementation`):
+> author the code first, then the knowledge graph.
+
+## Critical Rules
+
+1. **`models/commons/` is read-only.** Never edit it as part of KB work.
+2. **License first.** Only permissively-licensed models (MIT / Apache-2.0 / BSD and compatible) are
+   accepted. Verify the upstream license before writing any documentation.
+3. **Templates from `models/dummy/`.** Not from this skill directory.
+4. **Public sources only.** Read papers from arXiv/bioRxiv/DOI URLs and code from
+   GitHub/HuggingFace. No internal R2 access is required to complete this skill.
+
+## Workflow (4 Phases, in order)
+
+| Phase | Output | Guide |
+|-------|--------|-------|
+| 1. Discovery | `sources.yaml` | `discovery/GUIDE.md` |
+| 2. Comparison | `comparison.yaml` | `comparison/GUIDE.md` |
+| 3. Documentation | `README.md`, `MODEL.md`, `BIOLOGY.md` | `documentation/GUIDE.md` |
+| 4. Validation | All files cross-checked | `validation/GUIDE.md` |
+
+Do not skip phases. Each phase has a gate that must pass before proceeding.
+
+## Quick Start
+
+For a model that has `config.py` and `app.py` but no knowledge-graph files:
+
+```
+1. Read discovery/GUIDE.md     ->  create sources.yaml
+2. Read comparison/GUIDE.md    ->  create comparison.yaml
+3. Read documentation/GUIDE.md ->  create README.md, MODEL.md, BIOLOGY.md
+4. Read validation/GUIDE.md    ->  cross-check everything; run make style && make docs
+```
+
+## Common Pitfalls
+
+- **Forgetting the license** -- check the GitHub/HuggingFace LICENSE file, not just the API
+  metadata field. Code and weights often have different licenses; document both and record the more
+  restrictive one in `sources.yaml`. **If upstream ships no LICENSE file** (license declared only as a
+  HuggingFace card metadata tag — common), record the SPDX id + a link to the card/canonical license
+  text in `sources.yaml`/`LICENSE` and note it; don't get blocked on the missing file.
+- **Fabricated benchmark numbers** -- only use values directly from papers with explicit citations
+  (e.g., "Table 2 of Lin et al., 2023"). Never estimate.
+- **Fabricated citations to hit the ≥3 applied-papers target** -- for a niche or new model, if an
+  honest, exhaustive search finds fewer than 3 applied papers, **document the gap** (short
+  `applied_literature` + a one-line note) — never invent a DOI, title, author, or number to reach the
+  count. The "≥3 papers" target never overrides the anti-fabrication rule.
+- **Content duplication across MODEL.md and README.md** -- README.md has concise summaries;
+  MODEL.md has full technical depth. Do not copy paragraphs between them.
+- **Old action names** -- the canonical actions are `predict`, `fold`, `encode`, `generate`,
+  `score`, `log_prob`. Do not use deprecated names (`predict_log_prob`, `extract_features`, `vhh`).
+- **Missing cross-references** -- README.md, MODEL.md, and BIOLOGY.md must link to each other at
+  the bottom of each file.
+- **Linking *other* models (or the YAML files) by relative path in prose** -- in body prose such as
+  BIOLOGY.md's *Related Models* section, name other models in **bold** + backtick slug (e.g.
+  **DNABERT-2** `dnabert2`); never write a relative link like `../dnabert2/README.md`. The docs
+  generator (`docs/gen_pages.py`) keys link-rewriting on the *filename*, ignoring the directory, so a
+  cross-model `README.md`/`MODEL.md`/`BIOLOGY.md` link is silently rewritten to *this* page's own
+  section anchor (`#usage`/`#architecture-training`/`#biology`) — pointing at the wrong section, not the
+  other model. Don't link `sources.yaml`/`comparison.yaml` in prose either -- they aren't page-rewritten
+  and render as off-site GitHub URLs. (The self-cross-link *footer* from the pitfall above is fine: it's
+  stripped from the built docs site and only aids GitHub browsers.)
+- **Non-permissive license** -- if you find a CC-BY-NC or custom non-commercial license, do not
+  proceed. Flag it in the PR; the model may not be eligible for the catalog.

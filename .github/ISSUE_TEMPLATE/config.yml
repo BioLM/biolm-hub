@@ -1,0 +1,9 @@
+# Disable blank issues so contributors go through one of the structured forms above.
+blank_issues_enabled: false
+contact_links:
+  - name: 📚 Documentation & contributor guide
+    url: https://github.com/BioLM/biolm-hub/blob/main/CONTRIBUTING.md
+    about: Read CONTRIBUTING.md and PHILOSOPHY.md before opening an issue or PR — most "how do I…" questions are answered there.
+  - name: 🔒 Report a security vulnerability
+    url: mailto:support+security@biolm.ai
+    about: Please don't open a public issue for security reports — email support+security@biolm.ai instead (see the README's Security section).

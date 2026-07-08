@@ -1,0 +1,88 @@
+model_slug: antifold
+display_name: AntiFold
+license:
+  type: BSD-3-Clause
+  url: https://github.com/oxpig/AntiFold/blob/main/LICENSE
+  notes: ''
+molecule_types:
+- antibody
+- nanobody
+applicable_to:
+- immunotherapy
+- drug development
+- antibody engineering
+- antibody design
+- CDR optimization
+tasks:
+- inverse_folding
+- embedding
+primary_papers:
+- title: 'AntiFold: Improved antibody structure-based design using inverse folding'
+  arxiv: '2405.03370'
+  doi: 10.1093/bioinformatics/btae403
+  venue: Bioinformatics, 2024
+  year: 2024
+  authors:
+  - Hoie MH
+  - Hummer AM
+  - Olsen TH
+  - Nielsen M
+  - Deane CM
+  pdf_r2: knowledge-base/models/antifold/primary/papers/mh2024.pdf
+  md_r2: knowledge-base/models/antifold/primary/papers-md/mh2024.md
+  figures_of_note: []
+source_repos:
+- type: github
+  url: https://github.com/oxpig/AntiFold
+  commit: c306ae678bded89f4daa6d431ebdc72381474ccb
+  snapshot_r2: knowledge-base/models/antifold/primary/repos/antifold-c306ae67.tar.gz
+applied_literature:
+- title: Benchmarking inverse folding models for antibody CDR sequence design
+  doi: 10.1371/journal.pone.0324566
+  year: 2025
+  relevance: Evaluates AntiFold against ProteinMPNN, ESM-IF, and LM-Design on Fab and VHH CDR sequence recovery, finding AntiFold
+    superior for Fab antibody design.
+  molecule_focus: antibody
+  task_focus: benchmark
+  pdf_r2: pending
+  md_r2: pending
+- title: Atomically accurate de novo design of antibodies with RFdiffusion
+  doi: 10.1038/s41586-025-09721-5
+  year: 2025
+  relevance: Demonstrates computational antibody design pipeline where inverse folding tools like AntiFold are used alongside
+    RFdiffusion for CDR sequence optimization.
+  molecule_focus: antibody
+  task_focus: antibody_design
+  pdf_r2: pending
+  md_r2: pending
+- title: 'Deep learning in GPCR drug discovery: benchmarking the path to accurate peptide binding'
+  doi: 10.1093/bib/bbaf186
+  year: 2025
+  relevance: Benchmarks structure prediction and inverse folding models for GPCR-peptide interaction prediction, contextualizing
+    antibody-specific tools in broader drug discovery.
+  molecule_focus: protein-peptide
+  task_focus: binding_prediction
+  pdf_r2: pending
+  md_r2: pending
+- title: 'AbBiBench: A Benchmark for Antibody Binding Affinity Maturation and Design'
+  arxiv: '2506.04235'
+  year: 2025
+  relevance: Benchmarks AntiFold alongside 14 other protein models on 184,500+ experimental antibody-antigen binding measurements.
+    AntiFold (ESM-IF fine-tuned on antibodies) showed a -0.097 drop in affinity correlation vs ESM-IF, revealing potential
+    catastrophic forgetting from antibody-specific fine-tuning in the complex-level binding prediction setting. Inverse folding
+    models as a class outperformed all other model categories.
+  molecule_focus: antibody
+  task_focus: binding_prediction
+  pdf_r2: knowledge-base/models/antifold/applied/papers/unknown2025d.pdf
+  md_r2: pending
+- title: 'nanoFOLD: sequence design of nanobodies via inverse folding'
+  doi: 10.1101/2025.04.29.651236
+  year: 2025
+  relevance: Develops a nanobody-specific inverse folding model (nanoFOLD) fine-tuned from ESM-IF and benchmarks it directly
+    against AntiFold on VHH sequence recovery and binder enrichment. nanoFOLD outperforms AntiFold on nanobody-specific tasks
+    (75% VHH recovery vs AntiFold lower), while AntiFold retains superiority on Fab antibody design, quantifying the domain-specificity
+    gap.
+  molecule_focus: nanobody
+  task_focus: inverse_folding
+  pdf_r2: knowledge-base/models/antifold/applied/papers/unknown2025e.pdf
+  md_r2: pending

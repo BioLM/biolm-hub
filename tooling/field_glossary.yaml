@@ -1,0 +1,104 @@
+# Canonical schema-field descriptions — the consistency source of truth.
+#
+# `tooling/check_schema_docs.py` enforces this (and runs in CI via
+# tooling/test_schema_docs.py):
+#   1. EVERY request/response field across every model must carry a non-empty
+#      description that RENDERS in model_json_schema() (a `Field(description=...)`;
+#      a Field nested inside Optional[Annotated[...]] silently drops it — put the
+#      Field at field level instead).
+#   2. Fields listed under `verbatim` must use one of the exact strings given, so
+#      a shared concept reads identically across models. If a model genuinely
+#      needs different wording, add that wording to the allowed list here (with a
+#      comment) rather than letting it drift silently.
+#
+# Only fields with a single, stable, model-independent meaning are pinned here.
+# Everything else just needs *a* good description (rule 1) — wording is per-model.
+
+verbatim:
+  # Sampling / generation parameters
+  seed:
+    - "Random seed for reproducible sampling."
+  temperature:
+    - "Sampling temperature; higher values increase diversity."
+  top_p:
+    - "Nucleus (top-p) sampling threshold."
+  top_k:
+    - "Top-k sampling cutoff; only the k most likely tokens are sampled."
+  num_samples:
+    - "Number of sequences to generate per input."
+  max_new_tokens:
+    - "Maximum number of new tokens to generate."
+  diffusion_batch_size:
+    - "Number of diffusion samples to generate in parallel."
+
+  # Structure-confidence outputs. (Bare `plddt` is intentionally NOT pinned: in
+  # folding models it's a per-residue output list, but in some models it's a
+  # boolean request flag. `mean_plddt` — the scalar mean pLDDT over residues —
+  # has a single stable meaning, so it IS pinned.)
+  ptm:
+    - "Predicted TM-score (pTM) for the overall structure (0–1)."
+  pae:
+    - "Predicted aligned error (PAE) matrix, in Ångströms."
+  mean_plddt:
+    - "Mean per-residue pLDDT confidence score (0–100); higher values indicate more confident predictions."
+
+  # Representation / token outputs. (`contacts` is NOT pinned: a predicted contact
+  # map in language models but an input contact restraint in structure models.)
+  # Per-position embeddings converged to ONE canonical name across the catalog:
+  # `residue_embeddings`. All emitters are protein/antibody models (the DNA/RNA
+  # models only emit pooled/last embeddings), so the biology-appropriate,
+  # ESM-standard term is used. Models that formerly emitted `per_token_embeddings`
+  # or `per_residue_embeddings` now serialize `residue_embeddings` and still accept
+  # the old names as validation aliases.
+  residue_embeddings:
+    - "Per-residue embedding vectors."
+  # The INPUT option that REQUESTS per-residue embeddings converged to ONE
+  # canonical value across the catalog: "per_residue" (mirrors the canonical
+  # `residue_embeddings` output field above). Encode `include` enums (and
+  # zymctrl's `pooling` enum) expose `per_residue`; the legacy input literals
+  # `per_token` (esm2/esm1b/esmc/e1/msa_transformer/zymctrl) and `residue`
+  # (igbert/igt5/antifold) are still accepted via each enum's `_missing_` hook
+  # so existing request payloads keep validating. dsm/temberture already used
+  # `per_residue`. ablang2's `rescoding` is a documented exception: it is an
+  # embedding *mode* (seqcoding vs rescoding), not a per-residue include flag
+  # alongside `mean`, so it is intentionally left unconverged.
+  # (`include` descriptions are per-model — the option sets differ — so the
+  # field itself is not pinned verbatim here.)
+  sequence_index:
+    - "Index of the corresponding input sequence within the request batch."
+  vocab_tokens:
+    - "Vocabulary token order corresponding to the logits columns."
+  sequence_tokens:
+    - "Per-position input tokens, aligned with the logits."
+  layer:
+    - "Model layer this representation was taken from."
+  logits:
+    - "Per-position logits over the model vocabulary."
+  # Per-residue probability matrices (currently mpnn only): one row per residue
+  # over the 21-amino-acid vocabulary. Distinct from the singular per-sequence
+  # `log_prob` scalar below — these are the full per-position distributions.
+  log_probs:
+    - "Per-residue log probabilities over 21 amino acid types, in the model's canonical order."
+  sampling_probs:
+    - "Per-residue sampling probabilities over 21 amino acid types, corresponding to log_probs."
+
+  # Pooled (per-sequence) embeddings serialize as `embeddings`/`embedding` in most
+  # encoders. omni_dna is a documented exception: it is a dual-pooling encoder that
+  # returns BOTH a `mean` (mean-pooled) and a `last` (last-token) vector as separate
+  # fields, selected via its `include` option, rather than a single `embeddings`
+  # field. The field names are intentionally left unconverged for that model.
+
+  # Per-sequence likelihood — masked-LM models report a pseudo-log-likelihood;
+  # autoregressive models report an exact (joint) log-likelihood. Both allowed.
+  log_prob:
+    - "Pseudo-log-likelihood of the sequence under the model."
+    - "Log-likelihood of the sequence under the model."
+
+  # sadie is a documented naming exception: its per-domain annotation output
+  # retains three upstream ANARCI column names verbatim — `Chain`, `Numbering`,
+  # and `Insertion` (PascalCase) — as a faithful passthrough of the numbering
+  # tool's own output. These are single-model fields (not shared across the
+  # catalog), so they are not pinned here, and the non-snake_case spelling is
+  # intentional. The fields also accept the snake_case forms (`chain`/
+  # `numbering`/`insertion`) as validation aliases; the emitted names are
+  # unchanged.

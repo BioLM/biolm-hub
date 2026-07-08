@@ -1,0 +1,61 @@
+model_slug: "immunebuilder"
+display_name: "ImmuneBuilder"
+last_updated: "2026-07-09"
+
+strengths:
+  - "Broadest immune protein coverage in this catalog: four dedicated sub-models for conventional antibodies (ABodyBuilder2), nanobodies (NanoBodyBuilder2), TCRs (TCRBuilder2), and updated TCRs (TCRBuilder2Plus)"
+  - "CPU-only inference for all variants (8 GB RAM, no GPU), making it the most cost-effective structural prediction tool for immune proteins in this catalog"
+  - "EGNN ensemble architecture captures geometric constraints of the immunoglobulin fold with built-in uncertainty estimation from multiple model predictions"
+  - "OpenMM relaxation ensures physically realistic bond geometries, producing PDB structures that are immediately usable for downstream molecular modeling tools"
+  - "Dedicated NanoBodyBuilder2 variant specifically trained on VHH structures from SAbDab, accounting for extended CDR3 loops and adapted framework residues unique to nanobodies"
+  - "Published in Communications Biology (2023) with extensive benchmarking against AlphaFold2, ESMFold, and earlier methods; widely cited in the antibody modeling community"
+  - "Single-sequence prediction without MSA requirement, enabling fast structural characterization of immune protein sequences from sequencing campaigns"
+  - "BSD-3-Clause license with no commercial restrictions, widely adopted in academic and industrial antibody/TCR engineering pipelines"
+
+weaknesses:
+  - "Lower CDR accuracy compared to newer PLM-enhanced methods (AbodyBuilder3 language variant, ImmuneFold) that incorporate protein language model embeddings"
+  - "Does not predict antibody-antigen complex structures; only models unbound immune receptor structures -- use ImmuneFold for complex prediction"
+  - "No per-residue confidence scores (pLDDT) for quality assessment -- unlike AbodyBuilder3 and ImmuneFold, users cannot identify which regions are predicted with high or low confidence"
+  - "Single action (fold) with no embedding, scoring, or sequence generation capabilities -- purely a structure prediction tool"
+  - "ABodyBuilder2 sub-model has been superseded by AbodyBuilder3 for conventional antibody structure prediction, making the antibody variant no longer state-of-the-art"
+  - "Does not support gamma/delta TCRs; trained primarily on alpha/beta TCR structures"
+  - "Four separate deployments required for full coverage, increasing infrastructure overhead compared to a single unified model"
+
+use_when:
+  - "You need to predict structures for multiple immune protein types (antibodies, nanobodies, and TCRs) using a single unified model family with consistent output format"
+  - "You want CPU-only structure prediction for cost-effective high-throughput screening of immune protein libraries without GPU infrastructure"
+  - "You need nanobody (VHH) structure prediction with a model specifically trained on single-domain antibody structures from SAbDab"
+  - "You need TCR structure prediction (alpha/beta chains) and want the choice between TCRBuilder2 and the updated TCRBuilder2Plus with expanded training data"
+  - "You want to provide predicted structures as input for downstream tools like AntiFold (inverse folding) or structure-based developability analysis"
+  - "You are benchmarking antibody structure prediction methods and need a well-established reference with published accuracy metrics"
+
+dont_use_when:
+  - "You need the highest-accuracy antibody structure prediction and have GPU resources available -- use AbodyBuilder3 (language variant) or ImmuneFold, which leverage protein language model embeddings"
+  - "You need antibody-antigen complex structure prediction -- use ImmuneFold, which accepts antigen PDB input for complex modeling"
+  - "You need per-residue confidence scores (pLDDT) to assess prediction quality -- use AbodyBuilder3 or ImmuneFold, both of which provide pLDDT scores"
+  - "You need sequence-level analysis (embeddings, scoring, generation) rather than structure prediction -- use AbLang2, IgBERT, or IgT5"
+  - "You need TCR-pMHC complex modeling with peptide and MHC context -- use ImmuneFold (TCR variant), which takes four-chain input including peptide and MHC"
+  - "You need general protein structure prediction for non-immune targets -- use ESMFold or Chai-1"
+  - "You need the fastest possible antibody structure prediction for a single candidate -- ImmuneBuilder's OpenMM relaxation adds latency"
+
+alternatives:
+  - model: "abodybuilder3"
+    when_better: "Higher CDR accuracy via the language (ProtT5) variant and per-residue pLDDT confidence scores for quality assessment."
+    when_worse: "Antibody-only (paired VH/VL); cannot predict nanobody or TCR structures, and the language variant needs a GPU whereas ImmuneBuilder runs CPU-only."
+  - model: "immunefold"
+    when_better: "ESM-2-based representations for the highest CDR accuracy, supports antibody-antigen and TCR-pMHC complex prediction, and returns pTM/pLDDT confidence."
+    when_worse: "Requires a T4 GPU (16 GB) and has no dedicated nanobody variant, while ImmuneBuilder runs entirely on CPU and covers nanobodies."
+  - model: "esmfold"
+    when_better: "General single-sequence folder that also handles immune chains (concatenate heavy/light with ':') plus any non-immune protein, and returns pTM/mean pLDDT confidence in one tool."
+    when_worse: "No immune-specific training or dedicated nanobody/TCR/CDR handling, requires an A10G GPU, and is generally less accurate on antibody CDR loops than ImmuneBuilder's specialized sub-models."
+
+complements:
+  - model: "antifold"
+    workflow: "Predict immune protein structures with ImmuneBuilder, then use AntiFold for structure-conditioned CDR sequence design on the predicted antibody or nanobody structures"
+    example_protocol: null
+  - model: "ablang2"
+    workflow: "Use AbLang2 to score antibody sequences for evolutionary plausibility and embed them for clustering, then predict structures for representative candidates with ImmuneBuilder for structural analysis"
+    example_protocol: null
+  - model: "mpnn"
+    workflow: "Predict immune protein structures with ImmuneBuilder, then use ProteinMPNN for structure-conditioned inverse folding to redesign framework or CDR residues while preserving the predicted backbone geometry"
+    example_protocol: null

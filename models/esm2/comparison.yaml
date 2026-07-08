@@ -1,0 +1,69 @@
+model_slug: esm2
+display_name: ESM2
+last_updated: "2026-07-09"
+
+strengths:
+  - "Five size variants (8M, 35M, 150M, 650M, 3B) allow fine-grained speed/quality tradeoff — the 8M and 35M variants run on CPU-only, making ESM2 accessible without GPU infrastructure"
+  - "650M single-sequence contact prediction matches MSA Transformer accuracy (long-range P@L ~0.57) while being orders of magnitude faster — no MSA computation required"
+  - "Most widely benchmarked protein language model: downstream performance validated across ProteinGym DMS (87 datasets), contact prediction, and transfer learning tasks, providing reliable baseline comparisons"
+  - "MIT license with no usage restrictions — suitable for commercial, academic, and clinical applications without licensing concerns"
+  - "Rich output repertoire from a single model: per-token embeddings, mean-pooled embeddings, BOS embeddings, predicted contact maps, attention matrices, logits, and per-sequence log-probabilities"
+  - "Proven as a drop-in replacement for computationally expensive PSSM/MSA features in downstream pipelines (e.g., DeepRank-GNN-esm achieved equal PPI scoring accuracy with ESM2 embeddings vs. PSSM features)"
+  - "Transfer learning benchmark (Nature Scientific Reports, 2025) demonstrated that the 650M variant matches the 3B variant on most downstream classification tasks, validating the mid-range variant as the practical sweet spot"
+  - "Deterministic inference (fixed seed) ensures reproducible results across runs on the same hardware, critical for scientific reproducibility and regulatory submissions"
+
+weaknesses:
+  - "Encoder-only architecture — cannot generate or design novel protein sequences; for sequence design tasks, use generative models like ProteinMPNN, ProGen2, or ZymCTRL"
+  - "Maximum input length is 2048 amino-acid residues for all variants (BOS/EOS tokens are added internally); sequences exceeding this limit are truncated, losing C-terminal context. The smaller variants (8M–650M) were trained with a 1024-token crop, so embeddings for very long sequences may be less reliable on those variants."
+  - "No structure awareness — trained purely on sequences without 3D structural supervision; structure-aware models such as ProstT5 incorporate structural tokens and outperform ESM2 on structure-dependent tasks when structure information is available"
+  - "Contact prediction derived from attention weights is approximate — not competitive with dedicated structure prediction models (ESMFold, AlphaFold2) for actual structure determination"
+  - "Single-chain only — no explicit modeling of protein complexes, multi-chain interactions, or protein-ligand binding; models like Chai-1 or RF3 handle multi-chain inputs natively"
+  - "Representation quality degrades for under-represented protein types: membrane proteins, intrinsically disordered proteins, fibrous proteins (collagen, keratin), and very short peptides (<10 residues)"
+  - "No explicit handling of post-translational modifications (phosphorylation, glycosylation, ubiquitination) — modified residues are invisible to the model vocabulary"
+  - "Variant effect prediction (log-probability scoring, single unmasked forward pass) scores ~0.42 Spearman rho on ProteinGym DMS — competitive but not state-of-the-art compared to ensemble methods like ESM-1v (5-model, ~0.45) or supervised approaches"
+  - "Significant quality gap across variants: 8M contact prediction P@L ~0.30 vs. 650M ~0.57, yet 3B provides only marginal gains over 650M (ProteinGym DMS: 0.43 vs 0.42 Spearman rho) at much higher compute cost (L40S GPU, reduced tokens_per_batch)"
+
+use_when:
+  - "You need general-purpose protein embeddings for downstream ML tasks (fitness prediction, subcellular localization, function annotation, clustering) and want the widest ecosystem compatibility"
+  - "You want fast single-sequence inference without MSA computation — ESM2 produces embeddings in a single forward pass, making it suitable for proteome-scale analyses (millions of sequences)"
+  - "You are building a multi-model pipeline and need a reliable embedding backbone — ESM2 is the most commonly used feature extractor in published protein ML workflows"
+  - "You need zero-shot variant effect scoring (log_prob) to prioritize mutations in a directed evolution or clinical genetics study before committing to expensive wet-lab validation"
+  - "You need to choose between inference cost and quality — the 8M variant on CPU handles rapid screening, while the 3B variant on L40S GPU provides the highest-quality representations"
+  - "You need contact maps as a quick structural assessment without running a full structure prediction pipeline — ESM2 attention-derived contacts are fast and informative for fold-level analysis"
+  - "Your sequences include proteins from diverse organisms (bacteria, archaea, eukaryotes, viruses) — UniRef50 training ensures broad taxonomic coverage"
+  - "You want a permissively licensed (MIT) foundation model with no commercial restrictions for integration into proprietary pipelines or products"
+
+dont_use_when:
+  - "You need structure-conditioned protein representations and have access to experimental or predicted structures — use ProstT5 instead, which incorporates Foldseek 3Di structural tokens and captures fold-level information ESM2 cannot access"
+  - "You need to generate or design novel protein sequences — use ProteinMPNN for structure-conditioned inverse folding, ProGen2 for unconditional generation, or ZymCTRL for enzyme generation with EC number conditioning"
+  - "You need accurate 3D protein structure prediction — use ESMFold (which uses ESM2 internally but adds a structure module), Chai-1, RF3, or AF2 NIM for higher-accuracy structure prediction"
+  - "You are working exclusively with antibody sequences and need CDR-specific representations — use AbLang2 or IgBERT, which are trained on antibody-specific corpora and outperform general protein LMs on antibody tasks"
+  - "You need to analyze protein sequences longer than ~2048 residues without truncation — consider Evo or Evo2 which support much longer context lengths (up to 131K tokens for Evo2)"
+  - "You need to model protein-protein complexes or multi-chain assemblies — use Chai-1 or RF3 which accept multi-chain inputs with covalent and non-covalent interaction modeling"
+  - "You need an MSA-aware model that explicitly leverages evolutionary coupling information from alignments — use MSA Transformer or PoET, which process MSA columns jointly rather than single sequences"
+
+alternatives:
+  - model: "esmc"
+    when_better: "Newer, more efficient architecture with competitive embedding quality and updated training."
+    when_worse: "ESM2 has far more published benchmarks and 5 size variants (8M-3B incl. CPU-only) vs ESMC's single 300M, plus an unmatched downstream ecosystem (e.g. ESMFold)."
+  - model: "esm1b"
+    when_better: "Retained only for backward compatibility with legacy pipelines depending on its specific embedding dimensions."
+    when_worse: "ESM2-650M matches or exceeds ESM-1b on every evaluated benchmark with the same architecture/input format; ESM2 is strictly preferable."
+  - model: "esm1v"
+    when_better: "5-model ensemble gives higher Spearman on zero-shot variant-effect prediction."
+    when_worse: "Single-model ESM2-650M is faster and more versatile; ESM-1v is variant-effect-only (single <mask> per sequence) and offers no embeddings."
+  - model: "e1"
+    when_better: "Retrieval-augmented protein LM: prepending homolog context sequences lifts embeddings and variant-effect scoring above single-sequence ESM2, approaching MSA-level signal without a formal alignment."
+    when_worse: "ESM2 is far more benchmarked, offers 5 size variants including CPU-only, and needs no context homologs; E1 is newer with a thinner validated track record."
+  - model: "prostt5"
+    when_better: "Injects Foldseek 3Di structural tokens for fold-aware embeddings that outperform ESM2 on structure-dependent downstream tasks when structure signal helps."
+    when_worse: "ESM2 has more size variants, a richer LM output repertoire (logits/contacts/attention/log_prob for variant effect), and a much larger validated ecosystem; ProstT5's encode is embedding-focused."
+
+complements:
+  - model: esmfold
+    workflow: "ESM2 embeddings serve as the language model backbone for ESMFold's structure prediction — use ESM2 encode to assess sequence quality and filter inputs, then pass promising candidates to ESMFold for single-sequence 3D structure prediction"
+    example_protocol: null
+
+  - model: mpnn
+    workflow: "Use ESM2 log_prob to score wild-type sequence fitness, then use ProteinMPNN to redesign specific regions (e.g., surface residues for stability), and finally re-score the designed sequences with ESM2 to verify evolutionary plausibility — published as part of the JACS 2024 protein design evaluation pipeline"
+    example_protocol: null

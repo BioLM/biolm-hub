@@ -1,0 +1,76 @@
+model_slug: deepviscosity
+display_name: DeepViscosity
+license:
+  type: MIT
+  url: https://github.com/Lailabcode/DeepViscosity/blob/main/LICENSE
+  notes: ''
+molecule_types:
+- protein
+applicable_to:
+- antibody
+tasks:
+- property_prediction
+primary_papers:
+- title: Accelerating high-concentration monoclonal antibody development with large-scale viscosity data and ensemble deep
+    learning
+  doi: 10.1080/19420862.2025.2483944
+  venue: mAbs, 2025
+  year: 2025
+  authors:
+  - Lateefat A. Kalejaye
+  - Jia-Min Chu
+  - I-En Wu
+  pdf_r2: knowledge-base/models/deepviscosity/primary/papers/kalejaye2025.pdf
+  md_r2: pending
+  figures_of_note: []
+source_repos:
+- type: github
+  url: https://github.com/Lailabcode/DeepViscosity
+  commit: '2d22a5bfd3905ca508fe675fd212d2d431876517'
+  snapshot_r2: pending
+  readme_md_r2: knowledge-base/models/deepviscosity/primary/pages/gh-deepviscosity-readme.md
+applied_literature:
+- title: Reduction of monoclonal antibody viscosity using interpretable machine learning
+  doi: 10.1080/19420862.2024.2303781
+  venue: mAbs, 2024
+  year: 2024
+  pdf_r2: pending
+  md_r2: pending
+  relevance: Complementary approach to DeepViscosity using interpretable decision trees on Fv properties (pI, hydrophobic
+    patches) for antibody viscosity prediction and reduction
+- title: Leveraging multi-modal feature learning for predictions of antibody viscosity
+  doi: 10.1080/19420862.2025.2490788
+  venue: mAbs, 2025
+  year: 2025
+  pdf_r2: pending
+  md_r2: pending
+  relevance: Multi-modal viscosity prediction integrating sequence, structure, physicochemical properties, and language-model
+    embeddings for high-concentration antibody formulations
+- title: A high-throughput platform for biophysical antibody developability assessment to enable AI/ML model training
+  doi: 10.1080/19420862.2025.2593055
+  venue: mAbs, 2025
+  year: 2025
+  pdf_r2: pending
+  md_r2: pending
+  relevance: Provides viscosity among 10 developability assays for 246 IgGs, enabling training of ML models including viscosity
+    predictors like DeepViscosity
+- title: ProtT5 and random forests-based viscosity prediction method for therapeutic mAbs
+  doi: 10.1016/j.ejps.2024.106705
+  venue: European Journal of Pharmaceutical Sciences, 2024
+  year: 2024
+  authors:
+  - Xiaohu Hao
+  - others
+  pdf_r2: pending
+  md_r2: pending
+  relevance: ProtT5 language model embeddings with random forests for antibody viscosity regression (PCC = 0.928) on 40 commercial
+    therapeutic mAbs; complementary sequence-only approach to DeepViscosity's DeepSP-based feature extraction
+- title: Sequence-Based Viscosity Prediction for Rapid Antibody Engineering
+  doi: 10.3390/biom14060617
+  venue: Biomolecules, 2024
+  year: 2024
+  pdf_r2: pending
+  md_r2: pending
+  relevance: Applied viscosity prediction to engineer a highly viscous anti-IL-13 mAb, reducing viscosity from 34 cP to 13
+    cP at 150 mg/mL using in silico screening of 16 variants; demonstrates the practical antibody engineering workflow that
+    DeepViscosity enables

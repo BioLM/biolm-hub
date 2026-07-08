@@ -1,0 +1,99 @@
+model_slug: boltzgen
+display_name: BoltzGen
+license:
+  type: MIT
+  url: https://github.com/HannesStark/boltzgen/blob/main/LICENSE
+  notes: ''
+molecule_types:
+- protein
+- dna
+- rna
+- ligand
+- complex
+applicable_to:
+- protein
+- antibody
+- nanobody
+- peptide
+- enzyme
+- ligand
+tasks:
+- sequence_generation
+- structure_prediction
+primary_papers:
+- title: 'BoltzGen: Toward Universal Binder Design'
+  doi: 10.1101/2025.11.20.689494
+  venue: bioRxiv preprint, 2025
+  year: 2025
+  authors:
+  - Hannes Stark
+  - Felix Faltings
+  - MinGyu Choi
+  - Jeremy Wohlwend
+  - Gabriele Corso
+  - Regina Barzilay
+  - Tommi Jaakkola et al.
+  pdf_r2: knowledge-base/models/boltzgen/primary/papers/stark2025.pdf
+  md_r2: knowledge-base/models/boltzgen/primary/papers-md/stark2025.md
+  figures_of_note: []
+source_repos:
+- type: github
+  url: https://github.com/HannesStark/boltzgen
+  commit: 3eddb5a
+  snapshot_r2: knowledge-base/models/boltzgen/primary/repos/boltzgen-3eddb5a.tar.gz
+  readme_md_r2: knowledge-base/models/boltzgen/primary/pages/gh-boltzgen-readme.md
+  notes: 'commit is the knowledge-graph snapshot (matches snapshot_r2); the deployed
+    container pins a later code commit (617e549, see helpers.py BOLTZGEN_COMMIT).'
+- type: huggingface
+  url: https://huggingface.co/boltzgen/boltzgen-1
+  notes: 'Model checkpoints: design (diverse/adherence), inverse folding, folding, affinity'
+  page_md_r2: knowledge-base/models/boltzgen/primary/pages/hf-boltzgen-1.md
+applied_literature:
+- title: 'Boltzdesign1: Inverting All-Atom Structure Prediction Model for Generalized Biomolecular Binder Design'
+  doi: 10.1101/2025.04.06.647261
+  venue: bioRxiv preprint, 2025
+  year: 2025
+  authors:
+  - Yehlin Cho
+  - Martin Pacesa
+  - Zhidian Zhang
+  - Bruno E. Correia
+  - Sergey Ovchinnikov
+  pdf_r2: knowledge-base/models/boltzgen/applied/papers/cho2025.pdf
+  relevance: Alternative binder design method inverting Boltz-1 structure prediction; directly comparable to BoltzGen's unified
+    design-and-folding approach
+- title: 'BoltzGen: Validated de novo binder design for diverse targets'
+  venue: Tamarind Bio blog, 2025
+  year: 2025
+  relevance: Independent analysis of BoltzGen experimental validation across 26 targets, 66% nanomolar binder success rate,
+    and comparison with RFDiffusion/EvoDiff baselines
+- title: 'Behind the Model: Building BoltzGen with Hannes Stark'
+  venue: Benchling Blog, 2025
+  year: 2025
+  relevance: Technical interview covering BoltzGen design decisions, geometry-based residue representation, and practical
+    guidance for binder design campaigns
+- title: 'Boltz-2: Towards Accurate and Efficient Binding Affinity Prediction'
+  doi: 10.1101/2025.06.14.659707
+  venue: bioRxiv preprint, 2025
+  year: 2025
+  authors:
+  - Saro Passaro
+  - Gabriele Corso
+  - Jeremy Wohlwend
+  - Hannes Stark
+  - Tommi Jaakkola
+  - Regina Barzilay et al.
+  pdf_r2: knowledge-base/models/boltzgen/applied/papers/passaro2025.pdf
+  relevance: Successor foundation model from the same team; jointly predicts structures and binding affinities, approaching
+    FEP accuracy at 1000x lower cost; directly extends the Boltz-1 backbone that BoltzGen builds upon and provides affinity
+    scoring for BoltzGen-designed binders.
+- title: One-shot design of functional protein binders with BindCraft
+  doi: 10.1038/s41586-025-09429-6
+  venue: Nature, 2025
+  year: 2025
+  authors:
+  - Martin Pacesa
+  - Lennart Nickel
+  - Bruno E. Correia et al.
+  relevance: Competing AF2-based binder design pipeline achieving 10-100% experimental success rates on 12 diverse targets;
+    provides key comparison baseline for BoltzGen's unified design-and-folding approach vs iterative AF2 hallucination.

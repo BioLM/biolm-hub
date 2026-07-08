@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Virtual environments / tooling caches
+.venv/
+.direnv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+
+# Test / coverage artifacts
+.coverage
+coverage.xml
+htmlcov/
+
+# Local model weights / downloaded assets (pulled from R2 at runtime)
+model-store/
+model-cache/
+
+# Secrets / local env
+.env
+.env.*
+!.env.example
+*.local
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Local working directories
+.planning/
+scratchpad/
+
+# mkdocs build output
+site/
+
+# Generated docs pages (built virtually by docs/gen_pages.py at mkdocs build time;
+# a standalone `python docs/gen_pages.py` run leaks them to disk — never commit).
+docs/models/
+docs/philosophy.md
+docs/contributing.md
+docs/future-work.md

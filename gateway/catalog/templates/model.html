@@ -1,0 +1,88 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ model_info.display_name }} &middot; biolm-hub</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="site-header">
+        <nav class="site-nav">
+            <a href="/catalog" class="brand">
+                <span class="brand-mark">◆</span>
+                biolm-hub
+            </a>
+            <div class="nav-links">
+                <a href="https://biolm.github.io/biolm-hub/" class="nav-link" target="_blank" rel="noopener">Docs ↗</a>
+                <a href="/docs" class="nav-link" target="_blank" rel="noopener">API docs ↗</a>
+                <a href="https://biolm.ai/" class="nav-link" target="_blank" rel="noopener">biolm.ai ↗</a>
+            </div>
+        </nav>
+    </header>
+    <div class="container">
+        <header>
+            <div class="page-head">
+                <a href="/catalog" class="back-link">&larr; Back to catalog</a>
+                <h1>{{ model_info.display_name }}
+                    {% if deployed == false %}<span class="status-badge undeployed">● not deployed</span>
+                    {% elif deployed %}<span class="status-badge deployed">● deployed</span>{% endif %}
+                </h1>
+            </div>
+        </header>
+        <main>
+            {% if deployed == false %}
+                <div class="deploy-notice">
+                    This model is not currently deployed, so inference will fail.
+                    Deploy it first with <code>bh deploy {{ model_info.base_model_slug }}</code>.
+                </div>
+            {% endif %}
+            {% for endpoint in model_info.endpoints %}
+                <div class="endpoint-card">
+                    <h2>{{ endpoint.name }}</h2>
+                    <p class="endpoint-path"><code>{{ endpoint.method }} {{ gateway_url }}{{ endpoint.path }}</code></p>
+                    {% if endpoint.description %}
+                        <p>{{ endpoint.description }}</p>
+                    {% endif %}
+
+                    {# Every element inside a form is resolved RELATIVE to that form in script.js
+                       (via per-form classes), so multiple action forms on one page work independently. #}
+                    <form class="api-form" data-endpoint="{{ gateway_url }}{{ endpoint.path }}" data-schema='{{ (endpoint.request_schema or {}) | tojson }}'>
+
+                        <div class="params-container"></div>
+
+                        <div class="items-section" style="display: none;">
+                            <h3>Items</h3>
+                            <div class="items-container"></div>
+                            <div class="item-controls">
+                                <button type="button" class="add-item-btn">+ Add Item</button>
+                            </div>
+                        </div>
+
+                        {# Disabling is a UX hint only; the backend still returns a clean 404 if undeployed. #}
+                        <button type="submit"{% if deployed == false %} disabled title="Model not deployed"{% endif %}>Submit</button>
+                    </form>
+
+                    <div class="response-area" aria-live="polite">
+                        <pre><code>Response will appear here...</code></pre>
+                    </div>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <p>This model exposes no inference endpoints.</p>
+                </div>
+            {% endfor %}
+        </main>
+    </div>
+    <footer class="site-footer">
+        Submitting sends the request to this local gateway (<code>bh serve</code>), which calls your
+        deployed Modal model&nbsp;— not the container directly. Machine-readable API:
+        <a href="/docs">Swagger&nbsp;UI</a> · <a href="/redoc">ReDoc</a> · <a href="/openapi.json">OpenAPI&nbsp;JSON</a>.
+    </footer>
+    <script src="/static/script.js"></script>
+</body>
+</html>

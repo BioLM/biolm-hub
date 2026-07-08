@@ -1,0 +1,86 @@
+model_slug: esm1v
+display_name: ESM1v
+license:
+  type: MIT
+  url: https://github.com/facebookresearch/esm/blob/main/LICENSE
+  notes: ''
+molecule_types:
+- protein
+applicable_to:
+- protein
+- enzyme
+tasks:
+- sequence_completion
+- property_prediction
+primary_papers:
+- title: Language models enable zero-shot prediction of the effects of mutations on protein function
+  arxiv: '2108.07684'
+  doi: 10.1101/2021.07.09.450648
+  venue: NeurIPS, 2021
+  year: 2021
+  authors:
+  - Joshua Meier
+  - Roshan Rao
+  - Robert Verkuil
+  - Jason Liu
+  - Tom Sercu
+  - Alexander Rives
+  pdf_r2: knowledge-base/models/esm1v/primary/papers/meier2021.pdf
+  md_r2: knowledge-base/models/esm1v/primary/papers-md/meier2021.md
+  figures_of_note: []
+source_repos:
+- type: github
+  url: https://github.com/facebookresearch/esm
+  commit: ''
+  snapshot_r2: pending
+  readme_md_r2: knowledge-base/models/esm1v/primary/pages/gh-esm-readme.md
+- type: huggingface
+  url: https://huggingface.co/facebook/esm1v_t33_650M_UR90S_1
+  notes: 5 model ensemble (n1-n5), each 650M parameters, plus an 'all' variant that loads all 5.
+  page_md_r2: knowledge-base/models/esm1v/primary/pages/hf-esm1v_t33_650m_ur90s_1.md
+applied_literature:
+- title: Genome-wide prediction of disease variant effects with a deep protein language model
+  doi: 10.1038/s41588-023-01465-0
+  year: 2023
+  relevance: Uses ESM1b (closely related to ESM-1v) to predict all ~450 million possible missense variant effects in the human
+    genome, outperforming existing methods on ~150,000 ClinVar/HGMD variants and 28 deep mutational scan datasets.
+  molecule_focus: protein
+  task_focus: variant_effect_prediction
+  pdf_r2: pending
+  md_r2: pending
+- title: Enhancing missense variant pathogenicity prediction with protein language models using VariPred
+  doi: 10.1038/s41598-024-51489-7
+  year: 2024
+  relevance: Benchmarks ESM-1v alongside ESM-1b and ESM-2 for variant pathogenicity prediction, demonstrating that combining
+    log-likelihood ratios with residue embeddings achieves MCC of 0.714 without structural features or MSAs.
+  molecule_focus: protein
+  task_focus: variant_effect_prediction
+  pdf_r2: pending
+  md_r2: pending
+- title: Fine-tuning Protein Language Models with Deep Mutational Scanning improves Variant Effect Prediction
+  arxiv: '2405.06729'
+  year: 2024
+  relevance: Demonstrates that fine-tuning ESM-1v on deep mutational scanning data with a Normalised Log-odds Ratio head consistently
+    improves variant effect prediction across ProteinGym and ClinVar benchmarks.
+  molecule_focus: protein
+  task_focus: variant_effect_prediction
+  pdf_r2: knowledge-base/models/esm1v/applied/papers/arxiv2405.06729.pdf
+  md_r2: pending
+- title: "ESM-scan \u2014 A tool to guide amino acid substitutions"
+  doi: 10.1002/pro.5221
+  year: 2024
+  relevance: Builds ESM-Scan on ESM-1v zero-shot predictions for in silico deep mutational scanning, enabling genome-wide
+    prediction of preferential amino acid substitutions for protein engineering
+  molecule_focus: protein
+  task_focus: protein engineering
+  pdf_r2: pending
+  md_r2: pending
+- title: Accurate prediction of functional effect of single amino acid variants with deep learning
+  doi: 10.1016/j.csbj.2023.11.017
+  year: 2023
+  relevance: Rep2Mut-V2 uses ESM-1v 33rd-layer representations to predict variant effects across 38 proteins (118,933 variants),
+    achieving Spearman 0.7 and surpassing six state-of-the-art methods
+  molecule_focus: protein
+  task_focus: variant_effect_prediction
+  pdf_r2: pending
+  md_r2: pending

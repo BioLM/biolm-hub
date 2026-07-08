@@ -1,0 +1,59 @@
+model_slug: "igbert"
+display_name: "IgBert"
+last_updated: "2026-03-17"
+
+strengths:
+  - "Both paired and unpaired variants in a single model family, enabling analysis of both matched heavy-light chain pairs and individual chains when pairing information is unavailable"
+  - "HuggingFace Transformers-compatible architecture, making fine-tuning, transfer learning, and integration with standard ML ecosystems straightforward"
+  - "Three complementary actions (encode, generate, log_prob) covering embedding extraction, masked residue prediction, and sequence-level log-probability scoring"
+  - "Paired variant captures heavy-light chain co-evolution through joint processing with [SEP] separator, encoding the combined paratope properties that determine binding specificity"
+  - "Trained on one of the largest paired antibody datasets from Exscientia, with strong published benchmarks on CDR sequence recovery, expression prediction, and pair classification tasks"
+  - "Unpaired variant provides a fallback for NGS datasets where pairing information is lost, avoiding the requirement for matched heavy-light chain data"
+  - "Permissively licensed (MIT per the HuggingFace model card; permits commercial use), suitable for therapeutic antibody development"
+
+weaknesses:
+  - "No germline debiasing in the training objective, so embeddings may conflate germline gene identity with functional properties -- a known bias in antibody language models that AbLang2 explicitly addresses"
+  - "Requires T4 GPU for inference (6 GB RAM per variant), which increases deployment cost compared to CPU-only models like AbLang2"
+  - "Not specialized for nanobody (VHH) sequences; the unpaired variant can process them but lacks nanobody-specific training that captures hallmark residues and extended CDR3 diversity"
+  - "Two separate deployments required (paired and unpaired) to cover all use cases, doubling infrastructure if both are needed simultaneously"
+  - "No predict action for per-position likelihoods (only generate for masked prediction and log_prob for global scoring) -- AbLang2 provides a richer output set"
+  - "Variable domain focus only; constant regions are not the primary training target, limiting utility for full-length antibody analysis"
+  - "Published benchmarks show CDR-aware fine-tuned models can surpass IgBERT on binding affinity prediction tasks, suggesting room for improvement on binding-related downstream tasks"
+
+use_when:
+  - "You need to analyze both paired and unpaired antibody sequences within the same pipeline and want a consistent model family that handles both cases"
+  - "You want a HuggingFace-compatible antibody language model for fine-tuning on custom downstream tasks such as binding affinity, expression level, or specificity prediction"
+  - "You need to restore missing residues in antibody sequences from sequencing data, using either paired cross-chain context or single-chain context depending on data availability"
+  - "You are building a repertoire analysis pipeline and need embeddings that capture paired chain properties for clonal family clustering and convergent evolution detection"
+  - "You want to score engineered antibody variants with log_prob to assess sequence plausibility and identify mutations that disrupt conserved structural motifs"
+  - "You need to compare BERT-architecture antibody representations against T5-architecture (IgT5) or debiased (AbLang2) alternatives for your specific downstream task"
+
+dont_use_when:
+  - "You specifically need germline-debiased representations that separate functional properties from germline gene identity -- use AbLang2 with its focal-loss training"
+  - "You are working exclusively with nanobody (VHH) sequences and need single-domain-specialized representations -- IgBERT's unpaired variant can process VHH but is not nanobody-specialized; use AntiFold or ImmuneFold for nanobody-specific structural analysis"
+  - "You need 3D structure prediction from sequence -- use AbodyBuilder3 for Fab structures, ImmuneBuilder for antibodies/nanobodies/TCRs, or ImmuneFold for highest accuracy"
+  - "You need structure-conditioned inverse folding for CDR library design -- use AntiFold, which requires a backbone structure but produces structurally compatible sequences"
+  - "You need to analyze non-antibody proteins or compare antibodies with other protein families -- use ESM-2, which covers the full protein universe"
+  - "You need developability property predictions (viscosity, thermostability) rather than general embeddings or sequence scoring -- use DeepViscosity for antibody viscosity or TemBERTure for thermostability (Tm)"
+  - "You want embedding-only analysis with the best possible T5-architecture representations -- use IgT5, the companion model from the same paper"
+
+alternatives:
+  - model: "ablang2"
+    when_better: "AbLang2 provides germline-debiased representations with focal-loss training, plus a predict action for per-position likelihoods and a generate action for sequence restoration -- all on CPU without GPU"
+    when_worse: "AbLang2 requires paired heavy-light chain input only; IgBERT's unpaired variant handles single-chain analysis when pairing information is unavailable"
+  - model: "igt5"
+    when_better: "IgT5 is the companion T5-architecture model from the same paper; its relative position biases may better capture long-range dependencies for some downstream tasks"
+    when_worse: "IgT5 is embedding-only (encode action) with no sequence generation or log-probability scoring; IgBERT provides generate and log_prob actions for more complete analysis"
+  - model: "esm2"
+    when_better: "ESM-2 covers all proteins, offers 5 size variants, and has the broadest downstream ecosystem; better for cross-protein-family comparisons"
+    when_worse: "ESM-2 is not antibody-specialized, cannot model paired heavy-light chains, and underperforms antibody-specific models on CDR recovery and antibody property prediction tasks"
+complements:
+  - model: "sadie"
+    workflow: "Use SADIE to annotate, number, and extract variable domains from raw antibody sequences, then pass them to IgBERT for embedding generation, masked residue prediction, or log-probability scoring"
+    example_protocol: null
+  - model: "antifold"
+    workflow: "Use IgBERT log_prob to score candidate antibody sequences for evolutionary plausibility, then use AntiFold on predicted structures for structure-conditioned CDR redesign of top candidates"
+    example_protocol: null
+  - model: "abodybuilder3"
+    workflow: "Use IgBERT to embed and cluster antibody libraries by functional similarity, then predict 3D structures for representative candidates with AbodyBuilder3 for structural characterization"
+    example_protocol: null

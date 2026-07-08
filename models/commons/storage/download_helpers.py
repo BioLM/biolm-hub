@@ -1,0 +1,480 @@
+from collections.abc import Callable
+from pathlib import Path
+from typing import Any, Optional, cast
+
+from models.commons.core.logging import get_logger
+from models.commons.storage.acquisition import (
+    AcquisitionConfig,
+    AcquisitionResult,
+    AcquisitionStrategy,
+    CacheConfig,
+    CustomSourceConfig,
+    HfSourceConfig,
+    R2OnlyConfig,
+    UrlSourceConfig,
+    ValidationConfig,
+    acquire_model_weights,
+)
+
+"""
+High-Level Download Helpers (Preferred API)
+==========================================
+
+Purpose:
+Thin, ergonomic wrappers around the acquisition engine. Most models use these
+helpers to implement (a) legacy direct-from-R2 or (b) check-R2-then-fetch-and-
+cache flows with minimal boilerplate.
+
+Role in Flow:
+Layer 1 (Top) → Uses acquisition.py (strategies) → downloads.py (low-level ops)
+
+Common patterns:
+- r2_then_hf / r2_then_library / r2_then_urls / r2_then_archive: try the R2 cache
+  first, then fall back to the original source and cache the result back to R2.
+- download_with_fallback(primary, fallback): try R2, then source (HF/library/URLs)
+- extract_model_variant(...): fetch variant axes from variant_config
+
+Notes:
+- Prefer these helpers from models/*/download.py; acquire_model_weights is still
+  available for advanced/custom scenarios.
+"""
+
+logger = get_logger(__name__)
+
+
+def download_with_fallback(
+    primary_config: AcquisitionConfig,
+    fallback_config: AcquisitionConfig,
+) -> AcquisitionResult:
+    """
+    Attempt primary acquisition strategy, fallback to secondary if it fails.
+
+    Args:
+        primary_config: Primary acquisition configuration to try first
+        fallback_config: Fallback configuration if primary fails
+
+    Returns:
+        AcquisitionResult from whichever strategy succeeded
+
+    Examples:
+        >>> # Try R2 first, fallback to HuggingFace
+        >>> primary = AcquisitionConfig(strategy=AcquisitionStrategy.R2_ONLY, ...)
+        >>> fallback = AcquisitionConfig(strategy=AcquisitionStrategy.HUGGINGFACE_HUB, ...)
+        >>> result = download_with_fallback(primary, fallback)
+    """
+    logger.info("🔄 [download_helpers.py] Attempting primary acquisition strategy...")
+    primary_result = acquire_model_weights(primary_config)
+
+    if primary_result.success:
+        logger.info("✅ [download_helpers.py] Primary strategy succeeded")
+        return primary_result
+
+    logger.warning(
+        "⚠️ [download_helpers.py] Primary strategy failed: %s",
+        primary_result.error_message,
+    )
+    logger.info("🔄 [download_helpers.py] Attempting fallback strategy...")
+
+    fallback_result = acquire_model_weights(fallback_config)
+
+    if fallback_result.success:
+        logger.info("✅ [download_helpers.py] Fallback strategy succeeded")
+    else:
+        logger.error(
+            "❌ [download_helpers.py] Fallback strategy also failed: %s",
+            fallback_result.error_message,
+        )
+
+    return fallback_result
+
+
+def extract_model_variant(variant_config: Optional[dict[str, Any]], key: str) -> str:
+    """
+    Extract model variant value from variant_config dictionary.
+
+    Args:
+        variant_config: Dictionary containing variant configuration
+        key: Key to extract (e.g., "MODEL_SIZE", "MODEL_TYPE")
+
+    Returns:
+        Extracted variant value as string
+
+    Raises:
+        ValueError: If variant_config is None/empty or key is not found
+    """
+    if not variant_config:
+        raise ValueError(
+            f"variant_config is required but was {variant_config}. "
+            f"Expected a dictionary with key '{key}'."
+        )
+
+    if key not in variant_config:
+        available_keys = list(variant_config.keys())
+        raise ValueError(
+            f"Required key '{key}' not found in variant_config. "
+            f"Available keys: {available_keys}. "
+            f"This likely means the model's app.py is not passing the correct variant_config."
+        )
+
+    value = variant_config[key]
+    if value is None:
+        raise ValueError(
+            f"Key '{key}' exists in variant_config but has value None. "
+            f"This likely means the variant was not properly set in app.py."
+        )
+
+    return cast(str, value)
+
+
+# ---------------------------------------------------------------------------
+# Declarative fallback wrappers
+# ---------------------------------------------------------------------------
+# These wrappers build both R2-primary and source-fallback configs internally,
+# eliminating the 40-60 lines of boilerplate that models previously wrote by
+# hand.  Each returns an AcquisitionResult; callers only need to check
+# result.success and use result.actual_model_path.
+# ---------------------------------------------------------------------------
+
+
+def _build_r2_primary(
+    *,
+    base_model_slug: str,
+    weights_version: str,
+    model_variant: Optional[str],
+    sub_path: Optional[str],
+    target_dir: "Path",
+    filter_func: Optional[Callable[[str], bool]] = None,
+    required_files: Optional[list[str]] = None,
+) -> AcquisitionConfig:
+    """Internal helper: build the R2-only primary config used by all fallback wrappers."""
+    return AcquisitionConfig(
+        strategy=AcquisitionStrategy.R2_ONLY,
+        target_dir=target_dir,
+        cache_config=CacheConfig(enable_r2_cache=False),  # reading, not writing
+        validation_config=ValidationConfig(required_files=required_files),
+        r2_config=R2OnlyConfig(
+            base_model_slug=base_model_slug,
+            weights_version=weights_version,
+            model_variant=model_variant,
+            sub_path=sub_path,
+            filter_func=filter_func,
+        ),
+    )
+
+
+def r2_then_hf(
+    *,
+    base_model_slug: str,
+    weights_version: str,
+    model_variant: Optional[str] = None,
+    sub_path: Optional[str] = None,
+    hf_repo_id: str,
+    hf_revision: Optional[str] = None,
+    allow_patterns: Optional[list[str]] = None,
+    ignore_patterns: Optional[list[str]] = None,
+    required_files: Optional[list[str]] = None,
+    repo_type: str = "model",
+) -> AcquisitionResult:
+    """Try R2 first, fall back to HuggingFace Hub download with R2 caching.
+
+    Builds both configs internally — models only need to supply the source
+    parameters.  On success, ``result.actual_model_path`` points to the HF
+    snapshot directory (which may differ from target_dir).
+
+    When the R2 primary succeeds, the snapshot path is resolved automatically
+    so callers never need to call ``build_hf_snapshot_path`` themselves.
+    """
+    from models.commons.storage.downloads import (
+        build_hf_snapshot_path,
+        get_model_dir_util,
+    )
+
+    target_dir = get_model_dir_util(
+        base_model_slug=base_model_slug,
+        weights_version=weights_version,
+        model_variant=model_variant,
+        sub_path=sub_path,
+    )
+
+    # R2 primary: skip required_files validation — R2 may store HF models in a
+    # flat layout that differs from the HF snapshot structure (e.g. safetensors
+    # vs pytorch_model.bin, no nested snapshot dirs).
+    primary = _build_r2_primary(
+        base_model_slug=base_model_slug,
+        weights_version=weights_version,
+        model_variant=model_variant,
+        sub_path=sub_path,
+        target_dir=target_dir,
+    )
+
+    fallback = AcquisitionConfig(
+        strategy=AcquisitionStrategy.HUGGINGFACE_HUB,
+        target_dir=target_dir,
+        cache_config=CacheConfig(enable_r2_cache=True),
+        validation_config=ValidationConfig(required_files=required_files),
+        hf_config=HfSourceConfig(
+            repo_id=hf_repo_id,
+            revision=hf_revision,
+            allow_patterns=allow_patterns,
+            ignore_patterns=ignore_patterns,
+            repo_type=repo_type,
+        ),
+    )
+
+    result = download_with_fallback(primary, fallback)
+
+    # Ensure actual_model_path always points to the HF snapshot directory.
+    # When the HF fallback runs, _acquire_huggingface_hub already sets this.
+    # When the R2 primary succeeds, we need to resolve it ourselves.
+    if result.success and result.actual_model_path == target_dir:
+        if hf_revision is None:
+            raise ValueError(
+                "r2_then_hf: R2 cache hit but no hf_revision was provided; a "
+                "pinned commit hash is required to resolve the HF snapshot path "
+                "when restoring from R2's flat layout."
+            )
+        snapshot_path = build_hf_snapshot_path(
+            target_dir, hf_repo_id, hf_revision, repo_type=repo_type
+        )
+        result.actual_model_path = snapshot_path
+
+    return result
+
+
+def r2_then_library(
+    *,
+    base_model_slug: str,
+    weights_version: str,
+    model_variant: Optional[str] = None,
+    sub_path: Optional[str] = None,
+    library_name: str,
+    init_fn: Callable[[Path], Any],
+    env_vars: Optional[dict[str, str]] = None,
+    required_files: Optional[list[str]] = None,
+    cache_to_r2: bool = True,
+) -> AcquisitionResult:
+    """Try R2 first, fall back to a library-managed download with R2 caching.
+
+    The ``init_fn`` is called with ``target_dir`` and should trigger the
+    library's own download mechanism (e.g. ``ESM3.from_pretrained``). The source
+    fetch runs through the CUSTOM strategy: ``init_fn`` becomes the acquisition
+    function, and ``env_vars`` (if any) are applied for the duration of the fetch
+    and restored afterwards.
+
+    Args:
+        cache_to_r2: When True (default) the library output is uploaded to R2
+            after a source fetch so future deploys self-populate. Set False for
+            libraries that manage their own out-of-tree cache and cannot be
+            redirected into ``target_dir`` (e.g. ``evo``).
+    """
+    from models.commons.storage.downloads import get_model_dir_util
+
+    target_dir = get_model_dir_util(
+        base_model_slug=base_model_slug,
+        weights_version=weights_version,
+        model_variant=model_variant,
+        sub_path=sub_path,
+    )
+
+    # R2 primary: skip required_files validation — R2 caches the raw
+    # library output which may use different file names/paths than
+    # what required_files specifies for the library download.
+    primary = _build_r2_primary(
+        base_model_slug=base_model_slug,
+        weights_version=weights_version,
+        model_variant=model_variant,
+        sub_path=sub_path,
+        target_dir=target_dir,
+    )
+
+    # ``init_fn`` is invoked as ``acquisition_fn(target_dir=target_dir)`` — the
+    # same single-``target_dir`` call the library-managed path used. It writes
+    # into (and returns) target_dir, so actual_model_path stays target_dir and
+    # the whole tree is cached back to R2, exactly as before.
+    fallback = AcquisitionConfig(
+        strategy=AcquisitionStrategy.CUSTOM,
+        target_dir=target_dir,
+        cache_config=CacheConfig(enable_r2_cache=cache_to_r2),
+        validation_config=ValidationConfig(required_files=required_files),
+        custom_config=CustomSourceConfig(
+            acquisition_fn=init_fn,
+            name=library_name,
+            description=f"library-managed download via {library_name}",
+            env_vars=env_vars,
+        ),
+    )
+
+    return download_with_fallback(primary, fallback)
+
+
+def r2_then_urls(
+    *,
+    base_model_slug: str,
+    weights_version: str,
+    model_variant: Optional[str] = None,
+    sub_path: Optional[str] = None,
+    urls: dict[str, str],
+    required_files: Optional[list[str]] = None,
+    headers: Optional[dict[str, str]] = None,
+    verify_ssl: bool = True,
+    timeout: int = 3600,
+    chunk_size: int = 8192,
+) -> AcquisitionResult:
+    """Try R2 first, fall back to direct URL downloads with R2 caching."""
+    from models.commons.storage.downloads import get_model_dir_util
+
+    target_dir = get_model_dir_util(
+        base_model_slug=base_model_slug,
+        weights_version=weights_version,
+        model_variant=model_variant,
+        sub_path=sub_path,
+    )
+
+    primary = _build_r2_primary(
+        base_model_slug=base_model_slug,
+        weights_version=weights_version,
+        model_variant=model_variant,
+        sub_path=sub_path,
+        target_dir=target_dir,
+        required_files=required_files,
+    )
+
+    fallback = AcquisitionConfig(
+        strategy=AcquisitionStrategy.DIRECT_URLS,
+        target_dir=target_dir,
+        cache_config=CacheConfig(enable_r2_cache=True),
+        validation_config=ValidationConfig(required_files=required_files),
+        url_config=UrlSourceConfig(
+            urls=urls,
+            headers=headers,
+            verify_ssl=verify_ssl,
+            timeout=timeout,
+            chunk_size=chunk_size,
+        ),
+    )
+
+    return download_with_fallback(primary, fallback)
+
+
+def r2_then_archive(
+    *,
+    base_model_slug: str,
+    weights_version: str,
+    model_variant: Optional[str] = None,
+    sub_path: Optional[str] = None,
+    archive_url: str,
+    extract_subtrees: dict[str, str],
+    strip_repo_root: bool = True,
+    required_files: Optional[list[str]] = None,
+    headers: Optional[dict[str, str]] = None,
+    verify_ssl: bool = True,
+    timeout: int = 1800,
+) -> AcquisitionResult:
+    """Try R2 first, fall back to a source ``.zip`` archive with R2 caching.
+
+    On an R2 cache miss the archive at ``archive_url`` is downloaded once, then
+    each ``(src_prefix -> dest)`` entry in ``extract_subtrees`` is extracted into
+    ``target_dir / dest``. The extracted tree is then cached back to R2 (with the
+    completion marker) so future deploys self-populate from R2.
+
+    This replaces the hand-rolled "download zip → unzip subtree" logic that
+    several models (deepviscosity/temberture) carry inline.
+
+    Args:
+        archive_url: URL of the source ``.zip`` (e.g. a GitHub archive link).
+        extract_subtrees: Mapping of archive subtree prefix (relative to the
+            repo root, e.g. ``"weights/"``) to a destination directory
+            relative to ``target_dir`` (use ``""`` to extract into the root).
+        strip_repo_root: When True (default) the single ``<Repo>-<ref>/`` root
+            directory that GitHub archives wrap everything in is auto-detected
+            and prepended to each ``src_prefix``. Set False to provide prefixes
+            that already include the archive root.
+        required_files: Files validated (relative to ``target_dir``) after
+            extraction; also enforced on the R2-primary read.
+        headers / verify_ssl / timeout: Forwarded to the archive download.
+
+    Returns:
+        AcquisitionResult; on success ``actual_model_path`` is ``target_dir``.
+    """
+    from models.commons.storage.downloads import (
+        detect_archive_root_prefix,
+        download_archive,
+        extract_archive_subtree,
+        get_model_dir_util,
+    )
+
+    target_dir = get_model_dir_util(
+        base_model_slug=base_model_slug,
+        weights_version=weights_version,
+        model_variant=model_variant,
+        sub_path=sub_path,
+    )
+
+    primary = _build_r2_primary(
+        base_model_slug=base_model_slug,
+        weights_version=weights_version,
+        model_variant=model_variant,
+        sub_path=sub_path,
+        target_dir=target_dir,
+        required_files=required_files,
+    )
+
+    def _acquire_archive(target_dir: Path, **_: Any) -> dict[str, Any]:
+        import shutil
+        import tempfile
+
+        with tempfile.TemporaryDirectory(prefix="r2_then_archive_") as tmp:
+            zip_path = Path(tmp) / "source_archive.zip"
+            meta = download_archive(
+                archive_url,
+                zip_path,
+                headers=headers,
+                verify_ssl=verify_ssl,
+                timeout=timeout,
+            )
+
+            root_prefix = (
+                detect_archive_root_prefix(zip_path) if strip_repo_root else ""
+            )
+
+            # Two-phase to avoid cross-destination clobber: clear every distinct
+            # destination FIRST, then extract (overwrite=False). If a root ("")
+            # destination were cleared lazily *after* a sibling subdir was already
+            # extracted, rmtree(target_dir) would wipe that sibling. Clearing up
+            # front (idempotent via the exists-guard, so order doesn't matter) makes
+            # it safe; multiple subtrees mapped into one dir still merge (cleared once).
+            dest_dirs = {
+                (target_dir / dest_rel if dest_rel else target_dir)
+                for dest_rel in extract_subtrees.values()
+            }
+            for dest_dir in dest_dirs:
+                if dest_dir.exists():
+                    shutil.rmtree(dest_dir)
+
+            for src_prefix, dest_rel in extract_subtrees.items():
+                full_prefix = f"{root_prefix}{src_prefix}"
+                dest_dir = target_dir / dest_rel if dest_rel else target_dir
+                extract_archive_subtree(
+                    zip_path, full_prefix, dest_dir, overwrite=False
+                )
+
+        return {
+            "archive_url": archive_url,
+            "subtrees_extracted": len(extract_subtrees),
+            "bytes_downloaded": meta.get("bytes_downloaded", 0),
+            "stripped_root": root_prefix,
+        }
+
+    fallback = AcquisitionConfig(
+        strategy=AcquisitionStrategy.CUSTOM,
+        target_dir=target_dir,
+        cache_config=CacheConfig(enable_r2_cache=True),
+        validation_config=ValidationConfig(required_files=required_files),
+        custom_config=CustomSourceConfig(
+            acquisition_fn=_acquire_archive,
+            name=f"{base_model_slug}_archive",
+            description=f"Download + extract source archive from {archive_url}",
+        ),
+    )
+
+    return download_with_fallback(primary, fallback)

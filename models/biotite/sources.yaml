@@ -1,0 +1,88 @@
+model_slug: "biotite"
+display_name: "Biotite"
+license:
+  type: "BSD-3-Clause"
+  url: "https://github.com/biotite-dev/biotite/blob/main/LICENSE.rst"
+  notes: ""
+molecule_types:
+  - "protein"
+  - "complex"
+applicable_to:
+  - "protein"
+  - "enzyme"
+  - "antibody"
+  - "complex"
+tasks:
+  - "utility"
+  - "feature_extraction"
+primary_papers:
+  - title: "Biotite: a unifying open source computational biology framework in Python"
+    arxiv: ""
+    doi: "10.1186/s12859-018-2367-z"
+    venue: "BMC Bioinformatics, 2018"
+    year: 2018
+    authors:
+      - "Patrick Kunzmann"
+      - "Kay Hamacher"
+    pdf_r2: "knowledge-base/models/biotite/primary/papers/kunzmann2018.pdf"
+    figures_of_note: []
+source_repos:
+  - type: "github"
+    url: "https://github.com/biotite-dev/biotite"
+  - type: "pypi"
+    url: "https://pypi.org/project/biotite/"
+    notes: "Structure analysis toolkit for computational biology"
+applied_literature:
+  - title: "Biotite: new tools for a versatile Python bioinformatics library"
+    doi: "10.1186/s12859-023-05345-6"
+    url: "https://link.springer.com/article/10.1186/s12859-023-05345-6"
+    venue: "BMC Bioinformatics, 2023"
+    year: 2023
+    authors:
+      - "Patrick Kunzmann"
+      - "Tom David Mueller"
+      - "Maximilian Greil"
+      - "et al."
+    relevance: >
+      Major update paper from Biotite developers presenting new tools added since
+      the original 2018 publication, including 3Di structural alphabet support,
+      improved database interfaces, and new analysis routines. Directly documents
+      the extended capabilities used in this platform's integration.
+    pdf_r2: "pending"
+  - title: "Bilingual language model for protein sequence and structure"
+    doi: "10.1093/nargab/lqae150"
+    url: "https://academic.oup.com/nargab/article/6/4/lqae150/7901286"
+    venue: "NAR Genomics and Bioinformatics, 6(4), 2024"
+    year: 2024
+    authors:
+      - "Michael Heinzinger"
+      - "Konstantin Weissenow"
+      - "Joaquin Gomez Sanchez"
+      - "Adrian Henkel"
+      - "Milot Mirdita"
+      - "Martin Steinegger"
+      - "Burkhard Rost"
+    relevance: >
+      ProstT5 paper uses Biotite's Needleman-Wunsch alignment implementation
+      with the 3Di substitution matrix from Foldseek to compute structural
+      sequence similarities. Demonstrates Biotite as infrastructure for
+      evaluating protein structure language models.
+    pdf_r2: "pending"
+  - title: "Afpdb: an efficient structure manipulation package for AI protein design"
+    doi: "10.1093/bioinformatics/btae654"
+    url: "https://academic.oup.com/bioinformatics/article/40/12/btae654/7876263"
+    venue: "Bioinformatics, 40(12), btae654, 2024"
+    year: 2024
+    authors:
+      - "Yingyao Zhou"
+      - "Jiayi Cox"
+      - "Bin Zhou"
+      - "Steven Zhu"
+      - "Yang Zhong"
+      - "Glen Spraggon"
+    relevance: >
+      Compares Afpdb against Biotite as a baseline for AI protein design
+      structure manipulation. Acknowledges Biotite's comparable NumPy-based
+      architecture and positions it as a key tool in the structural
+      bioinformatics ecosystem for protein design workflows.
+    pdf_r2: "pending"

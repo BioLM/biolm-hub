@@ -1,0 +1,35 @@
+# Run with: pre-commit run --all-files   (or `make style`)
+# Internal planning scratch (deleted before public launch) is not linted/formatted.
+exclude: '^\.planning/'
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      # Committed structure fixtures (models/*/test_data/*.pdb|*.cif) are
+      # byte-identical copies of files fetched over the network for golden
+      # generation (see MED-12). PDB is a fixed-column format and both
+      # formats round-trip through fixture.py as raw text, so these two
+      # hooks must not rewrite them -- doing so would silently desync the
+      # committed copy from the bytes the existing goldens were built from.
+      - id: trailing-whitespace
+        exclude: 'models/[^/]+/test_data/.*\.(pdb|cif)$'
+      - id: end-of-file-fixer
+        exclude: 'models/[^/]+/test_data/.*\.(pdb|cif)$'
+      - id: check-yaml
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: ["--maxkb=1024"]
+      - id: debug-statements
+
+  # ruff lints (with autofix); black formats. (We use black as the single formatter.)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+
+  - repo: https://github.com/psf/black
+    rev: 24.10.0
+    hooks:
+      - id: black

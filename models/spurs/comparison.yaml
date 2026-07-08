@@ -1,0 +1,50 @@
+model_slug: spurs
+display_name: SPURS
+last_updated: "2026-07-09"
+
+strengths:
+  - "Multi-mutation ddG prediction with per-mutation contributions, capturing pairwise epistatic effects that simple additive models miss -- critical for combinatorial protein engineering"
+  - "Full deep mutational scanning (DMS) matrix generation (L positions x 20 amino acids) in seconds, computationally replicating what saturation mutagenesis experiments measure experimentally"
+  - "Hybrid ESM2-650M + GNN architecture combines evolutionary sequence features with structural context for comprehensive stability assessment"
+  - "Published in Nature Communications (2025): generalizable and scalable stability prediction"
+  - "Variant sequence comparison mode automatically identifies all mutations between wild-type and variant sequences and predicts combined ddG"
+  - "Supports both specific mutation lists and automatic full-DMS scanning in a single predict action, enabling flexible use from targeted queries to comprehensive landscapes"
+  - "T4 GPU requirement (16 GB RAM) provides a good balance of accuracy and cost for structure-based stability prediction"
+
+weaknesses:
+  - "Requires both sequence and 3D structure as input -- cannot predict stability from sequence alone; use ESM2 log-likelihoods or TemBERTure when no structure is available"
+  - "Very recent model (published 2025) with no applied literature citations yet -- independent validation is limited"
+  - "T4 GPU with 16 GB RAM required -- more resource-intensive than CPU-only alternatives like GEMME for evolutionary variant scoring"
+  - "Training data may under-represent membrane proteins and intrinsically disordered regions, potentially reducing accuracy on these protein types"
+  - "ddG predictions are approximate -- not a replacement for physics-based methods (Rosetta, FoldX) when high-precision energetics are needed for a specific target"
+  - "Single-chain proteins only; multi-chain complex stability and interface mutations require separate treatment"
+  - "No uncertainty quantification on individual ddG predictions -- the model does not provide confidence intervals"
+
+use_when:
+  - "You have a 3D structure and need fast, accurate ddG predictions for single or multiple simultaneous mutations with epistatic effects captured"
+  - "You want a complete computational DMS matrix covering all possible single-residue substitutions to guide a directed evolution or rational design campaign"
+  - "You are comparing wild-type and engineered variant sequences and want to quantify the predicted stability difference in kcal/mol"
+  - "You need multi-mutation stability prediction that goes beyond additive approximations to capture synergistic or antagonistic epistatic effects"
+  - "You are filtering large mutation libraries to exclude destabilizing variants before experimental screening, saving time and reagent costs"
+  - "You want to integrate stability prediction into an automated protein design pipeline alongside structure prediction (Chai-1) and sequence design (ProteinMPNN)"
+
+dont_use_when:
+  - "You do not have a 3D structure and cannot generate one -- use GEMME (MSA-based) or ESM2 pseudo-log-likelihoods for sequence-only variant scoring"
+  - "You need high-precision physics-based ddG values for a single critical mutation -- use FoldX or Rosetta ddG protocols for individual high-stakes predictions"
+  - "You need global protein melting temperature (Tm) rather than per-mutation ddG -- use TemBERTure"
+  - "You need variant effect prediction driven purely by evolutionary conservation signals -- use GEMME for MSA-based scoring that captures evolutionary constraint without structural bias"
+  - "You are working with intrinsically disordered proteins that lack a stable reference structure for ddG calculation"
+  - "You need CPU-only inference for cost-sensitive large-scale screening -- GEMME runs on CPU in under 10 minutes"
+
+alternatives:
+  - model: "thermompnn"
+    when_better: "Lighter-weight (8 GB RAM) with a longer peer-reviewed (PNAS) track record for single-mutation ddG; simplest choice when only single-point mutations are needed."
+    when_worse: "Cannot predict multi-mutation ddG or generate combined/epistatic effects; SPURS handles arbitrary simultaneous mutations with per-mutation contribution decomposition and full DMS matrices."
+  - model: "thermompnn_d"
+    when_better: "Provides an explicit epistatic double-mutation mode designed and benchmarked specifically for pairwise mutations."
+    when_worse: "Limited to at most two mutations; SPURS handles arbitrary numbers of simultaneous mutations and per-mutation contribution decomposition."
+
+complements:
+  - model: esm2
+    workflow: "Use ESM2 log_prob for fast sequence-based mutation screening to identify evolutionarily plausible mutations, then validate with SPURS structure-based ddG for a two-layer stability assessment"
+    example_protocol: null

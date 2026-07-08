@@ -1,0 +1,92 @@
+model_slug: chai1
+display_name: Chai-1
+license:
+  type: Apache-2.0
+  url: https://github.com/chaidiscovery/chai-lab/blob/main/LICENSE
+  notes: ''
+molecule_types:
+- protein
+- dna
+- rna
+- ligand
+- complex
+applicable_to:
+- protein
+- antibody
+- enzyme
+- peptide
+- dna
+- rna
+- ligand
+tasks:
+- structure_prediction
+primary_papers:
+- title: 'Chai-1: Decoding the molecular interactions of life'
+  doi: 10.1101/2024.10.10.615955
+  venue: bioRxiv preprint, 2024
+  year: 2024
+  authors:
+  - Chai Discovery Team
+  pdf_r2: knowledge-base/models/chai1/primary/papers/team2024.pdf
+  md_r2: knowledge-base/models/chai1/primary/papers-md/team2024.md
+  figures_of_note: []
+source_repos:
+- type: github
+  url: https://github.com/chaidiscovery/chai-lab
+  commit: ''
+  snapshot_r2: pending
+  readme_md_r2: knowledge-base/models/chai1/primary/pages/gh-chai-lab-readme.md
+applied_literature:
+- title: 'PoseX: AI Defeats Physics Approaches on Protein-Ligand Cross Docking'
+  arxiv: '2505.01700'
+  year: 2025
+  relevance: Large-scale cross-docking benchmark evaluating Chai-1 alongside AlphaFold3 and 23 other methods, revealing co-folding
+    models converge at 60-61% accuracy.
+  molecule_focus: protein-ligand
+  task_focus: docking_benchmark
+  pdf_r2: knowledge-base/models/chai1/applied/papers/unknown2025.pdf
+  md_r2: pending
+- title: 'Deep learning in GPCR drug discovery: benchmarking the path to accurate peptide binding'
+  doi: 10.1093/bib/bbaf186
+  year: 2025
+  relevance: Benchmarks Chai-1, AF2, AF3, and ESMFold on GPCR-peptide binding prediction with 124 ligands and 1240 decoys.
+  molecule_focus: protein-peptide
+  task_focus: binding_prediction
+  pdf_r2: pending
+  md_r2: pending
+- title: 'Beyond rigid docking: deep learning approaches for fully flexible protein-ligand interactions'
+  doi: 10.1093/bib/bbaf454
+  year: 2025
+  relevance: Reviews Chai-1 and other deep learning docking approaches for flexible protein-ligand interaction modeling in
+    drug discovery.
+  molecule_focus: protein-ligand
+  task_focus: review
+  pdf_r2: pending
+  md_r2: pending
+- title: Large scale prospective evaluation of co-folding across 557 Mac1-ligand complexes and three virtual screens
+  doi: 10.64898/2025.12.25.696505
+  year: 2025
+  relevance: Tests Chai-1, AF3, and Boltz-2 on 557 SARS-CoV-2 Mac1 ligand poses; all achieve >50% under 2A RMSD; evaluates
+    co-folding for AmpC, D4, sigma2 virtual screens
+  molecule_focus: protein-ligand
+  task_focus: co-folding benchmark and virtual screening
+  pdf_r2: pending
+  md_r2: pending
+- title: Benchmarking all-atom biomolecular structure prediction with FoldBench
+  doi: 10.1038/s41467-025-67127-3
+  year: 2025
+  relevance: Benchmarks Chai-1, AF3, Boltz-1, HelixFold3 across 1,522 assemblies and 9 tasks including protein-ligand, protein-RNA,
+    protein-DNA, and antibody-antigen complexes
+  molecule_focus: multi-molecule complex
+  task_focus: comprehensive structure prediction benchmark
+  pdf_r2: pending
+  md_r2: pending
+- title: PepPCBench is a Comprehensive Benchmarking Framework for Protein-Peptide Complex Structure Prediction
+  doi: 10.1021/acs.jcim.5c01084
+  year: 2025
+  relevance: Benchmarks Chai-1, AF3, AFM, HelixFold3, RFAA on 261 protein-peptide complexes with peptides of 5-30 residues
+    for docking accuracy and scoring
+  molecule_focus: protein-peptide
+  task_focus: protein-peptide docking benchmark
+  pdf_r2: pending
+  md_r2: pending

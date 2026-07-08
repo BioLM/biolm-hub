@@ -1,0 +1,85 @@
+model_slug: msa-transformer
+display_name: MSA Transformer
+license:
+  type: MIT
+  url: https://github.com/facebookresearch/esm/blob/main/LICENSE
+  notes: Part of the ESM (Evolutionary Scale Modeling) suite from Meta AI
+molecule_types:
+- protein
+applicable_to:
+- protein
+- enzyme
+- antibody
+tasks:
+- embedding
+primary_papers:
+- title: MSA Transformer
+  doi: 10.1101/2021.02.12.430858
+  venue: ICML 2021
+  year: 2021
+  authors:
+  - Roshan Rao
+  - Jason Liu
+  - Robert Verkuil
+  - Joshua Meier
+  - John Canny
+  - Pieter Abbeel
+  - Tom Sercu
+  - Alexander Rives
+  pdf_r2: knowledge-base/models/msa_transformer/primary/papers/rao2021.pdf
+  md_r2: knowledge-base/models/msa_transformer/primary/papers-md/rao2021.md
+  figures_of_note:
+  - 'Figure 1: Axial attention architecture with tied row attention'
+  - 'Figure 2: Unsupervised contact prediction from attention maps'
+source_repos:
+- type: github
+  url: https://github.com/facebookresearch/esm
+  commit: 2b369911bb5b4b0dda914521b9475cad1656b2ac
+  snapshot_r2: knowledge-base/models/esm2/primary/repos/esm-2b369911.tar.gz
+  notes: MSA Transformer is part of the fair-esm library (esm.pretrained.esm_msa1b_t12_100M_UR50S)
+  readme_md_r2: knowledge-base/models/msa_transformer/primary/pages/gh-esm-readme.md
+applied_literature:
+- title: 'A-Prot: protein structure modeling using MSA transformer'
+  doi: 10.1186/s12859-022-04628-8
+  venue: BMC Bioinformatics, 2022
+  year: 2022
+  authors:
+  - Yonghyun Hong
+  - Juyong Lee
+  - Junsu Ko
+  pdf_r2: pending
+  md_r2: pending
+  relevance: Extracts MSA Transformer features and row attention maps for 3D protein structure modeling, converting them into
+    distance and dihedral angle predictions
+- title: 'S-Pred: protein structural property prediction using MSA transformer'
+  doi: 10.1038/s41598-022-18205-9
+  venue: Scientific Reports, 2022
+  year: 2022
+  pdf_r2: pending
+  md_r2: pending
+  relevance: Uses MSA Transformer features with LSTM to predict secondary structure (SS8), solvent accessibility (ASA), and
+    intrinsically disordered regions (IDR)
+- title: 'MFTrans: A multi-feature transformer network for protein secondary structure prediction'
+  doi: 10.1016/j.ijbiomac.2024.134109
+  venue: International Journal of Biological Macromolecules, 2024
+  year: 2024
+  pdf_r2: pending
+  md_r2: pending
+  relevance: Combines MSA Transformer with multi-view deep learning to capture global and local protein features for secondary
+    structure prediction
+- title: Pairing interacting protein sequences using masked language modeling
+  doi: 10.1073/pnas.2311887121
+  venue: PNAS, 2024
+  year: 2024
+  pdf_r2: pending
+  md_r2: pending
+  relevance: DiffPALM exploits MSA Transformer masked token predictions to pair interacting protein sequences, outperforming
+    coevolution-based methods and improving AlphaFold-Multimer complex structure prediction
+- title: Understanding Language Model Scaling on Protein Fitness Prediction
+  doi: 10.1101/2025.04.25.650688
+  venue: bioRxiv preprint, 2025
+  year: 2025
+  pdf_r2: knowledge-base/models/msa_transformer/applied/papers/unknown2025.pdf
+  md_r2: pending
+  relevance: Systematic evaluation of MSA Transformer among MLMs on ProteinGym DMS benchmark, demonstrating MSA-based models
+    achieve strong fitness prediction by leveraging evolutionary context from homologous sequences

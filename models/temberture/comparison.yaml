@@ -1,0 +1,49 @@
+model_slug: temberture
+display_name: TemBERTure
+last_updated: "2026-07-09"
+
+strengths:
+  - "Self-contained model with its own ProtBERT-BFD backbone -- does not require ESM2 as a dependency, simplifying deployment and reducing inference pipeline complexity"
+  - "Dual-mode capability: classifier variant provides binary thermophilic/non-thermophilic classification (83% accuracy on TemStaPro benchmark), regression variant predicts quantitative Tm in degrees C"
+  - "Thermostability-aware embeddings via the encode action capture stability-relevant features learned during fine-tuning, useful as input features for custom downstream models"
+  - "Three output types from a single model family: embeddings, classification probabilities, and scalar Tm predictions -- versatile for different analysis workflows"
+  - "Handles proteins up to 512 residues from all domains of life, covering both thermophilic and mesophilic organisms"
+  - "Published in Bioinformatics Advances (2024) with clear benchmarking against TemStaPro and other thermostability prediction methods"
+  - "MIT license enables unrestricted commercial use in enzyme engineering and pharmaceutical development"
+
+weaknesses:
+  - "Requires T4 GPU with 16 GB RAM for both classifier and regression variants due to the ProtBERT-BFD backbone -- significantly more resource-intensive than lightweight CPU-based stability predictors"
+  - "Maximum sequence length of 512 residues is more restrictive than ESM2-based alternatives (1022 residues), excluding many larger proteins"
+  - "Classification provides only binary thermophilic/non-thermophilic distinction -- does not quantify the degree of thermostability within each class"
+  - "Regression accuracy for quantitative Tm prediction has not been extensively benchmarked in independent studies"
+  - "No per-mutation resolution -- predicts global protein stability properties without identifying which specific residues or mutations influence thermostability"
+  - "ProtBERT-BFD backbone is an older protein language model compared to ESM2, potentially capturing less nuanced sequence representations"
+  - "No support for organism growth temperature context that could improve prediction accuracy for proteins from characterized organisms"
+
+use_when:
+  - "You need a quick binary assessment of whether a protein is thermophilic or non-thermophilic for large-scale classification of protein databases or metagenomic datasets"
+  - "You want thermostability-aware protein embeddings for use in custom downstream ML models (clustering, transfer learning, feature engineering)"
+  - "You need both classification and quantitative Tm prediction in a unified model family with consistent embedding representations"
+  - "You prefer a self-contained model without ESM2 dependency for simpler deployment and operation"
+  - "You are performing initial thermostability screening where binary classification is sufficient before deeper analysis with other tools"
+  - "You want to generate embeddings that specifically capture thermal stability features, rather than general protein representations from ESM2"
+
+dont_use_when:
+  - "You need a quantitative Tm regressor whose accuracy has been extensively validated in independent studies -- TemBERTure's regression mode has limited external benchmarking to date"
+  - "You need per-mutation ddG predictions to identify specific stabilizing mutations -- use ThermoMPNN or SPURS with a 3D structure"
+  - "Your sequences exceed 512 residues -- use ESM2-based approaches, which handle longer sequences (up to ~1022 residues)"
+  - "You want CPU-only inference to minimize costs -- TemBERTure requires a GPU for its ProtBERT-BFD backbone"
+  - "You need pH-dependent or formulation-specific stability predictions -- no current model in this catalog supports this"
+
+alternatives: []  # no same-input-modality substitute in the catalog
+
+complements:
+  - model: thermompnn
+    workflow: "Use TemBERTure classifier for rapid thermostability screening of protein libraries, then run ThermoMPNN on the structures of promising thermophilic candidates to identify further stabilizing mutations via per-position ddG scanning"
+    example_protocol: null
+  - model: deepviscosity
+    workflow: "For antibody or therapeutic-protein candidates, use TemBERTure to assess thermostability and DeepViscosity to flag high-viscosity, aggregation-prone candidates -- screening for both thermal stability and developability gives a more complete profile"
+    example_protocol: null
+  - model: esm2
+    workflow: "Combine TemBERTure's thermostability-aware embeddings with ESM2's general-purpose protein embeddings as complementary feature sets for custom downstream stability prediction models"
+    example_protocol: null

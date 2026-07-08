@@ -1,0 +1,75 @@
+model_slug: rf3
+display_name: RosettaFold3
+license:
+  type: BSD-3-Clause
+  url: https://github.com/RosettaCommons/foundry/blob/main/LICENSE
+  notes: ''
+molecule_types:
+- protein
+- dna
+- rna
+- ligand
+- complex
+applicable_to:
+- protein
+- antibody
+- enzyme
+- peptide
+- dna
+- rna
+- ligand
+tasks:
+- structure_prediction
+primary_papers:
+- title: Accelerating Biomolecular Modeling with AtomWorks and RF3
+  doi: 10.1101/2025.08.14.670328
+  venue: bioRxiv preprint, 2025
+  year: 2025
+  authors:
+  - Nathaniel Corley
+  - Simon Mathis
+  pdf_r2: knowledge-base/models/rf3/primary/papers/corley2025.pdf
+  md_r2: knowledge-base/models/rf3/primary/papers-md/corley2025.md
+  figures_of_note: []
+source_repos:
+- type: github
+  url: https://github.com/RosettaCommons/foundry
+  commit: '6866d610a9d5e485ef4bf601adb40c4928b8321f'
+applied_literature:
+- title: Generalized biomolecular modeling and design with RoseTTAFold All-Atom
+  doi: 10.1126/science.adl2528
+  year: 2024
+  relevance: Predecessor RFAA demonstrates unified protein-nucleic acid-small molecule modeling and RFdiffusionAA for designing
+    protein binders around small molecules.
+  molecule_focus: protein-ligand
+  task_focus: structure_prediction
+- title: De novo Design of All-atom Biomolecular Interactions with RFdiffusion3
+  doi: 10.1101/2025.09.18.676967
+  year: 2025
+  relevance: Companion generative model built on RF3 architecture for all-atom biomolecular design including DNA binders and
+    enzymes.
+  molecule_focus: protein
+  task_focus: protein_design
+- title: Atom-level enzyme active site scaffolding using RFdiffusion2
+  doi: 10.1038/s41592-025-02975-x
+  year: 2025
+  relevance: Related RosettaFold-family model that designs enzymes from atomic active site descriptions, benchmarking against
+    41 diverse active sites.
+  molecule_focus: protein
+  task_focus: enzyme_design
+- title: Benchmarking all-atom biomolecular structure prediction with FoldBench
+  doi: 10.1038/s41467-025-67127-3
+  year: 2025
+  relevance: Systematic benchmark of 1,522 biological assemblies across 9 target types evaluating AF3, Boltz-1, Chai-1, HelixFold3,
+    and Protenix; provides the reference framework against which RF3 is compared on protein-protein, protein-ligand, and nucleic
+    acid structure prediction tasks.
+  molecule_focus: complex
+  task_focus: structure_prediction
+- title: A comprehensive benchmarking of the AlphaFold3 for predicting biomacromolecules and their interactions
+  doi: 10.1093/bib/bbaf616
+  year: 2025
+  relevance: Benchmarks AF3 against RoseTTAFoldNA and other methods across 9 datasets (monomers, multimers, peptide-protein,
+    antibody-antigen, RNA, protein-nucleic acid); provides quantitative baselines that contextualize RF3 performance on the
+    same prediction tasks.
+  molecule_focus: complex
+  task_focus: structure_prediction

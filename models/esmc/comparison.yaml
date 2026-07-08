@@ -1,0 +1,63 @@
+model_slug: esmc
+display_name: "ESM C"
+last_updated: "2026-07-09"
+
+strengths:
+  - "Higher parameter efficiency than ESM2 — ESMC-300M surpasses ESM2-650M on multiple benchmarks with significantly fewer parameters (EvolutionaryScale's 600M variant, also MIT and not distributed here, approaches ESM2-3B quality)"
+  - "The 300M variant runs on A10G GPUs and is suitable for high-throughput screening while surpassing ESM2-650M on multiple benchmarks"
+  - "Transfer learning benchmark (Nature Scientific Reports, 2025) showed ESMC-600M (upstream; also MIT, not distributed here) offers an optimal balance between performance and efficiency, matching larger models on limited-data regimes"
+  - "Full action repertoire — encode (embeddings), predict (masked token prediction), and log_prob (sequence fitness scoring) — covers the same use cases as ESM2 in a single model"
+  - "Trained on the latest protein databases with updated training procedures, potentially capturing more recent evolutionary patterns than ESM2 (2023 training data)"
+  - "Demonstrated strong antibody engineering results — CDR-focused fine-tuning of ESMC-600M (upstream; also MIT, not distributed here) matched or exceeded 3B-parameter antibody-specific baselines with 5x fewer parameters"
+  - "Supports sequences up to 2048 residues with all 20 standard amino acids plus extended characters and gaps"
+  - "Applied literature shows ESMC embeddings capture emergent structural features useful for electrostatic property prediction (pKa) despite being a sequence-only model"
+
+weaknesses:
+  - "Smaller ecosystem of downstream fine-tuned models compared to ESM2 — no ESMC-specific structure predictor (ESMFold uses ESM2), stability predictor, or toxicity predictor yet"
+  - "Fewer independent benchmark validations than ESM2, which has been evaluated across hundreds of published studies since 2023"
+  - "Only one distributed size variant (300M) — lacks the extreme scaling range of ESM2 (8M-3B), particularly missing a CPU-friendly small variant and a maximum-quality large variant; EvolutionaryScale's 600M variant exists upstream but is also MIT and not distributed here"
+  - "No structure awareness — purely sequence-based, outperformed by structure-aware models such as ProstT5 on tasks where structural information is available"
+  - "Single-chain only — no explicit modeling of protein complexes or multi-chain interactions"
+  - "Primary announcement is a blog post rather than a peer-reviewed paper, limiting formal methodological scrutiny"
+
+use_when:
+  - "You need high-quality protein embeddings with better parameter efficiency than ESM2, especially when GPU memory is constrained but you want near-3B-level quality"
+  - "You are building a new protein ML pipeline and want the latest-generation ESM embeddings without legacy constraints"
+  - "You need sequence fitness scoring (log_prob) for variant prioritization and want improved evolutionary signal from newer training data"
+  - "You want masked token prediction for sequence design or variant effect estimation with state-of-the-art single-sequence accuracy"
+  - "You are fine-tuning or performing transfer learning on limited labeled data and want the latest-generation ESM embeddings with improved evolutionary signal from newer training data"
+
+dont_use_when:
+  - "You need a permissive MIT license for unrestricted commercial deployment — use ESM2 instead, which has no licensing restrictions"
+  - "You need compatibility with the extensive ecosystem of ESM2-based downstream tools (ESMFold and others) that expect ESM2-specific embedding dimensions and formats"
+  - "You need a CPU-only model for edge deployment or extremely cost-sensitive screening — ESM2 8M and 35M variants run on CPU; ESMC requires GPU"
+  - "You need structure-aware protein representations — use ProstT5 (with 3Di structural tokens) when structural information is available"
+  - "You are reproducing published results that specifically used ESM2 embeddings and need exact comparability"
+  - "You need the absolute largest model available — ESM2-3B provides more raw parameters than the distributed ESMC-300M, with diminishing returns for most tasks"
+
+alternatives:
+  - model: "esm2"
+    when_better: "Far more published benchmarks, five size variants spanning CPU-only 8M to 3B, and an established ecosystem of ESM2-based downstream tools; the safer production default."
+    when_worse: "esmc reaches comparable embedding quality with fewer parameters (300M surpasses ESM2-650M), from newer training data."
+  - model: "esm1b"
+    when_better: "esm1b is essentially never strictly better; it is an earlier generation kept for reproducing legacy ESM-1b results."
+    when_worse: "esmc is two generations ahead with superior representations, higher parameter efficiency, and longer context (2048 vs 1022 residues)."
+  - model: "prostt5"
+    when_better: "Adds structure awareness \u2014 bidirectional AA<->3Di translation and structure-informed embeddings that capture fold-level information esmc's pure-sequence embeddings miss."
+    when_worse: "esmc gives richer sequence-only outputs (mean/per-residue embeddings, logits, log_prob) and masked prediction; ProstT5's structure mode needs 3Di tokens and it lacks a fitness log_prob action."
+  - model: "esm1v"
+    when_better: "Purpose-built zero-shot variant-effect predictor: a 5-member ensemble returning ranked amino-acid substitution scores at a masked position, a task-specific output that esmc's raw predict logits would need post-processing to match."
+    when_worse: "esmc adds embeddings (encode) and whole-sequence fitness scoring (log_prob) beyond masked prediction, supports 2048 vs 1022 residues, allows multiple masks, and is a newer more parameter-efficient generation; esm1v only exposes single-masked-position predict."
+
+complements:
+  - model: esmfold
+    workflow: "Use ESMC encode to assess sequence quality and fitness via log_prob, then pass promising candidates to ESMFold for single-sequence 3D structure prediction — ESMC acts as a faster, more efficient pre-filter"
+    example_protocol: null
+
+  - model: chai1
+    workflow: "Use ESMC log_prob to score and rank variant libraries for evolutionary plausibility, then predict 3D structures of top-ranked variants with Chai-1 to assess structural consequences of mutations"
+    example_protocol: null
+
+  - model: temberture
+    workflow: "Use ESMC embeddings or log_prob to identify candidate stabilizing mutations, then predict thermostability of the top candidates with TemBERTure for quantitative melting temperature (Tm) prediction"
+    example_protocol: null

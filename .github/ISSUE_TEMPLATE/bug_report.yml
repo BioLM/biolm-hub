@@ -1,0 +1,103 @@
+name: Bug report
+description: Something in the catalog, the `bh` CLI, or a deployed model isn't working as documented.
+title: "[bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. The more precise the repro, the faster it gets
+        fixed — see [`CONTRIBUTING.md`](../../CONTRIBUTING.md) for how the repo is organized.
+
+  - type: input
+    id: model-action
+    attributes:
+      label: Model + action
+      description: Which model directory under `models/`, and which action verb (`predict`, `fold`, `encode`, `generate`, `score`, `log_prob`)?
+      placeholder: "e.g. esm2 / encode"
+    validations:
+      required: true
+
+  - type: textarea
+    id: payload
+    attributes:
+      label: Request payload
+      description: The exact JSON body you sent (redact anything sensitive — sequences/structures are fine, credentials are not).
+      render: json
+      placeholder: |
+        {
+          "items": [
+            {"sequence": "MKT..."}
+          ]
+        }
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen (per the model's `README.md` / schema)?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What actually happened? Include the full error response/traceback if there is one.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: deploy-mode
+    attributes:
+      label: Deploy mode
+      description: How did you deploy/run the model?
+      options:
+        - "bh deploy (credential-less — no R2/HF secrets configured)"
+        - "bh deploy (with my own R2/HF secrets, self-populating)"
+        - "bh serve (local gateway)"
+        - "A deployed gateway (gateway/server.py) on Modal"
+        - "Ran the model's app.py directly (not via bh)"
+        - "Other / not sure"
+    validations:
+      required: true
+
+  - type: input
+    id: modal-environment
+    attributes:
+      label: Modal environment
+      description: The Modal environment/workspace you deployed to (e.g. `biolm-hub-dev`, a custom env, or your own workspace name).
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: |
+        Relevant output from `modal app logs <app-name>` (preferred over inferring from an HTTP
+        status code — see the container-health note in `CONTRIBUTING.md`/`PHILOSOPHY.md`), plus
+        the `bh`/CLI output if relevant.
+      render: shell
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: Commit / version
+      description: Output of `git rev-parse HEAD` (or the release/tag) you're running.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues and didn't find a duplicate.
+          required: true
+        - label: This is not a security vulnerability (those go to support+security@biolm.ai, not a public issue).
+          required: true

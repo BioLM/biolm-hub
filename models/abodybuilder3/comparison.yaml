@@ -1,0 +1,61 @@
+model_slug: "abodybuilder3"
+display_name: "ABodyBuilder3"
+last_updated: "2026-07-09"
+
+strengths:
+  - "Two complementary variants: a fast CPU-only pLDDT variant for high-throughput screening and a language-enhanced L40S GPU variant that leverages ProtT5 embeddings for improved CDR accuracy"
+  - "Antibody-specialized GNN architecture trained on SAbDab crystallographic structures, achieving state-of-the-art CDR loop prediction accuracy among antibody-specific methods at time of publication"
+  - "Per-residue pLDDT confidence scores (0-100 scale) enable users to identify well-predicted framework regions versus uncertain CDR loops, guiding downstream interpretation"
+  - "Predicts full-atom Fv structures (backbone and side chains) in PDB format, directly usable as input for structure-based design tools (AntiFold and molecular docking)"
+  - "Language variant uses ProtT5 protein language model embeddings for enhanced accuracy, particularly in CDR-H3 where sequence diversity makes purely structural approaches less effective"
+  - "Fast inference compared to AlphaFold2: single-sequence prediction without MSA computation, enabling rapid structural characterization of antibody libraries"
+  - "Apache-2.0 license with no commercial restrictions, from the same Exscientia/Oxford group that published IgBERT and IgT5"
+  - "Published successor to the widely used ABodyBuilder lineage (ABodyBuilder, ABodyBuilder2), with documented accuracy improvements"
+
+weaknesses:
+  - "Requires paired heavy and light chain sequences; cannot predict nanobody (VHH) structures -- use ImmuneBuilder (NanoBodyBuilder2) or ImmuneFold for nanobodies"
+  - "Predicts Fv region only; constant domains (CH1, CL, Fc) are not modeled, limiting utility for full-length antibody structural analysis"
+  - "Does not predict antibody-antigen complex structures; only models the unbound Fv -- use ImmuneFold for complex prediction with antigen context"
+  - "Cannot predict TCR structures; antibody-only model -- use ImmuneBuilder or ImmuneFold for TCR structure prediction"
+  - "Language variant requires L40S GPU (48 GB VRAM), making it one of the more expensive models to deploy in this catalog"
+  - "CDR-H3 prediction remains challenging despite improvements; pLDDT scores in this region are typically lower and predictions should be interpreted with caution for long CDR-H3 loops"
+  - "Single action (fold) with no embedding or sequence scoring capabilities -- purely a structure prediction tool"
+
+use_when:
+  - "You need rapid Fv structure prediction for paired antibody sequences to support structure-based CDR design, paratope identification, or epitope mapping"
+  - "You want to provide predicted structures as input for AntiFold inverse folding to design structurally compatible CDR variant libraries"
+  - "You need per-residue confidence scores (pLDDT) to assess which regions of an antibody structure are reliably predicted before using them for downstream analysis"
+  - "You are characterizing an antibody library at structural level and need fast throughput without MSA computation -- the pLDDT variant runs on CPU for high-volume screening"
+  - "You want the highest-accuracy antibody-specific structure prediction available (language variant) for a small number of high-priority candidates"
+  - "You need predicted Fv structures as input for structure-based developability feature extraction (biophysical descriptors that require 3D atomic coordinates)"
+
+dont_use_when:
+  - "You need to predict nanobody (VHH) structures -- use ImmuneBuilder's NanoBodyBuilder2 variant, which is specifically trained on single-domain antibody structures"
+  - "You need to predict antibody-antigen complex structures with bound antigen context -- use ImmuneFold, which accepts antigen PDB input for complex modeling"
+  - "You need TCR structure prediction -- use ImmuneBuilder (TCRBuilder2/TCRBuilder2Plus) or ImmuneFold (TCR variant)"
+  - "You need the broadest immune protein coverage (antibodies + nanobodies + TCRs) in a single model -- use ImmuneBuilder, which has dedicated sub-models for all three"
+  - "You need ESM-2-enhanced accuracy and are working with antibodies or TCRs -- use ImmuneFold, which uses ESM-2 3B representations for potentially higher CDR accuracy"
+  - "You need sequence-level analysis (embeddings, scoring, generation) rather than structure prediction -- use AbLang2, IgBERT, or IgT5"
+  - "You need general protein structure prediction for non-antibody targets -- use ESMFold or Chai-1"
+
+alternatives:
+  - model: "immunebuilder"
+    when_better: "Covers antibodies, nanobodies (VHH), and TCRs in one family with CPU-only inference for all variants; use when you need nanobody/TCR folding or a single endpoint for mixed immune proteins."
+    when_worse: "Its ABodyBuilder2 antibody sub-model predates ABodyBuilder3 and has lower CDR accuracy; ABodyBuilder3's ProtT5 language variant is the accuracy upgrade for paired antibodies."
+  - model: "immunefold"
+    when_better: "Uses ESM-2 3B representations for strong CDR-H3 accuracy and supports antibody-antigen complex prediction from an antigen PDB."
+    when_worse: "Requires a T4 GPU and is newer with less community validation; ABodyBuilder3's pLDDT variant offers CPU-only speed for high-throughput screening."
+  - model: "esmfold"
+    when_better: "General protein structure predictor that accepts the same antibody chains (as a ':'-separated complex) and folds them with no antibody-specific setup; also handles arbitrary non-antibody chains in the same job."
+    when_worse: "Not antibody-specialized -- lower CDR (especially CDR-H3) accuracy and no antibody-region-calibrated confidence; ABodyBuilder3 is faster and more accurate for standalone Fv prediction."
+  - model: "chai1"
+    when_better: "AlphaFold3-class biomolecular predictor that can fold antibody chains together with antigens, ligands, or nucleic acids from the same sequence input for full-complex context."
+    when_worse: "Heavier and slower, GPU-bound, and not antibody-specialized; ABodyBuilder3 is the faster, more accurate choice for unbound paired-Fv structure prediction."
+
+complements:
+  - model: "antifold"
+    workflow: "Predict Fv structure with ABodyBuilder3, then pass the predicted structure to AntiFold for structure-conditioned CDR sequence design and library generation"
+    example_protocol: null
+  - model: "ablang2"
+    workflow: "Use AbLang2 to score antibody sequences for evolutionary plausibility, then predict structures for top-scoring candidates with ABodyBuilder3 for structural characterization"
+    example_protocol: null

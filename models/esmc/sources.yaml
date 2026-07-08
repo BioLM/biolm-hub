@@ -1,0 +1,93 @@
+model_slug: esmc
+display_name: ESM C
+license:
+  type: MIT
+  url: https://github.com/evolutionaryscale/esm/blob/main/LICENSE.md
+  notes: The entire ESM/ESMC family (including model weights) was re-released under the standard MIT License by Chan
+    Zuckerberg Biohub in May 2026 (Copyright 2026 Chan Zuckerberg Biohub, Inc.), superseding the former EvolutionaryScale
+    Cambrian Open License Agreement. Commercial and non-commercial use is permitted; the "Built with ESM" attribution
+    and "ESM"-prefixed naming requirements no longer apply.
+molecule_types:
+- protein
+applicable_to:
+- protein
+- antibody
+- enzyme
+- peptide
+tasks:
+- embedding
+- sequence_completion
+- property_prediction
+primary_papers:
+- title: 'ESM Cambrian: Revealing the mysteries of proteins with unsupervised learning'
+  venue: EvolutionaryScale blog post (not a peer-reviewed paper), 2024
+  year: 2024
+  url: https://www.evolutionaryscale.ai/blog/esm-cambrian
+  authors:
+  - EvolutionaryScale Team
+  pdf_r2: pending
+  md_r2: pending
+  figures_of_note: []
+source_repos:
+- type: github
+  url: https://github.com/evolutionaryscale/esm
+  commit: ''
+  snapshot_r2: pending
+  readme_md_r2: knowledge-base/models/esmc/primary/pages/gh-esm-readme.md
+- type: huggingface
+  url: https://huggingface.co/EvolutionaryScale/esmc-300m-2024-12
+  notes: 'EvolutionaryScale publishes two sizes (300M and 600M). This catalog distributes ONLY the
+    300M variant (a19d363f07313a10a64d08a2d6b41376a73df5c8). Both sizes are MIT-licensed; the 600M
+    weights are also MIT but are not distributed in this catalog. Uses esm==3.1.3 pip package.'
+  page_md_r2: knowledge-base/models/esmc/primary/pages/hf-esmc-300m-2024-12.md
+- type: other
+  url: https://www.evolutionaryscale.ai/blog/esm-cambrian
+  notes: Primary announcement blog post with benchmark results.
+applied_literature:
+- title: Medium-sized protein language models perform well at transfer learning on realistic datasets
+  doi: 10.1038/s41598-025-05674-x
+  year: 2025
+  relevance: Benchmarks ESM C 600M against ESM-2 variants on realistic transfer learning tasks, finding ESM C 600M offers
+    an optimal balance between performance and efficiency, matching larger models on limited-data regimes.
+  molecule_focus: protein
+  task_focus: transfer_learning
+  pdf_r2: pending
+  md_r2: pending
+- title: Protein Electrostatic Properties are Fine-Tuned Through Evolution
+  doi: 10.1101/2025.04.17.649309
+  year: 2025
+  relevance: Trains KaML-ESM models using ESM Cambrian 600M embeddings for protein pKa prediction, demonstrating ESMC learns
+    emergent structural features that improve electrostatic property prediction over ESM-2 despite fewer parameters.
+  molecule_focus: protein
+  task_focus: property_prediction
+  pdf_r2: knowledge-base/models/esmc/applied/papers/unknown2025b.pdf
+  md_r2: pending
+- title: CDR-aware masked language models for paired antibodies enable state-of-the-art binding prediction
+  doi: 10.1101/2025.10.31.685149
+  year: 2025
+  relevance: Fine-tunes ESM C 600M with CDR-focused masking on paired antibody sequences, achieving state-of-the-art binding
+    affinity prediction that matches or exceeds 3B-parameter antibody-specific baselines with 5x fewer parameters.
+  molecule_focus: antibody
+  task_focus: binding_prediction
+  pdf_r2: knowledge-base/models/esmc/applied/papers/unknown2025c.pdf
+  md_r2: pending
+- title: Efficient inference, training, and fine-tuning of protein language models
+  doi: 10.1016/j.isci.2025.113495
+  year: 2025
+  relevance: Reimplements ESM-C alongside ESM-2 with Flash-Attention and sequence packing for 4-9x faster inference and 3-14x
+    lower memory; parameter-efficient fine-tuning achieves state-of-the-art on FLIP benchmark (70% Spearman for melting point,
+    87% AU-PRC for transcription factor ID), demonstrating ESMC as a practical high-throughput PLM.
+  molecule_focus: protein
+  task_focus: efficiency_benchmark
+  pdf_r2: pending
+  md_r2: pending
+- title: Assessing Quantization and Efficient Inference of Protein Language Models
+  venue: GEM Workshop, ICLR 2025
+  year: 2025
+  relevance: Benchmarks 4-bit quantized ESM-C 300M and 600M against ESM-2 variants on GFP brightness prediction and variant
+    effect tasks; ESM-C 300M/600M match or exceed ESM-2 3B performance with 46.7% average memory reduction and 3.8x inference
+    speedup via FlashAttention, validating ESMC for resource-constrained deployment.
+  molecule_focus: protein
+  task_focus: efficiency_benchmark
+  pdf_r2: pending
+  md_r2: pending

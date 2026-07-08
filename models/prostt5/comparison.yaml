@@ -1,0 +1,61 @@
+model_slug: prostt5
+display_name: "ProstT5"
+last_updated: "2026-07-09"
+
+strengths:
+  - "Bilingual sequence-structure translation — uniquely provides bidirectional conversion between amino acid sequences and Foldseek 3Di structural tokens, enabling both forward folding (AA to 3Di) and inverse folding (3Di to AA)"
+  - "Structure-aware embeddings for remote homology detection — achieves 92.2% accuracy on CATH superfamily classification with 9.9% F1 improvement over sequence-only ProtT5 (CATHe2, 2025)"
+  - "Three orders of magnitude faster than AlphaFold2 for deriving 3Di structural representations from sequence, enabling rapid structural annotation of large protein databases"
+  - "T5 encoder-decoder architecture enables generative capability — can design novel amino acid sequences conditioned on target 3Di structural constraints (inverse folding)"
+  - "MIT license with no commercial restrictions, suitable for any deployment scenario"
+  - "Fine-tuned from the 3-billion-parameter ProtT5-XL-U50 model (pretrained on UniRef50, ~45M sequences), inheriting strong sequence modeling while adding structural translation capability"
+  - "Validated for protein-protein binding site prediction (GraphPBSP, 2024) outperforming state-of-the-art methods, demonstrating utility beyond fold classification"
+  - "Two complementary actions (encode, generate) with direction control (AA2fold, fold2AA) provide flexible workflows for both analysis and design tasks"
+
+weaknesses:
+  - "Requires 3Di structural tokens as input for structure-to-sequence direction — users must either run Foldseek on existing structures or use the model's own AA2fold prediction, adding pipeline complexity"
+  - "Generated amino acid sequences from inverse folding (fold2AA) are predictions, not experimentally validated designs — output quality varies with generation parameters and should be treated as starting points for experimental testing"
+  - "Structure prediction via 3Di tokens is lower resolution than dedicated atomic-level structure predictors (AlphaFold2, Chai-1, ESMFold) — captures local geometry but not precise atomic coordinates"
+  - "No dedicated variant effect scoring action — cannot directly compute fitness scores for mutations like ESM1v or PoET"
+  - "Single size variant only — no scaling flexibility across different compute budgets"
+  - "Performance degrades for intrinsically disordered proteins where 3Di tokens have ambiguous assignments, reducing structure-aware embeddings to near-sequence-only quality"
+  - "Requires L4 GPU (24GB VRAM) — higher compute requirement than ESM2-650M (T4) or MSA Transformer (T4)"
+  - "Variant axes create multiple deployments (encode x AA2fold, encode x fold2AA, generate x AA2fold, generate x fold2AA), increasing operational complexity"
+
+use_when:
+  - "You need rapid structural annotation of large protein databases — ProstT5 generates 3Di tokens from sequence at three orders of magnitude faster than running AlphaFold2"
+  - "You need structure-aware protein embeddings for remote homology detection, fold classification, or function annotation where structural similarity matters more than sequence similarity"
+  - "You want to design novel protein sequences conditioned on target structural constraints (3Di tokens) — ProstT5's inverse folding capability generates diverse sequence candidates"
+  - "You need to search structural databases (via Foldseek) for query proteins without running full 3D structure prediction — generate 3Di tokens with ProstT5 for fast Foldseek search"
+  - "You are studying protein structure-sequence relationships and need a model that explicitly captures the bidirectional mapping between amino acid language and structural alphabet language"
+  - "You are annotating metagenomic protein sequences at scale where structural family assignment from sequence alone provides more informative classification than sequence-based clustering"
+
+dont_use_when:
+  - "You need accurate atomic-level 3D protein structure prediction — use Chai-1, RF3, or ESMFold, which produce full coordinate sets rather than structural alphabet tokens"
+  - "You need variant effect prediction scores — use ESM1v, ESM2 log_prob, or PoET score, which are purpose-built for quantitative mutation scoring"
+  - "You need general-purpose protein embeddings without structural considerations — use ESM2 or ESMC, which are simpler, faster, and produce high-quality sequence embeddings"
+  - "You need MSA-aware analysis that leverages evolutionary covariation from multiple sequence alignments — use MSA Transformer or PoET"
+  - "You are working primarily with intrinsically disordered proteins where structural token assignments are unreliable"
+  - "You need a single model that covers embeddings, variant scoring, and atomic structure prediction together — no single catalog model does all three; combine ESM2 or ESMC (embeddings, scoring) with a structure predictor such as ESMFold or Chai-1"
+  - "You need dedicated structure-conditioned inverse folding with atomic-level structural input — use ProteinMPNN, which accepts full PDB coordinates rather than structural alphabet tokens"
+
+alternatives:
+  - model: "esm2"
+    when_better: "Simpler, faster sequence-only protein embeddings with five size variants and lower GPU needs; broader action set (encode/predict/log_prob/contacts); MIT."
+    when_worse: "No structure-aware embeddings and no sequence-structure translation \u2014 misses the fold-level signal ProstT5 encodes directly from sequence."
+  - model: "esmc"
+    when_better: "State-of-the-art protein sequence embeddings and pseudo-log-likelihood scoring with no structural input dependency; simpler for pure sequence analysis."
+    when_worse: "No structural awareness and no generative/inverse-folding capability; ProstT5 uniquely bridges the sequence-structure gap bidirectionally."
+
+complements:
+  - model: chai1
+    workflow: "Use Chai-1 to predict high-accuracy 3D structures, convert to 3Di tokens with Foldseek, then use ProstT5 encode for structure-aware embeddings or generate for inverse folding to design new sequences for those structures"
+    example_protocol: null
+
+  - model: esm2
+    workflow: "Use ProstT5 encode for structure-aware embeddings and ESM2 encode for sequence-level embeddings, then combine both feature sets for downstream ML models — capturing complementary sequence and structural information"
+    example_protocol: null
+
+  - model: antifold
+    workflow: "Use ProstT5 for rapid 3Di-based structural annotation and fold classification of candidate proteins, then use AntiFold for specialized antibody inverse folding on antibody targets identified in the screen"
+    example_protocol: null

@@ -1,0 +1,59 @@
+model_slug: chai1
+display_name: Chai-1
+last_updated: "2026-07-09"
+
+strengths:
+  - "True multi-modal co-folding: jointly predicts structure of protein + DNA + RNA + small-molecule ligand complexes (up to 5 entities) in a single inference pass, eliminating the need for separate docking tools"
+  - "Protein-ligand docking via SMILES input enables simultaneous structure prediction and binding pose prediction without requiring a pre-existing protein structure -- valuable for early-stage drug discovery"
+  - "Apache-2.0 open-source license with commercially supported development from Chai Discovery, providing both community access and enterprise-grade support options"
+  - "Diffusion-based architecture generates multiple diverse structure samples from different random seeds, enabling exploration of alternative binding modes and conformational states"
+  - "Supports optional ESM embeddings (use_esm_embeddings=True) to improve prediction quality for proteins with shallow MSA coverage, bridging single-sequence and MSA-based approaches"
+  - "Handles nucleic acid complexes natively -- protein-DNA (transcription factor binding) and protein-RNA (ribosome, CRISPR-Cas) -- covering a broad range of biological interaction types"
+  - "Competitive with AlphaFold3 on cross-docking benchmarks (60-61% accuracy), representing the open-source state of the art for multi-molecule structure prediction"
+  - "Supports proteins up to 1024 residues and nucleic acids up to 3072 bases per entity, covering most biologically relevant complex sizes"
+
+weaknesses:
+  - "Requires A100 80GB GPU with 64GB system RAM -- the most resource-intensive deployment tier, limiting accessibility for smaller research groups"
+  - "No binding affinity prediction -- produces structures and confidence scores but cannot estimate binding energies; a dedicated affinity predictor is required for that"
+  - "Single-sequence mode (without MSA or ESM embeddings) substantially reduces prediction accuracy, especially for proteins lacking close homologs in training data"
+  - "Membrane protein predictions are weakened by training primarily on soluble protein structures -- no lipid bilayer context is modeled"
+  - "Very short peptides (< 10 residues) lack sufficient structural context for reliable binding pose prediction within the diffusion framework"
+  - "Complex macrocyclic and metalloorganic ligands may produce poor binding poses due to limited representation in training data"
+  - "Produces static conformations from diffusion sampling -- does not model conformational ensembles or intrinsically disordered regions"
+  - "No dedicated interface confidence metric such as ipSAE -- interface quality must be assessed from general pTM/pLDDT scores"
+
+use_when:
+  - "You need to predict the 3D structure of a multi-molecule complex (protein-ligand, protein-DNA, protein-RNA, or any combination) and no experimental structure is available"
+  - "You are performing protein-ligand docking in early drug discovery where the target protein structure is unknown -- Chai-1 predicts both the protein structure and ligand binding pose simultaneously"
+  - "You need to model protein-nucleic acid interactions (transcription factor-DNA binding, CRISPR-Cas complexes, RNA-binding protein complexes) with atomic-level detail"
+  - "You want to explore multiple binding modes by generating diverse structure samples from different diffusion seeds and ranking by confidence"
+  - "You need an open-source (Apache-2.0) multi-molecule structure predictor as an alternative to the closed-source AlphaFold3 server"
+  - "You are studying antibody-antigen interactions and need to predict epitope-paratope contacts for therapeutic antibody development"
+
+dont_use_when:
+  - "You only need single-chain protein structure prediction -- ESMFold is orders of magnitude faster for single proteins"
+  - "You need binding affinity predictions alongside structure -- Chai-1 predicts structures and confidence scores but does not estimate binding affinities"
+  - "You need de novo protein design or sequence generation -- Chai-1 is prediction-only; use BoltzGen for generative design tasks"
+  - "Your sequences exceed 1024 residues per protein chain or 3072 bases per nucleic acid -- consider RF3 or breaking the problem into subunits"
+  - "You need conformational ensemble modeling for intrinsically disordered proteins -- Chai-1 produces single static structures"
+  - "You need pocket-constrained docking where the binding site is fixed in advance -- Chai-1 performs unconstrained structure prediction and does not accept explicit pocket constraints"
+  - "GPU resources are limited (no A100 80GB available) -- use ESMFold for single-chain proteins or RF3 on A100 40GB for multi-molecule targets"
+
+alternatives:
+  - model: "rf3"
+    when_better: "RF3 supports template conditioning, cyclic peptides, and CCD codes for non-canonical residues; newest architecture with potentially highest accuracy on multi-molecule benchmarks."
+    when_worse: "Chai-1 has more published cross-docking benchmarks; different training data may favor different target classes; Chai-1's ESM embedding integration is a unique feature."
+  - model: "esmfold"
+    when_better: "100-1000x faster single-sequence inference (seconds vs minutes) on A10G GPU; no MSA required; dramatically lower cost per prediction."
+    when_worse: "Protein-only with lower accuracy; no multi-molecule support; cannot model binding interactions with DNA/RNA/ligand molecules that Chai-1 co-folds."
+
+complements:
+  - model: esm2
+    workflow: "Use ESM2 encode to generate protein embeddings for large-scale sequence screening and fitness prediction, then run Chai-1 on top candidates for detailed multi-molecule complex structure prediction"
+    example_protocol: null
+  - model: mpnn
+    workflow: "Predict protein-ligand complex structure with Chai-1, then use ProteinMPNN to redesign the protein around the predicted binding interface for optimized affinity and stability"
+    example_protocol: null
+  - model: esmfold
+    workflow: "Use ESMFold for rapid structural triage of protein candidates (seconds per prediction), then run Chai-1 on promising targets for multi-molecule complex structure prediction with ligand docking"
+    example_protocol: null

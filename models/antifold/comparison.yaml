@@ -1,0 +1,61 @@
+model_slug: "antifold"
+display_name: "AntiFold"
+last_updated: "2026-07-09"
+
+strengths:
+  - "Antibody-specialized inverse folding with significantly higher CDR sequence recovery than general-purpose models (ESM-IF1, ProteinMPNN) on Fab structures, as shown in Hoie et al. 2024 and PLoS ONE 2025 benchmark"
+  - "IMGT-aware region targeting allows precise control over which CDRs or framework regions to redesign (e.g., CDRH3-only, all CDRs, framework-only for humanization)"
+  - "Supports both conventional paired antibodies (VH/VL) and single-domain nanobodies (VHH) with dedicated chain modes"
+  - "High-throughput library generation: can produce up to 50,000 structure-compatible sequences per request with tunable diversity via sampling temperature"
+  - "Lightweight CPU-only inference (2 GB RAM, no GPU required), enabling fast and cost-effective batch processing"
+  - "Antigen-context conditioning: including the antigen chain as structural context improves design quality for interface-proximal residues"
+  - "Multiple output modes in a single model: sequence generation, per-residue log-probabilities, global scoring, and residue-level embeddings"
+  - "Fine-tuned from ESM-IF1 on SAbDab crystallographic structures, inheriting general inverse folding knowledge while specializing for immunoglobulin folds"
+
+weaknesses:
+  - "Requires a 3D backbone structure as input (PDB format with IMGT numbering); cannot operate on sequence alone"
+  - "Not applicable to non-antibody proteins: training is limited to immunoglobulin variable domains from SAbDab, so predictions on general proteins are unreliable"
+  - "Training data is biased toward human and mouse antibodies; performance on antibodies from other species (rabbit, chicken, shark) is less validated"
+  - "Does not model antigen-antibody binding affinity directly; designed sequences are structurally compatible but not guaranteed to bind the target antigen"
+  - "Nanobody training set is smaller than the conventional antibody set, so CDR predictions for VHH may be less diverse"
+  - "Cannot design constant region (Fc) sequences; limited to variable domain engineering only"
+  - "Autoregressive decoder means sequence generation is sequential, which adds latency compared to single-pass masked models for very large batch sizes"
+  - "Relies on the accuracy of the input structure: errors in the backbone (e.g., from low-confidence computational models) propagate directly into sequence predictions"
+
+use_when:
+  - "Designing CDR variant libraries for phage or yeast display campaigns where structural compatibility with a known backbone conformation is required"
+  - "Humanizing a non-human antibody by redesigning framework regions while keeping CDR sequences fixed, using structure-informed suggestions"
+  - "Scoring how well an existing antibody sequence fits its observed crystal structure to identify structurally strained or liability-prone positions"
+  - "Generating diverse CDR-H3 sequences conditioned on a known binding-competent backbone geometry for affinity maturation"
+  - "Extracting antibody structural embeddings for downstream ML tasks such as clustering, paratope prediction, or developability scoring"
+  - "Optimizing nanobody (VHH) CDR loops when a crystal or cryo-EM structure of the nanobody is available"
+  - "Comparing the structural fitness of wild-type versus engineered antibody variants using per-residue log-probability profiles"
+  - "Building focused combinatorial libraries targeting specific CDR subsets (e.g., CDRH1 + CDRH2 only) with controlled expected variation"
+
+dont_use_when:
+  - "You need to design sequences for non-antibody proteins such as enzymes, receptors, or de novo scaffolds (use mpnn or esm_if1 instead -- they handle arbitrary protein backbones)"
+  - "No 3D structure is available and you want sequence-only antibody design or scoring (use ablang2 for antibody sequence likelihood or igbert for paired heavy/light analysis)"
+  - "You need to predict or generate the 3D structure of an antibody from sequence (use abodybuilder3 or immunefold for antibody structure prediction)"
+  - "You want to predict binding affinity or antigen specificity rather than structural compatibility of sequences (use specialized binding predictors or docking tools)"
+  - "You need to design multi-domain constructs including Fc regions, bispecific formats, or full-length IgG engineering (AntiFold only handles variable domains)"
+  - "You are working with T-cell receptors (TCRs), which have different CDR definitions and structural conventions not represented in AntiFold training data"
+  - "You need general protein fitness prediction from sequence alone without structural context (use esm2 pseudo-log-likelihoods or esmc embeddings instead)"
+
+alternatives:
+  - model: "mpnn"
+    when_better: "Designing sequences for any non-antibody protein or multi-chain complex; ProteinMPNN handles arbitrary backbone geometries and is validated across diverse folds."
+    when_worse: "When the target is an antibody or nanobody; it lacks IMGT-aware region targeting and achieves lower CDR sequence recovery on immunoglobulin structures."
+  - model: "esm_if1"
+    when_better: "General proteins, or when you want the un-specialized base model covering all CATH 4.3 folds."
+    when_worse: "Antibody CDR/framework design; AntiFold fine-tunes ESM-IF1 on SAbDab and outperforms it on antibody sequence recovery."
+
+complements:
+  - model: "abodybuilder3"
+    workflow: "Use ABodyBuilder3 to predict the 3D structure of an antibody from sequence, then pass the predicted structure to AntiFold for structure-based CDR redesign or library generation"
+    example_protocol: null
+  - model: "ablang2"
+    workflow: "Generate candidate CDR sequences with AntiFold, then score them with AbLang2 sequence likelihoods to filter for sequences that are both structurally compatible and sequence-plausible"
+    example_protocol: null
+  - model: "biotite"
+    workflow: "Use Biotite to compute backbone RMSD between the input structure and predicted structures of AntiFold-designed sequences, validating that designed sequences maintain the intended backbone conformation"
+    example_protocol: null

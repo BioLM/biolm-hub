@@ -1,0 +1,221 @@
+# ============================================================================
+# sources.yaml — Model Knowledge Base Source Manifest
+# ============================================================================
+#
+# This file is the machine-readable index of all primary sources, applied
+# literature, and external references for this model. It lives in the repo
+# (lightweight, no binaries) and points to bulk artifacts stored in R2.
+#
+# R2 path convention:
+#   r2://biolm-public/knowledge-base/models/{model_slug}/
+#
+# Quick access patterns (read-only):
+#   bh r2 ls r2://biolm-public/knowledge-base/models/{model_slug}/
+#   bh r2 cat r2://biolm-public/knowledge-base/models/{model_slug}/primary/papers-md/paper.md
+#   bh r2 download r2://biolm-public/knowledge-base/models/{model_slug}/ /tmp/kb/{model_slug}/
+#
+# For a template field marked "TODO", include a brief note on how to obtain
+# the missing value, e.g.:
+#   doi: "TODO: Search Google Scholar for '{paper_title}' to find DOI"
+#
+# ============================================================================
+
+# ---------------------------------------------------------------------------
+# Identity (must match config.py ModelFamily fields)
+# ---------------------------------------------------------------------------
+model_slug: "dummy"
+  # The base_model_slug from config.py / ModelFamily.
+  # Must match the directory name under models/.
+
+display_name: "Dummy"
+  # The display_name from config.py / ModelFamily.
+  # Human-readable name used in documentation and UI.
+
+# ---------------------------------------------------------------------------
+# License (CRITICAL — required for every model)
+# ---------------------------------------------------------------------------
+license:
+  type: "MIT"
+    # SPDX identifier preferred. Common values:
+    #   MIT, Apache-2.0, BSD-3-Clause, CC-BY-4.0, CC-BY-NC-4.0,
+    #   CC-BY-NC-SA-4.0, Proprietary, Unknown
+  url: ""
+    # URL to the license file in the source repo or on the model page.
+    # e.g., "https://github.com/org/repo/blob/main/LICENSE"
+  notes: ""
+    # Any additional licensing context, e.g.:
+    #   "Model weights are CC-BY-NC-4.0; code is MIT"
+    #   "Non-commercial use only"
+    #   "Academic use only; contact authors for commercial license"
+
+# ---------------------------------------------------------------------------
+# Molecule & Task Metadata (should align with config.py ModelTags)
+# ---------------------------------------------------------------------------
+molecule_types:
+  # Primary molecule types this model is designed for.
+  # Values from InputMolecule enum: protein, antibody, nanobody, tcr,
+  # peptide, dna, rna, ligand, complex
+  - "protein"
+
+applicable_to:
+  # Broader applicability beyond the primary design. For example, a protein
+  # language model (molecule_types: [protein]) may also be applicable to
+  # antibodies, enzymes, or peptides even if not specifically trained on them.
+  - "protein"
+  - "enzyme"
+
+tasks:
+  # Primary tasks from Task enum: structure_prediction, inverse_folding,
+  # embedding, sequence_generation, sequence_completion, property_prediction,
+  # sequence_classification, annotation, feature_extraction,
+  # sequence_optimization, stability_prediction, utility
+  - "utility"
+
+# ---------------------------------------------------------------------------
+# Primary Papers
+# ---------------------------------------------------------------------------
+# The model's own publication(s). Most models have 1; some have 2+
+# (e.g., Boltz-1 paper + Boltz-2 paper, or ESM-1b + ESM-2).
+# Order: most important / foundational paper first.
+primary_papers:
+  - title: "Full paper title as published"
+      # Exact title from the paper. Used in citations and documentation.
+
+    arxiv: ""
+      # arXiv ID without the URL prefix, e.g., "2201.07338"
+      # For bioRxiv, use the DOI suffix, e.g., "2024.11.19.624167"
+
+    doi: ""
+      # Full DOI, e.g., "10.1126/science.ade2574"
+      # Search at https://doi.org/ or Google Scholar if not known.
+
+    venue: ""
+      # Publication venue and year, e.g., "Science, 2023" or
+      # "NeurIPS 2023" or "bioRxiv preprint, 2024"
+
+    year: 2024
+      # Publication year (integer).
+
+    authors:
+      # List of authors. Can use "et al." for long lists.
+      # First author + "et al." is acceptable for >5 authors.
+      - "Author A"
+      - "Author B et al."
+
+    pdf_r2: "knowledge-base/models/dummy/primary/papers/paper-name.pdf"
+      # R2 path (without r2://biolm-public/ prefix) to the PDF.
+      # Set to "" or "pending" if not yet uploaded.
+
+    md_r2: "knowledge-base/models/dummy/primary/papers-md/paper-name.md"
+      # R2 path to the markdown conversion of the PDF.
+      # Set to "" or "pending" if not yet converted.
+
+    figures_of_note:
+      # List of important figures/plots/diagrams in the paper that are
+      # relevant for understanding the model. These cannot be represented
+      # in markdown, so noting them here ensures we know to reference
+      # the PDF directly when these visuals are needed.
+      - "Figure 1: Model architecture diagram"
+      - "Figure 3: Benchmark comparison table"
+      - "Table 2: Ablation study results"
+
+# ---------------------------------------------------------------------------
+# Source Repositories
+# ---------------------------------------------------------------------------
+# GitHub, HuggingFace, NIMs catalog, or other source pages.
+source_repos:
+  - type: "github"
+      # One of: github, huggingface, nims, pypi, other
+    url: "https://github.com/org/repo"
+      # Full URL to the repository or model page.
+    commit: ""
+      # Pinned commit hash (for reproducibility). Optional.
+    branch: "main"
+      # Branch used. Optional, defaults to "main".
+    snapshot_r2: "knowledge-base/models/dummy/primary/repos/repo-snapshot.tar.gz"
+      # R2 path to a tarball snapshot of the repo at the pinned commit.
+      # Set to "" or "pending" if not yet captured.
+    notes: ""
+      # Any relevant notes, e.g., "Only the src/ directory is relevant"
+
+  - type: "huggingface"
+    url: "https://huggingface.co/org/model-name"
+    page_md_r2: "knowledge-base/models/dummy/primary/pages/hf-model-page.md"
+      # R2 path to a markdown capture of the HuggingFace model card.
+      # Set to "" or "pending" if not yet captured.
+    notes: ""
+      # e.g., "Multiple model sizes available; we use the 650M variant"
+
+  # Example for NVIDIA NIMs:
+  # - type: "nims"
+  #   url: "https://build.nvidia.com/nvidia/model-name"
+  #   page_md_r2: "knowledge-base/models/dummy/primary/pages/nims-catalog.md"
+  #   notes: "NVIDIA NIM container-based deployment"
+
+# ---------------------------------------------------------------------------
+# Applied Literature
+# ---------------------------------------------------------------------------
+# Secondary research: papers, blogs, and benchmarks that show this model
+# being USED on specific tasks or biological problems. These are NOT the
+# model's own papers — they are downstream applications and evaluations.
+#
+# Search strategies (tailored by molecule type):
+#   - Protein models: search for "{model_name} antibody", "{model_name} enzyme",
+#     "{model_name} thermostability", etc.
+#   - DNA models: search for "{model_name} promoter", "{model_name} enhancer",
+#     "{model_name} variant effect", etc.
+#   - Structure models: search for "{model_name} drug discovery",
+#     "{model_name} protein design", etc.
+#
+# Quality criteria for inclusion:
+#   - Peer-reviewed or reputable preprint (bioRxiv, arXiv)
+#   - Includes quantitative results using this model
+#   - Relevant to BioLM platform use cases
+applied_literature:
+  - title: "Example: Using DummyModel for enzyme stability screening"
+    arxiv: ""
+      # arXiv/bioRxiv ID if available.
+    doi: ""
+      # DOI if available.
+    url: ""
+      # Direct URL if not on arXiv/bioRxiv (e.g., blog post, conference paper).
+    year: 2024
+    relevance: "Brief description of why this paper is relevant and what it shows"
+      # 1-2 sentences on the key finding or result related to this model.
+    molecule_focus: "protein"
+      # Which molecule type is the primary focus of this applied work.
+      # Use a single string value (e.g., "protein", "antibody", "dna",
+      # "protein-ligand complex"). For multi-molecule focus, use the
+      # dominant molecule type.
+    task_focus:
+      # Which tasks from the Task enum are demonstrated.
+      - "property_prediction"
+    pdf_r2: "knowledge-base/models/dummy/applied/papers/example-paper.pdf"
+    md_r2: "knowledge-base/models/dummy/applied/papers-md/example-paper.md"
+    protocol_potential:
+      feasibility: "medium"
+        # Rate as high/medium/low based on how many pipeline models
+        # are available on BioLM. Omit entirely if the paper doesn't
+        # describe a multi-model pipeline.
+      models_available:
+        - "dummy"
+      models_missing:
+        - "some-other-model"
+      protocol_type: "benchmark"
+        # Category: antibody_design, enzyme_optimization, protein_design,
+        # structure_prediction, variant_effect, drug_discovery, dna_design,
+        # benchmark, evaluation, etc.
+      market_segment: "academic_research"
+        # Target: biopharmaceutical, synthetic_biology, industrial_enzymes,
+        # antibody_therapeutics, immunotherapy, genomics, diagnostics, etc.
+      notes: "Brief description of the pipeline and what makes it implementable or not"
+
+  # Example blog entry:
+  # - title: "Blog: Benchmarking protein LLMs for antibody design"
+  #   url: "https://blog.example.com/protein-llm-benchmark"
+  #   year: 2024
+  #   relevance: "Compares DummyModel embeddings against ESM2 for CDR property prediction"
+  #   molecule_focus: "antibody"
+  #   task_focus: ["embedding", "property_prediction"]
+  #   pdf_r2: ""
+  #   md_r2: "knowledge-base/models/dummy/applied/blogs/protein-llm-benchmark.md"

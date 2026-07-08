@@ -1,0 +1,107 @@
+model_slug: immunebuilder
+display_name: ImmuneBuilder
+license:
+  type: BSD-3-Clause
+  url: https://github.com/oxpig/ImmuneBuilder/blob/main/LICENSE
+  notes: ''
+molecule_types:
+- antibody
+- nanobody
+- tcr
+applicable_to:
+- immunotherapy
+- drug development
+- antibody engineering
+- TCR engineering
+- nanobody design
+- structural immunology
+tasks:
+- structure_prediction
+primary_papers:
+- title: 'ImmuneBuilder: Deep-Learning models for predicting the structures of immune proteins'
+  arxiv: '2301.08423'
+  doi: 10.1038/s42003-023-04927-7
+  venue: Communications Biology, 2023
+  year: 2023
+  authors:
+  - Abanades B
+  - Wong WK
+  - Boyles F
+  - Georges G
+  - Bujotzek A
+  - Deane CM
+  pdf_r2: knowledge-base/models/immunebuilder/primary/papers/b2023.pdf
+  md_r2: knowledge-base/models/immunebuilder/primary/papers-md/b2023.md
+  figures_of_note: []
+source_repos:
+- type: github
+  url: https://github.com/oxpig/ImmuneBuilder
+  commit: ''
+  snapshot_r2: pending
+  readme_md_r2: knowledge-base/models/immunebuilder/primary/pages/gh-immunebuilder-readme.md
+- type: pypi
+  url: https://pypi.org/project/ImmuneBuilder/
+  commit: ''
+  snapshot_r2: pending
+applied_literature:
+- title: 'ABodyBuilder3: improved and scalable antibody structure predictions'
+  doi: 10.1093/bioinformatics/btae576
+  year: 2024
+  relevance: Successor to ImmuneBuilder's ABodyBuilder2 that achieves new SOTA CDR loop accuracy by leveraging language model
+    embeddings and improved pLDDT-based uncertainty.
+  molecule_focus: antibody
+  task_focus: structure_prediction
+  pdf_r2: pending
+  md_r2: pending
+- title: The Application of Machine Learning on Antibody Discovery and Optimization
+  doi: 10.3390/molecules29245923
+  year: 2024
+  relevance: Review covering ImmuneBuilder and other ML tools for antibody structure prediction in the context of therapeutic
+    antibody discovery pipelines.
+  molecule_focus: antibody
+  task_focus: review
+  pdf_r2: pending
+  md_r2: pending
+- title: Benchmarking inverse folding models for antibody CDR sequence design
+  doi: 10.1371/journal.pone.0324566
+  year: 2025
+  relevance: Benchmarks CDR design tools on structures predicted by models like ImmuneBuilder, evaluating the full structure-to-sequence
+    antibody design pipeline.
+  molecule_focus: antibody
+  task_focus: benchmark
+  pdf_r2: pending
+  md_r2: pending
+- title: Investigating the ability of deep learning-based structure prediction to extrapolate and/or enrich the set of antibody
+    CDR canonical forms
+  doi: 10.3389/fimmu.2024.1352703
+  year: 2024
+  relevance: Uses ABodyBuilder2 (ImmuneBuilder) to predict structures for ~1.5 million paired antibody sequences and clusters
+    CDR loops to discover new canonical forms. Quantifies the generalization and extrapolation limits of ABodyBuilder2 by
+    retraining models with withheld CDR lengths and canonical forms, providing the largest-scale structural repertoire analysis
+    powered by ImmuneBuilder.
+  molecule_focus: antibody
+  task_focus: structural_repertoire_analysis
+  pdf_r2: pending
+  md_r2: pending
+- title: 'PROPERMAB: an integrative framework for in silico prediction of antibody developability using machine learning'
+  doi: 10.1080/19420862.2025.2474521
+  year: 2025
+  relevance: Uses ABodyBuilder2 (ImmuneBuilder suite v0.0.8) to predict 3D Fv structures as a core pipeline step, then extracts
+    structure-based molecular features for machine learning models predicting hydrophobic interaction chromatography retention
+    time and high-concentration viscosity. Demonstrates ImmuneBuilder enabling repertoire-scale in silico developability screening
+    at Regeneron.
+  molecule_focus: antibody
+  task_focus: developability_prediction
+  pdf_r2: pending
+  md_r2: pending
+- title: 'Computational design of therapeutic antibodies with improved developability: efficient traversal of binder landscapes
+    and rescue of escape mutations'
+  doi: 10.1080/19420862.2025.2511220
+  year: 2025
+  relevance: Uses ABodyBuilder2 to predict antibody structures as a key step in a therapeutic design pipeline targeting SARS-CoV-2.
+    ABodyBuilder2 structures are scored with the Therapeutic Antibody Profiler (TAP) to filter candidates, with experimental
+    validation showing 54% of designs gained binding to escape variants and all designs improved in aggregation behavior.
+  molecule_focus: antibody
+  task_focus: therapeutic_antibody_design
+  pdf_r2: pending
+  md_r2: pending

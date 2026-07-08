@@ -1,0 +1,77 @@
+model_slug: dna-chisel
+display_name: DNA-Chisel
+license:
+  type: MIT
+  url: https://github.com/Edinburgh-Genome-Foundry/DnaChisel/blob/master/LICENSE
+  notes: ''
+molecule_types:
+- dna
+applicable_to:
+- dna
+- synthetic_biology
+tasks:
+- feature_extraction
+primary_papers:
+- title: DNA Chisel, a versatile sequence optimizer
+  doi: 10.1093/bioinformatics/btaa558
+  venue: Bioinformatics, 36(16), 4508-4509, 2020
+  year: 2020
+  authors:
+  - Valentin Zulkower
+  - Susan Rosser
+  pdf_r2: pending
+  md_r2: pending
+  figures_of_note: []
+source_repos:
+- type: github
+  url: https://github.com/Edinburgh-Genome-Foundry/DnaChisel
+  commit: ''
+  snapshot_r2: pending
+applied_literature:
+- title: 'Maximizing Heterologous Expression of Engineered Type I Polyketide Synthases: Investigating Codon Optimization Strategies'
+  doi: 10.1021/acssynbio.3c00367
+  year: 2023
+  relevance: Uses DNA Chisel codon optimization algorithms to generate 11 codon variants of engineered polyketide synthases,
+    achieving 50x increase in protein expression
+  molecule_focus: dna
+  task_focus: codon optimization for protein expression
+  pdf_r2: pending
+  md_r2: pending
+- title: mRNAid, an open-source platform for therapeutic mRNA design and optimization strategies
+  doi: 10.1093/nargab/lqae028
+  year: 2024
+  relevance: Builds on DNA Chisel as core optimization framework for therapeutic mRNA sequence design, enabling codon usage,
+    GC content, and MFE optimization
+  molecule_focus: dna
+  task_focus: therapeutic mRNA design
+  pdf_r2: pending
+  md_r2: pending
+- title: 'Comparative Analysis of Codon Optimization Tools: Advancing toward a Multi-Criteria Framework for Synthetic Gene
+    Design'
+  doi: 10.3390/bioengineering12040358
+  year: 2025
+  relevance: Benchmarks DNA Chisel against other codon optimization tools in a multi-criteria evaluation framework for synthetic
+    gene design
+  molecule_focus: dna
+  task_focus: codon optimization benchmarking
+  pdf_r2: pending
+  md_r2: pending
+- title: Cross-species gene redesign leveraging ortholog information and generative modeling
+  doi: 10.1038/s41467-026-69966-0
+  year: 2025
+  relevance: OrthologTransformer outperforms DNA Chisel synonymous codon optimization for heterologous PETase expression in
+    B. subtilis, demonstrating limitations of codon-only optimization
+  molecule_focus: dna
+  task_focus: cross-species gene optimization
+  pdf_r2: pending
+  md_r2: pending
+- title: Generative AI-driven artificial DNA design for enhancing inter-species gene activation and enzymatic degradation
+    of PET
+  doi: 10.1101/2025.05.08.652991
+  year: 2025
+  relevance: Uses DNA Chisel codon-optimized controls as baseline; OrthologTransformer-designed PETase surpasses codon-optimized
+    variants for PET degradation activity
+  molecule_focus: dna
+  task_focus: heterologous gene expression optimization
+  pdf_r2: pending
+  md_r2: pending

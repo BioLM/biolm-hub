@@ -1,0 +1,62 @@
+model_slug: "igt5"
+display_name: "IgT5"
+last_updated: "2026-03-17"
+
+strengths:
+  - "T5 architecture with relative position biases (rather than absolute positional embeddings), which may better capture long-range dependencies between distant framework residues and CDR loops in variable-length antibody sequences"
+  - "Both paired and unpaired variants in a single model family, enabling analysis of matched heavy-light chain pairs and individual chains depending on data availability"
+  - "From the same large-scale paired antibody training dataset as IgBERT (Exscientia/Kenlay et al. 2024), providing a direct architecture comparison (T5 encoder vs BERT) on identical training data"
+  - "Published benchmarks show IgT5 Paired achieves 91.63% VH accuracy on paired sequence recovery, establishing it as a competitive baseline for antibody language models"
+  - "HuggingFace Transformers-compatible model weights, making integration with standard ML ecosystems and transfer learning pipelines straightforward"
+  - "Permissively licensed (MIT per the HuggingFace model card; permits commercial use), suitable for therapeutic antibody development"
+  - "Mean-pooled or per-residue embeddings capture both sequence-level and position-level representations for flexible downstream use"
+
+weaknesses:
+  - "Embedding-only model (encode action only): no sequence generation, masked prediction, or log-probability scoring -- limiting utility compared to IgBERT's three actions or AbLang2's four actions"
+  - "Requires T4 GPU with 16 GB RAM for inference, making it more expensive than CPU-only models like AbLang2, and more expensive than IgBERT (6 GB RAM)"
+  - "No germline debiasing in the training objective, so embeddings may conflate germline gene identity with functional properties, a known bias that AbLang2 explicitly addresses"
+  - "Not specialized for nanobody (VHH) sequences; the unpaired variant can process them but lacks nanobody-specific training"
+  - "Published CDR-aware benchmarks show compact fine-tuned models can surpass the 3B-parameter IgT5 by 16-25% on binding affinity prediction using 5x fewer parameters, suggesting the model may be overparameterized for some tasks"
+  - "Two separate deployments required (paired and unpaired) to cover all use cases, adding infrastructure complexity"
+  - "Embedding-only output means users cannot directly assess sequence plausibility or score mutations without training separate downstream models"
+
+use_when:
+  - "You specifically want T5-architecture embeddings for antibody sequences, either for architectural comparison against BERT-based models or because T5 relative position biases better suit your downstream task"
+  - "You need paired or unpaired antibody embeddings from a well-benchmarked model and your downstream task requires only embedding features, not generation or scoring"
+  - "You are comparing T5 vs BERT representation architectures for antibody property prediction and want models trained on the same dataset (IgT5 vs IgBERT from Kenlay et al. 2024)"
+  - "You need embeddings as input features for training custom downstream ML models for antibody properties (binding affinity, expression, stability) and want a strong antibody-specific baseline"
+  - "You are building a multi-model ensemble combining IgT5, IgBERT, and AbLang2 embeddings for improved downstream prediction through representation diversity"
+
+dont_use_when:
+  - "You need sequence generation, masked residue prediction, or log-probability scoring -- use IgBERT (generate + log_prob actions) or AbLang2 (four actions including predict and generate)"
+  - "You need germline-debiased antibody representations -- use AbLang2 with focal-loss training that explicitly reduces germline bias in embeddings"
+  - "You are working with nanobody (VHH) sequences and need VHH-specific representations -- IgT5's unpaired variant can process VHH but is not nanobody-specialized; use AntiFold or ImmuneFold for nanobody-specific structural analysis"
+  - "You need the most cost-effective antibody embeddings and GPU resources are limited -- use AbLang2 (CPU-only, 4 GB RAM)"
+  - "You need 3D structure prediction -- use AbodyBuilder3, ImmuneBuilder, or ImmuneFold for structure prediction from sequence"
+  - "You need developability property predictions -- use DeepViscosity for antibody viscosity or TemBERTure for thermostability (Tm)"
+  - "You need antibody annotation (numbering, CDR boundaries, germline assignment) -- use SADIE as a preprocessing step"
+
+alternatives:
+  - model: "igbert"
+    when_better: "IgBERT provides generate and log_prob actions in addition to encode, enabling sequence completion and scoring not available in IgT5; also uses less GPU memory (6 GB vs 16 GB)"
+    when_worse: "IgBERT uses BERT architecture while IgT5 uses T5 with relative position biases; for tasks sensitive to long-range dependencies in variable-length sequences, T5 may be advantageous"
+  - model: "ablang2"
+    when_better: "AbLang2 provides four actions (encode, predict, generate, log_prob) with germline debiasing on CPU-only -- more functionality at lower compute cost"
+    when_worse: "AbLang2 requires paired input only and uses a custom library; IgT5 offers both paired and unpaired variants with HuggingFace compatibility for fine-tuning"
+  - model: "esm2"
+    when_better: "ESM-2 covers all proteins with 5 size variants and the broadest downstream ecosystem; better for cross-protein-family analyses and when antibody-specific training is not critical"
+    when_worse: "ESM-2 is not antibody-specialized and cannot model paired heavy-light chains; IgT5's antibody-specific training produces more informative representations for antibody tasks"
+
+complements:
+  - model: "sadie"
+    workflow: "Use SADIE to annotate, number, and extract variable domains from raw antibody sequences, then pass the validated sequences to IgT5 for T5-architecture embedding generation"
+    example_protocol: null
+  - model: "igbert"
+    workflow: "Use IgT5 encode for T5-architecture embeddings alongside IgBERT encode for BERT-architecture embeddings, combining both representation types as features for improved downstream prediction through architectural diversity"
+    example_protocol: null
+  - model: "abodybuilder3"
+    workflow: "Use IgT5 to embed and cluster antibody libraries by functional similarity, then predict 3D structures for representative candidates with AbodyBuilder3 for structural characterization of diverse clusters"
+    example_protocol: null
+  - model: "antifold"
+    workflow: "Use IgT5 embeddings for initial antibody repertoire analysis and candidate selection, then apply AntiFold on predicted structures for structure-conditioned CDR redesign of prioritized candidates"
+    example_protocol: null
