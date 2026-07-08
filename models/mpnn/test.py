@@ -32,9 +32,11 @@ def _validate_mpnn_generate(
             ), f"Result {idx} '{conf_field}' value {val} is outside [0, 1]"
 
 
-# MPNN test suite — test 3 representative variants (protein + ligand + global_label_membrane)
-# with 1 input each. Full 6-variant x 4-input matrix (24 tests) exceeds CI timeout.
-# Membrane variant is included to catch regressions in the membrane-aware code path.
+# MPNN test suite — test all 6 deployable variants (protein, ligand, soluble,
+# global_label_membrane, per_residue_label_membrane, hyper) with 1 input each.
+# The full 6-variant x 4-input matrix (24 tests) exceeds CI timeout, so each
+# variant runs the single canonical INPUT1 backbone. The two membrane variants
+# are included to catch regressions in the membrane-aware code paths.
 #
 # Structural validator (not a numeric golden comparison) is deliberate: ProteinMPNN
 # GENERATES sequences by temperature-sampling the per-residue distribution, so the
@@ -67,7 +69,37 @@ test_suite = TestSuite(
             ],
         ),
         VariantTestMapping(
+            variant_config={"MODEL_TYPE": MPNNModelTypes.SOLUBLE},
+            test_cases=[
+                ActionTestCase(
+                    action_name=ModelActions.GENERATE,
+                    input_fixture=INPUT1,
+                    validator=_validate_mpnn_generate,
+                ),
+            ],
+        ),
+        VariantTestMapping(
             variant_config={"MODEL_TYPE": MPNNModelTypes.GLOBAL_LABEL_MEMBRANE},
+            test_cases=[
+                ActionTestCase(
+                    action_name=ModelActions.GENERATE,
+                    input_fixture=INPUT1,
+                    validator=_validate_mpnn_generate,
+                ),
+            ],
+        ),
+        VariantTestMapping(
+            variant_config={"MODEL_TYPE": MPNNModelTypes.PER_RESIDUE_LABEL_MEMBRANE},
+            test_cases=[
+                ActionTestCase(
+                    action_name=ModelActions.GENERATE,
+                    input_fixture=INPUT1,
+                    validator=_validate_mpnn_generate,
+                ),
+            ],
+        ),
+        VariantTestMapping(
+            variant_config={"MODEL_TYPE": MPNNModelTypes.HYPER},
             test_cases=[
                 ActionTestCase(
                     action_name=ModelActions.GENERATE,
