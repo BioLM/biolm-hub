@@ -63,7 +63,11 @@ Then call it — every model speaks the same verbs (`predict`, `fold`, `encode`,
 ```bash
 curl -s http://127.0.0.1:8000/api/v1/esm2-8m/encode \
   -H "Content-Type: application/json" \
-  -d '{"items": [{"sequence": "MKTVRQERLKSIVRILERSKEPVSGAQLAEELSVSRQVIVQDIAYLRSLGYNIVATPRGYVLAGG"}]}'
+  -d '{
+    "items": [
+      { "sequence": "MKTVRQERLKSIVRILERSKEPVSGAQLAEELSVSRQVIVQDIAYLRSLGYNIVATPRGYVLAGG" }
+    ]
+  }'
 ```
 
 > [!WARNING]
