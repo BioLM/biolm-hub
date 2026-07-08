@@ -138,19 +138,15 @@ Phase 5: Review
 
 ---
 
-## Global Rules (from `CONTRIBUTING.md`)
+## Global Rules — canonical in `CONTRIBUTING.md`
+
+**`CONTRIBUTING.md` → "House rules" is the source of truth** for the closed verb set, schema field
+names, licensing, logging, and errors — read it, don't restate it. This recap is only what bites
+during implementation.
 
 ### Actions — closed set
-| Verb | Means |
-|------|-------|
-| `predict` | scalar/label property of a sequence or structure, **or** masked-token / fill-mask prediction (see note) |
-| `fold` | 3D structure prediction (returns `pdb`/`cif` + confidence) |
-| `encode` | learned representations / embeddings |
-| `generate` | new sequences or structures (sampling, design, inverse folding) |
-| `score` | model-defined scalar fitness (document what it means) |
-| `log_prob` | per-sequence (pseudo) log-likelihood scalar |
-
-Do not invent new verbs.
+`predict` · `fold` · `encode` · `generate` · `score` · `log_prob`. Pick the verb that matches intent —
+a folding model `fold`s, it doesn't overload `predict`. Don't invent verbs.
 
 > **`predict` legitimately covers masked-token / fill-mask prediction — but mind the payload for
 > large-vocab LMs.** The shipped `esm2` model exposes masked-LM fill-mask as `predict`:
@@ -164,10 +160,13 @@ Do not invent new verbs.
 > prefer `log_prob` (one pseudo-log-likelihood scalar per sequence) and/or `encode` (embeddings)
 > over a logits-returning `predict`.
 
-### Schema field names — uniform across families
-- **Inputs:** `sequence` / `sequences` / `msa`; `pdb` / `cif`; `smiles`; batch items under `items`, parameters under `params`
-- **Antibodies:** `heavy_chain` / `light_chain`; nanobody/VHH = lone `heavy_chain`; TCR = `tcr_alpha`/`tcr_beta`/`tcr_gamma`/`tcr_delta` + `peptide` + `mhc`
-- **Outputs:** `embeddings`, `logits`, `log_prob`, `score`, `sequence`, `pdb`/`cif`, `plddt`/`ptm`/`pae`; batch results under `results`
+### Schema field names
+Uniform across families; the biology lives in metadata/tags, not field names (canonical list in
+`CONTRIBUTING.md`). Inputs: `sequence` / `sequences` / `msa`; `pdb` / `cif`; `smiles` (+ `ccd`);
+`name`; batch items under `items`, parameters under `params`. Antibodies: `heavy_chain` /
+`light_chain` (nanobody/VHH = lone `heavy_chain`); TCR = `tcr_alpha`/`tcr_beta`/`tcr_gamma`/`tcr_delta`
++ `peptide` + `mhc`. Outputs: `embeddings`, `logits`, `log_prob`, `score`, `sequence`, `pdb`/`cif`,
+`plddt`/`ptm`/`pae`; batch results under `results`.
 
 ### Logging — never `print` in runtime code
 ```python
@@ -201,7 +200,7 @@ typed subclass instead. (See `models/igbert/schema.py` validators raising `Value
 
 ## Common Pitfalls (top 8)
 
-1. **Non-permissive license** — check before coding anything (MIT/Apache-2.0/BSD only)
+1. **Non-permissive license** — check before coding anything (permissive + CC-BY-4.0; GPL needs maintainer review — see `CONTRIBUTING.md` → "License first")
 2. **`make check` failing on push** — run it locally first; never push with it red
 3. **Running tests before generating fixtures** — always `python models/MODEL/fixture.py` first
 4. **Unpinned dependencies** — every package must use `==X.Y.Z`

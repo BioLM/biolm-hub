@@ -7,7 +7,7 @@ Gather information about the model, confirm the license is permissive, find anal
 
 ## 1.1 License Check — Do This First
 
-**Only permissively-licensed models are accepted:** MIT, Apache-2.0, BSD-3-Clause, and compatible permissive licenses. CC-BY-NC, GPL, proprietary, and "academic only" licenses are **not accepted**.
+**Permissive licenses only** — canonical policy: `CONTRIBUTING.md` → "License first". Accepted: MIT, Apache-2.0, BSD-3-Clause (and compatible permissive licenses), plus CC-BY-4.0 (common for weights). **GPL / copyleft** is accepted only after a maintainer reviews the copyleft reach — flag it and ask; don't auto-reject *or* auto-accept. CC-BY-NC, other non-commercial / "academic only", and proprietary licenses are **not accepted**.
 
 1. Find the LICENSE file in the source repo or the model card.
 2. Record the SPDX identifier (e.g., `Apache-2.0`).
