@@ -18,7 +18,7 @@ from models.commons.model.config import ModelFamily, ResolvedVariant
 from models.commons.model.schema import ModalResourceSpec
 
 """
-Unified deployment script for BioLM models.
+Unified deployment script for biolm-hub models.
 
 This script handles single-variant, multi-variant, and whole-catalog
 deployments by leveraging the ModelFamily configuration defined in each model's
@@ -870,7 +870,7 @@ def deploy_cmd(
     ] = None,
 ) -> None:
     """
-    Deploy one or more BioLM models, or the whole catalog with --all.
+    Deploy one or more biolm-hub models, or the whole catalog with --all.
 
     By default deploys each named model's single default variant; pass
     --all-variants for the whole family or --variant KEY=value for a specific one.

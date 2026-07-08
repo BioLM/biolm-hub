@@ -54,5 +54,5 @@ def serve_cmd(
     fastapi_app = build_gateway_app(mapper, use_cache=False)
     mount_catalog(fastapi_app, mapper, environment=env, gateway_url=gateway_url or "")
 
-    typer.echo(f"BioLM catalog → http://{host}:{port}/catalog")
+    typer.echo(f"biolm-hub catalog → http://{host}:{port}/catalog")
     uvicorn.run(fastapi_app, host=host, port=port)

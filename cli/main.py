@@ -1,6 +1,6 @@
 """biolm-hub CLI (``bh``).
 
-Command-line tools for deploying and running BioLM models on Modal.
+Command-line tools for deploying and running biolm-hub models on Modal.
 """
 
 import typer
@@ -20,7 +20,7 @@ from cli.setup import setup_cmd
 console = Console()
 app = typer.Typer(
     name="bh",
-    help="BioLM command-line tools for model management and infrastructure.",
+    help="biolm-hub command-line tools for model management and infrastructure.",
     no_args_is_help=True,
     add_completion=False,
 )
@@ -28,7 +28,7 @@ app = typer.Typer(
 
 def print_version(value: bool) -> None:
     if value:
-        console.print("BioLM CLI version 0.1.0")
+        console.print("biolm-hub CLI (bh) version 0.1.0")
         raise typer.Exit()
 
 
@@ -42,7 +42,7 @@ def main(
         is_eager=True,
     ),
 ) -> None:
-    """Command-line tools for deploying and running BioLM models on Modal."""
+    """Command-line tools for deploying and running biolm-hub models on Modal."""
     pass
 
 
@@ -64,7 +64,7 @@ app.command("serve")(serve_cmd)
 def display_cli_help() -> None:
     """Display a rich formatted help message."""
     header = Panel(
-        "BioLM Command Line Interface",
+        "biolm-hub Command Line Interface",
         style="bold blue",
         padding=(1, 2),
     )
