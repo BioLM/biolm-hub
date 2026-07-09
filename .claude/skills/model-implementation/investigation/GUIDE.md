@@ -21,7 +21,42 @@ Gather information about the model, confirm the license is permissive, find anal
 
 ---
 
-## 1.2 Gather Model Information
+## 1.2 Scope & Resource Check — Also Before You Code
+
+biolm-hub OSS deliberately supports a **bounded** class of models. Classify the model now, before
+writing code or deploying — getting this wrong burns Modal compute on a model the catalog cannot host.
+
+**STOP — out of scope — if the model requires ANY of:**
+- a persistent **Modal Volume**, `NetworkFileSystem`, or `CloudBucketMount` (any mounted, pre-populated
+  filesystem beyond the container image + weights fetched by `download.py`);
+- a **reference database hosted server-side** — UniRef, BFD, MGnify, PDB70, ColabFold DBs, etc.:
+  anything in the tens-of-GB→TB range that is *not the model's own weights*;
+- **server-side alignment/search** — running MSA / HHblits / jackhmmer / hmmer / MMseqs2 *inside the
+  endpoint* against a hosted database;
+- **any asset that is neither** (a) a bounded weight artifact fetchable through the `download.py`
+  `r2_then_*` wrappers, **nor** (b) supplied by the caller in the request.
+
+If any apply, **do not write code or deploy.** These belong to the internal pipeline, not this catalog —
+the Modal-Volume lifecycle, multi-TB data hosting, and per-caller cost attribution are complexity this
+OSS project intentionally omits. The catalog's convention for alignment-dependent models is to take the
+MSA as an **`msa`/`alignment` request input** (the caller runs the search — or uses a separate MSA
+service — and passes the result in; see `models/chai1`, `models/rf3`, `models/msa_transformer`). If the
+model can be adapted to that pattern, proceed on that basis. Otherwise stop and raise it with the
+maintainers.
+
+**In scope — proceed — when both hold:**
+- weights are a **bounded download** that `download.py` fetches once and R2 caches (the disqualifier is
+  *not* raw size — the largest shipped models pull multi-GB→tens-of-GB checkpoints via `r2_then_hf`; it
+  is needing a *persistent volume/DB mount* or *server-side search*), **and**
+- any MSA / template / structure the model needs is a **request input** (`msa` / `alignment` /
+  `msa_content`, `pdb` / `cif`, template fields) — not searched server-side.
+
+This boundary is enforced in CI: `tooling/check_no_modal_volumes.py` fails the build if any model's code
+references `modal.Volume` / `NetworkFileSystem` / `CloudBucketMount`.
+
+---
+
+## 1.3 Gather Model Information
 
 Review the available sources — paper, GitHub repo, HuggingFace model card, project website. For each:
 
@@ -54,7 +89,7 @@ Review the available sources — paper, GitHub repo, HuggingFace model card, pro
 
 ---
 
-## 1.3 Find a Reference Model
+## 1.4 Find a Reference Model
 
 Browse `models/` to find the closest analogous implementation. Read its `app.py`, `config.py`, `schema.py`, `test.py`, and `download.py` (if present). Copy patterns; adapt only what is specific to the new model.
 
@@ -99,7 +134,7 @@ Browse `models/` to find the closest analogous implementation. Read its `app.py`
 
 ---
 
-## 1.4 Determine Specifications
+## 1.5 Determine Specifications
 
 Work through these before writing a line of code:
 
@@ -127,7 +162,7 @@ Map each action to its input/output schema fields (using the standard field name
 
 ---
 
-## 1.5 Create a Skeleton `sources.yaml`
+## 1.6 Create a Skeleton `sources.yaml`
 
 Create `models/<name>/sources.yaml` now — a skeleton is better than none, and the license field is required before any code is merged.
 
@@ -167,7 +202,7 @@ See `models/dummy/sources.yaml` for the complete schema including `applied_liter
 
 ---
 
-## 1.6 Evaluate Endpoint Reuse
+## 1.7 Evaluate Endpoint Reuse
 
 If the new model calls an existing hosted model (e.g., ESM-2 for embeddings), verify compatibility before assuming you can reuse the endpoint:
 
@@ -184,6 +219,7 @@ If compatible, use `modal.Cls.lookup()`. Document the decision (which endpoint, 
 Before moving to Phase 2, confirm:
 
 - [ ] License confirmed permissive and recorded in `sources.yaml`
+- [ ] Scope check passed: no Modal Volume, no server-side reference DB, no server-side MSA/template search (any alignment is a request input)
 - [ ] Reference model(s) identified; key files read
 - [ ] Variants, actions, and schemas approved by user (or, running autonomously, recorded in the PR / `sources.yaml`)
 - [ ] Resource requirements estimated

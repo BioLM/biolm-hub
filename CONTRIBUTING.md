@@ -67,6 +67,15 @@ other non-commercial or "academic only" terms, and proprietary licenses. Code an
 license in `sources.yaml`, include a per-model `LICENSE`/attribution file, and never vendor weights or
 code you can't redistribute.
 
+**Scope — bounded assets only.** A model's assets must be either (a) bounded weights that `download.py`
+fetches through the `r2_then_*` wrappers (self-populating the public R2 bucket), or (b) provided by the
+caller in the request. Models that require a **Modal Volume**, a **server-side reference database**
+(UniRef / BFD / MGnify / PDB70 / …), or **server-side MSA/template search** are **out of scope** for this
+catalog — that volume lifecycle, multi-TB data hosting, and per-caller cost attribution is deliberately
+omitted here. Alignment-dependent models take the MSA as an `msa`/`alignment` input (see `chai1`, `rf3`,
+`msa_transformer`): the caller supplies the alignment; the endpoint does not search a hosted database.
+CI enforces this (`tooling/check_no_modal_volumes.py`).
+
 ## House rules (the "Global Rules")
 
 These are uniform across every model. CI and review enforce them.

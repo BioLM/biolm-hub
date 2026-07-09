@@ -1,4 +1,4 @@
-.PHONY: install style lint format mypy check check-schema-docs test test-unit test-integration test-deployment test-github-scripts docs clean
+.PHONY: install style lint format mypy check check-schema-docs check-no-volumes test test-unit test-integration test-deployment test-github-scripts docs clean
 
 # Helper to scope tests to one or more models:
 #   make test MODEL=esm2
@@ -36,11 +36,15 @@ mypy:
 
 # Everything CI runs on every PR: style + mypy + schema docs + CI-script tests + unit
 # (no Modal/R2 needed). mypy is enforced (blocking) — mirrors ci.yml.
-check: style mypy check-schema-docs test-github-scripts test-unit
+check: style mypy check-schema-docs check-no-volumes test-github-scripts test-unit
 
 # Every schema field has a rendered Field(description=...) and shared fields match the glossary.
 check-schema-docs:
 	uv run python tooling/check_schema_docs.py
+
+# Scope guard: no model mounts a Modal Volume / NFS / cloud-bucket mount (out-of-scope infra).
+check-no-volumes:
+	uv run python tooling/check_no_modal_volumes.py
 
 # All non-deployment tests (scope with MODEL=/MODELS=).
 test:

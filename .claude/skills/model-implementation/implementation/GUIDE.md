@@ -104,7 +104,7 @@ class MyModelResponse(ResponseModel):
 > (imports, decorators, class shape), but pick field names from `CONTRIBUTING.md` / the SKILL Global
 > Rules — never inherit the reference's choice. e.g. `igbert` names its unpaired chain `sequence`, but
 > a **nanobody/VHH is a lone `heavy_chain`** (never `vhh`, never `sequence`). See the reference caveat
-> in `investigation/GUIDE.md §1.3`.
+> in `investigation/GUIDE.md §1.4`.
 
 ### Field descriptions, the glossary, and the schema-doc gate
 
@@ -519,7 +519,7 @@ if __name__ == "__main__":
 > **raw** string and segments it itself — no space-join, and **character length ≠ token count**. Check
 > the `tokenizer_class` in `tokenizer_config.json` and `model_type` in `config.json` — mirroring the
 > reference's tokenization when the family differs silently produces wrong inference and is hard to
-> catch without running the model. (See `investigation/GUIDE.md §1.3`.)
+> catch without running the model. (See `investigation/GUIDE.md §1.4`.)
 
 **Anti-patterns:**
 ```python

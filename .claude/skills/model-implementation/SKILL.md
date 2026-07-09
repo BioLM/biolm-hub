@@ -43,7 +43,7 @@ Read: `investigation/GUIDE.md`
 
 Gather information, check the license, find reference models, draft `sources.yaml`, determine variants/actions/resources.
 
-**Gate:** License confirmed permissive; reference model(s) identified; actions/schemas approved.
+**Gate:** License confirmed permissive; **scope in-bounds** (no Modal Volume / server-side reference DB / server-side MSA search); reference model(s) identified; actions/schemas approved.
 
 ---
 
@@ -108,6 +108,7 @@ checklist (`implementation/GUIDE.md`) and the Phase 3/4 gates *feed* this review
 Phase 1: Investigation
   → Read: investigation/GUIDE.md
   → Check LICENSE — stop if non-permissive
+  → Check scope — stop if it needs a Modal Volume / server-side DB / server-side MSA search
   → GATE: ref model identified, actions approved
 
 Phase 2: Implementation
@@ -198,16 +199,17 @@ typed subclass instead. (See `models/igbert/schema.py` validators raising `Value
 
 ---
 
-## Common Pitfalls (top 8)
+## Common Pitfalls (top 9)
 
 1. **Non-permissive license** — check before coding anything (permissive + CC-BY-4.0; GPL needs maintainer review — see `CONTRIBUTING.md` → "License first")
-2. **`make check` failing on push** — run it locally first; never push with it red
-3. **Running tests before generating fixtures** — always `python models/MODEL/fixture.py` first
-4. **Unpinned dependencies** — every package must use `==X.Y.Z`
-5. **Unpinned HuggingFace revisions** — use 40-char commit hash, never `"main"`
-6. **Missing seeds** — set `torch`, `numpy`, `random`, `cuda` seeds for determinism (**stochastic/torch models only** — deterministic CPU/algorithmic tools like `dna_chisel`/`biotite` need none)
-7. **Modifying `models/commons/`** — breaks all other models; raise as a separate change
-8. **Wrong action verb** — use the closed set; folding = `fold`, not `predict`
+2. **Out-of-scope infrastructure** — needs a Modal Volume, a server-side reference DB (UniRef/BFD/MGnify/PDB70), or server-side MSA/template search → **STOP before coding or deploying.** The catalog takes MSAs as an `msa`/`alignment` request input; it does not host databases or run alignment on the endpoint. See `investigation/GUIDE.md §1.2` and `CONTRIBUTING.md` → "Scope — bounded assets only"
+3. **`make check` failing on push** — run it locally first; never push with it red
+4. **Running tests before generating fixtures** — always `python models/MODEL/fixture.py` first
+5. **Unpinned dependencies** — every package must use `==X.Y.Z`
+6. **Unpinned HuggingFace revisions** — use 40-char commit hash, never `"main"`
+7. **Missing seeds** — set `torch`, `numpy`, `random`, `cuda` seeds for determinism (**stochastic/torch models only** — deterministic CPU/algorithmic tools like `dna_chisel`/`biotite` need none)
+8. **Modifying `models/commons/`** — breaks all other models; raise as a separate change
+9. **Wrong action verb** — use the closed set; folding = `fold`, not `predict`
 
 See `resources/common_issues.md` for the full list.
 
