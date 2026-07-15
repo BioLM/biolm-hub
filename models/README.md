@@ -29,7 +29,7 @@ shape of the call across the whole catalog.
 <!-- BEGIN GENERATED CATALOG (tooling/gen_model_catalog.py — do not edit by hand) -->
 ## Models
 
-**37 models · 69 deployable variants.** Each row is one variant — everything you need to call it. When `bh serve` is running, invoke an action with `POST /api/v1/{endpoint-slug}/{action}`; to call the Modal class directly, use `modal.Cls.from_name("{modal-app}", ...)`. The **Actions** column lists the closed-set verbs the variant's family supports.
+**69 deployable models across 37 model families.** Each row is one variant — everything you need to call it. When `bh serve` is running, invoke an action with `POST /api/v1/{endpoint-slug}/{action}`; to call the Modal class directly, use `modal.Cls.from_name("{modal-app}", ...)`. The **Actions** column lists the closed-set verbs the variant's family supports.
 
 | Model | Base slug | Endpoint slug | Modal app | Actions | GPU |
 |-------|-----------|---------------|-----------|---------|-----|
