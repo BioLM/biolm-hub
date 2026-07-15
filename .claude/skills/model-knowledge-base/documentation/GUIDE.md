@@ -47,10 +47,16 @@ Related Models, Biological Background.
 3. **Author `MODEL.md`** — architecture and training from the paper; benchmarks only with explicit
    citations (e.g. "Table 2 of Lin et al., 2023"). Never estimate a number.
 4. **Author `BIOLOGY.md`** — molecule coverage, the biological problem, and concrete applied use cases.
-5. **Cross-link** the model's own three files in a trailing `See also:` footer at the bottom of each
-   (this footer is stripped from the built docs site but aids GitHub browsers). Refer to **other**
-   models by bold name + backtick slug in prose — never a relative `../<model>/README.md` link, and
-   don't link `sources.yaml`/`comparison.yaml` in prose (see the cross-link pitfall in `SKILL.md`).
+5. **Cross-link the model's own three files** in a trailing `See also:` footer at the bottom of each
+   file. This footer is stripped from the built docs site and only aids GitHub browsers — it is the
+   one place a same-model relative link is allowed.
+   In body prose, refer to **other** models by bold name + backtick slug (e.g. **DNABERT-2**
+   `dnabert2`) — never a relative link like `../dnabert2/README.md`. The docs generator
+   (`docs/gen_pages.py`) rewrites cross-file links by *filename*, ignoring the directory, so a
+   cross-model `README.md`/`MODEL.md`/`BIOLOGY.md` link is silently rewritten to *this* page's own
+   anchor (`#usage` / `#architecture-training` / `#biology`) — pointing at the wrong section of the
+   wrong page. Do not link `sources.yaml` / `comparison.yaml` in prose either: they are not
+   page-rewritten and render as off-site GitHub URLs.
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: model-implementation
-description: Complete workflow for implementing new biological models on biolm-hub. Use when adding a model from a paper, HuggingFace, or GitHub. Covers investigation, implementation, validation, and documentation.
+description: Complete workflow for implementing, porting, reviewing, and validating biological models on biolm-hub. Use when adding a model from a paper, HuggingFace, or GitHub, when porting or adapting a reference model, or when reviewing, verifying, or validating a model implementation for correctness and house style. Covers investigation, implementation, validation, documentation, and review.
 ---
 
 # BioLM Model Implementation Workflow
@@ -86,6 +86,10 @@ A **separate reviewer with fresh context** — spawn a subagent; same-context se
 (`CLAUDE.md`) — reviews the full diff against the four dimensions below. The Phase 2 self-review
 checklist (`implementation/GUIDE.md`) and the Phase 3/4 gates *feed* this review; they do not replace it.
 
+When `model-knowledge-base` was invoked in Phase 4, its blind re-derivation of every fabricatable value
+— benchmark numbers, author surnames, DOIs, from the primary source — folds into this single Phase 5
+review rather than running as a separate pass.
+
 1. **Schema uniformity** — field names match the uniform house rules (`sequence`/`sequences`/`msa`,
    `smiles`, batch `items`, `params`, `heavy_chain`/`light_chain`,
    `embeddings`/`logits`/`log_prob`/`score`/`plddt`/`ptm`/`pae`, batch `results`) and are **not**
@@ -102,40 +106,23 @@ checklist (`implementation/GUIDE.md`) and the Phase 3/4 gates *feed* this review
 
 ---
 
-## Quick Start
+## Command Runbook
 
+The phase map and its gates live in the Workflow Overview above; this is only the command sequence.
+Read each phase's `GUIDE.md` for the detail.
+
+```bash
+# Phase 1 is investigation — no commands. Phases 2 → 4:
+make check                                # style + mypy + schema-doc + CI-script + unit (CI's `checks` job)
+make docs                                 # mkdocs --strict (separate CI job — the generated page must build)
+python -m tooling.gen_model_catalog       # refresh models/README.md (else test_readme_catalog_is_fresh fails)
+python models/<name>/fixture.py           # record golden input + output BEFORE tests (template: models/dummy/fixture.py)
+python -m pytest models/<name>/test.py
+MODAL_ENVIRONMENT=biolm-hub-dev bh deploy <name> --force   # + one live call (REQUIRED with Modal creds; else flag unverified in PR)
 ```
-Phase 1: Investigation
-  → Read: investigation/GUIDE.md
-  → Check LICENSE — stop if non-permissive
-  → Check scope — stop if it needs a Modal Volume / server-side DB / server-side MSA search
-  → GATE: ref model identified, actions approved
 
-Phase 2: Implementation
-  → Read: implementation/GUIDE.md
-  → Create files in order
-  → GATE: make check passes
-
-Phase 3: Validation
-  → Read: validation/GUIDE.md
-  → make check (MANDATORY)
-  → make docs (mkdocs --strict — the generated page must build)
-  → python -m tooling.gen_model_catalog (regenerate models/README.md — else test_readme_catalog_is_fresh fails)
-  → python models/MODEL/fixture.py (record golden input + output; before tests; template: models/dummy/fixture.py)
-  → python -m pytest models/MODEL/test.py
-  → MODAL_ENVIRONMENT=biolm-hub-dev bh deploy MODEL + one live call (REQUIRED with Modal creds; else flag unverified in PR)
-  → GATE: coverage ≥85%; goldens recorded + loaded; dev deploy + live call (or unverified-flagged)
-
-Phase 4: Documentation
-  → Read: documentation/GUIDE.md
-  → Invoke model-knowledge-base for all five KG files (before the PR)
-  → make check && make docs && git add && git commit
-  → Create PR
-
-Phase 5: Review
-  → Fresh-context reviewer (subagent) reviews the full diff
-  → GATE: sign-off on all 4 dimensions (schema uniformity · action verbs · typed errors+logging · field descriptions+docs)
-```
+Then invoke `model-knowledge-base` for all five knowledge-graph files (before the PR), and spawn a
+fresh-context reviewer (Phase 5) over the full diff.
 
 ---
 
@@ -149,17 +136,9 @@ during implementation.
 `predict` · `fold` · `encode` · `generate` · `score` · `log_prob`. Pick the verb that matches intent —
 a folding model `fold`s, it doesn't overload `predict`. Don't invent verbs.
 
-> **`predict` legitimately covers masked-token / fill-mask prediction — but mind the payload for
-> large-vocab LMs.** The shipped `esm2` model exposes masked-LM fill-mask as `predict`:
-> `ESM2PredictRequest` takes sequences containing `<mask>` tokens and `ESM2PredictResponse` returns
-> per-position `logits` + `sequence_tokens` + `vocab_tokens` (`models/esm2/schema.py`, mapped to
-> `ModelActions.PREDICT` in `models/esm2/config.py`) — not a scalar. That is correct house style.
-> **However**, returning full per-position logits is only cheap for a **small-vocabulary** model
-> (esm2's protein alphabet is ~20 tokens → an `[L, 20]` matrix). For a **large-vocabulary** LM the
-> `[L, |vocab|]` payload bloats fast — e.g. a chemical/BPE LM like ChemBERTa has a 7,924-token vocab,
-> so a fill-mask `predict` would ship an `[L, 7924]` matrix per sequence. For large-vocab models
-> prefer `log_prob` (one pseudo-log-likelihood scalar per sequence) and/or `encode` (embeddings)
-> over a logits-returning `predict`.
+> `predict` covers masked-token / fill-mask prediction as well as scalar/label prediction. For a
+> **large-vocabulary** LM, returning full per-position logits bloats the payload — prefer `log_prob`
+> and/or `encode`. Payload sizing and the `esm2` fill-mask example: `implementation/GUIDE.md §2.2`.
 
 ### Schema field names
 Uniform across families; the biology lives in metadata/tags, not field names (canonical list in
@@ -180,38 +159,23 @@ logger = get_logger(__name__)
 from models.commons.core.error import UserError  # caller's mistake — surfaced verbatim
 # ServerError — system failure — let it propagate; never catch-and-print
 ```
-
-The full taxonomy lives in `models/commons/core/error.py`. Raise the **most specific** subclass:
-
-| Class | `code` | Raise when |
-|-------|--------|-----------|
-| `UserError` | `user.error` | generic caller mistake (user-facing base) |
-| `ValidationError400` | `user.validation` | payload passes type checks but fails a business rule |
-| `UnsupportedOptionError` | `user.unsupported_option` | caller asked for an option/variant/param the model doesn't support |
-| `ResourceNotFoundError` | `user.resource_not_found` | a user-referenced resource/asset doesn't exist |
-| `ServerError` / `ModelExecutionError` | `system.*` | internal failure — usually just let it propagate (sanitized to 5xx) |
-
-**"No bare `ValueError`" applies to imperative checks in `app.py`, NOT to Pydantic validators.** A
-field/model validator (`BeforeValidator`, `@field_validator`, `@model_validator`) raising a plain
-`ValueError` is correct house style — Pydantic turns it into a 422. In the *action code*, raise a
-typed subclass instead. (See `models/igbert/schema.py` validators raising `ValueError`, while its
-`app.py` raises `ValidationError400`.)
+Raise the **most specific** `UserError` subclass for a caller mistake in `app.py` action code; let
+system errors propagate (they're sanitized to 5xx). A Pydantic validator raising a plain `ValueError`
+is correct — that rule is about imperative checks in `app.py`, not validators. Full taxonomy table and
+worked cases: `implementation/GUIDE.md §2.4`.
 
 ---
 
-## Common Pitfalls (top 9)
+## Common Pitfalls (the five that bite first)
 
-1. **Non-permissive license** — check before coding anything (permissive + CC-BY-4.0; GPL needs maintainer review — see `CONTRIBUTING.md` → "License first")
-2. **Out-of-scope infrastructure** — needs a Modal Volume, a server-side reference DB (UniRef/BFD/MGnify/PDB70), or server-side MSA/template search → **STOP before coding or deploying.** The catalog takes MSAs as an `msa`/`alignment` request input; it does not host databases or run alignment on the endpoint. See `investigation/GUIDE.md §1.2` and `CONTRIBUTING.md` → "Scope — bounded assets only"
-3. **`make check` failing on push** — run it locally first; never push with it red
-4. **Running tests before generating fixtures** — always `python models/MODEL/fixture.py` first
-5. **Unpinned dependencies** — every package must use `==X.Y.Z`
-6. **Unpinned HuggingFace revisions** — use 40-char commit hash, never `"main"`
-7. **Missing seeds** — set `torch`, `numpy`, `random`, `cuda` seeds for determinism (**stochastic/torch models only** — deterministic CPU/algorithmic tools like `dna_chisel`/`biotite` need none)
-8. **Modifying `models/commons/`** — breaks all other models; raise as a separate change
-9. **Wrong action verb** — use the closed set; folding = `fold`, not `predict`
+1. **Non-permissive license** — check before writing any code (permissive + CC-BY-4.0; GPL needs maintainer review — see `investigation/GUIDE.md §1.1`).
+2. **Out-of-scope infrastructure** — needs a Modal Volume, a server-side reference DB (UniRef/BFD/MGnify/PDB70), or server-side MSA/template search → **STOP before coding or deploying** (`investigation/GUIDE.md §1.2`). The catalog takes MSAs as an `msa`/`alignment` request input; it does not host databases or run alignment on the endpoint.
+3. **`make check` red on push** — run it locally first; never push to re-trigger CI.
+4. **Tests before fixtures** — always `python models/<name>/fixture.py` first.
+5. **Editing `models/commons/`** — read-only during model work; raise commons changes separately.
 
-See `resources/common_issues.md` for the full list.
+Full list (dependencies, HF revisions, seeds, tokenizers, mypy, action verbs, resource tiers, …):
+`resources/common_issues.md`.
 
 ---
 
@@ -219,4 +183,6 @@ See `resources/common_issues.md` for the full list.
 
 - `resources/quick_reference.md` — file creation order, essential commands, GPU tier table, import examples
 - `resources/common_issues.md` — common pitfalls and fixes
+- `resources/model_upgrade_tiers.md` — dependency/upgrade risk tiers (GREEN/YELLOW/RED) for choosing or bumping a model's Python + package pins
+- `investigation/GUIDE.md §1.4` — the reference-model selection table (which shipped model to copy for protein / DNA / structure / folding / HF-weights / no-weights inputs)
 - `models/dummy/` — the canonical template (copy this, don't invent from scratch)

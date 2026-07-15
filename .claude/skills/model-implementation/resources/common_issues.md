@@ -1,7 +1,7 @@
 # Common Issues
 
-Pitfalls seen repeatedly when implementing models, with the fix. The `SKILL.md` lists the top 8;
-this is the fuller set.
+Pitfalls seen repeatedly when implementing models, with the fix. The `SKILL.md` lists the five that
+bite first; this is the fuller set.
 
 ## Licensing & sources
 
