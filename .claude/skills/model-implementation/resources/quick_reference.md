@@ -12,7 +12,7 @@ Create files in dependency order (later files import earlier ones):
 3. `download.py` — weight acquisition (only if the model has weights)
 4. `app.py` — the Modal app + the action methods
 5. `test.py` — the `TestSuite` (integration + deployment cases); `fixture.py` if generating fixtures
-6. `LICENSE` — the upstream license text, copied verbatim from the source repo (every model dir ships one; it must match `sources.yaml`). No upstream LICENSE file (license only a HF card metadata tag)? Record the SPDX id + canonical text/URL + a note — don't block. See `investigation/GUIDE.md §1.1`.
+6. `LICENSE` — the upstream license text, copied verbatim from the source repo (every model dir ships one; it must match `sources.yaml`). No upstream LICENSE file? See `investigation/GUIDE.md §1.1`.
 7. `__init__.py` — empty marker
 
 Then the knowledge graph (`sources.yaml`, `comparison.yaml`, `README.md`, `MODEL.md`, `BIOLOGY.md`)
@@ -58,8 +58,8 @@ logger = get_logger(__name__)
 - Mount secrets with `@app.cls(secrets=runtime_secrets(), ...)`. `runtime_secrets()` returns
   `[cloudflare_r2_secret]` normally, or `[]` under `BIOLM_SKIP_MODAL_SECRETS` so a credential-less
   deploy can still start — never hard-code `secrets=[cloudflare_r2_secret]`.
-- GPU / snapshot models also pass `experimental_options={"enable_gpu_snapshot": True}` on `@app.cls`
-  (see `models/dummy/app.py`); CPU / no-weights models omit it.
+- GPU / snapshot models also pass `experimental_options={"enable_gpu_snapshot": True}` on `@app.cls`;
+  it is GPU-only — omit it on any CPU (`gpu=None`) container. Definitive rule: `implementation/GUIDE.md §2.4`.
 - Use only `ModelMixin` / `ModelMixinSnap` from `models.commons.model.base` as base classes; don't inherit a base class from another repository. (The repo *does* ship its own response cache — a decorator-driven R2 cache in `models/commons/core/caching.py`, off by default and never for `generate` — but you don't wire caching in per-model.)
 
 ## GPU / resource tiers (Modal)

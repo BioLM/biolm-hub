@@ -11,7 +11,7 @@ Write all model files in dependency order, following the patterns from `models/d
 4. `app.py` — Modal application
 5. `test.py` — test suite
 6. `fixture.py` — golden-fixture generator (required for almost every model, stochastic ones included — golden input + recorded output is the default validation path, compared with the tolerance mode that matches the output type; see §2.5 / §2.6)
-7. `LICENSE` — the upstream license text, copied verbatim from the source repo (required in every model dir; the license must match `sources.yaml` and the README). **If upstream ships no LICENSE file** (the license exists only as a HuggingFace card metadata tag — very common): record the SPDX id + the canonical license text/URL (SPDX / Creative Commons / OSI page) and a note that upstream declares it only via metadata; don't block on the missing file. The permissive-only gate still applies to the tagged license.
+7. `LICENSE` — the upstream license text, copied verbatim from the source repo (required in every model dir; the license must match `sources.yaml` and the README). No upstream LICENSE file (license only a HF card metadata tag)? See `investigation/GUIDE.md §1.1`.
 8. `__init__.py` — empty package marker
 
 ---
@@ -56,6 +56,10 @@ class MyModelRequest(RequestModel):
 class MyModelResponse(ResponseModel):
     embedding: list[float] = Field(description="Per-sequence embedding vector.")
 ```
+
+> A **pooled** per-sequence vector is `embedding`/`embeddings`; a **per-residue** matrix is the
+> distinct canonical `residue_embeddings` (not `per_token_embeddings`). Confirm output names against
+> `tooling/field_glossary.yaml`.
 
 **Requirements:**
 - Use `RequestModel` (strict) for inputs, `ResponseModel` (lenient) for outputs
@@ -250,6 +254,18 @@ naming_function=lambda base_slug, cfg: (
 - `action_schemas` is a list of `ActionSchemaMap(name=..., request_schema=..., response_schema=...)`
 - `naming_function` takes `(base_slug: str, cfg: dict)` and returns `tuple[str, str]`
 - Include complete `ModelTags` — used for catalog discovery
+
+> **`predict` legitimately covers masked-token / fill-mask prediction — but mind the payload for
+> large-vocab LMs.** The shipped `esm2` model exposes masked-LM fill-mask as `predict`:
+> `ESM2PredictRequest` takes sequences containing `<mask>` tokens and `ESM2PredictResponse` returns
+> per-position `logits` + `sequence_tokens` + `vocab_tokens` (`models/esm2/schema.py`, mapped to
+> `ModelActions.PREDICT` in `models/esm2/config.py`) — not a scalar. That is correct house style.
+> **However**, returning full per-position logits is only cheap for a **small-vocabulary** model
+> (esm2's protein alphabet is ~20 tokens → an `[L, 20]` matrix). For a **large-vocabulary** LM the
+> `[L, |vocab|]` payload bloats fast — e.g. a chemical/BPE LM like ChemBERTa has a 7,924-token vocab,
+> so a fill-mask `predict` would ship an `[L, 7924]` matrix per sequence. For large-vocab models
+> prefer `log_prob` (one pseudo-log-likelihood scalar per sequence) and/or `encode` (embeddings)
+> over a logits-returning `predict`.
 
 ---
 
@@ -512,14 +528,11 @@ if __name__ == "__main__":
 > here. Either is correct; just don't mix a `snap=False` GPU move with a `snap=True` that already loaded
 > to GPU.
 
-> **Verify the tokenizer family from the UPSTREAM model, not the reference.** A BERT/WordPiece model
-> (e.g. `igbert`) space-joins residues (`" ".join(seq)`); a RoBERTa char-level byte-BPE model passes
-> the **raw** sequence (no spaces); a **subword / k-mer / custom-vocabulary tokenizer** (BPE, k-mer —
-> as in DNA models like `dnabert2` (BPE) and the Nucleotide Transformer (upstream, k-mer)) also takes the
-> **raw** string and segments it itself — no space-join, and **character length ≠ token count**. Check
-> the `tokenizer_class` in `tokenizer_config.json` and `model_type` in `config.json` — mirroring the
-> reference's tokenization when the family differs silently produces wrong inference and is hard to
-> catch without running the model. (See `investigation/GUIDE.md §1.4`.)
+> **Tokenizer family — verify from the upstream model, not the reference.** How you feed input
+> (space-joined residues vs the raw string) depends on the tokenizer family, which you confirm from the
+> upstream `tokenizer_config.json` (`tokenizer_class`) / `config.json` (`model_type`) — never inherited
+> from the reference file you copied. Full three-bucket breakdown (BERT/WordPiece · RoBERTa byte-BPE ·
+> subword/k-mer/custom): `investigation/GUIDE.md §1.4`.
 
 **Anti-patterns:**
 ```python
@@ -528,15 +541,23 @@ print("loading model")                                  # WRONG — use logger
 raise ValueError("bad sequence")                        # WRONG (in app.py action code) — raise a typed error subclass
 ```
 
-> **Errors: use the specific subclass; `ValueError` in validators is fine.** `models/commons/core/error.py`
-> defines the taxonomy — raise the most specific one for a bad-input branch in this action code:
-> `ValidationError400` (values pass type checks but fail a business rule), `UnsupportedOptionError`
-> (unsupported option/variant/param), `ResourceNotFoundError` (a referenced asset is missing), or plain
-> `UserError` when none fits. System failures (`ServerError`/`ModelExecutionError`) should just
-> propagate — the gateway sanitizes them to 5xx. **The "no bare `ValueError`" rule is about imperative
-> checks here in `app.py`, NOT Pydantic validators:** a `BeforeValidator` / `@field_validator` /
-> `@model_validator` raising a plain `ValueError` is correct house style — Pydantic collects it into a
-> 422 (see `models/igbert/schema.py` validators raising `ValueError`, while `app.py` raises `ValidationError400`).
+**Errors — raise the most specific subclass; `ValueError` in validators is fine.**
+`models/commons/core/error.py` defines the taxonomy. In this action code, raise the most specific class
+for a bad-input branch; let system failures (`ServerError`/`ModelExecutionError`) propagate — the
+gateway sanitizes them to 5xx.
+
+| Class | `code` | Raise when |
+|-------|--------|-----------|
+| `UserError` | `user.error` | generic caller mistake (user-facing base) |
+| `ValidationError400` | `user.validation` | payload passes type checks but fails a business rule |
+| `UnsupportedOptionError` | `user.unsupported_option` | caller asked for an option/variant/param the model doesn't support |
+| `ResourceNotFoundError` | `user.resource_not_found` | a user-referenced resource/asset doesn't exist |
+| `ServerError` / `ModelExecutionError` | `system.*` | internal failure — usually just let it propagate (sanitized to 5xx) |
+
+**The "no bare `ValueError`" rule is about imperative checks here in `app.py`, NOT Pydantic
+validators:** a `BeforeValidator` / `@field_validator` / `@model_validator` raising a plain `ValueError`
+is correct house style — Pydantic collects it into a 422 (see `models/igbert/schema.py` validators
+raising `ValueError`, while `app.py` raises `ValidationError400`).
 
 ### CPU / no-weights variant
 
@@ -624,6 +645,8 @@ class MyModelImplementation(ModelMixinSnap):
 ## 2.5 `test.py`
 
 ```python
+from typing import Any
+
 from models.commons.model.schema import ModelActions
 from models.commons.testing.config import ActionTestCase, TestSuite, VariantTestMapping
 from models.commons.testing.runner import generate_tests_from_suite
@@ -631,7 +654,7 @@ from models.my_model.config import MODEL_FAMILY
 from models.my_model.schema import MyModelRequest
 
 
-def _validate_encode(actual_output: dict, _expected_output: dict = None) -> None:
+def _validate_encode(actual_output: dict[str, Any], _expected_output: dict[str, Any] | None = None) -> None:
     """Custom validator — asserts a structural contract when the output can't be
     expressed as a tolerance (see the mode table below and §2.6). NOT a fallback
     for 'non-deterministic': stochastic models still use goldens + a tolerance."""
@@ -707,11 +730,10 @@ kwargs in **`models/commons/testing/comparator.py`** — that file is the author
 
 Write `fixture.py` for **almost every model** — golden input + recorded golden output is the default
 validation path (§2.5), using `input_filename_template` + `expected_output_fixture`. This applies to
-**stochastic models too**: pick the `tolerances=` mode that matches the output type (a folding model
-pins structure with `pdb_rmsd_threshold`; a generator pins length with `is_generated_seq`), so the
-golden still holds. Skip golden generation and validate entirely with a custom `validator=` only when
-the contract genuinely can't be expressed as a tolerance (e.g. "parses as valid CIF", "returns exactly
-N samples") — justify that in the PR. **Copy the template at `models/dummy/fixture.py`** and adapt it —
+**stochastic models too**: the `tolerances=` mode that matches the output type absorbs run-to-run
+noise, so the golden still holds (mode table in §2.5). Skip golden generation and validate entirely
+with a custom `validator=` only when the contract genuinely can't be expressed as a tolerance (e.g.
+"parses as valid CIF", "returns exactly N samples") — justify that in the PR. **Copy the template at `models/dummy/fixture.py`** and adapt it —
 `models/esm2/fixture.py` is a fuller multi-fixture example. Before opening the PR, run `python
 models/<name>/fixture.py` so the goldens are recorded, and verify an integration test loads them (a
 maintainer populates the public `biolm-public` bucket — see the R2-credentials note below and
