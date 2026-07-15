@@ -1,6 +1,6 @@
 ---
 name: model-knowledge-base
-description: Author the five knowledge-graph files (sources.yaml, comparison.yaml, README.md, MODEL.md, BIOLOGY.md) for a model in biolm-hub. Use when adding a new model or improving existing documentation for a model whose sources are publicly available on arXiv/bioRxiv/GitHub/HuggingFace.
+description: Author a model's knowledge graph in biolm-hub — the five files sources.yaml, comparison.yaml, README.md, MODEL.md, and BIOLOGY.md for one model. Use when adding a new model, when improving an existing model's knowledge graph, and when the model-implementation flow reaches its documentation phase; also runs standalone. Applies to any model whose sources are public on arXiv/bioRxiv/GitHub/HuggingFace.
 ---
 
 # Model Knowledge Base
@@ -35,11 +35,18 @@ All templates live in `models/dummy/`. Point at those -- do not duplicate them h
 
 ## Critical Rules
 
-1. **`models/commons/` is read-only.** Never edit it as part of KB work.
-2. **License first.** Only permissively-licensed models (MIT / Apache-2.0 / BSD and compatible) are
+1. **Never fabricate — this rule outranks every count and every template field.** Every benchmark
+   number, DOI, author name, venue, and citation must come from a source you have actually read: a
+   paper table or figure, a LICENSE file, a model card. When an honest, exhaustive search comes up
+   short — fewer than three applied papers, an unresolved license, a benchmark the paper doesn't
+   report — write one line documenting the gap and move on. A target count or an empty template
+   field is never a reason to invent a value. A documented gap passes every gate in this skill; an
+   invented value fails review even when every box is checked.
+2. **`models/commons/` is read-only.** Never edit it as part of KB work.
+3. **License first.** Only permissively-licensed models (MIT / Apache-2.0 / BSD and compatible) are
    accepted. Verify the upstream license before writing any documentation.
-3. **Templates from `models/dummy/`.** Not from this skill directory.
-4. **Public sources only.** Read papers from arXiv/bioRxiv/DOI URLs and code from
+4. **Templates from `models/dummy/`.** Not from this skill directory.
+5. **Public sources only.** Read papers from arXiv/bioRxiv/DOI URLs and code from
    GitHub/HuggingFace. No internal R2 access is required to complete this skill.
 
 ## Workflow (4 Phases, in order)
@@ -51,18 +58,8 @@ All templates live in `models/dummy/`. Point at those -- do not duplicate them h
 | 3. Documentation | `README.md`, `MODEL.md`, `BIOLOGY.md` | `documentation/GUIDE.md` |
 | 4. Validation | All files cross-checked | `validation/GUIDE.md` |
 
-Do not skip phases. Each phase has a gate that must pass before proceeding.
-
-## Quick Start
-
-For a model that has `config.py` and `app.py` but no knowledge-graph files:
-
-```
-1. Read discovery/GUIDE.md     ->  create sources.yaml
-2. Read comparison/GUIDE.md    ->  create comparison.yaml
-3. Read documentation/GUIDE.md ->  create README.md, MODEL.md, BIOLOGY.md
-4. Read validation/GUIDE.md    ->  cross-check everything; run make style && make docs
-```
+Do not skip phases. Each phase gate must pass before the next begins. After Phase 4, the knowledge
+graph is PR-ready only once `make style` and `make docs` both pass (`validation/GUIDE.md` runs these).
 
 ## Common Pitfalls
 
@@ -73,24 +70,17 @@ For a model that has `config.py` and `app.py` but no knowledge-graph files:
   text in `sources.yaml`/`LICENSE` and note it; don't get blocked on the missing file.
 - **Fabricated benchmark numbers** -- only use values directly from papers with explicit citations
   (e.g., "Table 2 of Lin et al., 2023"). Never estimate.
-- **Fabricated citations to hit the ≥3 applied-papers target** -- for a niche or new model, if an
-  honest, exhaustive search finds fewer than 3 applied papers, **document the gap** (short
-  `applied_literature` + a one-line note) — never invent a DOI, title, author, or number to reach the
-  count. The "≥3 papers" target never overrides the anti-fabrication rule.
+- **Fabricated citations to hit the ≥3 applied-papers target** -- when an honest search finds fewer
+  than three, document the gap; never invent one. Procedure: `discovery/GUIDE.md` Step 4.
 - **Content duplication across MODEL.md and README.md** -- README.md has concise summaries;
   MODEL.md has full technical depth. Do not copy paragraphs between them.
 - **Old action names** -- the canonical actions are `predict`, `fold`, `encode`, `generate`,
   `score`, `log_prob`. Do not use deprecated names (`predict_log_prob`, `extract_features`, `vhh`).
 - **Missing cross-references** -- README.md, MODEL.md, and BIOLOGY.md must link to each other at
   the bottom of each file.
-- **Linking *other* models (or the YAML files) by relative path in prose** -- in body prose such as
-  BIOLOGY.md's *Related Models* section, name other models in **bold** + backtick slug (e.g.
-  **DNABERT-2** `dnabert2`); never write a relative link like `../dnabert2/README.md`. The docs
-  generator (`docs/gen_pages.py`) keys link-rewriting on the *filename*, ignoring the directory, so a
-  cross-model `README.md`/`MODEL.md`/`BIOLOGY.md` link is silently rewritten to *this* page's own
-  section anchor (`#usage`/`#architecture-training`/`#biology`) — pointing at the wrong section, not the
-  other model. Don't link `sources.yaml`/`comparison.yaml` in prose either -- they aren't page-rewritten
-  and render as off-site GitHub URLs. (The self-cross-link *footer* from the pitfall above is fine: it's
-  stripped from the built docs site and only aids GitHub browsers.)
+- **Cross-model or YAML links in prose** — never link another model or a `.yaml` file by relative
+  path in body prose; name other models in **bold + backtick slug** (e.g. **DNABERT-2** `dnabert2`).
+  The docs generator rewrites cross-file links by filename alone, so a relative link silently
+  misfires. Mechanics and the one allowed exception: `documentation/GUIDE.md` Step 5.
 - **Non-permissive license** -- if you find a CC-BY-NC or custom non-commercial license, do not
   proceed. Flag it in the PR; the model may not be eligible for the catalog.
