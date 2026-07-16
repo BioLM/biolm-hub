@@ -33,6 +33,15 @@ serve = [
     "jinja2>=3.1.0,<4.0.0",
 ]
 
+# MCP server (`bh mcp`) — surfaces the catalog (knowledge graphs + per-action schemas) over the
+# Model Context Protocol so agents can probe and compose model pipelines. Opt-in:
+# `pip install "biolm-hub[mcp]"`. The SDK bundles its own FastMCP server + a Streamable-HTTP ASGI
+# app (uvicorn, in the [serve] extra, hosts `bh mcp --http`). Pinned exact; a v2 rename is imminent
+# and the import is quarantined in gateway/mcp/_sdk.py.
+mcp = [
+    "mcp==1.28.1",
+]
+
 # Documentation site (`make docs`). The site is generated at build time from each
 # model's config + knowledge graph by docs/gen_pages.py — there are no committed
 # per-model doc pages to keep in sync. Opt-in: `pip install "biolm-hub[docs]"`.
