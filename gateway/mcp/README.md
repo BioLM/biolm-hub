@@ -11,37 +11,38 @@
 it reads the repo. Only `invoke_action` touches Modal.*
 
 ```bash
-# 1 — Install (the MCP server is an opt-in extra; `make install` already includes it)
+# The MCP server is an opt-in extra (`make install` already includes it).
 pip install "biolm-hub[mcp]"
-
-# 2 — Run it (stdio: local, zero network, the everyday path)
-bh mcp
-#   …or serve Streamable HTTP for a remote/multi-client agent:
-bh mcp --http --port 9000        # → http://127.0.0.1:9000/mcp
 ```
 
-Point an agent at it. For a client that reads an `mcpServers` config (Claude Desktop, Claude Code, an
-SDK agent):
+A stdio MCP server is **spawned by the client, not run by hand** — you don't run `bh mcp` yourself and
+leave it up; the client (the Inspector, Claude Code, Claude Desktop) launches it over stdin/stdout, so
+run bare it just blocks waiting for a client. Point clients at the **absolute** path to the venv's `bh`
+— a bare `bh` isn't on the spawned process's PATH.
+
+**See it now** — the MCP Inspector (a browser UI, no agent; needs Node):
+
+```bash
+npx @modelcontextprotocol/inspector "$(pwd)/.venv/bin/bh" mcp
+```
+
+**Claude Code** — `--scope user` makes it global (default `local` is repo-dir-only); verify, then
+restart Claude Code (a running session won't see a newly-added server):
+
+```bash
+claude mcp add --scope user biolm-hub -- "$(pwd)/.venv/bin/bh" mcp     # then `claude mcp list` → ✔ Connected
+```
+
+**Config-file clients** (Claude Desktop, SDK agents) use the same absolute path:
 
 ```jsonc
-// stdio (local) — the client spawns `bh mcp`
-{ "mcpServers": { "biolm-hub": { "command": "bh", "args": ["mcp"] } } }
-
-// or Streamable HTTP (a running `bh mcp --http`)
+// stdio — replace /ABS/PATH with your checkout
+{ "mcpServers": { "biolm-hub": { "command": "/ABS/PATH/biolm-hub/.venv/bin/bh", "args": ["mcp"] } } }
+// or Streamable HTTP (a running `bh mcp --http`):
 { "mcpServers": { "biolm-hub": { "url": "http://127.0.0.1:9000/mcp" } } }
 ```
 
-That's it — the agent can now probe the whole catalog.
-
-### Try it (all verified end-to-end)
-
-```bash
-npx @modelcontextprotocol/inspector bh mcp                             # click-around UI (needs Node)
-claude mcp add biolm-hub -- bh mcp                                     # Claude Code → `claude mcp list` shows ✔ Connected
-npx @modelcontextprotocol/inspector --cli bh mcp --method tools/list   # one-shot check from a shell
-```
-
-The [For agents](../../docs/mcp.md) docs page has a sample prompt + the full probe → compose walkthrough.
+The [For agents](../../docs/mcp.md) docs page has the full step-by-step + a sample prompt.
 
 ### Host it on Modal (opt-in)
 
@@ -85,14 +86,17 @@ Read `biolm://capabilities` first for the exact `molecule` / `task` / `action` v
 
 > *"Design a protein that binds target X, then check the designs are plausible."*
 
-1. **Which models?** `search_models(task="inverse_folding")` → ProteinMPNN + friends, each with a
+1. **Which models?** `list_models(task="inverse_folding")` → ProteinMPNN + friends, each with a
    one-liner and capability tags.
 2. **Right fit?** `get_model_knowledge("mpnn")` → when to use / when NOT, benchmarks, and its
    **complements** point at ESM-2 for scoring.
 3. **How to call them?** `get_model_schema("mpnn", "generate")` + `get_model_schema("esm2-650m",
    "log_prob")` → exact request/response JSON Schemas.
-4. **Run the chain.** `invoke_action("mpnn", "generate", …)` designs → `invoke_action("esm2-650m",
-   "log_prob", …)` scores them. All from metadata the MCP already had.
+4. **Run the chain.** `invoke_action("protein-mpnn", "generate", …)` designs →
+   `invoke_action("esm2-650m", "log_prob", …)` scores them. All from metadata the MCP already had.
+
+`invoke_action` takes a deployable **variant** slug (`protein-mpnn`, `esm2-650m`); the probe tools also
+accept the **family** slug (`mpnn`, `esm2`).
 
 The narrative version of this — the "why it exists" pitch — is the [For agents (MCP)](../../docs/mcp.md)
 docs page.
@@ -111,7 +115,7 @@ trace):
 | Model isn't deployed | `Model 'esm2-650m' isn't deployed to Modal. Deploy it with: bh deploy esm2` |
 | Modal auth/token missing | `Modal authentication failed. Set up credentials with: modal token new` |
 | Timed out / can't reach Modal | `'esm2-650m/encode' timed out on Modal.` / `Couldn't reach Modal…` |
-| Invalid input | `Invalid input for esm2-650m/encode: items.0.sequence: field required` (before any call) |
+| Invalid input | `Invalid input for esm2-650m/encode: items.0.sequence: Field required` (before any call) |
 | The model rejects the request | The model's own `detail` + error `code`, surfaced verbatim |
 
 > [!WARNING]
