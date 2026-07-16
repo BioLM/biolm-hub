@@ -15,7 +15,7 @@
   <a href="https://biolm.github.io/biolm-hub/"><img alt="Docs" src="https://img.shields.io/badge/docs-live-14b8a6.svg"></a>
   <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg"></a>
   <img alt="Python 3.12+" src="https://img.shields.io/badge/python-3.12%2B-blue.svg">
-  <img alt="37 models" src="https://img.shields.io/badge/models-37-6d28d9.svg">
+  <img alt="69 deployable models across 37 model families" src="https://img.shields.io/badge/models-69%20deployable%20%C2%B7%2037%20families-6d28d9.svg">
   <a href="https://github.com/BioLM/biolm-hub/discussions"><img alt="Discussions" src="https://img.shields.io/badge/discussions-join-ff8a00.svg"></a>
 </p>
 
@@ -35,7 +35,7 @@ prediction. Everyone who touches that model, human or agent, pays the tax again.
 
 **biolm-hub is the missing substrate.** Every model has the same layout, the same action verbs, the
 same schemas, and a machine-readable knowledge graph — so anyone can pull a model off the shelf and
-have it running in **minutes, not days**. **37 models today**, one uniform interface, built to grow as
+have it running in **minutes, not days**. **69 deployable models across 37 families today**, one uniform interface, built to grow as
 the community adds more.
 
 ## Quickstart
