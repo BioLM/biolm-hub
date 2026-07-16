@@ -53,13 +53,19 @@ Read `biolm://capabilities` first for the exact `molecule` / `task` / `action` v
 
 ## The flow it's built for — probe, then compose
 
-> *"Design a protein, then check it's plausible."*
+> *"Design a protein that binds target X, then check the designs are plausible."*
 
-1. `search_models(task="inverse_folding")` → candidates (e.g. `mpnn`).
-2. `get_model_knowledge("mpnn")` → confirms fit, and its **complements** point to `esm2` for scoring.
-3. `get_model_schema("esm2-650m", action="log_prob")` → the exact request shape.
-4. `invoke_action("mpnn-…", "generate", items=[…])` → designs → `invoke_action("esm2-650m", "log_prob", …)`
-   → scores them. All from metadata the MCP already had.
+1. **Which models?** `search_models(task="inverse_folding")` → ProteinMPNN + friends, each with a
+   one-liner and capability tags.
+2. **Right fit?** `get_model_knowledge("mpnn")` → when to use / when NOT, benchmarks, and its
+   **complements** point at ESM-2 for scoring.
+3. **How to call them?** `get_model_schema("mpnn", "generate")` + `get_model_schema("esm2-650m",
+   "log_prob")` → exact request/response JSON Schemas.
+4. **Run the chain.** `invoke_action("mpnn", "generate", …)` designs → `invoke_action("esm2-650m",
+   "log_prob", …)` scores them. All from metadata the MCP already had.
+
+The narrative version of this — the "why it exists" pitch — is the [For agents (MCP)](../../docs/mcp.md)
+docs page.
 
 ## Invoking models — and what happens when things go wrong
 
