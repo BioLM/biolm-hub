@@ -13,6 +13,7 @@ from rich.text import Text
 from cli.cache import cache_app
 from cli.deploy import deploy_cmd
 from cli.kb import kb_app
+from cli.mcp import mcp_cmd
 from cli.r2 import r2_app
 from cli.serve import serve_cmd
 from cli.setup import setup_cmd
@@ -60,6 +61,9 @@ app.command("deploy")(deploy_cmd)
 # Mount the serve command (local catalog web app)
 app.command("serve")(serve_cmd)
 
+# Mount the mcp command (Model Context Protocol server over the catalog)
+app.command("mcp")(mcp_cmd)
+
 
 def display_cli_help() -> None:
     """Display a rich formatted help message."""
@@ -82,6 +86,7 @@ def display_cli_help() -> None:
     commands_table.add_row("setup", "Check your Modal + R2 configuration")
     commands_table.add_row("deploy", "Deploy one or more models to Modal")
     commands_table.add_row("serve", "Launch the local catalog web app")
+    commands_table.add_row("mcp", "Run the MCP server over the model catalog")
     commands_table.add_row("cache", "Inspect response-caching configuration")
     commands_table.add_row("r2", "Browse Cloudflare R2 storage (read-only)")
     commands_table.add_row("kb", "Manage model knowledge bases")
