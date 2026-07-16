@@ -51,11 +51,19 @@ Probing the catalog needs **no Modal account** — it reads the repo. Only `invo
 | `search_models` | Free-text + capability search, ranked — the "which models?" step. |
 | `get_model_knowledge` | When to use / when **not**, strengths, alternatives, complements, benchmarks, citations (`format` = `json` or `md`). |
 | `get_model_schema` | A model's per-action request/response JSON Schema. |
+| `find_alternatives` | A model's alternatives — competitors with when-each-is-better/worse notes, to swap one out. |
+| `find_complements` | A model's complements — the models it chains with, and the workflow for how. |
+| `suggest_pipeline` | A deterministic, explainable first-draft pipeline for a free-text goal — a heuristic over the complements graph, **not** an LLM plan. |
+| `get_openapi` | The gateway's full OpenAPI (JSON), generated in-process; optional `slug` slices to one model (needs the `[serve]` extra). |
 | `invoke_action` | Run an action on a deployed model — with clean, actionable errors if it isn't deployed, auth fails, or the input is invalid. |
 
 The same data is mirrored as cacheable **resources** (`biolm://catalog`, `biolm://capabilities`,
-`biolm://model/{slug}[/knowledge|/schema]`) for clients that read them. Start from
+`biolm://openapi`, `biolm://model/{slug}[/knowledge|/schema]`) for clients that read them, and the
+`compose_pipeline(goal)` **prompt** seeds a probe-then-compose plan. Start from
 `biolm://capabilities` for the exact molecule/task/action vocabulary to filter on.
+
+Host the whole thing on Modal (stateless Streamable HTTP) with `modal deploy gateway/mcp/deploy_mcp.py`
+— an opt-in, unauthenticated surface with the same stance as the gateway.
 
 ## The property that makes it scale
 
