@@ -33,6 +33,19 @@ SDK agent):
 
 That's it — the agent can now probe the whole catalog.
 
+### Host it on Modal (opt-in)
+
+`gateway/mcp/deploy_mcp.py` hosts the MCP server on Modal over **stateless** Streamable HTTP, mirroring
+the gateway deployment:
+
+```bash
+modal deploy gateway/mcp/deploy_mcp.py    # → https://<workspace>--biolm-mcp-web.modal.run/mcp
+```
+
+Point a client at the deployed `/mcp` URL. Bind a custom domain with `BIOLM_MCP_DOMAIN`. Like the
+gateway, the hosted surface is **unauthenticated and bills your Modal account** — don't expose it
+publicly without your own access control. It stays metadata-only until a client calls `invoke_action`.
+
 ## What the agent gets
 
 **Tools** (work in every MCP client):
@@ -43,11 +56,18 @@ That's it — the agent can now probe the whole catalog.
 | `search_models` | Free-text search + capability filters, ranked — the "which models?" step. |
 | `get_model_knowledge` | When to use / when **not** to, strengths, benchmarks, alternatives, complements. `format` = `json` (default) or `md`. |
 | `get_model_schema` | A model's per-action request/response JSON Schema — the "how do I call it?" step. |
+| `find_alternatives` | A model's **alternatives** (competitors + when each is better/worse) — swap one model for another. |
+| `find_complements` | A model's **complements** (the models it chains with, and the workflow for how). |
+| `suggest_pipeline` | A deterministic, explainable first-draft pipeline for a free-text `goal` — a heuristic over the complements graph, **not** an LLM plan. |
+| `get_openapi` | The gateway's full OpenAPI (JSON), generated in-process; optional `slug` slices to one model. Needs the `[serve]` extra. |
 | `invoke_action` | Run an action on a **deployed** variant and get the model's response. |
 
 **Resources** (a cacheable mirror, for clients that read resources):
-`biolm://catalog` · `biolm://capabilities` · `biolm://model/{slug}` · `biolm://model/{slug}/knowledge`
-· `biolm://model/{slug}/schema`.
+`biolm://catalog` · `biolm://capabilities` · `biolm://openapi` · `biolm://model/{slug}` ·
+`biolm://model/{slug}/knowledge` · `biolm://model/{slug}/schema`.
+
+**Prompt:** `compose_pipeline(goal)` seeds an agent with the capability vocab + catalog summary and
+asks it to draft a probe-then-compose plan.
 
 Read `biolm://capabilities` first for the exact `molecule` / `task` / `action` vocabulary to filter on.
 
