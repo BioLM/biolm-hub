@@ -16,7 +16,6 @@ Deploy (from the repo root):
     BIOLM_CACHE_ENABLED=1 python -m gateway.deploy_gateway --cache
 """
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import modal
@@ -26,6 +25,7 @@ from gateway.config import (
     local_gateway_path,
     remote_gateway_path,
 )
+from models.commons.model.naming import MODELS_DIR
 from models.commons.util.config import (
     cloudflare_r2_secret,
     common_requirements,
@@ -37,8 +37,8 @@ if TYPE_CHECKING:
 
 # The gateway imports every model's config.py at startup, so it needs the WHOLE
 # models/ tree (models/__init__.py + models/commons/ + every models/<slug>/)
-# mounted at /root/models, so we compute the real source dir here.
-_local_models_dir = Path(__file__).resolve().parent.parent / "models"
+# mounted at /root/models. MODELS_DIR is the canonical repo models/ dir.
+_local_models_dir = MODELS_DIR
 _pycache_ignore = modal.FilePatternMatcher("**/__pycache__", "**/*.pyc")
 
 image = (

@@ -21,6 +21,7 @@ from models.commons.modal.downloader import setup_download_layer
 from models.commons.modal.source import setup_source_layer
 from models.commons.model.base import ModelMixinSnap
 from models.commons.model.config import biolm_model_class
+from models.commons.model.naming import REPO_ROOT
 from models.commons.util.config import (
     common_requirements,
     runtime_secrets,
@@ -147,7 +148,7 @@ class RF3Model(ModelMixinSnap):
         logger.info("RF3 model directory: %s", self.model_dir)
 
         # Set up environment for foundry
-        os.environ["PROJECT_ROOT"] = str(Path(__file__).parent.parent.parent)
+        os.environ["PROJECT_ROOT"] = str(REPO_ROOT)
 
         # Get device
         self.device = get_torch_device()
