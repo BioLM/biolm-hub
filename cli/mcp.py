@@ -35,6 +35,13 @@ def mcp_cmd(
             'Install it with: pip install "biolm-hub[mcp]"'
         ) from e
 
+    # stdio reserves stdout for the JSON-RPC protocol, so any log line on stdout corrupts the
+    # stream and breaks the client. Route logging to stderr before anything logs (harmless under
+    # --http). Model discovery logs during build_mcp_server, so this must come first.
+    from models.commons.core.logging import route_root_logging_to_stderr
+
+    route_root_logging_to_stderr()
+
     # invoke_action reads MODAL_ENVIRONMENT at call time (mirrors `bh serve`).
     if env:
         os.environ["MODAL_ENVIRONMENT"] = env

@@ -33,6 +33,16 @@ SDK agent):
 
 That's it — the agent can now probe the whole catalog.
 
+### Try it (all verified end-to-end)
+
+```bash
+npx @modelcontextprotocol/inspector bh mcp                             # click-around UI (needs Node)
+claude mcp add biolm-hub -- bh mcp                                     # Claude Code → `claude mcp list` shows ✔ Connected
+npx @modelcontextprotocol/inspector --cli bh mcp --method tools/list   # one-shot check from a shell
+```
+
+The [For agents](../../docs/mcp.md) docs page has a sample prompt + the full probe → compose walkthrough.
+
 ### Host it on Modal (opt-in)
 
 `gateway/mcp/deploy_mcp.py` hosts the MCP server on Modal over **stateless** Streamable HTTP, mirroring

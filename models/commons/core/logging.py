@@ -48,6 +48,22 @@ def get_logger(name: str) -> logging.Logger:
     return logging.getLogger(name)
 
 
+def route_root_logging_to_stderr() -> None:
+    """Redirect stdout-bound root log handlers to stderr.
+
+    A stdio-protocol server (``bh mcp``) reserves **stdout** for JSON-RPC framing, so any log line
+    written there corrupts the stream and breaks the client. Call this before serving so the
+    framework's logs (and anything propagating to the root logger, e.g. the MCP SDK) go to stderr.
+    """
+    configure_logging()
+    for handler in logging.getLogger().handlers:
+        if (
+            isinstance(handler, logging.StreamHandler)
+            and getattr(handler, "stream", None) is sys.stdout
+        ):
+            handler.setStream(sys.stderr)
+
+
 def truncate_for_debug(obj: Any, max_length: int = DEBUG_MAX_FIELD_LENGTH) -> Any:
     """
     Recursively truncate long string fields in objects for debug logging.
