@@ -15,6 +15,7 @@ dependencies = [
     "biopython>=1.84,<2.0.0",
     "orjson>=3.10.11,<4.0.0",
     "pydantic==2.13.4",
+    "pyyaml>=6.0,<7.0",  # knowledge-graph loader + `bh kb` read sources/comparison YAML
     "rich>=13.9.4,<16.0.0",
     "typer>=0.13.1,<1.0.0",
 ]

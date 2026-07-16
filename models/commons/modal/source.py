@@ -38,6 +38,20 @@ def setup_source_layer(
 
         from models.commons.util.config import remote_models_path, skip_modal_secrets
 
+        # Guarantee PyYAML in every model image (this layer is common to ALL models, incl. the
+        # weightless/algorithmic ones that skip the download layer). The framework's
+        # ``ModelMixin.knowledge_graph()`` method reads each model's sources/comparison YAML at
+        # request time, so its parser must be importable in-container. A RANGE (not an exact pin)
+        # so it stays a no-op where a model already pins its own PyYAML (e.g. boltzgen, immunefold)
+        # — any 6.x works for the loader — while still installing it where nothing else does.
+        image = image.uv_pip_install("pyyaml>=6.0,<7.0")
+
+        # Bake the model slug into the image so ``ModelMixin.knowledge_graph()`` can find its own
+        # KG files at ``/root/models/<slug>/`` deterministically. Modal runs the app as ``__main__``
+        # via its own entrypoint, so ``inspect``/``sys.modules`` resolve to the runner, not app.py —
+        # an env var is the reliable in-container signal (this layer runs for every model).
+        image = image.env({"_BIOLM_MODEL_SLUG": base_model_slug})
+
         # Use relative paths for Modal's add_local_dir
         local_models_base = Path("models")
         remote_models_base = Path(remote_models_path)
