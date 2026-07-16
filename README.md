@@ -96,12 +96,16 @@ curl -s http://127.0.0.1:8000/api/v1/esm2-8m/encode \
 
 ## Docs & interfaces
 
-Three ways in — one hop each:
+Four ways in — one hop each:
 
 - **Docs site** (schemas, per-model knowledge graph, when-to-use): <https://biolm.github.io/biolm-hub/>
   — browse every model at <https://biolm.github.io/biolm-hub/models/>.
 - **Browser catalog + live API** (`bh serve`): `http://127.0.0.1:8000/catalog`, with Swagger UI at
-  `/docs` and the machine-readable spec at `/openapi.json`.
+  `/docs`, the machine-readable spec at `/openapi.json`, and each model's knowledge graph at
+  `GET /api/v1/{model}/knowledge` (append `?format=md` for Markdown).
+- **MCP server** (`bh mcp`): expose the catalog to an agent over the Model Context Protocol — it can
+  probe every model's knowledge graph and per-action schema to decide which models to chain, then
+  invoke them. Install the `[mcp]` extra; see [`gateway/mcp/README.md`](gateway/mcp/README.md).
 - **For agents:** each model's machine-readable knowledge graph is `models/<name>/comparison.yaml`
   (when-to-use / alternatives) + `sources.yaml` (license / papers) — the same data rendered on each
   docs page.
