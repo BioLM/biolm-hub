@@ -44,7 +44,7 @@ flowchart TD
         UI["Browser catalog UI<br/>/catalog — run inference by hand"]
     end
 
-    subgraph CLIENT["One client, any of 37 models"]
+    subgraph CLIENT["One client, any of 69 deployable models"]
         direction LR
         HUMAN["Human"]
         AGENT["Agent / LLM"]
