@@ -43,6 +43,41 @@ an SDK agent):
 Probing the catalog needs **no Modal account** — it reads the repo. Only `invoke_action` runs a model
 (and bills your Modal account, like any deployed endpoint).
 
+## Try it — pick a client
+
+With the `[mcp]` extra installed, any of these works (all verified end-to-end):
+
+**A click-around UI, no agent** — the [MCP Inspector](https://github.com/modelcontextprotocol/inspector)
+(needs Node):
+
+```bash
+npx @modelcontextprotocol/inspector bh mcp
+```
+
+Opens a browser UI listing every tool and resource — run `search_models`, read a model's knowledge
+graph, inspect a schema, all by clicking.
+
+**An agent — Claude Code** (the "wow"):
+
+```bash
+claude mcp add biolm-hub -- bh mcp     # `claude mcp list` then shows: biolm-hub … ✔ Connected
+```
+
+Then ask it:
+
+> *"With the biolm-hub tools: I want to design an antibody and check it's plausible — which models
+> should I chain, in what order? For each, tell me when NOT to use it and show its request schema."*
+
+It calls `search_models` → `get_model_knowledge` → `get_model_schema` and plans the pipeline from
+metadata alone. (For **Claude Desktop**, drop the `mcpServers` block above into
+`claude_desktop_config.json` and restart.)
+
+**Just a shell** — confirm the server answers, nothing to install beyond Node:
+
+```bash
+npx @modelcontextprotocol/inspector --cli bh mcp --method tools/list
+```
+
 ## What the agent gets
 
 | Tool | Does |
