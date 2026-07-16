@@ -47,13 +47,12 @@ def _modal_status() -> tuple[bool, str]:
         # config.get() resolves the active profile *and* MODAL_* env vars. Both
         # halves of the token must be present — a lone MODAL_TOKEN_ID would
         # still fail to deploy.
-        # modal.config.Config.get is unannotated upstream (third-party, not ours to fix).
-        token_id = config.get("token_id")  # type: ignore[no-untyped-call]
-        token_secret = config.get("token_secret")  # type: ignore[no-untyped-call]
+        token_id = config.get("token_id")
+        token_secret = config.get("token_secret")
         if token_id and token_secret:
             env = (
                 os.getenv("MODAL_ENVIRONMENT")
-                or config.get("environment")  # type: ignore[no-untyped-call]
+                or config.get("environment")
                 or "(workspace default)"
             )
             return True, f"token in {user_config_path} · environment={env}"

@@ -6,7 +6,7 @@ credentials, an API error, or an unexpected CLI schema), it returns ``None`` so
 callers can show models with an *unknown* status rather than wrongly claiming
 everything is undeployed.
 
-It shells out to ``modal app list --json`` (read-only, tied to ``modal==1.3.5``)
+It shells out to ``modal app list --json`` (read-only, tied to ``modal==1.5.2``)
 and treats an app as deployed when its row's ``State`` is ``"deployed"`` (the app
 name is the row's ``Description``). Results are cached briefly so repeated catalog
 page loads don't spawn a ``modal`` subprocess per request.
