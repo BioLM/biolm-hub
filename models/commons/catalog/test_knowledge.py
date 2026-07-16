@@ -73,8 +73,8 @@ def test_parser_language_tagged_fence_line_does_not_close_block() -> None:
 def test_model_source_dir_uses_slug_env(monkeypatch: pytest.MonkeyPatch) -> None:
     # The knowledge_graph() container method resolves its model dir from the _BIOLM_MODEL_SLUG env
     # var the source layer bakes in (inspect/sys.modules are unreliable under Modal's __main__ runner).
-    from models.commons.catalog.knowledge import MODELS_DIR
     from models.commons.model.base import _model_source_dir
+    from models.commons.model.naming import MODELS_DIR
 
     class _Local:
         pass
