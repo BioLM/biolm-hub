@@ -300,7 +300,7 @@ requires-dist = [
     { name = "pydantic", specifier = "==2.13.4" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.4.4,<10.0.0" },
     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.23.6" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.1.0,<5.0.0" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.1.0,<8.0.0" },
     { name = "pytest-xdist", marker = "extra == 'dev'", specifier = ">=3.8.0,<4.0.0" },
     { name = "pyyaml", specifier = ">=6.0,<7.0" },
     { name = "pyyaml", marker = "extra == 'docs'", specifier = ">=6.0,<7.0" },
