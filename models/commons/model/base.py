@@ -1,7 +1,41 @@
+import os
 from dataclasses import dataclass
-from typing import Optional
+from pathlib import Path
+from typing import Any, Optional
 
 import modal
+
+
+def _model_source_dir(cls: type) -> Path:
+    """Locate the running model's own directory (holding its KG files), from inside its container.
+
+    Prefer the ``_BIOLM_MODEL_SLUG`` env var baked into every model image by the source layer —
+    ``inspect``/``sys.modules`` are unreliable here because Modal runs the app as ``__main__`` via
+    its own entrypoint, so the class's ``__file__`` points at the runner, not ``app.py``. As a
+    fallback (e.g. an older image without the env var) the source layer copies exactly one model
+    directory alongside ``commons``, so the model's dir is the sole non-commons dir with a
+    ``sources.yaml``.
+    """
+    from models.commons.catalog.knowledge import MODELS_DIR, model_dir_for_slug
+
+    slug = os.environ.get("_BIOLM_MODEL_SLUG")
+    if slug:
+        return model_dir_for_slug(slug)
+
+    candidates = [
+        d
+        for d in sorted(MODELS_DIR.iterdir())
+        if d.is_dir()
+        and d.name != "commons"
+        and not d.name.startswith(("_", "."))
+        and (d / "sources.yaml").exists()
+    ]
+    if len(candidates) == 1:
+        return candidates[0]
+    raise RuntimeError(
+        f"cannot locate the model source directory for {cls.__name__!r} "
+        f"(set _BIOLM_MODEL_SLUG); candidates={[d.name for d in candidates]}"
+    )
 
 
 class ModelMixin:
@@ -32,6 +66,23 @@ class ModelMixin:
             "status": "healthy",
             "class_name": self.__class__.__name__,
         }
+
+    @modal.method()
+    def knowledge_graph(self, fmt: str = "json") -> dict[str, Any] | str:
+        """Return this model's knowledge graph — what it is, how/when (and when not) to use it.
+
+        A self-describing endpoint every model gets for free: it reads the model's own
+        ``sources.yaml`` / ``comparison.yaml`` / ``README.md`` / ``MODEL.md`` / ``BIOLOGY.md``
+        (baked into the container image) and returns the same typed payload the gateway
+        ``/knowledge`` route serves. ``fmt="json"`` (default) returns the structured object;
+        ``fmt="md"`` returns one normalized Markdown document.
+        """
+        from models.commons.catalog.knowledge import load_model_knowledge
+
+        knowledge = load_model_knowledge(_model_source_dir(type(self)))
+        if fmt == "md":
+            return knowledge.to_markdown()
+        return knowledge.model_dump(mode="json")
 
 
 class ModelMixinSnap(ModelMixin):

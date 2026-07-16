@@ -23,17 +23,22 @@ Design notes:
 import functools
 import re
 from collections.abc import Callable
-from typing import Any, cast
+from enum import Enum
+from typing import Annotated, Any, cast
 
 import modal
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from pydantic import BaseModel
 
 from gateway.config import get_cors_allowed_origins
 from gateway.model_discovery import ModelMapper
+from models.commons.catalog.knowledge import (
+    ModelKnowledge,
+    load_model_knowledge_for_slug,
+)
 from models.commons.core.logging import DebugLogger, get_logger
 from models.commons.data.serializer import serialize_model
 
@@ -337,6 +342,28 @@ def _register_model_routes(
     return route_count
 
 
+class KnowledgeFormat(str, Enum):
+    """Response format for the per-model knowledge-graph route."""
+
+    JSON = "json"
+    MARKDOWN = "md"
+
+
+def _resolve_base_slug(model: str, model_mapper: ModelMapper) -> str | None:
+    """Resolve a base or variant slug to its base model slug, or None if unknown.
+
+    Knowledge-graph files are keyed by the family's base slug (e.g. ``esm2``), while API URLs use
+    variant slugs (e.g. ``esm2-650m``). Accept either so an agent holding a variant slug from the
+    catalog can still fetch the family's knowledge.
+    """
+    if model in model_mapper.get_all_registered_models():
+        return model
+    variant_info = model_mapper.get_variant_info(model)
+    if variant_info:
+        return str(variant_info["base_model_slug"])
+    return None
+
+
 def build_gateway_app(model_mapper: ModelMapper, *, use_cache: bool) -> FastAPI:
     """Build the gateway FastAPI app.
 
@@ -403,6 +430,30 @@ def build_gateway_app(model_mapper: ModelMapper, *, use_cache: bool) -> FastAPI:
     async def resource_specs() -> dict[str, dict[str, Any]]:
         """Return the resource specifications for all model variants."""
         return model_mapper.get_all_resource_specs()
+
+    @fastapi_app.get(
+        "/api/v1/{model}/knowledge",
+        tags=["Knowledge"],
+        response_model=ModelKnowledge,
+        summary="Get a model's knowledge graph (what it is, when to use it, benchmarks, citations)",
+    )
+    async def model_knowledge(
+        model: str,
+        fmt: Annotated[
+            KnowledgeFormat,
+            Query(alias="format", description="Response format: json (default) or md."),
+        ] = KnowledgeFormat.JSON,
+    ) -> ModelKnowledge | PlainTextResponse:
+        """Return the knowledge graph for a model family (accepts a base or variant slug)."""
+        base_slug = _resolve_base_slug(model, model_mapper)
+        if base_slug is None:
+            raise HTTPException(status_code=404, detail=f"Unknown model '{model}'.")
+        knowledge = load_model_knowledge_for_slug(base_slug)
+        if fmt is KnowledgeFormat.MARKDOWN:
+            return PlainTextResponse(
+                knowledge.to_markdown(), media_type="text/markdown"
+            )
+        return knowledge
 
     route_count = _register_model_routes(fastapi_app, model_mapper, use_cache=use_cache)
     logger.info("Registered %d gateway routes (use_cache=%s)", route_count, use_cache)

@@ -39,6 +39,7 @@ common_requirements = [
     "modal==1.3.5",
     "orjson==3.10.12",
     "pydantic==2.11.7",
+    "pyyaml==6.0.2",  # knowledge-graph loader (gateway /knowledge route + container KG method)
     # `requests` is a cold-start runtime dep: storage/__init__.py eagerly imports
     # the acquisition engine (the curated public storage API), which `import
     # requests` at module top. Models bundling transformers/hf get it transitively,
