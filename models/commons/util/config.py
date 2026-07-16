@@ -36,7 +36,7 @@ common_requirements = [
     "biopython==1.84",
     "boto3==1.35.78",
     "cbor2==5.6.5",  # Required for Modal SDK >= 1.2 serialization protocol
-    "modal==1.3.5",
+    "modal==1.5.2",
     "orjson==3.10.12",
     "pydantic==2.11.7",
     "pyyaml==6.0.2",  # knowledge-graph loader (gateway /knowledge route + container KG method)

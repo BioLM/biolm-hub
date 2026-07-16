@@ -115,8 +115,7 @@ def get_environment_name() -> str:
         str: The environment name (e.g., "biolm-hub-dev" or "biolm-hub").
     """
 
-    # modal.config.Config.get has no type stubs; cast preserves the runtime value.
-    return cast(str, modal.config.config.get("environment"))  # type: ignore[no-untyped-call]
+    return cast(str, modal.config.config.get("environment"))
 
 
 def is_prod_environment() -> bool:
