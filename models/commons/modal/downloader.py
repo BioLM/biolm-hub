@@ -6,6 +6,7 @@ from typing import Optional
 import modal
 
 from models.commons.core.logging import get_logger
+from models.commons.model.naming import MODELS_DIR, REPO_ROOT
 from models.commons.util.config import (
     cloudflare_r2_secret,
     huggingface_api_token_secret,
@@ -99,9 +100,7 @@ def setup_download_layer(
     image = _add_minimal_commons(image, model_folder_name)
 
     # Step 2: Add model's download module
-    downloader_file = Path(__file__).resolve()
-    repo_root = downloader_file.parent.parent.parent.parent
-    download_module = repo_root / "models" / model_folder_name / "download.py"
+    download_module = MODELS_DIR / model_folder_name / "download.py"
 
     if not download_module.exists():
         raise FileNotFoundError(
@@ -142,7 +141,7 @@ def setup_download_layer(
     # hash of all mounted source files in the kwargs, we ensure the download
     # layer rebuilds whenever any download-related code changes.
     source_hash = _compute_download_source_hash(
-        repo_root, model_folder_name, download_module
+        REPO_ROOT, model_folder_name, download_module
     )
 
     # Step 6: Execute download function.
@@ -241,10 +240,6 @@ def _add_minimal_commons(image: modal.Image, model_folder_name: str) -> modal.Im
         image: Modal image to add files to
         model_folder_name: Model folder name (e.g., "esm2", "ablang2")
     """
-    # Find repo root relative to this file
-    downloader_file = Path(__file__).resolve()
-    repo_root = downloader_file.parent.parent.parent.parent
-
     # Shared with _compute_download_source_hash so the mounted set and the
     # cache-busting hash always cover exactly the same files.
     all_files = _download_layer_source_files(model_folder_name)
@@ -272,7 +267,7 @@ def _add_minimal_commons(image: modal.Image, model_folder_name: str) -> modal.Im
 
     # Copy all required files to temp directory, preserving structure
     for file_path in all_files:
-        local_file = repo_root / file_path
+        local_file = REPO_ROOT / file_path
         if local_file.exists():
             # Create the destination path in temp directory
             dest_path = tmp_path / file_path

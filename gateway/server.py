@@ -12,7 +12,6 @@ Override the served domain or CORS with ``BIOLM_GATEWAY_DOMAIN`` /
 ``BIOLM_GATEWAY_CORS_ORIGINS`` (see ``gateway/config.py``).
 """
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import modal
@@ -23,6 +22,7 @@ from gateway.config import (
     remote_gateway_path,
 )
 from models.commons.core.logging import get_logger
+from models.commons.model.naming import MODELS_DIR
 from models.commons.util.config import common_requirements, remote_models_path
 
 if TYPE_CHECKING:
@@ -32,8 +32,8 @@ logger = get_logger(__name__)
 
 # The gateway imports every model's config.py at startup, so it needs the WHOLE
 # models/ tree (models/__init__.py + models/commons/ + every models/<slug>/)
-# mounted at /root/models, so we compute the real source dir here.
-_local_models_dir = Path(__file__).resolve().parent.parent / "models"
+# mounted at /root/models. MODELS_DIR is the canonical repo models/ dir.
+_local_models_dir = MODELS_DIR
 _pycache_ignore = modal.FilePatternMatcher("**/__pycache__", "**/*.pyc")
 
 image = (
