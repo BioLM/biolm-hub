@@ -12,6 +12,8 @@ import yaml
 from rich.console import Console
 from rich.table import Table
 
+from models.commons.model.naming import MODELS_DIR, slug_to_dirname
+
 console = Console()
 kb_app = typer.Typer(
     help="Manage model knowledge bases.",
@@ -19,9 +21,14 @@ kb_app = typer.Typer(
 )
 
 # --- Constants ---
-REPO_ROOT = Path(__file__).resolve().parent.parent
-MODELS_DIR = REPO_ROOT / "models"
 SKIP_DIRS = {"commons", "scripts", "__pycache__", "dummy"}
+
+
+def _model_dir(name: str) -> Path:
+    """Resolve a model's directory from a slug or directory name (hyphen or underscore)."""
+    underscored = MODELS_DIR / slug_to_dirname(name)
+    return underscored if underscored.exists() else MODELS_DIR / name
+
 
 # Valid enum values for schema validation
 VALID_MOLECULE_TYPES = {
@@ -74,7 +81,7 @@ def _get_all_model_slugs() -> list[str]:
 
 def _load_sources(model_slug: str) -> dict[str, Any]:
     """Load sources.yaml for a model. Raises typer.Exit on missing/malformed files."""
-    path = MODELS_DIR / model_slug / "sources.yaml"
+    path = _model_dir(model_slug) / "sources.yaml"
     if not path.exists():
         console.print(f"[red]Model '{model_slug}' not found in {MODELS_DIR}[/red]")
         raise typer.Exit(1)
@@ -113,7 +120,7 @@ def status_cmd(
 
     complete = 0
     for slug in slugs:
-        model_dir = MODELS_DIR / slug
+        model_dir = _model_dir(slug)
         has_sources = (model_dir / "sources.yaml").exists()
         has_readme = (model_dir / "README.md").exists()
         has_model = (model_dir / "MODEL.md").exists()
@@ -172,7 +179,7 @@ def validate_cmd(  # noqa: C901
     for slug in slugs:
         errors: list[str] = []
         warnings: list[str] = []
-        model_dir = MODELS_DIR / slug
+        model_dir = _model_dir(slug)
 
         # Check documentation files
         for doc in REQUIRED_DOCS:

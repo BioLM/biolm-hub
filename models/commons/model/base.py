@@ -16,7 +16,8 @@ def _model_source_dir(cls: type) -> Path:
     directory alongside ``commons``, so the model's dir is the sole non-commons dir with a
     ``sources.yaml``.
     """
-    from models.commons.catalog.knowledge import MODELS_DIR, model_dir_for_slug
+    from models.commons.catalog.knowledge import model_dir_for_slug
+    from models.commons.model.naming import MODELS_DIR
 
     slug = os.environ.get("_BIOLM_MODEL_SLUG")
     if slug:

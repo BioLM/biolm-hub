@@ -1,11 +1,11 @@
 import importlib.util
-from pathlib import Path
 from typing import Any, Optional
 
 from pydantic import BaseModel
 
 from models.commons.core.logging import get_logger
 from models.commons.model.config import ModelFamily
+from models.commons.model.naming import MODELS_DIR
 
 logger = get_logger(__name__)
 
@@ -46,7 +46,7 @@ class ModelMapper:
         The Modal class name is read from ``MODEL_FAMILY.modal_class_name`` — the
         single source of truth — so no AST/source scanning is needed.
         """
-        models_dir = Path(__file__).parent.parent / "models"
+        models_dir = MODELS_DIR
 
         for model_dir in models_dir.iterdir():
             if (

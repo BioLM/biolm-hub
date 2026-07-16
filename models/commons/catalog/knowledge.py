@@ -32,13 +32,9 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
 from models.commons.core.logging import get_logger
+from models.commons.model.naming import MODELS_DIR
 
 logger = get_logger(__name__)
-
-# The repository ``models/`` directory. ``knowledge.py`` lives at
-# ``models/commons/catalog/knowledge.py``; ``parents[2]`` is ``models/`` both in the repo and
-# inside a container (commons is copied to ``/root/models/commons`` by the source layer).
-MODELS_DIR = Path(__file__).resolve().parents[2]
 
 # The prose documents, in the order they appear in a normalized render. The key (label) is what
 # ``documents`` is keyed by; the value is the on-disk filename.

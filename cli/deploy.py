@@ -15,6 +15,7 @@ from rich.table import Table
 
 from models.commons.core.logging import get_logger
 from models.commons.model.config import ModelFamily, ResolvedVariant
+from models.commons.model.naming import model_app_path, slug_to_module
 from models.commons.model.schema import ModalResourceSpec
 
 """
@@ -51,10 +52,6 @@ auto-detection in either direction.
 
 console = Console()
 logger = get_logger(__name__)
-
-# Repo-relative models directory (…/models). Single source of truth for the
-# per-model ``app.py`` path used by every deploy subprocess.
-MODELS_DIR = Path(__file__).resolve().parent.parent / "models"
 
 # Default bounded parallelism for ``bh deploy --all``.
 DEFAULT_MAX_CONCURRENCY = 4
@@ -94,7 +91,7 @@ def _run_forced_deploy(
     Returns ``(success, captured_output, failure_detail)`` where ``failure_detail``
     is a one-line reason on failure (empty on success).
     """
-    model_path = MODELS_DIR / model_name / "app.py"
+    model_path = model_app_path(model_name)
     env = os.environ.copy()
     env.update(variant_env_vars)
     cmd = [sys.executable, str(model_path), "--force-deploy"]
@@ -130,7 +127,7 @@ def deploy_single_variant(
     model_name: str, variant_env_vars: dict[str, str], force: bool = False
 ) -> bool:
     """Deploy a single model variant using subprocess to ensure clean environment."""
-    model_path = MODELS_DIR / model_name / "app.py"
+    model_path = model_app_path(model_name)
 
     if force:
         print("  🚀 Force deployment enabled (--force flag active)")
@@ -163,9 +160,8 @@ def deploy_single_variant(
 def get_model_family(model_name: str) -> Optional[ModelFamily]:
     """Load the ModelFamily from a model's config.py."""
     try:
-        # Handle both model directory names and slugs
-        module_package_name = model_name.replace("-", "_")
-        config_module = import_module(f"models.{module_package_name}.config")
+        # Accept either a slug (hyphen) or a directory name; naming normalizes both.
+        config_module = import_module(f"{slug_to_module(model_name)}.config")
 
         if not hasattr(config_module, "MODEL_FAMILY"):
             print(
