@@ -58,7 +58,7 @@ dev = [
     # mypy floor >=1.14: 1.5.1 hard-crashes analyzing numpy 2.x stubs. mypy --strict
     # is a blocking CI gate (0 errors across the repo).
     "mypy>=1.14",
-    "pytest>=7.4.4,<8.0.0",
+    "pytest>=7.4.4,<10.0.0",
     "pytest-cov>=4.1.0,<5.0.0",
     "pytest-xdist>=3.8.0,<4.0.0",
     "pytest-asyncio>=0.23.6",
